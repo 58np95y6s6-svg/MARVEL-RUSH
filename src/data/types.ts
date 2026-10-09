@@ -1,7 +1,7 @@
 // Contrat partagé : définitions statiques du contenu (unités, boss, ennemis, équipes, packs).
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-export type Pack = 'marvel' | 'disney';
+export type Pack = 'marvel' | 'disney' | 'dc';
 export type Rarity = 'rare' | 'epique' | 'legendaire';
 /** premier = le plus avancé sur le chemin, aleatoire = au hasard, fort = le plus de PV. */
 export type Targeting = 'premier' | 'aleatoire' | 'fort';
@@ -10,9 +10,14 @@ export type UnitId =
   | 'ironman' | 'spiderman' | 'hulk' | 'thor' | 'strange' | 'venom' | 'cmarvel'
   | 'cap' | 'loki' | 'bucky' | 'hawkeye' | 'falcon' | 'widow' | 'shangchi'
   | 'moana' | 'maui' | 'pocahontas' | 'mulan' | 'merida' | 'ariel' | 'foxhound'
-  | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph';
+  | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph'
+  // Extension DC Comics
+  | 'batman' | 'superman' | 'wonderwoman' | 'flash' | 'aquaman' | 'greenlantern' | 'cyborg'
+  | 'supergirl' | 'shazam' | 'robin' | 'batgirl' | 'catwoman' | 'harley' | 'martian' | 'greenarrow';
 
-export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos';
+export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos'
+  // Extension DC Comics (Darkseid : boss final de l'extension)
+  | 'joker' | 'luthor' | 'bane' | 'sinestro' | 'blackadam' | 'darkseid';
 
 export type EnemyKind = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier' | 'sbire';
 
