@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_MAPS, ARENAS, ARENA_OF_BOSS, MAPS, arenaForBoss, getMap, mapForDeck, mapsForUniverse } from '../../src/maps/index';
+import { ALL_MAPS, ARENAS, ARENA_OF_BOSS, DC_ARENAS, DC_MAPS, MAPS, arenaForBoss, getMap, mapForDeck, mapsForUniverse } from '../../src/maps/index';
 import { PATH_CELLS, PATH_SHAPES, coopLayout, lanePoint, polylineLength, rectHitsPlay, soloLayout } from '../../src/maps/layout';
-import type { BossId } from '../../src/data/types';
+import type { BossId, UnitId } from '../../src/data/types';
+import { UNIT_LIST } from '../../src/data/units';
 
 const within = (v: number, ref: number, tol = 0.1) => Math.abs(v - ref) / ref <= tol;
 
@@ -37,12 +38,14 @@ describe('géométrie du plateau', () => {
 });
 
 describe('maps', () => {
-  it('12 maps, 7 variantes et 7 arènes, identifiants uniques', () => {
-    expect(MAPS.length).toBe(19);
-    expect(ARENAS.length).toBe(7);
+  it('12 maps, 7 variantes, 6 maps DC et 13 arènes, identifiants uniques', () => {
+    expect(MAPS.length).toBe(25);
+    expect(ARENAS.length).toBe(13);
     expect(new Set(ALL_MAPS.map((m) => m.id)).size).toBe(ALL_MAPS.length);
     expect(mapsForUniverse('marvel')).toHaveLength(6);
     expect(mapsForUniverse('disney')).toHaveLength(13);
+    expect(mapsForUniverse('dc')).toHaveLength(6);
+    expect(mapsForUniverse('boss')).toHaveLength(13);
   });
 
   it.each(ALL_MAPS.map((m) => [m.id, m] as const))('%s : longueurs, ambiances, couches', (_id, m) => {
@@ -72,6 +75,50 @@ describe('maps', () => {
           expect(rectHitsPlay(a.sweep, L), `${a.label} (${mode}, ${shape})`).toBe(false);
         }
       }
+  });
+});
+
+describe('extension DC', () => {
+  it('6 maps DC débloquées par les chapitres 7 à 9, avec un modificateur et un son', () => {
+    expect(DC_MAPS.map((m) => m.id)).toEqual(['gotham-nuit', 'batcave', 'metropolis', 'themyscira', 'atlantis', 'oa']);
+    for (const m of DC_MAPS) {
+      expect(m.universe).toBe('dc');
+      expect(m.unlock.type).toBe('chapitre');
+      expect(m.unlock.value).toBeGreaterThanOrEqual(7);
+      expect(m.unlock.value).toBeLessThanOrEqual(9);
+      expect(m.sound.length).toBeGreaterThan(0);
+      expect(m.pathCoop?.tronc.length).toBeGreaterThan(1);
+    }
+    expect(getMap('gotham-nuit').unlock.value).toBe(7);
+    expect(getMap('oa').unlock.value).toBe(9);
+  });
+
+  it('chaque héros DC est associé à exactement une map DC', () => {
+    const dcHeroes = UNIT_LIST.filter((u) => u.pack === 'dc').map((u) => u.id);
+    for (const id of dcHeroes) expect(DC_MAPS.filter((m) => m.heroes.includes(id)).map((m) => m.id), id).toHaveLength(1);
+    for (const m of DC_MAPS) for (const h of m.heroes) expect(dcHeroes).toContain(h);
+  });
+
+  it('6 arènes DC avec effets de boss, Apokolips pour Darkseid', () => {
+    expect(DC_ARENAS.map((a) => a.boss)).toEqual(['joker', 'luthor', 'bane', 'sinestro', 'blackadam', 'darkseid']);
+    for (const a of DC_ARENAS) {
+      expect(a.universe).toBe('boss');
+      expect(a.bossFx?.effects.length).toBeGreaterThan(0);
+      expect(ARENA_OF_BOSS[a.boss as BossId]).toBe(a.id);
+    }
+    expect(arenaForBoss('darkseid')?.name).toBe('Apokolips');
+  });
+
+  it('mapForDeck gère les decks DC', () => {
+    const dc = (ids: string[]) => ids as UnitId[];
+    expect(mapForDeck(dc(['batman', 'robin', 'catwoman', 'superman', 'thor'])).id).toBe('gotham-nuit');
+    expect(mapForDeck(dc(['superman', 'supergirl', 'shazam', 'aquaman', 'ironman'])).id).toBe('metropolis');
+    expect(mapForDeck(dc(['wonderwoman', 'aquaman', 'moana']), ['toits-new-york', 'atlantis', 'themyscira']).id).toBe('themyscira');
+    expect(mapForDeck(dc(['greenlantern', 'martian', 'flash', 'batgirl', 'moana'])).id).toBe('oa');
+    // maps DC encore verrouillées : repli sur une map débloquée
+    expect(mapForDeck(dc(['batman', 'superman', 'flash', 'aquaman', 'cyborg']), ['toits-new-york', 'ile-motunui']).id).toBe('toits-new-york');
+    // univers majoritaire DC sans map associée débloquée → première map DC débloquée
+    expect(mapForDeck(dc(['batman', 'superman', 'flash', 'aquaman', 'moana']), ['toits-new-york', 'oa']).id).toBe('oa');
   });
 });
 

@@ -153,6 +153,7 @@ export function bossTint(id: BossId): readonly [string, string] {
 /* ---------- sbires ---------- */
 const MOTION: Record<BossId, 'walk' | 'float'> = {
   jafar: 'walk', cruella: 'walk', ursula: 'float', malefique: 'walk', galactus: 'float', bouffon: 'float', thanos: 'walk',
+  joker: 'walk', luthor: 'walk', bane: 'walk', sinestro: 'float', blackadam: 'walk', darkseid: 'float',
 };
 /** Pas de marche : jambes « legA » / « legB » inclinées, pivot en haut de la jambe. */
 function walkLegs(svg: string, frameNo: 0 | 1): string {

@@ -29,16 +29,35 @@ import { areneMalefique } from './arene-malefique';
 import { areneGalactus } from './arene-galactus';
 import { areneBouffon } from './arene-bouffon';
 import { areneThanos } from './arene-thanos';
+import { gothamNuit } from './gotham-nuit';
+import { metropolis } from './metropolis';
+import { themyscira } from './themyscira';
+import { atlantis } from './atlantis';
+import { batcave } from './batcave';
+import { oa } from './oa';
+import { areneJoker } from './arene-joker';
+import { areneLuthor } from './arene-luthor';
+import { areneBane } from './arene-bane';
+import { areneSinestro } from './arene-sinestro';
+import { areneBlackadam } from './arene-blackadam';
+import { areneDarkseid } from './arene-darkseid';
 
-/** Maps d'univers (12) puis variantes Disney (7), dans l'ordre de déblocage. */
+/** Maps de l'extension DC (débloquées par les chapitres 7 à 9). */
+export const DC_MAPS: MapDefX[] = [gothamNuit, batcave, metropolis, themyscira, atlantis, oa];
+
+/** Maps d'univers (12), variantes Disney (7) puis maps DC (6), dans l'ordre de déblocage. */
 export const MAPS: MapDefX[] = [
   toitsNewYork, atelierStark, asgardBifrost, sanctumSanctorum, baseAvengers, templeDixAnneaux,
   ileMotunui, palaisImperial, royaumeDesMorts, zootopie, chambreAndy, sugarRush,
   foretPocahontas, highlandsRebelle, atlantica, bayou, recifNemo, tourRaiponce, foretRoxRouky,
+  ...DC_MAPS,
 ];
 
+/** Arènes des boss DC (Darkseid en dernier : boss final de l'extension). */
+export const DC_ARENAS: MapDefX[] = [areneJoker, areneLuthor, areneBane, areneSinestro, areneBlackadam, areneDarkseid];
+
 /** Arènes de boss, une par boss. */
-export const ARENAS: MapDefX[] = [areneJafar, areneCruella, areneUrsula, areneMalefique, areneGalactus, areneBouffon, areneThanos];
+export const ARENAS: MapDefX[] = [areneJafar, areneCruella, areneUrsula, areneMalefique, areneGalactus, areneBouffon, areneThanos, ...DC_ARENAS];
 
 export const ALL_MAPS: MapDefX[] = [...MAPS, ...ARENAS];
 
@@ -69,6 +88,12 @@ export const ARENA_OF_BOSS: Record<BossId, string> = {
   galactus: 'arene-galactus',
   bouffon: 'arene-bouffon',
   thanos: 'arene-thanos',
+  joker: 'arene-joker',
+  luthor: 'arene-luthor',
+  bane: 'arene-bane',
+  sinestro: 'arene-sinestro',
+  blackadam: 'arene-blackadam',
+  darkseid: 'arene-darkseid',
 };
 
 export function arenaForBoss(boss: BossId | string): MapDefX | null {
@@ -89,9 +114,10 @@ export function mapForDeck(deck: readonly UnitId[], unlocked?: readonly string[]
     if (score > bestScore) { best = m; bestScore = score; }
   }
   if (bestScore > 0) return best;
-  // Aucun héros associé : on prend la première map de l'univers majoritaire.
-  const marvel = deck.filter((u) => MAPS.some((m) => m.universe === 'marvel' && m.heroes.includes(u))).length;
-  const disney = deck.filter((u) => MAPS.some((m) => m.universe === 'disney' && m.heroes.includes(u))).length;
-  const u: Universe = disney > marvel ? 'disney' : 'marvel';
+  // Aucun héros associé à une map débloquée : on prend la première map débloquée de l'univers majoritaire
+  // (à égalité, l'ordre marvel, disney, dc).
+  const count = (u: Universe) => deck.filter((id) => MAPS.some((m) => m.universe === u && m.heroes.includes(id))).length;
+  let u: Universe = 'marvel';
+  for (const v of ['disney', 'dc'] as const) if (count(v) > count(u)) u = v;
   return candidates.find((m) => m.universe === u) ?? best;
 }

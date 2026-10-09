@@ -2,7 +2,7 @@
 // avec la grille et le chemin dessinés par-dessus, les animations d'ambiance et la
 // transition vers l'arène du boss.
 
-import { ARENAS, MAPS, arenaForBoss, getMap } from './index';
+import { ARENAS, DC_ARENAS, MAPS, arenaForBoss, getMap } from './index';
 import type { AmbientAnim, MapDefX } from './kit';
 import { type AnyLayout, type LayoutMode, type PathShape, boardsOf, lanePoint, layoutFor } from './layout';
 
@@ -120,6 +120,15 @@ export function animate(a: AmbientAnim, img: HTMLElement, t: number): void {
   }
 }
 
+/** Arène montée pour la transition : une arène DC pour une map DC, sinon une arène Marvel ou Disney. */
+function previewArena(map: MapDefX): MapDefX | null {
+  const hash = location.hash.match(/#dev\/maps\/[\w-]+\/(?:solo|coop)\/([\w-]+)/);
+  if (hash?.[1]) return getMap(hash[1]);
+  const pool = map.universe === 'dc' ? DC_ARENAS : ARENAS.filter((a) => !DC_ARENAS.includes(a));
+  const list = MAPS.filter((m) => (m.universe === 'dc') === (map.universe === 'dc'));
+  return pool[Math.max(0, list.indexOf(map)) % pool.length] ?? arenaForBoss('thanos');
+}
+
 export function mountMapPreview(root: HTMLElement): () => void {
   const v: View = { mode: 'solo', overlay: false, enemies: true, ui: false, focus: null };
   try { const s = JSON.parse(localStorage.getItem('dev-maps') ?? '{}') as Partial<View>; Object.assign(v, s); } catch { /* stockage indisponible */ }
@@ -159,7 +168,7 @@ export function mountMapPreview(root: HTMLElement): () => void {
     const list: MapDefX[] = v.focus ? [getMap(v.focus)] : [...MAPS, ...ARENAS.filter((a) => !MAPS.includes(a))];
     for (const map of list) {
       const card = el('div', 'display:flex;flex-direction:column;gap:8px;width:' + PHONE_W + 'px');
-      const arena = !map.boss && v.focus ? arenaForBoss(['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon', 'thanos'][MAPS.indexOf(map) % 7]!) : null;
+      const arena = !map.boss && v.focus ? previewArena(map) : null;
       const ph = phone(map, v, map.shape, arena ?? null);
       ticks.push(ph.tick);
       const title = el('div', 'display:flex;justify-content:space-between;align-items:baseline;gap:8px');
