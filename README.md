@@ -14,6 +14,7 @@ Jeu mobile de tower defense inspiré du système de Rush Royale : fusion d'unit�
 | `design/planches/` | Planches de personnages animées (HTML/SVG, à ouvrir dans un navigateur) |
 | `design/references/` | Références de style et galerie de références des personnages |
 | `design/game-design.md` | Rôles, attaques, compétences, boss et bonus d'équipe |
+| `docs/prompt-jeu.md` | Prompt complet pour développer le jeu (combat, tirages, solo, coop et duel en PWA) |
 
 ### Planches
 
