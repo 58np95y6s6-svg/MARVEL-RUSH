@@ -8,6 +8,15 @@ import { CHANGELOG, LATEST, type ReleaseNote } from './changelog';
 const SEEN_KEY = 'mr-version-vue';
 const CHECK_EVERY_MS = 20 * 60 * 1000;
 
+// Jamais de fenêtre de mise à jour en pleine partie : l'écran de combat émet
+// window 'mr-game' { running: boolean } au début et à la fin d'une partie.
+let gameRunning = false;
+let pendingUpdate: (() => void) | null = null;
+window.addEventListener('mr-game', (e) => {
+  gameRunning = !!(e as CustomEvent<{ running?: boolean }>).detail?.running;
+  if (!gameRunning && pendingUpdate) { const show = pendingUpdate; pendingUpdate = null; show(); }
+});
+
 const STYLE = `
 .mr-sheet-bg{position:fixed;inset:0;z-index:9999;background:rgba(14,10,31,.6);display:flex;align-items:flex-end;justify-content:center;animation:mr-fade .2s ease-out}
 .mr-sheet{width:min(440px,100%);max-height:85dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;background:#2a2347;color:#fff;font:16px 'Nunito',system-ui,sans-serif;border:3px solid #4b4370;border-bottom:0;border-radius:26px 26px 0 0;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.45);animation:mr-up .25s cubic-bezier(.2,.9,.3,1.2)}
@@ -95,7 +104,9 @@ export function setupUpdates(): void {
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
-      showUpdateAvailable(() => void updateSW(true));
+      const show = () => showUpdateAvailable(() => void updateSW(true));
+      if (gameRunning) pendingUpdate = show;
+      else show();
     },
     onRegisteredSW(_url, registration) {
       if (!registration) return;
