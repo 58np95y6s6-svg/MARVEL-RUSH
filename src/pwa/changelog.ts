@@ -29,6 +29,28 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-10g',
+    title: 'Campagne, tirages et collection',
+    date: '10 octobre 2026',
+    items: [
+      'Crée ton profil (pseudo, avatar) et choisis ton équipe de départ Marvel ou Disney, avec 10 tirages offerts.',
+      'Tirages : nouveau Pack Complet et packs par univers, contenu et probabilités affichés, garantie Légendaire, ouverture animée des cartes.',
+      'Collection et decks : cartes de héros façon Rush Royale, amélioration, éveils, talents, 3 decks et bonus d’équipe.',
+      'Campagne : 6 chapitres de 10 niveaux, lieutenant au niveau 5, boss du chapitre au niveau 10, Thanos à la fin.',
+      'Jusqu’à 3 étoiles par niveau, coffres d’étoiles, parchemins, cristaux et un personnage offert à chaque chapitre terminé.',
+      'Solo Infini (débloqué après le chapitre 1) : éclats par vague, coffres de palier, record, et un coffre quotidien sur l’accueil.',
+    ],
+  },
+  {
+    id: '2026-10-10f',
+    title: 'Compte à rebours',
+    date: '10 octobre 2026',
+    items: [
+      'Chaque partie commence par un compte à rebours 3, 2, 1, GO ! : place déjà tes héros avant l’arrivée des ennemis.',
+      'Pocahontas a de nouveaux cheveux au vent, en mèches souples.',
+    ],
+  },
+  {
     id: '2026-10-10e',
     title: 'Nouvelles stratégies et équilibrage',
     date: '10 octobre 2026',

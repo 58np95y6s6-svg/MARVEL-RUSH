@@ -1,5 +1,7 @@
 // Simulateur d'équilibrage headless (agent Game design).
-// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>]
+// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--campagne <c1-n3|c1|all>]
+// --campagne : joue un niveau de campagne (ou tous ceux d'un chapitre, ou les 60) et affiche le taux de
+// victoire et la part de chaque étoile (contraintes évaluées comme en jeu, src/campaign).
 // --casual : joueur « occasionnel » (réagit une fois par seconde, ne fusionne que plateau plein et au hasard,
 // sans copie ni booster, n'achète pas « Mana + », améliore tard), plus proche d'un humain débutant.
 // Joue N parties en Solo Infini (ou Coop Infini à deux bots avec --coop) avec un bot simple :
@@ -16,6 +18,9 @@ import { dropAction } from '../src/engine/archetypes';
 import { MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, POWERUP_COSTS } from '../src/engine/internal';
 import type { LaneId } from '../src/engine/types';
 import { getMap } from '../src/maps/index';
+import { LEVELS, getLevel, levelConfig, type CampaignLevel } from '../src/campaign/levels';
+import { evaluateStars } from '../src/campaign/progress';
+import { createBattleTracker } from '../src/campaign/tracker';
 
 const argv = process.argv.slice(2).filter((a) => a !== '--');
 const flag = (name: string): string | undefined => {
@@ -36,6 +41,7 @@ const botRand = () => ((botRng = (botRng * 1103515245 + 12345) >>> 0) / 2 ** 32)
 const maxWave = Number(flag('--max') ?? 80);
 const seed0 = Number(flag('--seed') ?? 1);
 const level = Number(flag('--level') ?? 1);
+const campaignArg = flag('--campagne');
 const games = argv.length && /^\d+$/.test(argv[argv.length - 1]!) ? Number(argv.pop()) : 20;
 const deck = (argv.length ? argv : ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow']) as UnitId[];
 for (const id of deck) if (!UNITS[id]) throw new Error(`Unité inconnue : ${id}`);
@@ -173,6 +179,40 @@ function play(seed: number): number {
     engine.drainEvents();
   }
   return engine.state.result?.wave ?? engine.state.wave;
+}
+
+if (campaignArg) {
+  const targets: CampaignLevel[] = campaignArg === 'all' ? LEVELS
+    : /^c\d+$/.test(campaignArg) ? LEVELS.filter((l) => `c${l.chapter}` === campaignArg)
+      : [getLevel(campaignArg)].filter((l): l is CampaignLevel => !!l);
+  if (!targets.length) throw new Error(`Niveau de campagne inconnu : ${campaignArg}`);
+  console.log(`Campagne · deck ${deck.join(', ')} · niveau de collection ${level} · ${games} parties par niveau${casual ? ' · joueur occasionnel' : ''}`);
+  for (const lv of targets) {
+    let wins = 0;
+    const st = [0, 0, 0];
+    for (let g = 0; g < games; g++) {
+      const seed = seed0 + g;
+      botRng = seed * 7919 + 17;
+      const cfg = levelConfig(lv, deck, null, seed);
+      cfg.players[0]!.levels = Object.fromEntries(deck.map((u) => [u, level]));
+      const engine = createEngine(cfg);
+      const tr = createBattleTracker();
+      while (!engine.state.result) {
+        const p = engine.state.players[0]!;
+        if (!casual || engine.state.tick % 20 === 0) { const c = decide(p, 0); if (c) engine.apply(c); }
+        tr.before(engine.state);
+        engine.tick();
+        tr.after(engine.state, engine.drainEvents());
+      }
+      const res = engine.state.result!;
+      const stars = evaluateStars(lv, { ...tr.stats(engine.state), won: res.outcome === 'victoire', wave: res.wave, livesLeft: engine.state.lives, deck, seed });
+      if (stars[0]) wins++;
+      stars.forEach((x, i) => { if (x) st[i]!++; });
+    }
+    const pc = (n: number) => `${String(Math.round((100 * n) / games)).padStart(3)} %`;
+    console.log(`${lv.id.padEnd(7)} ${String(lv.waves).padStart(2)} vagues ×${lv.hpMul.toFixed(2)} · victoire ${pc(wins)} · ★★ ${pc(st[1]!)} · ★★★ ${pc(st[2]!)}${wins ? ` (${Math.round((100 * st[2]!) / wins)} % des victoires)` : ''}`);
+  }
+  process.exit(0);
 }
 
 const t0 = performance.now();

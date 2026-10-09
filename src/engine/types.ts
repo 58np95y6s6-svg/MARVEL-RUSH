@@ -47,6 +47,8 @@ export interface GameConfig {
    * final, pas de Darkseid) ou 'dc' (5 boss, Darkseid à chaque palier final, pas de Thanos).
    */
   bossPool?: BossPool;
+  /** Compte à rebours avant la 1re vague (s) : on peut déjà invoquer et fusionner. Absent = 0. */
+  prepTime?: number;
   /** Modificateurs de map actifs (§7 bis), lus par le moteur. */
   mapModifiers?: Record<string, number>;
   /** Tutoriel et niveaux scénarisés : invocations imposées, ennemis affaiblis, etc. */
@@ -131,6 +133,8 @@ export interface EngineState {
   /** Prochain gros boss et nombre de vagues avant lui (bandeau « 1 vague avant le boss X »). */
   upcomingBoss?: { boss: BossId; inWaves: number };
   bossRageIn?: number;        // secondes avant la rage du boss en cours
+  /** Compte à rebours de début de partie (s) ; absent ou 0 = la partie a commencé. */
+  countdown?: number;
   result?: { outcome: 'victoire' | 'defaite'; winner?: PlayerId; wave: number };
 }
 

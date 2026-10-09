@@ -72,14 +72,16 @@
 .cx-gh.r-epique { background: linear-gradient(#b57cf0, #6c32b8); }
 .cx-gh.r-rare { background: linear-gradient(#5aa2f5, #2a62c4); }
 
-.cx-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.cx-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 10px; }
 .cx-card {
   position: relative; display: flex; flex-direction: column; align-items: stretch; padding: 0; cursor: pointer;
   border-radius: 12px; border: 3px solid var(--ink); background: var(--rar); color: #fff; overflow: hidden;
   box-shadow: 0 3px 0 rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.35); font: inherit;
 }
 .cx-card:active { transform: translateY(2px) scale(.97); }
-.cx-card.locked { filter: grayscale(.9) brightness(.7); }
+.cx-card.locked { filter: grayscale(.6) brightness(.85); }
+.cx-card.locked .cx-art img { filter: brightness(0) opacity(.55) drop-shadow(0 0 1px rgba(255,255,255,.5)); }
+.cx-card.locked .cx-lvl { display: none; }
 .cx-art {
   display: block; aspect-ratio: 1; margin: 3px 3px 0; border-radius: 9px; position: relative; overflow: hidden;
   background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--plate) 65%, #fff) 0, var(--plate) 55%, color-mix(in srgb, var(--plate) 60%, #000) 100%);

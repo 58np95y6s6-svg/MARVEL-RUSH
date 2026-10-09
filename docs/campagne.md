@@ -199,7 +199,7 @@ Boss intermédiaire : **Bane** (niveau 8, `arene-bane`), lieutenant **Mercenaire
 | 5 | gotham-nuit | 15 | 1,9 | L (5), B rot. (10), **L Clown géant** (15) | Clown tué en moins de 20 s | 1 parchemin |
 | 6 | batcave | 18 | 1,95 | L (5), B rot. (10), L (15) | Moins de 26 invocations | — |
 | 7 | gotham-nuit | 19 | 2,0 | L (5), B rot. (10), L (15) | Bonus d'équipe Bat-famille actif | — |
-| 8 | batcave → arène | 20 | 2,0 | L (5), B rot. (10), L Mercenaire (15), **B Bane** (20) | Bane tué avant son Venin (au-dessus de 50 % de PV pendant moins de 15 s) | 1 parchemin |
+| 8 | batcave → arène | 20 | 2,0 | L (5), B rot. (10), L Mercenaire (15), **B Bane** (20) | Bane tué en moins de 30 s | 1 parchemin |
 | 9 | gotham-nuit | 20 | 2,05 | L (5), B rot. (10), L (15), B rot. (20) | Aucune unité ne perd de rang | — |
 | 10 | gotham-nuit → arène | 20 | 2,1 | L (5), B rot. (10), **L Clown géant** (15), **B Joker** (20) | Joker tué en moins de 30 s | 2 parchemins, personnage garanti |
 
@@ -210,7 +210,7 @@ Boss intermédiaire : **Black Adam** (niveau 8, `arene-blackadam`), lieutenant *
 |---|---|---|---|---|---|---|
 | 1 | metropolis | 16 | 2,1 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
 | 2 | metropolis | 17 | 2,15 | L (5), B rot. (10), L (15) | Aucun blindé ne passe (robots LexCorp) | — |
-| 3 | themyscira | 18 | 2,15 | L (5), B rot. (10), L (15) | Avec Wonder Woman ou un bonus Trinité | — |
+| 3 | themyscira | 18 | 2,15 | L (5), B rot. (10), L (15) | Avec Wonder Woman dans le deck | — |
 | 4 | atlantis | 18 | 2,2 | L (5), B rot. (10), L (15) | Une unité de rang 6 | — |
 | 5 | metropolis | 15 | 2,2 | L (5), B rot. (10), **L Robot LexCorp géant** (15) | Robot tué en moins de 20 s | 1 parchemin |
 | 6 | themyscira | 19 | 2,25 | L (5), B rot. (10), L (15) | Moins de 27 invocations | — |
@@ -226,16 +226,16 @@ Boss intermédiaire : **Sinestro** (niveau 8, `arene-sinestro`), lieutenant **So
 |---|---|---|---|---|---|---|
 | 1 | oa | 17 | 2,4 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
 | 2 | oa | 18 | 2,45 | L (5), B rot. (10), L (15) | Une unité de rang 7 | — |
-| 3 | gotham-nuit | 18 | 2,5 | L (5), B rot. (10), L (15) | Aucun volant ne passe (Corps Sinestro, Parademons) | — |
+| 3 | gotham-nuit | 18 | 2,5 | L (5), B rot. (10), L (15) | Aucun bouclier ne passe (Corps Sinestro) | — |
 | 4 | metropolis | 19 | 2,5 | L (5), B rot. (10), L (15) | Deux bonus d'équipe actifs | — |
 | 5 | oa | 15 | 2,55 | L (5), B rot. (10), **L Soldat Sinestro géant** (15) | Soldat tué en moins de 20 s | 1 parchemin |
 | 6 | themyscira | 19 | 2,6 | L (5), B rot. (10), L (15) | Moins de 28 invocations | — |
 | 7 | atlantis | 20 | 2,65 | L (5), B rot. (10), L (15), B rot. (20) | Sans perdre de vie | — |
-| 8 | oa → arène | 20 | 2,65 | L (5), B rot. (10), L Soldat Sinestro (15), **B Sinestro** (20) | Aucune unité emprisonnée plus de 3 s | 1 parchemin |
+| 8 | oa → arène | 20 | 2,65 | L (5), B rot. (10), L Soldat Sinestro (15), **B Sinestro** (20) | Sinestro tué en moins de 30 s | 1 parchemin |
 | 9 | batcave | 20 | 2,7 | L (5), B rot. (10), L (15), B rot. (20) | Avec au moins 1 héros de chaque pack | — |
 | 10 | oa → Apokolips | 20 | 2,8 | L (5), B rot. (10), **L Parademon géant** (15), **Darkseid** (20) | Darkseid tué sans perdre de vie | 2 parchemins, personnage garanti, cadre de profil, 100 ✦ (Darkseid vaincu) |
 
-Configuration moteur des niveaux 10 DC : `script: { bossId, bossAtWave: 20, endOnBossKill: true, excludeBosses: [boss du niveau 8, boss du chapitre] }` ; au chapitre 9, `bossId: 'darkseid'` (PV ×2, Rayons Oméga et Boom Tube en alternance, Équation d'Anti-Vie à 30 %) ; les Parademons se mêlent aux vagues 18 et 19.
+Données : `src/campaign/levels.ts` (chapitres 7 à 9, `midBoss`, `bossPool: 'tous'` ; les chapitres 1 à 6 jouent la rotation `marvel-disney`). Configuration moteur des niveaux 10 DC : `script: { bossId, bossAtWave: 20, endOnBossKill: true, excludeBosses: [boss du niveau 8, boss du chapitre] }` ; au chapitre 9, `bossId: 'darkseid'` (PV ×2, Rayons Oméga et Boom Tube en alternance, Équation d'Anti-Vie à 30 %) ; les Parademons se mêlent aux vagues 18 et 19.
 
 ---
 

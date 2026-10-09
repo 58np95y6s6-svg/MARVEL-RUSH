@@ -106,6 +106,7 @@ function shuffledBosses(ctx: Ctx): BossId[] {
 function initState(cfg: GameConfig): SimState {
   const st: SimState = {
     tick: 0, time: 0, wave: 0, waveTimeLeft: 0, phase: 'vague',
+    countdown: cfg.prepTime ?? 0,
     players: cfg.players.map((ps): SimPlayer => ({
       id: ps.id,
       mana: cfg.script?.startMana ?? START_MANA,
@@ -659,6 +660,12 @@ function step(ctx: Ctx): void {
   st.queue = [];
   for (const c of queue) applyCommand(ctx, c);
   if (st.result || st.paused) return;
+  // Compte à rebours de début de partie : les commandes passent, rien ne bouge encore.
+  if ((st.countdown ?? 0) > EPS) {
+    st.countdown = Math.max(0, st.countdown! - DT);
+    if (st.countdown <= EPS) st.countdown = 0;
+    return;
+  }
   st.tick++;
   st.time = st.tick * DT;
   updateWave(ctx);

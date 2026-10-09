@@ -1,0 +1,285 @@
+import { describe, expect, it } from 'vitest';
+import { BOSSES, ROTATING_BOSSES } from '../../src/data/bosses';
+import { STARTER_DECKS } from '../../src/data/units';
+import { bossWaveKind, createEngine } from '../../src/engine';
+import { hasMap } from '../../src/maps';
+import {
+  CHAPTERS, LEVELS, chapterLevels, constraintLabel, getLevel, levelConfig, levelId, nextLevel,
+} from '../../src/campaign/levels';
+import {
+  campaignTotals, chapterStars, constraintMet, currentChapter, evaluateStars, isChapterUnlocked, isLevelUnlocked,
+  levelRewards, recordLevel, totalStars, type Progress, type Stars,
+} from '../../src/campaign/progress';
+import type { BattleOutcome } from '../../src/campaign/tracker';
+import type { Profile } from '../../src/meta/profile';
+
+const DECK = STARTER_DECKS.marvel;
+
+function outcome(over: Partial<BattleOutcome> = {}): BattleOutcome {
+  return {
+    won: true, wave: 3, livesLeft: 3, deck: DECK.slice(), seed: 1,
+    summons: 10, merges: 4, maxRank: 3, maxPowerup: 1, bossKills: [], leaked: {},
+    bossDestroyed: 0, bossDowngraded: 0, maxSleep: 0, endMana: 50, emptyCells: 3, time: 90,
+    ...over,
+  };
+}
+
+/** Progression où les niveaux donnés sont gagnés avec les étoiles données. */
+function progress(entries: [string, Stars][]): Progress {
+  const p: Progress = { campaign: {}, campaignChests: {}, heroes: {} };
+  for (const [id, stars] of entries) p.campaign[id] = { stars };
+  return p;
+}
+const ALL3: Stars = [true, true, true];
+const winAll = (chapters: number[], stars: Stars = ALL3): [string, Stars][] =>
+  chapters.flatMap((c) => chapterLevels(c).map((l): [string, Stars] => [l.id, stars]));
+
+describe('données de la campagne', () => {
+  it('9 chapitres × 10 niveaux (6 + 3 DC), identifiants c<ch>-n<n>', () => {
+    expect(CHAPTERS).toHaveLength(9);
+    expect(LEVELS).toHaveLength(90);
+    for (const ch of CHAPTERS) {
+      const ls = chapterLevels(ch.n);
+      expect(ls.map((l) => l.id)).toEqual(Array.from({ length: 10 }, (_, i) => `c${ch.n}-n${i + 1}`));
+    }
+  });
+
+  it('maps et boss existent, chaque contrainte a un libellé', () => {
+    for (const l of LEVELS) {
+      expect(hasMap(l.map), l.id).toBe(true);
+      expect(l.map.startsWith('arene-'), l.id).toBe(false);
+      if (l.boss) {
+        expect(BOSSES[l.boss.id], l.id).toBeDefined();
+        expect(hasMap(BOSSES[l.boss.id].arenaMapId)).toBe(true);
+      }
+      expect(constraintLabel(l.bonus, l).length).toBeGreaterThan(5);
+    }
+  });
+
+  it('courbe de difficulté du doc (vagues et PV× par chapitre)', () => {
+    const ranges: [number, number, number, number][] = [[3, 10, 0.55, 0.8], [5, 13, 0.85, 1.0], [8, 20, 0.95, 1.05], [10, 20, 1.05, 1.25], [12, 20, 1.25, 1.5], [14, 20, 1.5, 1.8], [15, 20, 1.8, 2.1], [15, 20, 2.1, 2.4], [15, 20, 2.4, 2.8]];
+    for (const ch of CHAPTERS) {
+      const [w0, w1, h0, h1] = ranges[ch.n - 1]!;
+      for (const l of chapterLevels(ch.n)) {
+        expect(l.waves).toBeGreaterThanOrEqual(w0);
+        expect(l.waves).toBeLessThanOrEqual(w1);
+        expect(l.hpMul).toBeGreaterThanOrEqual(h0 - 1e-9);
+        expect(l.hpMul).toBeLessThanOrEqual(h1 + 1e-9);
+      }
+    }
+    expect(getLevel('c1-n1')).toMatchObject({ map: 'toits-new-york', waves: 3, hpMul: 0.55 });
+    expect(getLevel('c6-n10')).toMatchObject({ waves: 20, hpMul: 1.8, boss: { id: 'thanos', wave: 20 } });
+  });
+
+  it('les configurations se construisent et le moteur démarre', () => {
+    for (const l of LEVELS) {
+      const cfg = levelConfig(l, DECK, null, 42);
+      expect(cfg).toMatchObject({ mode: 'solo', mapId: l.map, targetWaves: l.waves, mapModifiers: {} });
+      expect(cfg.script?.enemyHpMultiplier).toBe(l.hpMul);
+      const e = createEngine(cfg);
+      for (let i = 0; i < 40; i++) e.tick();
+      expect(e.state.wave).toBe(1);
+    }
+  });
+
+  it('rythme des boss conforme : < 5 vagues sans boss, 5-9 un lieutenant, ≥ 10 au moins un gros boss', () => {
+    for (const l of LEVELS) {
+      const cfg = levelConfig(l, DECK, null, 7);
+      const kinds = Array.from({ length: l.waves }, (_, i) => bossWaveKind(cfg, i + 1));
+      const expected = Array.from({ length: l.waves }, (_, i) => {
+        const w = i + 1;
+        return w % 10 === 0 ? 'gros' : w % 5 === 0 ? 'petit' : null;
+      });
+      expect(kinds, l.id).toEqual(expected);
+      if (l.waves < 5) expect(kinds.every((k) => k === null)).toBe(true);
+      if (l.waves >= 10) expect(kinds).toContain('gros');
+    }
+  });
+
+  it('niveaux 5 : lieutenant du boss du chapitre à la dernière vague ; niveaux 10 : boss du chapitre, fin à sa mort', () => {
+    for (const ch of CHAPTERS) {
+      const l5 = getLevel(levelId(ch.n, 5))!;
+      expect(l5.boss).toMatchObject({ kind: 'lieutenant', id: ch.lieutenantOf, wave: l5.waves });
+      const c5 = levelConfig(l5, DECK, null, 3);
+      if (l5.waves === 5) expect(c5.script).toMatchObject({ miniBoss: ch.lieutenantOf, bossAtWave: 5, endOnBossKill: true });
+      else {
+        expect(c5.script?.bossOrder?.[1]).toBe(ch.lieutenantOf);
+        expect(c5.script?.bossOrder?.[0]).not.toBe(ch.lieutenantOf);
+      }
+      const l10 = getLevel(levelId(ch.n, 10))!;
+      expect(l10.boss).toMatchObject({ kind: 'boss', id: ch.boss, wave: l10.waves });
+      expect(levelConfig(l10, DECK, null, 3).script).toMatchObject({ bossId: ch.boss, bossAtWave: l10.waves, endOnBossKill: true });
+    }
+    expect(getLevel('c6-n10')!.boss!.id).toBe('thanos');
+    expect(getLevel('c6-n8')!.boss).toMatchObject({ id: 'malefique', wave: 20 });
+  });
+
+  it('le boss du chapitre est retiré de la rotation jusqu’à son niveau', () => {
+    for (const ch of CHAPTERS.slice(0, 5)) {
+      for (const l of chapterLevels(ch.n)) expect(l.exclude, l.id).toEqual([ch.boss]);
+    }
+    for (const n of [1, 7, 8]) expect(getLevel(`c6-n${n}`)!.exclude).toEqual(['malefique']);
+    expect(getLevel('c6-n9')!.exclude).toBeUndefined();
+    // Chapitres DC : rotation complète, sans le boss intermédiaire ni le boss du chapitre.
+    expect(getLevel('c7-n3')!.exclude).toEqual(['bane', 'joker']);
+    expect(getLevel('c8-n10')!.exclude).toEqual(['blackadam', 'luthor']);
+    expect(getLevel('c9-n1')!.exclude).toEqual(['sinestro']);
+    expect(levelConfig(getLevel('c7-n1')!, DECK, null, 1).bossPool).toBe('tous');
+    expect(levelConfig(getLevel('c1-n1')!, DECK, null, 1).bossPool).toBe('marvel-disney');
+    expect(getLevel('c9-n10')!.boss).toMatchObject({ id: 'darkseid', wave: 20 });
+    expect(getLevel('c7-n8')!.boss).toMatchObject({ id: 'bane', wave: 20 });
+    expect(ROTATING_BOSSES).not.toContain('thanos');
+  });
+
+  it('nextLevel enchaîne les chapitres', () => {
+    expect(nextLevel(getLevel('c1-n9')!)!.id).toBe('c1-n10');
+    expect(nextLevel(getLevel('c1-n10')!)!.id).toBe('c2-n1');
+    expect(nextLevel(getLevel('c6-n10')!)!.id).toBe('c7-n1');
+    expect(nextLevel(getLevel('c9-n10')!)).toBeNull();
+  });
+
+  it('niveaux de collection, talents et éveils du profil passent au moteur', () => {
+    const profile = { heroes: { spiderman: { level: 4, cards: 0, awakening: 2, talents: [1, 0, null] } } } as unknown as Profile;
+    const cfg = levelConfig(getLevel('c1-n1')!, DECK, profile, 1);
+    expect(cfg.players[0]).toMatchObject({ levels: { spiderman: 4 }, talents: { spiderman: ['b', 'a'] }, awakening: { spiderman: 2 } });
+  });
+});
+
+describe('étoiles', () => {
+  const l1 = getLevel('c1-n1')!; // fusionner 3 fois
+  it('défaite : aucune étoile', () => {
+    expect(evaluateStars(l1, outcome({ won: false }))).toEqual([false, false, false]);
+  });
+  it('★★ avec au moins 2 vies, ★★★ indépendante de la 2e', () => {
+    expect(evaluateStars(l1, outcome({ livesLeft: 3, merges: 3 }))).toEqual([true, true, true]);
+    expect(evaluateStars(l1, outcome({ livesLeft: 1, merges: 5 }))).toEqual([true, false, true]);
+    expect(evaluateStars(l1, outcome({ livesLeft: 2, merges: 2 }))).toEqual([true, true, false]);
+  });
+  it('contraintes', () => {
+    const lv = (id: string) => getLevel(id)!;
+    const met = (id: string, o: Partial<BattleOutcome>) => constraintMet(lv(id).bonus, outcome(o), lv(id));
+    expect(met('c1-n2', { livesLeft: 3 })).toBe(true);
+    expect(met('c1-n2', { livesLeft: 2 })).toBe(false);
+    expect(met('c1-n3', { maxPowerup: 3 })).toBe(true);
+    expect(met('c1-n3', { maxPowerup: 2 })).toBe(false);
+    expect(met('c1-n4', { maxRank: 3 })).toBe(true);
+    expect(met('c1-n5', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 24 }] })).toBe(true);
+    expect(met('c1-n5', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 26 }] })).toBe(false);
+    expect(met('c1-n6', { summons: 11 })).toBe(true);
+    expect(met('c1-n6', { summons: 12 })).toBe(false);
+    expect(met('c1-n8', { deck: DECK })).toBe(true);
+    expect(met('c1-n8', { deck: STARTER_DECKS.disney })).toBe(false);
+    expect(met('c1-n9', { emptyCells: 2 })).toBe(true);
+    expect(met('c1-n10', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 10 }, { boss: 'bouffon', small: false, wave: 10, time: 39 }] })).toBe(true);
+    expect(met('c1-n10', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 10 }] })).toBe(false);
+    expect(met('c2-n3', { deck: ['loki', 'hawkeye', 'falcon', 'cmarvel', 'widow'] })).toBe(true);
+    expect(met('c2-n3', { deck: DECK })).toBe(false);
+    expect(met('c2-n6', { maxPowerup: 2 })).toBe(true);
+    expect(met('c2-n6', { maxPowerup: 3 })).toBe(false);
+    expect(met('c2-n8', { deck: ['widow', 'hawkeye', 'bucky', 'falcon', 'cmarvel'] })).toBe(true);
+    expect(met('c2-n8', { deck: DECK })).toBe(false);
+    expect(met('c2-n9', { bossDestroyed: 1 })).toBe(false);
+    expect(met('c3-n1', { deck: ['moana', 'maui', 'hawkeye', 'falcon', 'cmarvel'] })).toBe(true);
+    expect(met('c3-n4', { deck: ['moana', 'ariel', 'cmarvel', 'falcon', 'merida'] })).toBe(true);
+    expect(met('c3-n4', { deck: ['cmarvel', 'falcon', 'merida', 'foxhound', 'mulan'] })).toBe(false);
+    expect(met('c3-n8', { deck: ['moana', 'maui', 'ariel', 'falcon', 'cmarvel'] })).toBe(true);
+    expect(met('c3-n9', { endMana: 300 })).toBe(true);
+    expect(met('c4-n4', { leaked: { blinde: 1 } })).toBe(false);
+    expect(met('c4-n4', { leaked: { normal: 2 } })).toBe(true);
+    expect(met('c5-n3', { leaked: { bouclier: 1 } })).toBe(false);
+    expect(met('c5-n8', { bossDowngraded: 1 })).toBe(false);
+    expect(met('c5-n9', { deck: ['spiderman', 'moana', 'hawkeye', 'falcon', 'cmarvel'] })).toBe(true);
+    expect(met('c5-n9', { deck: DECK })).toBe(false);
+    expect(met('c6-n3', { maxSleep: 3 })).toBe(true);
+    expect(met('c6-n3', { maxSleep: 3.5 })).toBe(false);
+    expect(met('c6-n9', { deck: ['widow', 'hawkeye', 'bucky', 'falcon', 'cap'] })).toBe(true); // Agents + Ailes
+  });
+});
+
+describe('déblocage', () => {
+  it('niveaux l’un après l’autre', () => {
+    const p = progress([['c1-n1', [true, false, false]]]);
+    expect(isLevelUnlocked(p, 'c1-n1')).toBe(true);
+    expect(isLevelUnlocked(p, 'c1-n2')).toBe(true);
+    expect(isLevelUnlocked(p, 'c1-n3')).toBe(false);
+    expect(isLevelUnlocked(progress([]), 'c2-n1')).toBe(false);
+  });
+  it('seuils d’étoiles 0 / 30 / 60 / 95 / 130 et niveau 10 précédent gagné', () => {
+    expect(CHAPTERS.map((c) => c.unlockStars)).toEqual([0, 0, 30, 60, 95, 130, 165, 195, 225]);
+    // Chapitre 2 : niveau 10 du ch. 1 suffit (même à 1 étoile).
+    const ch1min = progress(winAll([1], [true, false, false]));
+    expect(isChapterUnlocked(ch1min, 2)).toBe(true);
+    expect(isChapterUnlocked(progress(winAll([1]).slice(0, 9)), 2)).toBe(false);
+    // Chapitre 3 : 30 étoiles.
+    const twoChaptersMin = progress(winAll([1, 2], [true, false, false])); // 20 ★
+    expect(totalStars(twoChaptersMin)).toBe(20);
+    expect(isChapterUnlocked(twoChaptersMin, 3)).toBe(false);
+    const enough = progress([...winAll([1]), ...winAll([2], [true, false, false])]); // 30 + 10
+    expect(isChapterUnlocked(enough, 3)).toBe(true);
+    // Chapitre 6 : 130 étoiles.
+    const five = progress([...winAll([1, 2, 3, 4]), ...winAll([5], [true, false, false])]); // 120 + 10
+    expect(totalStars(five)).toBe(130);
+    expect(isChapterUnlocked(five, 6)).toBe(true);
+    five.campaign['c5-n9'] = { stars: [true, false, false] };
+    five.campaign['c4-n1'] = { stars: [true, true, false] };
+    expect(isChapterUnlocked(five, 6)).toBe(false);
+    expect(currentChapter(progress([]))).toBe(1);
+    expect(currentChapter(enough)).toBe(3);
+  });
+});
+
+describe('récompenses', () => {
+  const l = (id: string) => getLevel(id)!;
+  it('éclats : 30 par étoile nouvelle, 10 par étoile refaite ; XP', () => {
+    const first = levelRewards(l('c1-n1'), [true, true, false], progress([]), DECK);
+    expect(first.total.shards).toBe(60);
+    expect(first.total.xp).toBe(20 + 20);
+    expect(first.firstWin).toBe(true);
+    const replay = levelRewards(l('c1-n1'), [true, true, true], progress([['c1-n1', [true, true, false]]]), DECK);
+    expect(replay.total.shards).toBe(10 + 10 + 30);
+    expect(replay.total.xp).toBe(20 + 10);
+    expect(replay.firstWin).toBe(false);
+    expect(levelRewards(l('c1-n1'), [false, false, false], progress([]), DECK).total).toEqual({});
+  });
+  it('niveau 5 et niveau 10, première victoire', () => {
+    const r5 = levelRewards(l('c1-n5'), [true, false, false], progress([]), DECK);
+    expect(r5.total.scrolls).toBe(1);
+    expect(r5.total.cards?.[0]?.count).toBe(10);
+    expect(DECK).toContain(r5.total.cards?.[0]?.unit);
+    const r10 = levelRewards(l('c1-n10'), [true, false, false], progress([]), DECK);
+    expect(r10.total).toMatchObject({ scrolls: 2, shards: 300 + 30, heroes: ['spiderman'], xp: (20 + 10) * 2 });
+    const owner = { ...progress([]), heroes: { spiderman: { level: 1, cards: 0, awakening: 0, talents: [null, null, null] } } } as Progress;
+    expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
+    expect(levelRewards(l('c3-n10'), [true, false, false], progress([]), DECK).total.heroes).toEqual(['moana']);
+    expect(levelRewards(l('c6-n10'), [true, false, false], progress([]), DECK).total).toMatchObject({ heroes: ['coco'], crystals: 100 });
+    // Rejouer après la première victoire : plus de récompense spéciale.
+    expect(levelRewards(l('c1-n10'), [true, false, false], progress([['c1-n10', [true, false, false]]]), DECK).total.scrolls).toBeUndefined();
+  });
+  it('25 ✦ pour 3 étoiles sur un niveau de boss, une seule fois', () => {
+    expect(levelRewards(l('c1-n5'), ALL3, progress([]), DECK).total.crystals).toBe(25);
+    expect(levelRewards(l('c1-n4'), ALL3, progress([]), DECK).total.crystals).toBeUndefined();
+    expect(levelRewards(l('c1-n5'), ALL3, progress([['c1-n5', ALL3]]), DECK).total.crystals).toBeUndefined();
+    expect(levelRewards(l('c1-n5'), [false, false, true], progress([['c1-n5', [true, true, false]]]), DECK).total.crystals).toBeUndefined();
+  });
+  it('coffres d’étoiles à 10, 20 et 30 étoiles du chapitre', () => {
+    const p = progress(winAll([1]).slice(0, 3)); // 9 ★
+    const rw = levelRewards(l('c1-n4'), [true, false, false], p, DECK);
+    expect(rw.chests).toEqual(['c1-10']);
+    expect(rw.lines.find((x) => x.kind === 'coffre')!.reward).toMatchObject({ shards: 150, scrolls: 1 });
+    recordLevel(p, l('c1-n4'), rw, 4);
+    expect(chapterStars(p, 1)).toBe(10);
+    expect(p.campaignChests['c1-10']).toBe(true);
+    expect(levelRewards(l('c1-n5'), [true, false, false], p, DECK).chests).toEqual([]);
+  });
+  it('campagne complète à 3 étoiles : 63 parchemins (7 par chapitre), 27 coffres, cristaux', () => {
+    const t = campaignTotals();
+    expect(t.scrolls).toBe(63);
+    expect(t.heroes).toEqual(['spiderman', 'thor', 'moana', 'mulan', 'buzzwoody', 'coco', 'batman', 'superman', 'greenlantern']);
+    expect(t.freePulls?.length).toBe(9);
+    // 25 ✦ × 22 niveaux de boss (5 et 10 de chaque chapitre, + 8 des ch. 6 à 9) + 100 (Thanos) + 100 (Darkseid)
+    expect(t.crystals).toBe(25 * 22 + 200);
+    // 270 étoiles × 30 + 9 × 300 + 9 × (150 + 250 + 400)
+    expect(t.shards).toBe(270 * 30 + 9 * 300 + 9 * 800);
+    expect(t.xp).toBe(81 * (20 + 30) + 9 * (20 + 30) * 2);
+  });
+});
