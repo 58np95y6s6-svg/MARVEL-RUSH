@@ -74,6 +74,10 @@ export interface SimState extends EngineState {
   spawnCount: number;
   waveElapsed: number;
   pendingBoss: BossId | null;
+  /** Prochain gros boss (bandeau « N vagues avant le boss X »). */
+  nextBigBoss: BossId | null;
+  /** Boss dont les sbires se mêlent à la vague en cours (les 2 vagues avant un gros boss). */
+  minionMaster: BossId | null;
   bossOrder: BossId[];
   bossIdx: number;
   paused: boolean;
@@ -115,6 +119,8 @@ export interface Ctx {
   coop: boolean;
   mods: Record<string, number>;
   info: PlayerInfo[];
+  /** Tests : impose la Pierre du Gant de l'infini. */
+  debugStone?: string;
 }
 
 export const NO_TEAM: TeamAgg = {

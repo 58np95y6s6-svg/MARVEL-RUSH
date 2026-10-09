@@ -1,0 +1,589 @@
+// Moteur de simulation pur à pas fixe (20 ticks/s), déterministe (graine mulberry32).
+// Aucune dépendance au DOM, à l'heure ou à Math.random.
+
+import { BOSSES, BOSS_STATS, LIEUTENANTS, ROTATING_BOSSES } from '../data/bosses';
+import { ENEMIES, WAVE_RULES, spawnWeights } from '../data/enemies';
+import { activeTeams } from '../data/teams';
+import type { BossId, EnemyKind, UnitId } from '../data/types';
+import {
+  GRID_SIZE, MAX_RANK, type Command, type CreateEngine, type Engine, type EngineState, type GameConfig,
+  type LaneId, type PlayerId,
+} from './types';
+import {
+  DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
+  SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, spawnRand,
+  type Ctx, type PlayerInfo, type SimEnemy, type SimPlayer, type SimState, type SimUnit, type TeamAgg,
+} from './internal';
+import { deriveSeed } from './rng';
+import { dealDamage, isAlive, retreat } from './combat';
+import { initUnitCounters, onWaveStart, updateUnits } from './abilities';
+import { pumpkinExplosion, updateBosses } from './bossPowers';
+import { mapLengths } from './maps';
+
+const SAVE_VERSION = 1;
+
+// ───────────── Contexte dérivé de la configuration ─────────────
+
+function buildInfo(cfg: GameConfig): PlayerInfo[] {
+  return cfg.players.map((ps, idx) => {
+    const teams = activeTeams(ps.deck);
+    const team: Partial<Record<UnitId, TeamAgg>> = {};
+    let markSlow = 0, chainIllusionChance = 0, illusionDuration = 2, manaPerWave = 0;
+    for (const t of teams) {
+      const prm = t.params;
+      for (const u of t.units) {
+        const a = (team[u] ??= { ...NO_TEAM });
+        a.damage += prm.damage ?? 0;
+        a.attackSpeed += prm.attackSpeed ?? 0;
+        a.critChance += prm.critChance ?? 0;
+        if (prm.critMul) a.critMul = prm.critMul;
+        a.cooldownReduction += prm.cooldownReduction ?? 0;
+        a.controlDuration += prm.controlDuration ?? 0;
+        a.doubleAttackChance += prm.doubleAttackChance ?? 0;
+      }
+      markSlow = Math.max(markSlow, prm.markSlow ?? 0);
+      if (prm.chainIllusionChance) {
+        chainIllusionChance = prm.chainIllusionChance;
+        illusionDuration = prm.illusionDuration ?? 2;
+      }
+      if (prm.manaPerWave) {
+        const have = t.units.filter((u) => ps.deck.includes(u)).length;
+        manaPerWave += prm.manaPerWave + (prm.manaPerExtra ?? 0) * Math.max(0, have - (prm.minCount ?? t.units.length));
+      }
+    }
+    return {
+      idx,
+      teams, team, markSlow, chainIllusionChance, illusionDuration, manaPerWave,
+      params: {}, levels: ps.levels ?? {}, awakening: ps.awakening ?? {}, talents: ps.talents ?? {},
+    };
+  });
+}
+
+function laneLengths(cfg: GameConfig): Record<LaneId, number> {
+  const m = mapLengths(cfg.mapId);
+  if (cfg.mode === 'coop') {
+    const c = m?.pathLengthCoop ?? DEFAULT_COOP_LENGTHS;
+    return { a: c.a, b: c.b, tronc: c.tronc };
+  }
+  return { a: m?.pathLength ?? DEFAULT_PATH_LENGTH, b: 0, tronc: 0 };
+}
+
+function buildCtx(cfg: GameConfig, st: SimState): Ctx {
+  return {
+    cfg, st, ev: [],
+    laneLen: laneLengths(cfg),
+    coop: cfg.mode === 'coop',
+    mods: cfg.mapModifiers ?? {},
+    info: buildInfo(cfg),
+  };
+}
+
+// ───────────── État initial ─────────────
+
+function shuffledBosses(ctx: Ctx): BossId[] {
+  const arr = ROTATING_BOSSES.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(spawnRand(ctx) * (i + 1)));
+    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+  }
+  return arr;
+}
+
+function initState(cfg: GameConfig): SimState {
+  const st: SimState = {
+    tick: 0, time: 0, wave: 0, waveTimeLeft: 0, phase: 'vague',
+    players: cfg.players.map((ps): SimPlayer => ({
+      id: ps.id,
+      mana: cfg.script?.startMana ?? START_MANA,
+      summonCost: SUMMON_COST_START,
+      grid: Array.from({ length: GRID_SIZE }, () => null),
+      powerUps: Object.fromEntries(ps.deck.map((u) => [u, 1])),
+      deck: ps.deck.slice(),
+      giftUsedThisWave: false,
+      summons: 0,
+      extraRestores: cfg.mapModifiers?.extraRevive ?? 0,
+    })),
+    lanes: (cfg.mode === 'coop' ? (['a', 'b', 'tronc'] as LaneId[]) : (['a'] as LaneId[]))
+      .map((id) => ({ id, length: DEFAULT_PATH_LENGTH })),
+    lives: START_LIVES,
+    enemies: [],
+    rng: deriveSeed(cfg.seed, 1),
+    spawnRng: deriveSeed(cfg.seed, 2),
+    nextUid: 1,
+    spawnTimer: 0, spawnCount: 0, waveElapsed: 0,
+    pendingBoss: null, nextBigBoss: null, minionMaster: null, bossOrder: [], bossIdx: 0,
+    paused: false, prevPhase: 'vague', awaitingVictory: false,
+    queue: [],
+  };
+  return st;
+}
+
+// ───────────── Vagues et rythme des boss (§4.3) ─────────────
+
+function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number } {
+  return cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+}
+
+const infinite = (cfg: GameConfig) => !cfg.targetWaves && cfg.mode !== 'tutoriel';
+
+export type BossWaveKind = 'petit' | 'gros' | null;
+
+/** Type de boss d'une vague : gros toutes les 10, petit toutes les 5 (hors gros), plus le script. */
+export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
+  const r = rhythm(cfg);
+  const s = cfg.script;
+  if (s?.miniBoss && s.bossAtWave !== undefined) {
+    if (wave === s.bossAtWave) return 'petit';
+  } else if (s?.bossAtWave !== undefined && wave === s.bossAtWave) {
+    return 'gros';
+  }
+  if (r.big > 0 && wave % r.big === 0) return 'gros';
+  if (infinite(cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'gros';
+  if (r.small > 0 && wave % r.small === 0) return 'petit';
+  return null;
+}
+
+function nextBigWave(cfg: GameConfig, after: number): number {
+  for (let w = after; w < after + 1000; w++) if (bossWaveKind(cfg, w) === 'gros') return w;
+  return after + 1000;
+}
+
+function shuffleBag(ctx: Ctx): void {
+  if (ctx.st.bossIdx >= ctx.st.bossOrder.length) {
+    ctx.st.bossOrder = shuffledBosses(ctx);
+    ctx.st.bossIdx = 0;
+  }
+}
+
+/** Gros boss d'une vague ; `consume` avance la rotation (sans répétition avant que les 6 soient passés). */
+function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
+  const s = ctx.cfg.script;
+  const r = rhythm(ctx.cfg);
+  if (s?.bossId && (s.bossAtWave === undefined || s.bossAtWave === wave || s.miniBoss)) return s.bossId;
+  if (infinite(ctx.cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'thanos';
+  shuffleBag(ctx);
+  const id = ctx.st.bossOrder[ctx.st.bossIdx]!;
+  if (consume) ctx.st.bossIdx++;
+  return id;
+}
+
+function setPhase(ctx: Ctx, phase: EngineState['phase']): void {
+  if (ctx.st.paused && ctx.st.phase === 'pause') ctx.st.prevPhase = phase;
+  else ctx.st.phase = phase;
+}
+
+function startWave(ctx: Ctx, wave: number): void {
+  const st = ctx.st;
+  const cfg = ctx.cfg;
+  st.wave = wave;
+  st.waveElapsed = 0;
+  st.spawnTimer = 0;
+  st.spawnCount = 0;
+  const kind = bossWaveKind(cfg, wave);
+  st.pendingBoss = kind === 'gros' ? bigBossFor(ctx, wave, true) : null;
+  const nb = nextBigWave(cfg, kind === 'gros' ? wave + 1 : wave);
+  st.nextBigBoss = bigBossFor(ctx, nb, false);
+  // Sbires du prochain gros boss dans les 2 vagues qui le précèdent.
+  st.minionMaster = !kind && nb - wave <= WAVE_RULES.minionWavesBefore ? st.nextBigBoss : null;
+  setPhase(ctx, 'vague');
+  emit(ctx, { type: 'waveStart', wave });
+  st.players.forEach((p, i) => {
+    p.giftUsedThisWave = false;
+    p.mana += onWaveStart(ctx, i) + ctx.info[i]!.manaPerWave;
+  });
+  if (kind === 'gros') {
+    st.waveTimeLeft = 0;
+    spawnBigBoss(ctx, st.pendingBoss!);
+  } else if (kind === 'petit') {
+    st.waveTimeLeft = 0;
+    const scripted = cfg.script?.miniBoss;
+    spawnSmallBoss(ctx, scripted ?? st.nextBigBoss!, !!scripted);
+  } else {
+    st.waveTimeLeft = WAVE_RULES.duration;
+  }
+}
+
+function waveFinished(ctx: Ctx): void {
+  const st = ctx.st;
+  if (st.wave > 0 && st.wave % WAVE_RULES.milestoneEvery === 0) emit(ctx, { type: 'milestone', wave: st.wave });
+  if (ctx.cfg.targetWaves && st.wave >= ctx.cfg.targetWaves) {
+    st.awaitingVictory = true;
+    return;
+  }
+  startWave(ctx, st.wave + 1);
+}
+
+function normalHp(ctx: Ctx, wave: number): number {
+  return WAVE_RULES.baseHp * Math.pow(WAVE_RULES.hpGrowth, wave - 1) * (ctx.cfg.script?.enemyHpMultiplier ?? 1);
+}
+
+/** Branches d'entrée : 'a' en Solo, 'a' et 'b' en Coop (un flot le long de chaque plateau). */
+function entryLanes(ctx: Ctx): LaneId[] {
+  return ctx.coop ? ['a', 'b'] : ['a'];
+}
+
+/** Les boss entrent par le tronc commun en Coop. */
+function bossLane(ctx: Ctx): LaneId {
+  return ctx.coop ? 'tronc' : 'a';
+}
+
+function addEnemy(ctx: Ctx, e: Omit<SimEnemy, 'uid' | 'distance' | 'effects'>): SimEnemy {
+  const enemy: SimEnemy = { uid: ctx.st.nextUid++, distance: 0, effects: {}, ...e };
+  if (ctx.coop && (e.lane === 'a' || e.lane === 'b')) {
+    enemy.x.from = e.lane;
+    enemy.x.owner = e.lane === 'a' ? 0 : 1;
+  }
+  ctx.st.enemies.push(enemy);
+  return enemy;
+}
+
+function spawnKind(ctx: Ctx, kind: EnemyKind): void {
+  const def = ENEMIES[kind];
+  const hp = normalHp(ctx, ctx.st.wave) * def.hpMul;
+  let speed = WAVE_RULES.baseSpeed * def.speedMul;
+  if (kind === 'rapide') speed *= 1 + (ctx.mods.fastSpeed ?? 0);
+  const shield = def.shieldHits > 0 ? Math.max(0, def.shieldHits + (ctx.mods.shieldHits ?? 0)) : 0;
+  for (const lane of entryLanes(ctx)) {
+    const e = addEnemy(ctx, { kind, lane, hp, maxHp: hp, speed, armor: def.armor, shieldHits: shield, x: {} });
+    emit(ctx, { type: 'enemySpawn', enemy: e.uid, kind, lane });
+  }
+}
+
+function spawnMinions(ctx: Ctx, boss: BossId): void {
+  const prm = BOSSES[boss].minion.params;
+  const hp = normalHp(ctx, ctx.st.wave) * (prm.hpMul ?? 1);
+  const speed = WAVE_RULES.baseSpeed * (prm.speedMul ?? 1);
+  const pack = Math.max(1, Math.round(prm.packSize ?? 1));
+  for (const lane of entryLanes(ctx)) {
+    for (let k = 0; k < pack; k++) {
+      const e = addEnemy(ctx, {
+        kind: 'sbire', lane, hp, maxHp: hp, speed, armor: prm.armor ?? 0, shieldHits: prm.shieldHits ?? 0,
+        minionOf: boss,
+        x: { flying: prm.flying ? 1 : undefined, arrivalStun: prm.arrivalStun, arrivalStunUnits: prm.arrivalStunUnits },
+      });
+      e.distance = -0.4 * k; // la meute arrive en file
+      emit(ctx, { type: 'enemySpawn', enemy: e.uid, kind: 'sbire', lane });
+    }
+  }
+}
+
+function spawnOne(ctx: Ctx): void {
+  const st = ctx.st;
+  if (st.minionMaster && st.spawnCount % WAVE_RULES.minionEvery === WAVE_RULES.minionEvery - 1) {
+    spawnMinions(ctx, st.minionMaster);
+  } else {
+    const weights = spawnWeights(st.wave);
+    const total = weights.reduce((sum, [, w]) => sum + w, 0);
+    let r = spawnRand(ctx) * total;
+    let kind: EnemyKind = 'normal';
+    for (const [k, w] of weights) {
+      if (r < w) { kind = k; break; }
+      r -= w;
+    }
+    spawnKind(ctx, kind);
+  }
+  st.spawnCount++;
+}
+
+function spawnInterval(wave: number): number {
+  return Math.max(WAVE_RULES.spawnIntervalMin, WAVE_RULES.spawnIntervalStart - WAVE_RULES.spawnIntervalStep * (wave - 1));
+}
+
+/** Petit boss : sbire géant (taille ×2) du prochain gros boss, ou sbire géant imposé par le script. */
+function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
+  const st = ctx.st;
+  const prm = BOSSES[master].minion.params;
+  const hp = normalHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul);
+  const e = addEnemy(ctx, {
+    kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: BOSS_STATS.speed, armor: prm.armor ?? 0,
+    shieldHits: prm.shieldHits ?? 0, minionOf: master, giant: true,
+    x: {
+      mini: 1, rageIn: BOSS_STATS.rageAfter, flying: prm.flying ? 1 : undefined,
+      ...(scripted ? {} : { master, lieutenant: 1, powerIn: LIEUTENANTS[master].power.interval }),
+    },
+  });
+  emit(ctx, { type: 'miniBossSpawn', enemy: e.uid, boss: master });
+  st.bossRageIn = BOSS_STATS.rageAfter;
+  setPhase(ctx, 'boss');
+}
+
+function spawnBigBoss(ctx: Ctx, boss: BossId): void {
+  const st = ctx.st;
+  const def = BOSSES[boss];
+  const hp = normalHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1);
+  const lane = bossLane(ctx);
+  const e = addEnemy(ctx, {
+    kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: 0, shieldHits: 0,
+    bossId: boss, x: { powerIn: def.power.interval, rageIn: BOSS_STATS.rageAfter },
+  });
+  emit(ctx, { type: 'bossSpawn', enemy: e.uid, boss, lane });
+  st.pendingBoss = null;
+  st.bossRageIn = BOSS_STATS.rageAfter;
+  setPhase(ctx, 'boss');
+}
+
+function bossAlive(ctx: Ctx): boolean {
+  return ctx.st.enemies.some((e) => isAlive(e) && (e.bossId || e.x.mini));
+}
+
+function updateWave(ctx: Ctx): void {
+  const st = ctx.st;
+  if (st.phase === 'vague') {
+    if (st.awaitingVictory) return;
+    st.waveElapsed += DT;
+    st.waveTimeLeft = Math.max(0, st.waveTimeLeft - DT);
+    if (st.waveTimeLeft > EPS) {
+      st.spawnTimer -= DT;
+      while (st.spawnTimer <= EPS) {
+        spawnOne(ctx);
+        st.spawnTimer += spawnInterval(st.wave);
+      }
+    } else {
+      waveFinished(ctx);
+    }
+  } else if (st.phase === 'boss') {
+    if (!bossAlive(ctx)) {
+      st.bossRageIn = undefined;
+      st.phase = 'vague';
+      waveFinished(ctx);
+    }
+  }
+}
+
+// ───────────── Ennemis ─────────────
+
+function dot(ctx: Ctx, e: SimEnemy, dps: number | undefined, left: number | undefined, by: number | undefined): number | undefined {
+  if (!left || left <= 0 || !dps) return left;
+  dealDamage(ctx, e, dps * DT, by ?? 0, { dot: true });
+  return Math.max(0, left - DT);
+}
+
+function dec(v: number | undefined): number | undefined {
+  return v !== undefined && v > 0 ? Math.max(0, v - DT) : v;
+}
+
+function updateEnemies(ctx: Ctx): void {
+  const st = ctx.st;
+  for (const e of st.enemies) {
+    if (!isAlive(e)) continue;
+    const f = e.effects, x = e.x;
+    f.burnFor = dot(ctx, e, f.burn, f.burnFor, x.burnBy);
+    x.bleedFor = dot(ctx, e, x.bleed, x.bleedFor, x.bleedBy);
+    x.poisonFor = dot(ctx, e, x.poison, x.poisonFor, x.poisonBy);
+    if (!isAlive(e)) continue;
+    f.slowFor = dec(f.slowFor);
+    if (f.slowFor === 0) { delete f.slow; delete f.slowFor; }
+    f.markedFor = dec(f.markedFor);
+    if (f.markedFor === 0) { delete f.marked; delete f.markedFor; }
+    if (f.burnFor === 0) { delete f.burn; delete f.burnFor; }
+    const stunned = (f.stunFor ?? 0) > EPS;
+    f.stunFor = dec(f.stunFor);
+    if (f.stunFor === 0) delete f.stunFor;
+    const knocked = (x.knockFor ?? 0) > EPS;
+    x.knockFor = dec(x.knockFor);
+    if (stunned) continue;
+    const speed = e.speed * (1 - ((f.slowFor ?? 0) > EPS ? f.slow ?? 0 : 0));
+    if (knocked) {
+      retreat(ctx, e, speed * DT);
+      continue;
+    }
+    e.distance += speed * DT;
+    const len = ctx.laneLen[e.lane];
+    if (e.distance < len) continue;
+    if (ctx.coop && e.lane !== 'tronc') {
+      // Fin de branche : l'ennemi rejoint le tronc commun.
+      e.distance -= len;
+      e.lane = 'tronc';
+      if (e.distance >= ctx.laneLen.tronc) reachEnd(ctx, e);
+    } else {
+      reachEnd(ctx, e);
+    }
+  }
+}
+
+function reachEnd(ctx: Ctx, e: SimEnemy): void {
+  e.x.gone = 1;
+  const st = ctx.st;
+  if (!ctx.cfg.script?.noLifeLoss && st.lives > 0) {
+    st.lives = e.bossId || e.x.mini ? 0 : Math.max(0, st.lives - 1);
+    emit(ctx, { type: 'lifeLost', lives: st.lives });
+  }
+  pumpkinExplosion(ctx, e);
+}
+
+// ───────────── Commandes ─────────────
+
+function reject(ctx: Ctx, command: Command['type'], reason: string): void {
+  emit(ctx, { type: 'rejected', command, reason });
+}
+
+function playerIndex(ctx: Ctx, id: PlayerId): number {
+  return ctx.st.players.findIndex((p) => p.id === id);
+}
+
+function newUnit(ctx: Ctx, player: number, unit: UnitId, rank: number): SimUnit {
+  const u: SimUnit = { uid: ctx.st.nextUid++, unit, rank, cooldown: 0.3, status: {}, counters: {} };
+  initUnitCounters(ctx, player, u);
+  return u;
+}
+
+function emptySlots(p: SimPlayer): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < GRID_SIZE; i++) if (!p.grid[i]) out.push(i);
+  return out;
+}
+
+const validSlot = (s: number) => Number.isInteger(s) && s >= 0 && s < GRID_SIZE;
+
+function applyCommand(ctx: Ctx, c: Command): void {
+  const st = ctx.st;
+  if (c.type === 'pause') {
+    if (st.result) return reject(ctx, c.type, 'La partie est terminée.');
+    if (c.paused && !st.paused) {
+      st.paused = true;
+      st.prevPhase = st.phase;
+      st.phase = 'pause';
+    } else if (!c.paused && st.paused) {
+      st.paused = false;
+      st.phase = st.prevPhase;
+    }
+    return;
+  }
+  if (st.result) return reject(ctx, c.type, 'La partie est terminée.');
+  const pi = playerIndex(ctx, c.player);
+  const p = st.players[pi];
+  if (!p) return reject(ctx, c.type, 'Joueur inconnu.');
+
+  switch (c.type) {
+    case 'summon': {
+      const empties = emptySlots(p);
+      if (empties.length === 0) return reject(ctx, c.type, 'Plateau plein : fusionne des unités !');
+      if (p.mana < p.summonCost) return reject(ctx, c.type, 'Pas assez de mana.');
+      const forced = ctx.cfg.script?.forcedSummons?.[p.summons];
+      const unit = forced ?? pick(ctx, p.deck)!;
+      const slot = pick(ctx, empties)!;
+      p.mana -= p.summonCost;
+      p.summonCost += SUMMON_COST_STEP;
+      p.summons++;
+      p.grid[slot] = newUnit(ctx, pi, unit, 1);
+      emit(ctx, { type: 'summon', player: p.id, slot, unit, rank: 1 });
+      return;
+    }
+    case 'merge': {
+      if (!validSlot(c.from) || !validSlot(c.to)) return reject(ctx, c.type, 'Case invalide.');
+      if (c.from === c.to) return reject(ctx, c.type, 'Choisis une autre unité.');
+      const a = p.grid[c.from], b = p.grid[c.to];
+      if (!a || !b) return reject(ctx, c.type, 'Il faut deux unités pour fusionner.');
+      if (a.unit !== b.unit) return reject(ctx, c.type, 'Seules deux unités identiques peuvent fusionner.');
+      if (a.rank !== b.rank) return reject(ctx, c.type, 'Les deux unités doivent avoir le même rang.');
+      if (a.rank >= MAX_RANK) return reject(ctx, c.type, 'Rang maximal atteint.');
+      const unit = pick(ctx, p.deck)!;
+      const rank = a.rank + 1;
+      p.grid[c.from] = null;
+      p.grid[c.to] = newUnit(ctx, pi, unit, rank);
+      emit(ctx, { type: 'merge', player: p.id, from: c.from, to: c.to, unit, rank });
+      return;
+    }
+    case 'powerup': {
+      if (!p.deck.includes(c.unit)) return reject(ctx, c.type, 'Cette unité n’est pas dans ton deck.');
+      const level = p.powerUps[c.unit] ?? 1;
+      if (level >= POWERUP_MAX) return reject(ctx, c.type, 'Amélioration maximale atteinte.');
+      const cost = POWERUP_COSTS[level - 1]!;
+      if (p.mana < cost) return reject(ctx, c.type, 'Pas assez de mana.');
+      p.mana -= cost;
+      p.powerUps[c.unit] = level + 1;
+      emit(ctx, { type: 'powerup', player: p.id, unit: c.unit, level: level + 1 });
+      return;
+    }
+    case 'gift': {
+      if (ctx.cfg.mode !== 'coop') return reject(ctx, c.type, 'Le cadeau n’existe qu’en Coop.');
+      if (p.giftUsedThisWave) return reject(ctx, c.type, 'Tu as déjà offert une unité pendant cette vague.');
+      if (!validSlot(c.slot)) return reject(ctx, c.type, 'Case invalide.');
+      const u = p.grid[c.slot];
+      if (!u) return reject(ctx, c.type, 'Aucune unité sur cette case.');
+      const qi = pi === 0 ? 1 : 0;
+      const q = st.players[qi];
+      if (!q) return reject(ctx, c.type, 'Pas de partenaire.');
+      const empties = emptySlots(q);
+      if (empties.length === 0) return reject(ctx, c.type, 'Le plateau de ton partenaire est plein.');
+      const slot = pick(ctx, empties)!;
+      p.grid[c.slot] = null;
+      delete u.status.transformedInto;
+      delete u.status.transformFor;
+      q.grid[slot] = u;
+      initUnitCounters(ctx, qi, u);
+      p.giftUsedThisWave = true;
+      emit(ctx, { type: 'gift', from: p.id, to: q.id, slot, unit: u.unit, rank: u.rank });
+      return;
+    }
+  }
+}
+
+// ───────────── Fin de partie ─────────────
+
+function checkEnd(ctx: Ctx): void {
+  const st = ctx.st;
+  if (st.result) return;
+  let res: EngineState['result'];
+  if (st.lives <= 0) res = { outcome: 'defaite', wave: st.wave };
+  if (!res && st.awaitingVictory && !st.enemies.some(isAlive)) {
+    res = { outcome: 'victoire', wave: st.wave };
+  }
+  if (!res) return;
+  st.result = res;
+  st.phase = 'fin';
+  st.paused = false;
+  emit(ctx, { type: 'gameOver', outcome: res.outcome, winner: res.winner, wave: res.wave });
+}
+
+// ───────────── Boucle ─────────────
+
+function step(ctx: Ctx): void {
+  const st = ctx.st;
+  const queue = st.queue;
+  st.queue = [];
+  for (const c of queue) applyCommand(ctx, c);
+  if (st.result || st.paused) return;
+  st.tick++;
+  st.time = st.tick * DT;
+  updateWave(ctx);
+  updateEnemies(ctx);
+  for (let i = 0; i < st.players.length; i++) updateUnits(ctx, i);
+  updateBosses(ctx);
+  st.enemies = st.enemies.filter((e) => !e.x.gone && e.hp > 0);
+  if (st.phase === 'boss') updateWave(ctx);
+  checkEnd(ctx);
+}
+
+export const createEngine: CreateEngine = (config: GameConfig, saved?: string): Engine => {
+  let st: SimState;
+  if (saved) {
+    const data = JSON.parse(saved) as { v: number; st: SimState };
+    if (data.v !== SAVE_VERSION) throw new Error('Sauvegarde incompatible.');
+    st = data.st;
+  } else {
+    st = initState(config);
+  }
+  const ctx = buildCtx(config, st);
+  for (const lane of st.lanes) lane.length = ctx.laneLen[lane.id];
+  if (!saved) {
+    st.bossOrder = shuffledBosses(ctx);
+    if (config.script?.paused) {
+      st.paused = true;
+      st.prevPhase = 'vague';
+    }
+    startWave(ctx, 1);
+    if (st.paused) st.phase = 'pause';
+  }
+  const engine: Engine & { readonly _ctx: Ctx } = {
+    _ctx: ctx,
+    config,
+    get state() { return ctx.st; },
+    tick() { step(ctx); },
+    apply(command: Command) { ctx.st.queue.push({ ...command }); },
+    drainEvents() { const ev = ctx.ev; ctx.ev = []; return ev; },
+    serialize() { return JSON.stringify({ v: SAVE_VERSION, st: ctx.st }); },
+  };
+  return engine;
+};
+

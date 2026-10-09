@@ -135,7 +135,7 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
       break;
     }
     case 'thanos': {
-      const stone = THANOS_STONES[randInt(ctx, THANOS_STONES.length)]!;
+      const stone = THANOS_STONES.find((t) => t.id === ctx.debugStone) ?? THANOS_STONES[randInt(ctx, THANOS_STONES.length)]!;
       let slots: number[] = [];
       switch (stone.id) {
         case 'puissance':

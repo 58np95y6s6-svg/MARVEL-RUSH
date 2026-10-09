@@ -751,3 +751,87 @@ export const sparkle = (x: number, y: number, r: number, col = '#fff') =>
 export const boxAround = (x: number, y: number, w: number, h: number, m = 8): Rect => ({ x: x - m, y: y - m, w: w + 2 * m, h: h + 2 * m });
 
 export { n1 };
+
+// ---------------------------------------------------------------- aides de scène communes
+
+/** Points libres (ni chemin ni grille) pour les petites animations, par mode. Rayon utile ≈ 40 px. */
+export type Spots = [Point, Point, Point, Point, Point, Point];
+export function spots(c: Ctx): Spots {
+  return c.mode === 'solo'
+    ? [{ x: 230, y: 1065 }, { x: 770, y: 1065 }, { x: 500, y: 1090 }, { x: 140, y: 160 }, { x: 860, y: 160 }, { x: 500, y: 150 }]
+    : [{ x: 70, y: 480 }, { x: 70, y: 950 }, { x: 300, y: 720 }, { x: 140, y: 60 }, { x: 860, y: 60 }, { x: 500, y: 60 }];
+}
+
+/** Base du ciel (horizon) selon le mode. */
+export const horizonY = (c: Ctx) => (c.mode === 'solo' ? 270 : 118);
+
+/** Dalle de sol plus claire sous chaque plateau (le plateau reste la zone la plus lisible). */
+export function boardPads(c: Ctx, color: string, margin = 0.85, op = 1): string {
+  return c.boards.map((b) => {
+    const g = b.grid, m = b.cell * margin;
+    return `<rect x="${n1(g.x - m)}" y="${n1(g.y - m)}" width="${n1(g.w + 2 * m)}" height="${n1(g.h + 2 * m)}" rx="${n1(b.cell * 0.45)}" fill="${color}" opacity="${op}"/>`;
+  }).join('');
+}
+
+/** Collines arrondies (silhouette) posées sur `base`. */
+export function hills(base: number, color: string, amp: number, seed: string, n = 6, outline = true): string {
+  const r = rng(seed);
+  let d = `M-20 ${base + 200} L-20 ${base}`;
+  const step = 1040 / n;
+  for (let i = 0; i < n; i++) {
+    const x0 = -20 + i * step, h = amp * (0.55 + r() * 0.45);
+    d += ` Q${n1(x0 + step * 0.5)} ${n1(base - h * 2)} ${n1(x0 + step)} ${n1(base)}`;
+  }
+  d += ` L1020 ${base + 200}Z`;
+  return `<path d="${d}" fill="${color}" ${outline ? `stroke="${INK}" stroke-width="${SW * 0.8}" stroke-linejoin="round"` : ''}/>`;
+}
+
+/** Montagnes pointues arrondies. */
+export function peaks(base: number, color: string, amp: number, seed: string, n = 5, snow?: string): string {
+  const r = rng(seed);
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const x = -60 + (i + r() * 0.4) * (1120 / n), w = 1120 / n * 0.9, h = amp * (0.6 + r() * 0.5);
+    s += cel(pathS(`M${n1(x - w * 0.7)} ${n1(base + 30)} Q${n1(x - w * 0.15)} ${n1(base - h * 0.7)} ${n1(x)} ${n1(base - h)} Q${n1(x + w * 0.15)} ${n1(base - h * 0.7)} ${n1(x + w * 0.7)} ${n1(base + 30)}Z`), color, { dx: 16, dy: 0, sw: SW * 0.8 });
+    if (snow) s += `<path d="M${n1(x - w * 0.16)} ${n1(base - h * 0.72)} Q${n1(x)} ${n1(base - h * 1.04)} ${n1(x + w * 0.16)} ${n1(base - h * 0.72)} Q${n1(x)} ${n1(base - h * 0.62)} ${n1(x - w * 0.16)} ${n1(base - h * 0.72)}Z" fill="${snow}"/>`;
+  }
+  return s;
+}
+
+/** Étoiles fixes dans une zone. */
+export function stars(c: Ctx, n: number, area: Rect, col = '#fff'): string {
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const x = area.x + c.rnd() * area.w, y = area.y + c.rnd() * area.h, r = 1.5 + c.rnd() * 3;
+    s += i % 5 === 0 ? sparkle(x, y, r * 3, col) : `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r)}" fill="${col}" opacity="${n1(0.5 + c.rnd() * 0.5)}"/>`;
+  }
+  return s;
+}
+
+/** Fond standard : ciel en dégradé, sol texturé, horizon personnalisé, dalles sous les plateaux. */
+export function scene(c: Ctx, o: { horizon?: (base: number) => string; texture?: 'spots' | 'grass' | 'none' | 'tiles'; pad?: string; padMargin?: number; after?: string }): string {
+  const base = horizonY(c);
+  let s = skyAndGround(c, { skyTo: base + 30, groundTexture: o.texture ?? 'spots' });
+  if (o.horizon) s += o.horizon(base);
+  if (o.pad) s += boardPads(c, o.pad, o.padMargin ?? 0.85);
+  return s + (o.after ?? '');
+}
+
+/** Anim : un élément qui traverse l'écran sur une ligne horizontale libre. */
+export function across(label: string, y: number, period: number, markup: (x: number, y: number) => string, size: { w: number; h: number }, o: { phase?: number; reverse?: boolean; x0?: number; x1?: number } = {}): AnimSpec {
+  const x0 = o.x0 ?? -size.w - 20, x1 = o.x1 ?? 1000 + 20;
+  const start = o.reverse ? x1 : x0;
+  return {
+    label, kind: 'drift', period, phase: o.phase ?? 0, dx: o.reverse ? x0 - x1 : x1 - x0, dy: 0,
+    box: { x: start, y: y - size.h, w: size.w, h: size.h + 10 }, markup: markup(start + size.w / 2, y),
+  };
+}
+
+/** Anim ponctuelle centrée sur un point (blink, bob, sway, spin, pulse). */
+export function at(label: string, kind: AmbientAnim['kind'], p: Point, r: number, markup: string, o: Partial<AmbientAnim> = {}): AnimSpec {
+  return { label, kind, period: o.period ?? 3, phase: o.phase ?? 0, amp: o.amp, min: o.min, ox: o.ox ?? p.x, oy: o.oy ?? p.y, box: { x: p.x - r, y: p.y - r, w: 2 * r, h: 2 * r }, markup };
+}
+
+/** Lueur douce (halo + cœur), pour lanternes, cristaux, étoiles. */
+export const glow = (x: number, y: number, r: number, col: string) =>
+  `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r * 2)}" fill="${col}" opacity=".18"/><circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r * 1.3)}" fill="${col}" opacity=".3"/><circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r)}" fill="${light(col, 0.4)}" stroke="${INK}" stroke-width="2.5"/>`;

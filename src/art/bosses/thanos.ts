@@ -1,6 +1,6 @@
 // Thanos (boss final) et ses Outriders, dessinés dans le traitement « méchant » de
 // design/planches/5-boss-sbires.html : chibi trapu, visage dans l'ombre, yeux lumineux.
-import { O, f, shaded, clip, gloss, limb, hand, star, glow, burst, sparks, mirror, shadow, tip, headS, type CharDef, type Ctx } from '../primitives';
+import { O, f, uid, shaded, clip, gloss, limb, hand, star, glow, burst, sparks, mirror, shadow, tip, headS, type CharDef, type Ctx } from '../primitives';
 import { hoodShade, geyes, evilMouth, txt, rnd, twinkle } from '../kits/villain';
 
 /** Couleurs des six Pierres d'infinité (code couleur du pouvoir annoncé en jeu). */
@@ -51,7 +51,7 @@ export const THANOS: CharDef = {
   id: 'thanos', name: 'Thanos', stats: [5, 2, 5], tint: '#c76a35', tint2: '#2a1236', mt: '#efe2fb', mt2: '#c9b0e6', glow: '#ffd400', shake: true,
   power: 'Gant de l’infini : une Pierre au hasard toutes les 8 s ; claquement de doigts à 30 % de PV.', minionTxt: 'Outriders : très rapides, en meute.',
   sh: { L: [52, 152], R: [148, 152] },
-  poses: [{ L: 18, R: -16 }, { L: 34, R: -166, body: [2, -6, 3, 1, 1.03] }, { L: 26, R: -128, body: [-5, 2, -5, 1.02, 0.98] }],
+  poses: [{ L: 18, R: -16 }, { L: 34, R: -150, body: [2, -6, 3, 1, 1.03] }, { L: 26, R: -128, body: [-5, 2, -5, 1.02, 0.98] }],
   bg() {
     let s = '';
     const r = rnd(23);
@@ -85,34 +85,34 @@ export const THANOS: CharDef = {
     b += shaded((a) => `<circle cx="100" cy="197" r="11" ${a}/>`, G, GD, -2, -2) + `<circle cx="100" cy="197" r="4.5" fill="#fff3b0" stroke="${O}" stroke-width="2"/>`;
     // col doré
     b += shaded((a) => `<path d="M66 132 Q100 148 134 132 L130 146 Q100 160 70 146Z" ${a}/>`, G, GD, -3, -3);
-    // visage violet et menton strié (sous la capuche)
-    b += shaded(headS, PU, PUD) ;
-    const chin = (a: string): string => `<path d="M66 112 Q66 152 100 156 Q134 152 134 112 Q100 126 66 112Z" ${a}/>`;
-    b += shaded(chin, PU, PUD, -3, -4);
-    b += `<path d="M84 128 Q85 142 90 151 M100 131 V156 M116 128 Q115 142 110 151 M76 122 Q76 134 80 142 M124 122 Q124 134 120 142" stroke="${PUD}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-    const win = (a: string): string => `<path d="M64 80 Q100 62 136 80 L136 130 Q100 146 64 130Z" ${a}/>`;
-    b += hoodShade(win, 70, 112, 0.62);
-    // capuche bleue
-    b += shaded((a) => `<path d="M38 108 Q30 30 100 22 Q170 30 162 108 Q160 130 144 144 L136 100 Q134 74 100 70 Q66 74 64 100 L56 144 Q40 130 38 108Z" ${a}/>`, BL, BLD, -4, -4);
-    // casque doré : dôme, crête, bandeau de front et protège-joues
-    b += shaded((a) => `<path d="M44 76 Q44 22 100 16 Q156 22 156 76 Q132 58 100 60 Q68 58 44 76Z" ${a}/>`, G, GD, -4, -4) + gloss(72, 34, 14, 5, -25, 0.5);
-    b += shaded((a) => `<path d="M90 70 L93 12 Q100 4 107 12 L110 70 Q100 64 90 70Z" ${a}/>`, GL, G, -2, -2);
-    b += `<path d="M76 62 Q72 40 84 22 M124 62 Q128 40 116 22" stroke="${GD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-    const guard = `<path d="M60 80 L72 82 L74 120 L64 126 Q58 104 60 80Z" fill="${G}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>`;
+    // capuche bleue (derrière le visage)
+    b += shaded((a) => `<path d="M32 114 Q26 30 100 20 Q174 30 168 114 Q168 142 146 154 L54 154 Q32 142 32 114Z" ${a}/>`, BL, BLD, -5, -4);
+    // visage violet, large menton strié
+    const faceS = (a: string): string => `<path d="M58 92 Q58 64 100 62 Q142 64 142 92 L141 128 Q138 160 100 163 Q62 160 59 128Z" ${a}/>`;
+    b += shaded(faceS, PU, PUD, -4, -4);
+    b += `<path d="M80 140 Q82 151 88 158 M100 143 V162 M120 140 Q118 151 112 158 M68 128 Q70 140 76 148 M132 128 Q130 140 124 148" stroke="${PUD}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+    b += `<path d="M90 118 Q100 114 110 118" stroke="${PUD}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+    b += hoodShade(faceS, 64, 112, 0.5);
+    // casque doré : dôme, crête, bandeau de front, protège-joues et disques
+    b += shaded((a) => `<path d="M42 86 Q40 18 100 12 Q160 18 158 86 Q150 72 140 68 Q100 56 60 68 Q50 72 42 86Z" ${a}/>`, G, GD, -4, -4) + gloss(70, 32, 14, 5, -25, 0.5);
+    b += shaded((a) => `<path d="M90 66 L92 8 Q100 0 108 8 L110 66 Q100 60 90 66Z" ${a}/>`, GL, G, -2, -2);
+    b += `<path d="M74 64 Q70 40 82 20 M126 64 Q130 40 118 20" stroke="${GD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    const guard = `<path d="M56 88 L66 90 L67 126 L59 122Z" fill="${G}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
     b += guard + mirror(guard);
-    b += shaded((a) => `<path d="M60 80 Q100 62 140 80 L136 90 Q100 74 64 90Z" ${a}/>`, G, GD, -2, -2);
-    const ear = shaded((a) => `<circle cx="44" cy="100" r="13" ${a}/>`, G, GD, -2, -2) + `<circle cx="44" cy="100" r="6" fill="${GD}" stroke="${O}" stroke-width="2.5"/>`;
+    b += shaded((a) => `<path d="M56 86 Q100 64 144 86 L141 96 Q100 76 59 96Z" ${a}/>`, G, GD, -2, -2);
+    const ear = shaded((a) => `<circle cx="40" cy="106" r="13" ${a}/>`, G, GD, -2, -2) + `<circle cx="40" cy="106" r="6" fill="${GD}" stroke="${O}" stroke-width="2.5"/>`;
     b += ear + mirror(ear);
     // regard et bouche
     b += x.byPose((p) => {
-      let s = geyes('#ffd23a', { x: 84, y: 100, s: p == 2 ? 1.05 : 0.95, sq: p == 1 ? 0.65 : 1 });
-      s += evilMouth(p, 100, 122, 12);
+      let s = geyes('#ffd23a', { x: 82, y: 104, s: p == 2 ? 1.08 : 1, sq: p == 1 ? 0.65 : 1 });
+      s += evilMouth(p, 100, 131, 13);
       return s;
     });
     b += x.arm('L', armL) + x.arm('R', armR);
     // épaulières dorées par-dessus les bras
-    b += shaded((a) => `<circle cx="50" cy="146" r="24" ${a}/>`, G, GD, -4, -4) + shaded((a) => `<circle cx="150" cy="146" r="24" ${a}/>`, G, GD, -4, -4);
-    b += `<path d="M32 152 Q50 164 68 152 M132 152 Q150 164 168 152" stroke="${GD}" stroke-width="3" fill="none"/>` + gloss(43, 137, 8, 4, -30, 0.55) + gloss(143, 137, 8, 4, -30, 0.55);
+    const pad = (a: string): string => `<path d="M24 156 Q22 124 50 120 Q78 124 78 152 Q50 164 24 156Z" ${a}/>`;
+    const pads = shaded(pad, G, GD, -4, -4) + `<path d="M28 146 Q50 154 76 144" stroke="${GD}" stroke-width="3" fill="none"/>` + gloss(40, 130, 9, 4, -30, 0.55);
+    b += pads + mirror(pads);
     // préparation : le gant levé, les six Pierres s'allument
     const [gx, gy] = tip(this, 'R', 1, 52);
     const cols = Object.values(STONES);
@@ -125,12 +125,14 @@ export const THANOS: CharDef = {
     b += x.when([1], `<g class="fx"><circle cx="${f(gx)}" cy="${f(gy)}" r="40" fill="#fff6d0" opacity=".35"/></g>${rays}` + cols.map((c, i) => `<polygon points="${star(gx + Math.cos(i * 1.05) * 62, gy + 14 + Math.sin(i * 1.05) * 30, 7, 2.4, 4)}" fill="${c}" stroke="${O}" stroke-width="2"/>`).join(''));
     // claquement de doigts : éclair blanc
     const [sx2, sy2] = tip(this, 'R', 2, 72);
+    const fl = uid('flash');
     const fxg = x.when([2],
-      `<g class="pop"><circle cx="${f(sx2)}" cy="${f(sy2)}" r="150" fill="#fff" opacity=".42"/><circle cx="${f(sx2)}" cy="${f(sy2)}" r="86" fill="#fff" opacity=".55"/></g>` +
+      `<radialGradient id="${fl}"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>` +
+      `<g class="pop"><circle cx="${f(sx2)}" cy="${f(sy2)}" r="118" fill="url(#${fl})"/></g>` +
       `<g class="pop">${burst(f(sx2), f(sy2), 34, '#fff', '#fffbe6')}</g>` +
       `<g class="ring"><circle cx="${f(sx2)}" cy="${f(sy2)}" r="52" fill="none" stroke="#fff" stroke-width="6"/></g>` +
       `<g class="pop">${cols.map((c, i) => sparks(f(sx2 + Math.cos(i * 1.047 + 0.5) * 70), f(sy2 + Math.sin(i * 1.047 + 0.5) * 56), 12, c, 5)).join('')}</g>` +
-      `<g class="pop">${txt(f(sx2 - 70), f(sy2 + 10), 26, '#fff', 'CLAC !', -10)}</g>`);
+      `<g class="pop">${txt(166, 6, 28, '#fff', 'CLAC !', 8)}</g>`);
     return shadow(88) + x.body(b) + fxg;
   },
 };
@@ -172,10 +174,11 @@ export const OUTRIDER: CharDef = {
     // bras supérieurs griffus
     const claws = (cx: number, cy: number): string =>
       `<g fill="${BO}" stroke="${O}" stroke-width="2.2" stroke-linejoin="round"><polygon points="${cx - 5},${cy} ${cx - 2},${cy + 12} ${cx + 1},${cy}"/><polygon points="${cx + 1},${cy + 1} ${cx + 5},${cy + 12} ${cx + 7},${cy}"/><polygon points="${cx + 6},${cy - 2} ${cx + 13},${cy + 7} ${cx + 11},${cy - 4}"/></g>`;
-    const reach = ([[150, 178], [138, 112], [176, 170]] as const)[p];
-    b += limb(108, 158, reach[0] - 10, reach[1], DK, 10) + hand(reach[0] - 10, reach[1], W, 8) + claws(reach[0] - 12, reach[1] + 4);
-    b += limb(126, 156, reach[0] + 6, reach[1] - 6, WD, 11) + hand(reach[0] + 6, reach[1] - 6, W, 9) + claws(reach[0] + 4, reach[1] - 2);
-    const fxg = x.when([2], `<g class="pop"><path d="M170 150 l22 24 M180 144 l20 22 M190 140 l14 16" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M170 150 l22 24 M180 144 l20 22 M190 140 l14 16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g>`) +
+    const R1 = ([[166, 180], [128, 104], [184, 158]] as const)[p];
+    const R2 = ([[180, 172], [146, 98], [194, 146]] as const)[p];
+    b += limb(116, 152, R1[0], R1[1], WD, 10) + hand(R1[0], R1[1], WD, 8) + claws(R1[0] - 2, R1[1] + 4);
+    b += limb(128, 156, R2[0], R2[1], W, 11) + hand(R2[0], R2[1], W, 9) + claws(R2[0] - 1, R2[1] + 5);
+    const fxg = x.when([2], `<g class="pop"><path d="M188 128 l18 26 M198 122 l16 24 M206 120 l10 16" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M188 128 l18 26 M198 122 l16 24 M206 120 l10 16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g>`) +
       x.when([1], sparks(140, 106, 18, '#ffe23a', 6));
     return shadow(54, 207, 0.18) + x.body(b) + fxg;
   },
