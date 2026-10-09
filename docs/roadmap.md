@@ -45,8 +45,9 @@ Demande du joueur : chaque extension doit proposer des capacités de stratégie 
 | Croissance | Dégâts qui grandissent avec le temps et les éliminations, sans plafond, gardés en partie à la fusion | Venom | Supergirl |
 | Mana par élimination | Mana à chaque élimination, croissant avec le niveau | Tiana & Naveen | Catwoman |
 | Boost de vitesse | Aura de cadence aux voisins | Captain America, Pocahontas | Cyborg |
+| Échangeur | Glissé sur un allié de même niveau, échange sa place avec lui, sans limite | Vanellope & Ralph | Flash |
 
-Transformers et Pixar devront couvrir les six archétypes (au moins un héros chacun), en plus de leur mécanique propre.
+Transformers et Pixar devront couvrir les sept archétypes (au moins un héros chacun), en plus de leur mécanique propre.
 
 ## Mise à jour suivante : extension TRANSFORMERS (publication le 25/10)
 
