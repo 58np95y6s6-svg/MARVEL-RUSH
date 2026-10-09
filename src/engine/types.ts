@@ -50,6 +50,12 @@ export interface GameConfig {
     bossId?: BossId;
     /** Campagne, niveaux 5 : un sbire géant du boss du chapitre (PV ×8, taille ×2) remplace le boss. */
     miniBoss?: BossId;
+    /** Ordre imposé des gros boss (campagne). Absent = rotation aléatoire sans répétition. */
+    bossOrder?: BossId[];
+    /** Gros boss exclus de la rotation (ex. Thanos hors des premiers chapitres). */
+    excludeBosses?: BossId[];
+    /** Niveaux de boss : la partie est gagnée dès que le boss imposé est vaincu. */
+    endOnBossKill?: boolean;
     paused?: boolean;           // le tutoriel peut figer la simulation
   };
 }

@@ -312,7 +312,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 
 **Coop — Infini**
 - On tient le plus de vagues possible, avec un petit boss toutes les 5 vagues, un gros toutes les 10 et Thanos à la 50.
-- **Récompenses par palier atteint**, données à chacun à la fin de la partie :
+- **Récompenses par palier atteint**, données à chacun à la fin de la partie. Chaque coffre de palier se gagne **une fois par jour et par mode** ; au-delà, seuls les éclats par vague comptent (contre l'inflation, voir `docs/equilibrage.md`).
 
 | Palier | Récompense (pour chacun) |
 |---|---|
@@ -381,7 +381,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
   3. la carte se retourne ;
   4. le personnage joue sa **boucle d'attaque** ;
   5. le bouton « Passer » révèle tout d'un coup pour un lot de 10.
-- **Doublons** : ils deviennent des cartes de niveau. Il faut 2, 4, 8, 16… cartes pour passer chaque niveau, jusqu'au niveau 10. Améliorer un niveau coûte aussi des éclats.
+- **Doublons** : ils deviennent des cartes de niveau. Il faut 1, 1, 2, 2, 2, 3, 3, 3, 4 cartes pour passer les niveaux 2 à 10 (21 au total), plus 50, 100, 150, 250, 400, 600, 900, 1 300, 1 800 éclats. Au-delà du niveau 10, les doublons servent à l'**Éveil** (§6.6), qui porte la progression longue.
 
 ### 6.3 Skins
 - **3 skins par unité** : Classique, Hiver et Néon, obtenus par palette alternative appliquée au SVG.
@@ -418,17 +418,17 @@ L'**Éveil** est la progression la plus longue du jeu, au-delà du niveau 10. Ch
 
 | Éveil | Copies du personnage | Cristaux ✦ | Gain (cumulé) | Débloque |
 |---|---|---|---|---|
-| ★1 | 5 | 100 | Attaque +6 %, vitesse d'attaque +4 % | — |
-| ★2 | 10 | 200 | +12 % / +8 % | **Passif 1** |
-| ★3 | 15 | 400 | +18 % / +12 % | — |
-| ★4 | 20 | 700 | +24 % / +16 % | **Passif 2** |
-| ★5 | 30 | 1 000 | +30 % / +20 % | Aura sur le jeton |
-| ★6 | 40 | 1 500 | +36 % / +24 % | **Passif 3** |
-| ★7 | 50 | 2 000 | +42 % / +28 % | — |
-| ★8 | 70 | 3 000 | +48 % / +32 % | **Passif 4** |
-| ★9 | 90 | 4 000 | +54 % / +36 % | — |
-| ★10 (max) | 120 | 6 000 | +60 % / +40 % | **Passif ultime** et apparence « Éveillé » (cadre doré animé, effets d'attaque améliorés) |
-| **Total** | **450 copies** | **18 900 ✦** | | |
+| ★1 | 2 | 50 | Attaque +6 %, vitesse d'attaque +4 % | — |
+| ★2 | 3 | 300 | +12 % / +8 % | **Passif 1** |
+| ★3 | 5 | 600 | +18 % / +12 % | — |
+| ★4 | 6 | 1 000 | +24 % / +16 % | **Passif 2** |
+| ★5 | 8 | 2 000 | +30 % / +20 % | Aura sur le jeton |
+| ★6 | 10 | 2 500 | +36 % / +24 % | **Passif 3** |
+| ★7 | 13 | 3 000 | +42 % / +28 % | — |
+| ★8 | 18 | 4 000 | +48 % / +32 % | **Passif 4** |
+| ★9 | 25 | 5 000 | +54 % / +36 % | — |
+| ★10 (max) | 40 | 6 500 | +60 % / +40 % | **Passif ultime** et apparence « Éveillé » (cadre doré animé, effets d'attaque améliorés) |
+| **Total** | **130 copies** | **24 950 ✦** | | |
 
 - Les copies demandées sont les mêmes pour toutes les raretés. Un Légendaire, tiré à 4 %, est donc **bien plus long** à éveiller qu'un Rare : c'est voulu.
 - **Passifs** : 5 par personnage (★2, ★4, ★6, ★8, ★10), dans l'esprit de sa compétence. Exemples :
@@ -438,8 +438,8 @@ L'**Éveil** est la progression la plus longue du jeu, au-delà du niveau 10. Ch
   L'agent Game design écrit les 140 passifs (28 × 5), chiffrés, dans `src/data/awakenings.ts`.
 
 **Cristaux d'éveil (✦), gagnés lentement**
-- Solo Infini et Coop Infini : 20 ✦ au palier 10, 40 au 20, 80 au 30, 120 au 40, 200 au 50, puis +30 tous les 10.
-- Premier gros boss vaincu de la journée : 15 ✦. Thanos vaincu : 100 ✦.
+- Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10.
+- Premier gros boss vaincu de la journée : 5 ✦. Thanos vaincu : 50 ✦.
 - Campagne : 3 étoiles sur un niveau de boss, la première fois : 25 ✦.
 - Coffre quotidien : 5 ✦.
 - Doublons d'un personnage déjà à ★10 : convertis en 5 ✦ chacun.
@@ -447,6 +447,7 @@ L'**Éveil** est la progression la plus longue du jeu, au-delà du niveau 10. Ch
   - premier ★1 dans la première semaine de jeu régulier ;
   - ★5 sur un personnage Rare en 2 à 3 mois ;
   - ★10 sur un Légendaire en **plus de 8 mois**.
+- Ces valeurs viennent de la simulation d'économie de `docs/equilibrage.md` §6 : premier ★1 vers le jour 8, ★5 sur un Rare vers le jour 66, ★10 sur un Légendaire vers le jour 262 (≈ 8,7 mois).
 - **Aucun achat**, aucun raccourci.
 
 **Affichage**

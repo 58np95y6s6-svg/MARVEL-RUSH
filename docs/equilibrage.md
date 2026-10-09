@@ -170,7 +170,61 @@ Règles de cohérence :
 
 Paires de decks de référence pour la Coop : `depart-marvel` + `depart-disney` ; `meta-marvel` + `meta-disney` ; `agents-ailes` + `princesses` ; `arcanes` + `pixar-animaux` ; `controle` + `anti-boss`.
 
-## 6. Boucle de réglage
+## 6. Économie et Éveils : simulation de la progression
+
+Modèle de **valeur attendue** jour par jour (script de travail de l'agent Game design, à reprendre dans `scripts/simulate.ts --economie` par l'agent Moteur ou Méta). Il vérifie le rythme visé du §6.6 : premier ★1 dans la première semaine, ★5 sur un Rare en 2 à 3 mois, ★10 sur un Légendaire en plus de 8 mois.
+
+### Hypothèses : joueur régulier (30 à 45 min par jour)
+| Poste | Hypothèse |
+|---|---|
+| Départ | 1 000 éclats, deck de départ |
+| Campagne Solo | finie en 3 semaines : ≈ 12 000 éclats au total (étoiles, coffres d'étoiles, boss), soit ≈ 570 / jour ; 12 niveaux de boss à 3 étoiles = 300 ✦ |
+| Solo Infini | **1 partie par jour** à partir du jour 3 ; vague atteinte : 15 (semaine 1), 20 (semaine 2), 30 (mois 2), 40 (mois 4), 50 (mois 8) |
+| Coop Infini | **3 parties par semaine**, vague atteinte = Solo Infini + 10 % |
+| Coffre quotidien | 150 éclats + 5 ✦ |
+| Premier gros boss du jour | ✦ (voir tableaux) |
+| Tirages | tout l'or part en lots de 10 (90 éclats le tirage) dans le **pack Marvel** |
+| Probabilités par tirage | Rare 72 % (3 Rares Marvel → **24 %** pour un Rare donné) ; Légendaire 4 %, garantie au 40e → en moyenne 1 Légendaire tous les **20,1 tirages** (≈ 5 %) ; 4 Légendaires Marvel → **1,24 %** pour un Légendaire donné. Le pack Disney (5 Rares, 4 Légendaires) donne 14,4 % pour un Rare donné. |
+| Cartes de coffre | les cartes des coffres d'Infini vont à une unité possédée au hasard (≈ 1/15 pour une unité donnée) |
+
+Revenu obtenu avec les règles du prompt : ≈ **1 150 éclats / jour** en semaine 1, **1 950** au jour 30, **3 250** au jour 90 et **5 500** au jour 240 (les coffres de palier d'Infini dominent). Soit 13 à 60 tirages par jour.
+
+### Résultat avec les chiffres actuels du prompt (§6.2 et §6.6)
+| Objectif | Visé | Obtenu | Cause |
+|---|---|---|---|
+| Premier ★1 (meilleur Rare) | ≤ 7 jours | **≈ 119 jours** | L'éveil s'ouvre au niveau 10, et l'échelle de cartes 2, 4, 8… 512 demande **1 022 cartes** pour y arriver. |
+| ★5 sur un Rare | 60 – 90 jours | ≈ 124 jours | Même cause (les cristaux ne bloquent pas). |
+| ★10 sur un Légendaire | > 240 jours | **jamais** (≈ 1 470 copies à 0,25-1 copie/jour : plus de 4 ans) | 1 022 cartes de niveau + 450 copies, à 1,24 % par tirage. |
+| Cristaux | — | ≈ 4 800 ✦ au jour 30 | Trop généreux : les 18 900 ✦ d'un ★10 arrivent vers le jour 120. |
+
+**Conclusion : les chiffres du prompt ratent les trois cibles.** Le verrou est l'échelle des cartes de niveau (puissances de 2), qui rend le niveau 10 inaccessible pour un Légendaire et trop lent pour un Rare.
+
+### Valeurs corrigées proposées (à valider par le chef de projet)
+1. **Cartes de niveau** (§6.2) : 1, 1, 2, 2, 2, 3, 3, 3, 4 cartes pour passer les niveaux 2 à 10 (**21 cartes** au total, au lieu de 1 022). Le coût en éclats des montées de niveau reste le frein principal des premiers niveaux (proposition : 50, 100, 150, 250, 400, 600, 900, 1 300, 1 800 éclats). La progression longue passe à l'Éveil, comme le veut le §6.6.
+2. **Copies d'éveil** (§6.6) : 2, 3, 5, 6, 8, 10, 13, 18, 25, 40 (**130 copies**, au lieu de 450), toujours identiques pour toutes les raretés.
+3. **Coût en cristaux** : 50, 300, 600, 1 000, 2 000, 2 500, 3 000, 4 000, 5 000, 6 500 (**24 950 ✦**, au lieu de 18 900). Le ★1 devient presque gratuit, le ★5 coûte 3 950 ✦ en cumulé.
+4. **Gains de cristaux** (divisés par 4 à 8) :
+   - Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10 ;
+   - premier gros boss du jour : 5 ✦ ; Thanos vaincu : 50 ✦ ;
+   - campagne (3 étoiles sur un niveau de boss) : 25 ✦, inchangé ; coffre quotidien : 5 ✦, inchangé ;
+   - doublons d'une unité à ★10 : 5 ✦, inchangé.
+
+Résultats avec ces valeurs (même joueur) :
+
+| Objectif | Visé | Obtenu |
+|---|---|---|
+| Premier ★1 (meilleur Rare Marvel) | ≤ 7 jours | **jour 8** (21 cartes + 2 copies vers le jour 8 ; les cristaux sont là dès le jour 3) |
+| ★5 sur un Rare | 60 – 90 jours | **jour 66** (bloqué par les cristaux : ≈ 1 600 ✦ au jour 30) |
+| ★10 sur un Légendaire | > 240 jours | **jour 262** (≈ 8,7 mois ; bloqué par les copies : ≈ 0,3 à 0,6 copie par jour) |
+
+Sensibilité (vague atteinte en Infini multipliée par k) : k = 0,8 → ★5 au jour 94, ★10 Légendaire au jour 396 ; k = 0,7 → jours 110 et 530 ; k = 1,15 → jours 65 et 248. Le ★1 reste au jour 8 dans tous les cas.
+
+### Points de vigilance
+- **Inflation d'éclats** : avec les coffres de palier du §5.2, un joueur qui atteint la vague 50 chaque jour gagne ≈ 5 500 éclats par jour (≈ 60 tirages). Si la collection se remplit trop vite, réduire de moitié les éclats des coffres héroïque et légendaire, ou ne donner les coffres de palier qu'**une fois par jour et par mode** (hypothèse du modèle ; à écrire dans les règles).
+- Le Légendaire garanti du coffre légendaire (vague 50) accélère le ★10 Légendaire si le joueur le choisit ; le modèle le compte comme aléatoire. Avec un Légendaire **au choix**, le ★10 tomberait vers le jour 200 : garder le tirage aléatoire.
+- À mesurer dans les journaux de partie réels après un mois : vague moyenne atteinte en Infini, nombre de parties par jour, et revenu réel (éclats et ✦ par jour) pour recaler le facteur k.
+
+## 7. Boucle de réglage
 
 1. Lancer tous les decks de référence au niveau 1 puis au niveau 5 (1 000 parties chacun).
 2. Corriger d'abord les ennemis si **tous** les decks sont hors cible dans le même sens.
