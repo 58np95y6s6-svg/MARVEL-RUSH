@@ -33,6 +33,8 @@ Toute l'interface est **en français**. Le jeu est **mobile d'abord**, en portra
 
 Usage strictement personnel : pas de monétisation, pas de vraie monnaie, pas d'indexation publique.
 
+**Pensé pour durer.** Une **extension DC Comics** est prévue après la version 1 : pack DC, héros et méchants DC, +30 niveaux de campagne, modes infinis prolongés (voir `docs/roadmap.md`). Tout le contenu est donc **piloté par les données** : packs, univers, unités, boss, maps, chapitres et paliers sont des listes, jamais codés en dur. L'interface affiche autant de packs et de chapitres qu'il y en a, et les sauvegardes sont versionnées avec une migration.
+
 ---
 
 ## 1. Sources à lire dans le dépôt avant de coder
