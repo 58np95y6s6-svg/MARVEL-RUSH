@@ -1,6 +1,6 @@
 // Variante : Forêt de Pocahontas (tracé de l'île de Motunui). Rivière, grands arbres, feuilles au vent.
 
-import { type Ctx, INK, P, across, at, cel, circleS, defineMap, flat, groundShadow, hills, n1, pathS, rectS, scene, spots } from './kit';
+import { type Ctx, INK, P, across, at, cel, circleS, defineMap, groundShadow, hills, n1, pathS, rectS, scene, spots } from './kit';
 
 const pal = {
   bg: '#13281f',
@@ -60,4 +60,3 @@ export const foretPocahontas = defineMap({
 
 export default foretPocahontas;
 
-void flat;

@@ -15,11 +15,19 @@ import { royaumeDesMorts } from './royaume-des-morts';
 import { zootopie } from './zootopie';
 import { chambreAndy } from './chambre-andy';
 import { sugarRush } from './sugar-rush';
+import { foretPocahontas } from './foret-pocahontas';
+import { highlandsRebelle } from './highlands-rebelle';
+import { atlantica } from './atlantica';
+import { bayou } from './bayou';
+import { recifNemo } from './recif-nemo';
+import { tourRaiponce } from './tour-raiponce';
+import { foretRoxRouky } from './foret-rox-rouky';
 
 /** Maps d'univers (12) puis variantes Disney (7), dans l'ordre de déblocage. */
 export const MAPS: MapDefX[] = [
   toitsNewYork, atelierStark, asgardBifrost, sanctumSanctorum, baseAvengers, templeDixAnneaux,
   ileMotunui, palaisImperial, royaumeDesMorts, zootopie, chambreAndy, sugarRush,
+  foretPocahontas, highlandsRebelle, atlantica, bayou, recifNemo, tourRaiponce, foretRoxRouky,
 ];
 
 /** Arènes de boss, une par boss. */

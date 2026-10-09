@@ -1,6 +1,6 @@
 // Variante : Récif de Nemo (Nemo & Dory, tracé de Sugar Rush). Anémones, coraux, banc de poissons.
 
-import { type Ctx, type Painter, INK, P, across, at, cel, circleS, defineMap, groundShadow, n1, scene, spots } from './kit';
+import { type Ctx, type Painter, INK, P, across, at, cel, circleS, defineMap, groundShadow, scene, spots } from './kit';
 import { clam, coral, seaweed } from './atlantica';
 
 const pal = {
@@ -65,4 +65,3 @@ export const recifNemo = defineMap({
 
 export default recifNemo;
 
-void n1;
