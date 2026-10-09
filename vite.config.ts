@@ -8,7 +8,7 @@ export default defineConfig({
   base,
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icon.svg', 'icon-180.png', 'robots.txt'],
       manifest: {
         name: 'Marvel Rush',

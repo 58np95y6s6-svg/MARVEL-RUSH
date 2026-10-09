@@ -573,6 +573,13 @@ Chaque écran suit les captures et les règles de `design/references/ecrans/READ
 
 ---
 
+## 8 bis. Mises à jour de l'app
+
+- Quand une nouvelle version est en ligne, une fenêtre **« Nouvelle version disponible »** propose **Mettre à jour** (ou Plus tard). Elle apparaît aussi quand l'app est déjà ouverte : l'app vérifie toutes les 20 min et à chaque retour dans l'app.
+- Après la mise à jour, une fenêtre **« Quoi de neuf ? »** liste les nouveautés, une seule fois par version.
+- **Chaque mise à jour visible par les joueurs ajoute une entrée en tête de `src/pwa/changelog.ts`** (id croissant, titre, date, phrases courtes). Les publications d'extensions (DC, Transformers, Pixar) en ajoutent une détaillée.
+- Ne jamais mettre à jour en pleine partie : si une partie est en cours, la fenêtre attend la fin de la partie.
+
 ## 9. Organisation du code
 
 ```
