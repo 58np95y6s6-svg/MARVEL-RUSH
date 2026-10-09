@@ -120,8 +120,10 @@ export const DISNEY_A: CharDef[] = [
     const H='#352c40',HD='#120d18',DR='#d9a566',DRD='#b07a42',TQ='#33bfb3',LC=['#e8413b','#f28a2e','#f6c64a'];
     const arm=(sx: number, sy: number)=>limb(sx,sy,sx,sy+38,SKT,15)+`<path d="M${sx-8} ${sy+8} H${sx+8}" stroke="${TQ}" stroke-width="3.5"/>`+hand(sx,sy+38,SKT);
     const strand=(d: any)=>shaded(a=>`<path d="${d}" ${a}/>`,H,HD,-3,-3);
-    let b=`<g class="flut" style="transform-origin:150px 80px">`+shaded(a=>`<path d="M136 38 Q186 26 228 32 Q242 38 232 48 Q212 56 224 66 Q238 74 228 84 Q208 92 220 102 Q230 114 214 120 Q186 124 158 132Z" ${a}/>`,H,HD,-4,-4)
-      +`<path d="M156 50 Q196 42 222 40 M162 78 Q196 72 222 74 M164 106 Q192 104 212 110" stroke="#5a4c6a" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>`;
+    let b=`<g class="flut" style="transform-origin:140px 70px">`
+      +shaded(a=>`<path d="M136 40 Q170 30 186 46 Q198 60 184 70 Q200 80 190 96 Q186 106 192 118 Q178 122 170 112 Q176 98 166 88 Q176 74 160 64 Q150 58 140 62Z" ${a}/>`,H,HD,-4,-4)
+      +shaded(a=>`<path d="M150 74 Q176 86 178 108 Q180 126 194 136 Q176 140 166 124 Q160 110 152 100Z" ${a}/>`,H,HD,-3,-3)
+      +`<path d="M150 46 Q172 42 182 52 M162 80 Q174 92 172 106 M162 98 Q170 114 182 128" stroke="#5a4c6a" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>`;
     b+=shaded(a=>`<path d="M42 92 Q36 24 100 22 Q160 24 162 84 Q162 140 152 186 L48 186 Q38 140 42 92Z" ${a}/>`,H,HD,-4,-4);
     b+=torso(SKT,SKTD);
     const dress=(a: string)=>`<path d="M57 203 C55 178 60 160 72 152 L126 137 C140 146 145 172 143 203Z" ${a}/>`;
