@@ -92,6 +92,10 @@ function showUpdateAvailable(apply: () => void): void {
 
 /** À appeler une fois l'accès vérifié. */
 export function setupUpdates(): void {
+  // Demande un stockage permanent : Android (Chrome) ne pourra plus effacer seul les données du jeu
+  // quand le téléphone manque de place. Accordé d'office aux apps installées sur la plupart des appareils.
+  void navigator.storage?.persist?.().catch(() => false);
+
   // « Quoi de neuf » après une mise à jour (pas au tout premier lancement).
   const seen = readSeen();
   if (seen === null) markSeen();
