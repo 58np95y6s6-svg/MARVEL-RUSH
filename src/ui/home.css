@@ -1,0 +1,26 @@
+.mr-home {
+  background:
+    radial-gradient(120% 60% at 50% 105%, #f2a36b 0, rgba(242,163,107,0) 60%),
+    linear-gradient(#2c2458 0%, #4b3f7e 55%, #a8607a 100%);
+  color: #fff; text-align: center;
+}
+.mr-home-head { padding: 28px 16px 0; }
+.mr-logo {
+  margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(52px, 16vw, 76px); line-height: .95;
+  color: var(--gold); paint-order: stroke fill; -webkit-text-stroke: 10px var(--ink);
+  filter: drop-shadow(0 6px 0 var(--ink)); transform: rotate(-3deg);
+  animation: mr-logo 3s ease-in-out infinite;
+}
+.mr-logo span, .mr-logo em { display: block; font-style: normal; }
+.mr-logo em { color: var(--red); font-size: 1.2em; }
+@keyframes mr-logo { 50% { transform: rotate(-3deg) translateY(-6px) scale(1.02); } }
+.mr-home-main { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 12px 24px; }
+.mr-home-deck { display: flex; justify-content: center; gap: 2px; margin-bottom: 6px; }
+.mr-home-deck img { width: min(17vw, 70px); height: auto; animation: mr-bob 2.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.35s); }
+@keyframes mr-bob { 50% { transform: translateY(-8px); } }
+.mr-home-mode { margin: 0; font-weight: 800; font-size: 15px; opacity: .9; }
+.mr-home .mr-play { width: min(78vw, 300px); font-size: 40px; padding: 16px 0 18px; border-radius: 24px; }
+.mr-home .mr-codex { width: min(64vw, 240px); font-size: 22px; }
+.mr-home .mr-tuto { width: min(64vw, 240px); font-size: 22px; }
+.mr-home .mr-tuto small { display: block; font-family: var(--body); font-weight: 800; font-size: 13px; opacity: .85; }
+.mr-home-foot { padding: 12px 16px calc(16px + var(--safe-bottom)); font-weight: 700; font-size: 14px; opacity: .75; }

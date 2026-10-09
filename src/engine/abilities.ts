@@ -1,6 +1,6 @@
 // Attaques et compétences des 43 unités (§4.5, extension DC). Une fonction par tick et par joueur :
-// timers, purification de Raiponce, transformations (Loki, Maui), compétences à recharge,
-// attaques de base.
+// timers, purification de Raiponce, croissance (archétype, voir archetypes.ts), métamorphose de Maui,
+// compétences à recharge, attaques de base.
 
 import type { UnitId } from '../data/types';
 import { UNITS } from '../data/units';
@@ -10,15 +10,16 @@ import {
 } from './internal';
 import {
   aliveAll, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate,
-  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, nearest, neighbors, pushBack,
+  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors, pushBack,
   progress, segmentOf, selectTarget, sendToStart, teamFor, topBy, unitHit, unitParams, within,
 } from './combat';
+import { enemyGridPos, inReach, unitRange } from './geometry';
+import { formationSplash, growOverTime } from './archetypes';
 
 export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
   const prm = unitParams(ctx, player, effectiveId(u));
   u.counters = {};
   if (prm.abilityCooldown) u.counters.cd = prm.abilityCooldown;
-  if (u.unit === 'loki') u.counters.lokiCd = unitParams(ctx, player, 'loki').abilityCooldown ?? 15;
 }
 
 function dec(v: number | undefined, by = DT): number | undefined {
@@ -49,7 +50,7 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
   }
   const rate = cooldownRate(ctx, player, effectiveId(u));
   if (c.cd !== undefined && c.cd > 0) c.cd = Math.max(0, c.cd - DT * rate);
-  if (c.lokiCd !== undefined && c.lokiCd > 0) c.lokiCd = Math.max(0, c.lokiCd - DT * cooldownRate(ctx, player, 'loki'));
+  growOverTime(ctx, player, u, DT);
 }
 
 /** Raiponce retire les effets de boss des unités adjacentes (et diagonales avec le talent). */
@@ -77,13 +78,12 @@ export function updateUnits(ctx: Ctx, player: number): void {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
     tickTimers(ctx, player, u);
-    if (u.unit === 'loki') lokiTransform(ctx, player, slot, u);
     if (effectiveId(u) === 'maui') mauiForm(ctx, player, slot, u);
     const disabled = isDisabled(u);
     let enemies = aliveAll(ctx);
     let cur = slot;
     if (!disabled && (u.counters.cd ?? 1) <= EPS) {
-      const res = timedAbility(ctx, player, slot, u, enemies);
+      const res = timedAbility(ctx, player, slot, u, enemies, inRange(ctx, player, slot, u, enemies));
       if (res !== false) {
         u.counters.cd = unitParams(ctx, player, effectiveId(u)).abilityCooldown ?? 0;
         if (typeof res === 'number') cur = res;
@@ -92,32 +92,21 @@ export function updateUnits(ctx: Ctx, player: number): void {
     }
     u.cooldown = Math.max(0, u.cooldown - DT * attackSpeedOf(ctx, player, cur, u));
     if (disabled || u.cooldown > EPS || enemies.length === 0) continue;
-    performAttack(ctx, player, cur, u, enemies);
+    const pool = inRange(ctx, player, cur, u, enemies);
+    // Aucun ennemi dans la zone : l'attaque reste prête (pas de coup dans le vide).
+    if (pool.length === 0) continue;
+    performAttack(ctx, player, cur, u, enemies, pool);
     const team = teamFor(ctx, player, effectiveId(u));
     if (team.doubleAttackChance > 0 && rand(ctx) < team.doubleAttackChance) {
       const again = aliveAll(ctx);
-      if (again.length > 0) performAttack(ctx, player, cur, u, again);
+      const againPool = inRange(ctx, player, cur, u, again);
+      if (againPool.length > 0) performAttack(ctx, player, cur, u, again, againPool);
     }
     u.cooldown += effectiveDef(u).attackInterval;
   }
 }
 
 // ───────────── Transformations ─────────────
-
-function lokiTransform(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
-  if (u.status.transformedInto || (u.counters.lokiCd ?? 0) > EPS || isDisabled(u)) return;
-  const p = ctx.st.players[player]!;
-  const options = p.deck.filter((d) => d !== 'loki');
-  const into = pick(ctx, options);
-  const prm = unitParams(ctx, player, 'loki');
-  u.counters.lokiCd = prm.abilityCooldown ?? 15;
-  if (!into) return;
-  u.status.transformedInto = into;
-  u.status.transformFor = prm.transformDuration ?? 10;
-  const ip = unitParams(ctx, player, into);
-  if (ip.abilityCooldown) u.counters.cd = ip.abilityCooldown;
-  emit(ctx, { type: 'ability', player: p.id, slot, unit: 'loki', name: 'Illusion', targets: [] });
-}
 
 function mauiForm(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
   if ((u.counters.cd ?? 0) > EPS) return;
@@ -148,7 +137,7 @@ const displaceable = (e: SimEnemy) => !e.bossId && !e.x.mini && !e.x.flying;
  * Déclenche la compétence à recharge. Renvoie false si elle n'a pas pu partir (on réessaie au
  * tick suivant), true sinon, ou la nouvelle case si l'unité s'est déplacée (Vanellope).
  */
-function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): boolean | number {
+function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: SimEnemy[], enemies: SimEnemy[]): boolean | number {
   const id = effectiveId(u);
   const prm = unitParams(ctx, player, id);
   const ctrl = controlMul(ctx, player, id);
@@ -157,7 +146,8 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       const lead = bestBy(enemies, (e) => progress(ctx, e));
       if (!lead) return false;
       const seg = segmentOf(ctx, lead);
-      const line = prm.beamAllLines ? enemies : enemies.filter((e) => segmentOf(ctx, e) === seg);
+      // Le laser part vers l'ennemi de tête de la zone, puis traverse toute sa ligne du chemin.
+      const line = prm.beamAllLines ? all : all.filter((e) => segmentOf(ctx, e) === seg);
       const dmg = baseDamage(ctx, player, slot, u) * (prm.beamDamage ?? 2) * (1 + (ctx.mods.beamDamage ?? 0));
       emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: line.map((e) => e.uid), fx: 'ironman:unibeam' });
       for (const e of line) {
@@ -233,25 +223,6 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       if (prm.pullStun) applyStun(target, prm.pullStun * ctrl);
       abilityEvent(ctx, player, slot, id, 'Lasso de Woody', [target]);
       return true;
-    }
-    case 'vanralph': {
-      const grid = ctx.st.players[player]!.grid;
-      const empties: number[] = [];
-      for (let i = 0; i < GRID_SIZE; i++) if (!grid[i]) empties.push(i);
-      const to = pick(ctx, empties);
-      if (to === undefined) return true; // pas de case libre : la recharge repart
-      grid[to] = u;
-      grid[slot] = null;
-      for (const j of neighbors(to, !!prm.auraDiagonal)) {
-        const n = grid[j];
-        if (!n) continue;
-        n.counters.boost = prm.boost ?? 0.2;
-        n.counters.boostFor = prm.boostDuration ?? 5;
-        n.counters.boostDamage = prm.boostDamage ?? 0;
-      }
-      // Pour Glitch, `slot` est la nouvelle case et `targets` contient l'ancienne case.
-      abilityEvent(ctx, player, to, id, 'Glitch', [slot]);
-      return to;
     }
     default:
       return dcTimedAbility(ctx, player, slot, u, enemies);
@@ -446,14 +417,30 @@ function dcTimedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enem
 
 // ───────────── Attaques de base ─────────────
 
-function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): void {
+/**
+ * Ennemis dans la zone de touche de l'unité posée sur `slot` (§4.1, « Portées d'attaque »).
+ * La cible principale d'une attaque ou d'une compétence est toujours choisie dans cette liste ;
+ * les effets secondaires (éclaboussures, rebonds, chaînes, attaques « tous les ennemis ») suivent
+ * ensuite leurs propres règles, sur tout le chemin.
+ */
+export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): SimEnemy[] {
+  const range = unitRange(effectiveDef(u));
+  if (!Number.isFinite(range) || ctx.debugNoRange) return enemies;
+  const out: SimEnemy[] = [];
+  for (const e of enemies) {
+    if (inReach(slot, range, enemyGridPos(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane)))) out.push(e);
+  }
+  return out;
+}
+
+function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[], pool: SimEnemy[]): void {
   const def = effectiveDef(u);
   const id = def.id;
-  const target = selectTarget(ctx, enemies, def.targeting);
+  const target = selectTarget(ctx, pool, def.targeting);
   if (!target) return;
   const at = ctx.ev.length;
   u.counters.attacks = (u.counters.attacks ?? 0) + 1;
-  const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies);
+  const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool);
   ctx.ev.splice(at, 0, {
     type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id,
     targets: targets.map((e) => e.uid), fx,
@@ -461,7 +448,7 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
 }
 
 function attackOf(
-  ctx: Ctx, player: number, slot: number, u: SimUnit, id: UnitId, target: SimEnemy, enemies: SimEnemy[],
+  ctx: Ctx, player: number, slot: number, u: SimUnit, id: UnitId, target: SimEnemy, enemies: SimEnemy[], pool: SimEnemy[],
 ): { targets: SimEnemy[]; fx: string } {
   const prm = unitParams(ctx, player, id);
   const ctrl = controlMul(ctx, player, id);
@@ -536,8 +523,8 @@ function attackOf(
       return { targets: chain, fx: 'thor:chaine' };
     }
     case 'venom': {
-      const bonus = Math.min(prm.killStackMax ?? 0.4, (c.kills ?? 0) * (prm.killStack ?? 0.02));
-      hit(target, dmg * (1 + bonus));
+      // La croissance (archétype) est déjà dans `dmg` (baseDamage).
+      hit(target, dmg);
       const thr = target.bossId ? prm.bossExecuteThreshold ?? 0 : prm.executeThreshold ?? 0.15;
       if (isAlive(target) && target.hp / target.maxHp < thr) {
         killEnemy(ctx, target, player, u);
@@ -569,6 +556,9 @@ function attackOf(
     }
     case 'loki': {
       hit(target, dmg);
+      // Formation (archétype) : 3 Loki alignés, la dague devient une attaque de zone.
+      const zone = formationSplash(ctx, player, slot, u);
+      if (zone > 0) splash(target, dmg * zone, 1.5);
       if (isAlive(target) && displaceable(target) && rand(ctx) < (prm.knockbackChance ?? 0.1)) {
         target.x.knockFor = (prm.knockbackDuration ?? 2) * ctrl;
         abilityEvent(ctx, player, slot, id, 'Illusion', [target]);
@@ -606,7 +596,7 @@ function attackOf(
     }
     case 'widow': {
       const hits = (c.hits = (c.hits ?? 0) + 1);
-      hit(target, target.bossId ? dmg * (prm.bossMul ?? 2) : dmg);
+      hit(target, dmg);
       if (hits % Math.max(1, Math.round(prm.paralyzeEvery ?? 5)) === 0 && isAlive(target)) {
         if (applyStun(target, (prm.paralyzeDuration ?? 1) * ctrl)) {
           abilityEvent(ctx, player, slot, id, 'Morsure de la veuve', [target]);
@@ -676,7 +666,7 @@ function attackOf(
         hit(target, dmg * (1 + (prm.secondHitBonus ?? 0.5)));
         return { targets: [target], fx: 'foxhound:double' };
       }
-      const next = selectTarget(ctx, enemies.filter(isAlive), 'premier');
+      const next = selectTarget(ctx, pool.filter(isAlive), 'premier');
       if (next) hit(next, dmg);
       return { targets: next ? [target, next] : [target], fx: 'foxhound:double' };
     }
@@ -865,24 +855,16 @@ const BASE_FX: Partial<Record<UnitId, string>> = {
   superman: 'vision-thermique', greenlantern: 'anneau', martian: 'rayon', batgirl: 'coup',
 };
 
-/** Unités dont la compétence se déclenche au début de chaque vague. */
+/** Début de vague : remise à zéro des compétences « une fois par vague ». Renvoie le mana gagné. */
 export function onWaveStart(ctx: Ctx, player: number): number {
   const p = ctx.st.players[player]!;
-  let mana = 0;
   for (let i = 0; i < GRID_SIZE; i++) {
     const u = p.grid[i];
     if (!u) continue;
     u.counters.avalanche = 0;
     u.counters.restores = 0;
-    if (effectiveId(u) === 'tiana') {
-      const prm = unitParams(ctx, player, 'tiana');
-      let m = (prm.waveMana ?? 10) + (prm.manaPerRank ?? 5) * (u.rank - 1);
-      if (ctx.st.pendingBoss && prm.bossWaveManaFactor) m *= prm.bossWaveManaFactor;
-      mana += m;
-      emit(ctx, { type: 'ability', player: p.id, slot: i, unit: 'tiana', name: 'Restaurant', targets: [] });
-    }
   }
-  return mana;
+  return 0;
 }
 
 export { UNITS };

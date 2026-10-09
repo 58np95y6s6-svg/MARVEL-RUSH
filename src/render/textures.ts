@@ -2,7 +2,7 @@
 // Tout passe par l'API de src/art (chaînes SVG → loadTexture), avec un cache local par clé
 // pour pouvoir lire une texture de façon synchrone dans la boucle de rendu.
 import { Texture } from 'pixi.js';
-import { bossSvg, enemySvg, loadTexture, minionSvg, tokenSvg, unitSvg, type EnemyLook } from '../art';
+import { bossSvg, enemySvg, loadTexture, minionSvg, tokenPortraitSvg, type EnemyLook } from '../art';
 import type { BossId, EnemyKind, Rarity, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 
@@ -10,7 +10,7 @@ export type Pose = 0 | 1 | 2;
 
 /** Taille d'affichage (px logiques) des éléments, sur l'écran logique 1000 × 1600. */
 export const SIZES = {
-  token: 128,
+  token: 142,
   enemy: 118,
   enemyGros: 150,
   enemyRapide: 104,
@@ -46,24 +46,10 @@ async function load(key: string, make: () => string, logicalW: number, res = res
   try { return await pending.get(key)!; } catch { return null; }
 }
 
-/**
- * Jeton d'une pose : on reprend `tokenSvg` (disque, liseré de rareté, reflet) et on remplace la figure
- * de repos par celle de la pose demandée. Les pastilles de rang sont retirées : le rendu les dessine
- * lui-même, ce qui évite une texture par rang.
- */
+/** Portrait rond d'une pose (sans plaque) : la plaque de rang est dessinée par le rendu. */
 export function tokenPoseSvg(id: UnitId, pose: Pose): string {
   const rarity: Rarity = UNITS[id]?.rarity ?? 'rare';
-  let svg = tokenSvg(id, 1, 'classique', { rarity });
-  // Retire les pastilles de rang (pilule à y = 166 puis points).
-  const pip = svg.search(/<rect x="[-\d.]+" y="166"/);
-  if (pip > 0) svg = svg.slice(0, pip) + '</svg>';
-  if (pose === 0) return svg;
-  const open = 'scale(.78) translate(-100 -118)">';
-  const a = svg.indexOf(open);
-  const close = svg.indexOf('</g></g><circle cx="100" cy="96" r="80" fill="none"', a);
-  if (a < 0 || close < 0) return svg;
-  const body = unitSvg(id, pose).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
-  return svg.slice(0, a + open.length) + body + svg.slice(close);
+  return tokenPortraitSvg(id, pose, 'classique', { rarity });
 }
 
 export function tokenTex(id: UnitId, pose: Pose): Texture | null {

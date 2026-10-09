@@ -53,3 +53,27 @@ img, svg, canvas { -webkit-user-drag: none; }
   mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
 .no-scroll { overflow: hidden !important; }
+
+/* Mode paysage bloqué : sur téléphone couché, un écran invite à le redresser
+   (le manifeste impose déjà le portrait sur Android ; iOS l'ignore). */
+#rotate { display: none; }
+@media (orientation: landscape) and (max-height: 600px) {
+  #app { visibility: hidden; }
+  #rotate {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: radial-gradient(circle at 50% 40%, #3a2a7a, #1d1733 70%);
+    color: #fff; font-family: var(--display); text-align: center;
+  }
+  #rotate p { margin: 0; font-size: 26px; letter-spacing: .5px; }
+  #rotate small { font-family: var(--body); font-size: 14px; opacity: .8; }
+  .rotate-phone {
+    width: 46px; height: 78px; border: 5px solid #fff; border-radius: 10px;
+    box-shadow: 0 0 0 4px var(--ink); animation: rotate-hint 2s ease-in-out infinite;
+  }
+}
+@keyframes rotate-hint {
+  0%, 20% { transform: rotate(-90deg); }
+  50%, 80% { transform: rotate(0deg); }
+  100% { transform: rotate(-90deg); }
+}

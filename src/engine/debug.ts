@@ -83,6 +83,11 @@ export function debugStone(engine: Engine, stone: string | undefined): void {
   ctxOf(engine).debugStone = stone;
 }
 
+/** Ignore les portées d'attaque (tests isolés des compétences). */
+export function debugNoRange(engine: Engine, on = true): void {
+  ctxOf(engine).debugNoRange = on;
+}
+
 /** Avance de n secondes. */
 export function runSeconds(engine: Engine, seconds: number): void {
   const n = Math.round(seconds * 20);

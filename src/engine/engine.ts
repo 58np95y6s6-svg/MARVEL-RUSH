@@ -3,23 +3,26 @@
 
 import { BOSSES, BOSS_POOLS, BOSS_STATS, LIEUTENANTS } from '../data/bosses';
 import { EXTRA_MILESTONE_WAVES, milestoneAt } from '../data/milestones';
-import { ENEMIES, WAVE_RULES, spawnWeights } from '../data/enemies';
+import { ENEMIES, WAVE_RULES, spawnWeights, waveHp } from '../data/enemies';
 import { activeTeams } from '../data/teams';
+import { UNITS } from '../data/units';
 import type { BossId, EnemyKind, UnitId } from '../data/types';
 import {
   GRID_SIZE, MAX_RANK, type Command, type CreateEngine, type Engine, type EngineState, type GameConfig,
   type LaneId, type PlayerId,
 } from './types';
 import {
-  DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
+  DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
   SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, spawnRand,
   type Ctx, type PlayerInfo, type SimEnemy, type SimPlayer, type SimState, type SimUnit, type TeamAgg,
 } from './internal';
 import { deriveSeed } from './rng';
-import { dealDamage, isAlive, retreat } from './combat';
+import { dealDamage, isAlive, manaYield, retreat, unitParams } from './combat';
 import { initUnitCounters, onWaveStart, updateUnits } from './abilities';
 import { pumpkinExplosion, updateBosses } from './bossPowers';
 import { mapLengths } from './maps';
+import { boardGeometry } from './geometry';
+import { inheritedGrowth, makeCopy, sacrifice, swapCells } from './archetypes';
 
 const SAVE_VERSION = 1;
 
@@ -74,6 +77,7 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
   return {
     cfg, st, ev: [],
     laneLen: laneLengths(cfg),
+    geo: boardGeometry(cfg.mode, mapLengths(cfg.mapId)?.shape),
     coop: cfg.mode === 'coop',
     mods: cfg.mapModifiers ?? {},
     info: buildInfo(cfg),
@@ -224,7 +228,7 @@ function startWave(ctx: Ctx, wave: number): void {
   emit(ctx, { type: 'waveStart', wave });
   st.players.forEach((p, i) => {
     p.giftUsedThisWave = false;
-    p.mana += onWaveStart(ctx, i) + ctx.info[i]!.manaPerWave;
+    p.mana += Math.round((onWaveStart(ctx, i) + ctx.info[i]!.manaPerWave) * manaYield(p));
   });
   if (kind === 'gros') {
     st.waveTimeLeft = 0;
@@ -252,7 +256,7 @@ function waveFinished(ctx: Ctx): void {
 }
 
 function normalHp(ctx: Ctx, wave: number): number {
-  return WAVE_RULES.baseHp * Math.pow(WAVE_RULES.hpGrowth, wave - 1) * (ctx.cfg.script?.enemyHpMultiplier ?? 1);
+  return waveHp(wave) * (ctx.cfg.script?.enemyHpMultiplier ?? 1);
 }
 
 /** Branches d'entrée : 'a' en Solo, 'a' et 'b' en Coop (un flot le long de chaque plateau). */
@@ -536,9 +540,46 @@ function applyCommand(ctx: Ctx, c: Command): void {
       if (a.rank >= MAX_RANK) return reject(ctx, c.type, 'Rang maximal atteint.');
       const unit = pick(ctx, p.deck)!;
       const rank = a.rank + 1;
+      // Archétypes : sacrifice (une fois par fusion) et croissance gardée en partie.
+      sacrifice(ctx, pi, c.to, a);
+      const growth = inheritedGrowth(ctx, pi, a, b, unit);
       p.grid[c.from] = null;
-      p.grid[c.to] = newUnit(ctx, pi, unit, rank);
+      const merged = newUnit(ctx, pi, unit, rank);
+      if (growth > 0) merged.counters.growth = growth;
+      p.grid[c.to] = merged;
       emit(ctx, { type: 'merge', player: p.id, from: c.from, to: c.to, unit, rank });
+      return;
+    }
+    case 'copy':
+    case 'promote':
+    case 'swap': {
+      if (!validSlot(c.from) || !validSlot(c.to)) return reject(ctx, c.type, 'Case invalide.');
+      if (c.from === c.to) return reject(ctx, c.type, 'Choisis une autre unité.');
+      const a = p.grid[c.from], b = p.grid[c.to];
+      if (!a || !b) return reject(ctx, c.type, 'Il faut deux unités.');
+      if (a.unit === b.unit) return reject(ctx, c.type, 'Deux unités identiques fusionnent.');
+      if (a.rank !== b.rank) return reject(ctx, c.type, 'Les deux unités doivent avoir le même rang.');
+      const prm = unitParams(ctx, pi, a.unit);
+      if (c.type === 'copy') {
+        if (!((prm.copyDamageMul ?? 0) > 0)) return reject(ctx, c.type, 'Cette unité ne sait pas copier.');
+        makeCopy(ctx, pi, a, b, (u) => initUnitCounters(ctx, pi, u));
+        emit(ctx, { type: 'copy', player: p.id, from: c.from, to: c.to, unit: a.unit, rank: a.rank });
+        return;
+      }
+      if (c.type === 'swap') {
+        if (!prm.swapAlly) return reject(ctx, c.type, 'Cette unité ne sait pas échanger sa place.');
+        swapCells(ctx, pi, c.from, c.to);
+        emit(ctx, { type: 'swap', player: p.id, from: c.from, to: c.to, unit: a.unit, rank: a.rank });
+        // Effet visuel du Glitch : `slot` = nouvelle case, `targets` = ancienne case.
+        emit(ctx, { type: 'ability', player: p.id, slot: c.to, unit: a.unit, name: UNITS[a.unit].ability.name, targets: [c.from] });
+        return;
+      }
+      if (!prm.promoteAlly) return reject(ctx, c.type, 'Cette unité ne peut pas faire monter une alliée.');
+      if (b.rank >= MAX_RANK) return reject(ctx, c.type, 'Rang maximal atteint.');
+      sacrifice(ctx, pi, c.from, a);
+      p.grid[c.from] = null;
+      b.rank += 1;
+      emit(ctx, { type: 'promote', player: p.id, from: c.from, to: c.to, unit: b.unit, rank: b.rank });
       return;
     }
     case 'powerup': {
@@ -550,6 +591,16 @@ function applyCommand(ctx: Ctx, c: Command): void {
       p.mana -= cost;
       p.powerUps[c.unit] = level + 1;
       emit(ctx, { type: 'powerup', player: p.id, unit: c.unit, level: level + 1 });
+      return;
+    }
+    case 'manaUpgrade': {
+      const level = p.manaLevel ?? 0;
+      if (level >= MANA_UPGRADE_MAX) return reject(ctx, c.type, 'Rendement du mana au maximum.');
+      const cost = MANA_UPGRADE_COSTS[level]!;
+      if (p.mana < cost) return reject(ctx, c.type, 'Pas assez de mana.');
+      p.mana -= cost;
+      p.manaLevel = level + 1;
+      emit(ctx, { type: 'manaUpgrade', player: p.id, level: level + 1 });
       return;
     }
     case 'gift': {
@@ -568,7 +619,9 @@ function applyCommand(ctx: Ctx, c: Command): void {
       delete u.status.transformedInto;
       delete u.status.transformFor;
       q.grid[slot] = u;
+      const growth = u.counters.growth;
       initUnitCounters(ctx, qi, u);
+      if (growth) u.counters.growth = growth; // la croissance voyage avec l'unité
       p.giftUsedThisWave = true;
       emit(ctx, { type: 'gift', from: p.id, to: q.id, slot, unit: u.unit, rank: u.rank });
       return;

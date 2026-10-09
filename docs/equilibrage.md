@@ -30,14 +30,14 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 | Hulk | Légendaire | Zone + étourdissement | 37,5 | 1,10 – 1,16 | Rage + Smash : vérifier le DPS à la 60e seconde d'un boss. |
 | Thor | Légendaire | Dégâts en chaîne | ~61 (3 cibles) | 1,10 – 1,16 | Fort sur les vagues, faible sur boss seul ; c'est voulu. |
 | Doctor Strange | Épique | Contrôle de position | 15 | 1,03 – 1,08 | Le Portail sauve des vies ; mesurer « vies sauvées » plutôt que les dégâts. |
-| Venom | Épique | Exécution + montée en puissance | 35 | 1,05 – 1,12 | Bonus par élimination plafonné ; inefficace sur boss, voulu. |
+| Venom | Épique | Exécution + Croissance | 35 | 1,05 – 1,12 | Croissance sans plafond (+0,5 %/s, +2 %/élimination), 50 % gardés en fusion : surveiller les parties longues (vague 30+). |
 | Captain Marvel | Rare | Dégâts monocible (pic) | 27,8 | 0,98 – 1,05 | Rare la plus forte en dégâts : rester sous 1,05. |
 | Captain America | Légendaire | Soutien + rebonds | 20 × 3 | 1,08 – 1,14 | La valeur dépend du placement ; le joueur auto doit placer au centre. |
-| Loki | Épique | Imprévisible | 22,5 | 1,03 – 1,08 | Sa transformation copie le meilleur du deck : IP très variable, viser l'écart-type. |
+| Loki | Épique | Copieur | 22,5 | 1,03 – 1,08 | Copie une alliée de même rang à −25 % : sa valeur dépend du meilleur héros du deck. |
 | Soldat de l'hiver | Épique | Critique + étourdissement | 37,5 (moyenne) | 1,05 – 1,10 | Équipe Les Agents (+30 % de critiques) le pousse fort. |
 | Œil de faucon | Rare | Polyvalent | 25,7 | 0,97 – 1,03 | Bonne Rare de base, sans pic. |
 | Falcon | Rare | Soutien (marque) | 25 | 0,95 – 1,02 | Valeur qui grandit avec les dégâts du deck ; c'est l'unité de remplacement du témoin. |
-| Black Widow | Épique | Anti-boss | 28 (56 vs boss) | 1,04 – 1,10 | Mesurer le temps de mort des boss avec / sans elle (−20 % visé). |
+| Black Widow | Épique | Sacrifice → mana | 28 | 1,00 – 1,06 | Plus de ×2 contre les boss ; rend 10/25/45/70/100/140/190 de mana par fusion ou destruction. |
 | Shang-Chi | Épique | Multi-cibles aléatoires | 30 + anneaux | 1,05 – 1,10 | Les anneaux ne doivent pas tout nettoyer avant la vague 10. |
 | Vaïana & Pua | Épique | Contrôle (repousser) | 15 | 1,03 – 1,08 | Comme Strange : mesurer les vies sauvées. |
 | Maui | Légendaire | Dégâts alternés | 33 (×2,5 requin) | 1,10 – 1,16 | Vérifier que les deux formes ont une valeur proche sur 16 s. |
@@ -46,9 +46,9 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 | Rebelle | Rare | Monocible sur la tête | 48,9 (crit) | 0,98 – 1,05 | DPS brut élevé mais monocible : à surveiller sur les boss. |
 | Ariel & Sébastien | Épique | Contrôle de masse | 11 | 1,03 – 1,08 | Saignement plafonné sur boss (`bleedBossFactor`). |
 | Rox & Rouky | Rare | Dégâts monocible | ~52 | 0,98 – 1,05 | Le doublé sur même cible rend Rox très bon contre les boss ; ajuster `secondHitBonus` d'abord. |
-| Tiana & Naveen | Rare | Économie | 8 | 0,95 – 1,02 | Mesurer le mana total gagné (+10 à 15 % visé). |
+| Tiana & Naveen | Rare | Mana par élimination | 8 | 0,95 – 1,02 | +1/2/3/4/5/6/8 de mana par ennemi touché qui tombe (au lieu du mana de vague) ; mesurer le mana total gagné (+10 à 15 % visé). |
 | Nemo & Dory | Rare | Aléatoire | 20 | 0,95 – 1,02 | Écart-type élevé accepté. |
-| Coco (Miguel) | Épique | Soutien anti-boss (restaure) | 10 | 1,03 – 1,08 | Sa valeur n'apparaît que contre Cruella et Galactus : rapporter l'IP par boss. |
+| Coco (Miguel) | Épique | Booster de fusion + restaure | 10 | 1,03 – 1,08 | Fait monter d'un rang une alliée de même rang (en disparaissant) ; Remember Me contre Cruella et Galactus. |
 | Nick & Judy | Épique | Contrôle + malus d'armure | 20 | 1,03 – 1,08 | Fort contre les blindés et Maléfique (gobelins). |
 | Buzz & Woody | Légendaire | Perçant + contrôle | 27,5 (ligne) | 1,08 – 1,14 | Laser perçant : mesurer le nombre moyen d'ennemis touchés. |
 | Raiponce & Pascal | Épique | Anti-contrôle de boss | 12 | 1,03 – 1,08 | Valeur contre Jafar, Maléfique, Bouffon Vert, Thanos. |
@@ -97,6 +97,71 @@ Mêmes bandes que ci-dessus (Rare 0,95 – 1,05, Épique 1,03 – 1,12, Légenda
 
 **Niveau de collection** (+10 % de dégâts par niveau) : un deck niveau 10 doit tenir environ **+60 %** de vagues par rapport au même deck niveau 1.
 
+## 2 bis. Portées d'attaque (§4.1, octobre 2026)
+
+Chaque unité a une portée (`UnitDef.range`, en cases, depuis le centre de sa case jusqu'à l'ennemi en coordonnées de grille ; `src/engine/geometry.ts`). Une unité ne choisit sa **cible principale** que parmi les ennemis de sa zone ; les effets secondaires gardent leurs propres règles sur tout le chemin (éclaboussures de Hulk, rebonds de Thor et de Captain America, flèche électrique, Avalanche de Mulan, anneaux de Shang-Chi, laser d'Iron Man qui traverse toute la ligne de l'ennemi visé). Les compétences à recharge qui visent (Portail, Drone Redwing, Appel de l'océan, Chant de sirène, Lasso, Langue de Naveen, Arrestation) ne visent aussi que dans la zone. Boss compris.
+
+Couverture moyenne du chemin Solo (part du chemin dans la zone, moyenne des 15 cases, chemin en U / en marches) : courte ≈ 10-12 % (6 cases sur 15 ne touchent rien : centre et bas de la grille), moyenne ≈ 27-30 %, longue ≈ 55-58 %. D'où la compensation, appliquée aux dégâts de base d'avant les portées : **globale ×1,22**, **longue ×1,22 × 1,4**, **moyenne ×1,22 × 1,7**, **courte ×1,22 × 3** (le ×1,22 commun compense aussi le passage du rang à « +51 % de dégâts et +12 % de cadence par rang », qui affaiblit les rangs 2 à 6). Rebelle, Tiana et Nemo & Dory ont reçu un petit bonus en plus pour garder le deck Disney de départ dans la cible.
+
+| Portée | Valeur | Unités (dégâts de base) |
+|---|---|---|
+| Globale (toute la map) | `'globale'` | Iron Man 37, Doctor Strange 18, Captain Marvel 30, Œil de faucon 22, Falcon 18, Rebelle 32, Tiana & Naveen 11 |
+| Longue | 3,4 | Thor 43, Loki 31, Soldat de l'hiver 51, Black Widow 24, Vaïana & Pua 26, Pocahontas & Meeko 17, Ariel & Sébastien 17, Nemo & Dory 26, Coco 17, Buzz & Woody 38 |
+| Moyenne | 2,4 | Spider-Man 21, Captain America 41, Nick & Judy 33, Raiponce & Pascal 25 |
+| Courte (corps à corps) | 1,6 | Hulk 220, Venom 128, Shang-Chi 44, Maui 146, Mulan & Mushu 110, Rox & Rouky 51, Vanellope & Ralph 165 |
+
+Le joueur automatique du simulateur tient compte des portées : à rang égal, il fusionne en priorité la paire dont une unité couvre le moins de chemin, vers la case la mieux placée.
+
+Mesures (`scripts/simulate.ts`, Solo Infini, niveau 1, toits de New York) :
+
+| Deck | Avant (300 parties) | Après portées + rang (300 parties) |
+|---|---|---|
+| Départ Marvel | 10,60 | **10,46** |
+| Départ Disney | 10,58 | **10,26** |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 16,33 (100) | 15,85 |
+| Méta Disney (Vaïana, Maui, Ariel, Nemo, Mulan) | 11,87 (100) | 9,66 |
+| Départ Marvel en Coop (50 parties) | 9,46 | 9,38 |
+
+À surveiller : les decks riches en corps à corps (méta Disney, `mixte-legendaires`, `arcanes`, `controle`) perdent 10 à 20 % avec le joueur automatique, qui place mal ; un joueur qui fusionne vers les cases du bord doit compenser. Si les journaux réels confirment l'écart, relever d'abord la portée courte (1,8) plutôt que les dégâts (déjà ×3,7).
+
+## 2 ter. Archétypes de stratégie et début de partie (octobre 2026)
+
+**Archétypes** (`src/engine/archetypes.ts`, docs/roadmap.md) : Black Widow perd son ×2 contre les boss (Sacrifice → mana : 10/25/45/70/100/140/190 une fois par fusion ou à la destruction), Loki sa transformation périodique (Copieur à −25 %, et Formation : +15 % par autre Loki aligné, +30 % max, zone à 40 % à 3 alignés), Venom son plafond de +40 % (Croissance : points +0,5/s et +0,02 par élimination, bonus = 0,28 × points^0,75, soit ≈ +100 % vers la vague 30 et +200 % vers la vague 60, 50 % du bonus gardé en fusion), Tiana son mana de vague (+1/2/3/4/5/6/8 par ennemi touché qui tombe), Vanellope sa téléportation aléatoire (Échangeur manuel, même bonus de cadence) ; Coco gagne le Booster de fusion.
+
+**Économie** : « Mana + » (50/100/200/400/800, +20 % de mana par élimination et par vague et par niveau) ; récompense de boss = 2,5 / 5,5 / 8 × le coût d'invocation actuel (lieutenant / gros boss / Thanos), × rendement, pour chaque joueur ; amélioration d'un héros : +15 % de dégâts **et +6 % de cadence** par niveau.
+
+**Début de partie allégé** (le joueur trouvait le premier niveau très dur) : 150 de mana au départ (au lieu de 100 : supprime les défaites en vague 1 quand les premières invocations tombent au centre, hors de portée) ; PV ×0,7 en vague 1, remontant jusqu'à ×1 en vague 12 (`earlyHpStart`, `earlyHpUntil`) ; la rampe tardive (×1,18 par vague) est inchangée.
+
+**Joueur automatique** : la règle « fusionne aussi quand le mana manque » est retirée (elle vidait le plateau : l'ancien bot faisait moins bien qu'un joueur au hasard) ; le bot achète « Mana + » et les améliorations quand elles coûtent moins que la prochaine invocation, copie / booste plateau plein (il n'utilise ni l'échange ni la formation exprès). Nouveau `--casual` (réagit une fois par seconde, fusionne au hasard plateau plein, n'achète pas « Mana + ») : approximation d'un joueur débutant. `--no-manaup` désactive l'achat de « Mana + ». Le simulateur affiche aussi le taux de passage des vagues 5, 10 et 15.
+
+Mesures (Solo Infini, niveau 1, toits de New York, graines 1..100) :
+
+| Deck | Avant (ancien bot, anciennes règles) | Après, bot de référence | Après, `--casual` |
+|---|---|---|---|
+| Départ Marvel | 10,40 (vague 10 passée : ≈ 40 %) | **16,61** (vague 5 : 100 %, vague 10 : 100 %, vague 15 : 98 %) | **15,44** (100 % / 99 % / 69 %) |
+| Départ Disney | 10,52 (≈ 40 %) | **17,67** (100 % / 99 % / 95 %) | **15,86** (100 % / 95 % / 74 %) |
+| Départ Marvel en Coop (50 parties) | 9,38 | 15,78 | — |
+| Widow, Loki, Coco, Venom, Tiana | 7,34 | 13,63 (vague 10 : 69 %) | — |
+
+Étapes intermédiaires (départ Marvel / Disney) : archétypes seuls 10,25 / 10,37 ; + récompense de boss et nouveau bot 14,66 / 15,22 ; + PV allégés 14,95 / 15,78 ; + achats rentables du bot et 150 de mana 16,61 / 17,67.
+
+**Risques d'équilibrage** (deck témoin T0 = Spider-Man, Œil de faucon, Falcon, Captain Marvel + 5e héros ; Rebelle = référence 17,20) :
+
+| 5e héros | Vague moyenne | Écart |
+|---|---|---|
+| Rebelle (référence) | 17,20 | — |
+| Captain America (Boost de vitesse) | 17,34 | +1 % |
+| Venom (Croissance) | 17,05 | −1 % |
+| Vanellope & Ralph (Échangeur, non utilisé par le bot) | 16,77 | −3 % |
+| Black Widow (Sacrifice) | 16,61 | −3 % |
+| Loki (Copieur ; formation non recherchée par le bot) | 16,38 | −5 % |
+| Pocahontas (Boost de vitesse) | 16,35 | −5 % |
+| Coco (Booster de fusion) | 16,10 | −6 % |
+| Tiana (Mana par élimination) | 15,43 | −10 % |
+| Deck « mana » (Spider-Man, Œil de faucon, Widow, Tiana, Pocahontas) | 15,99 (14,70 sans « Mana + ») | −7 % |
+
+Aucun emballement économique : les decks « mana » restent sous le témoin (le mana ne compense pas les dégâts perdus). « Mana + » vaut +3 % (T0 : 16,75 → 17,20) à +9 % (deck mana : 14,70 → 15,99). À surveiller : Tiana un peu faible (−10 %) ; la Croissance de Venom en parties très longues (courbe en puissance 0,75, sans plafond) ; la Formation de Loki (+30 % et zone) n'est pas mesurée par le bot.
+
 ## 3. Le simulateur (`scripts/simulate.ts`)
 
 Le simulateur est écrit par l'agent Moteur en parallèle ; il n'existe pas encore au moment de ce document. Usage attendu :
@@ -117,7 +182,7 @@ Le même pour tous les decks, simple et déterministe à graine égale :
 1. invoque dès que le mana ≥ coût d'invocation et qu'une case est libre ;
 2. fusionne dès que deux unités identiques de même rang existent, en priorité le plus bas rang ; garde en revanche les unités de **soutien** (Captain America, Pocahontas, Raiponce, Coco) si elles sont au centre ;
 3. améliore l'unité du deck qui a le plus d'exemplaires sur le plateau quand le mana ≥ coût d'amélioration + coût d'invocation ;
-4. plateau plein et rien à fusionner : améliore.
+4. plateau plein et rien à fusionner : copie (Loki) ou booste (Coco) l'alliée de même rang au plus fort DPS de base, sinon améliore.
 Variante « joueur expert » (optionnelle) : place les soutiens au centre, garde un rang 1 de chaque unité pour Loki/Coco.
 
 ### Mesures à rapporter (par deck)

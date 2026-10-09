@@ -14,7 +14,7 @@
 
 /* ---------- barre du haut ---------- */
 .mr-top {
-  position: absolute; left: 24px; right: 24px; top: calc(14px - min(var(--ext-top), 60px));
+  position: absolute; left: 24px; right: 24px; top: calc(14px - var(--ext-top));
   height: 104px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
 }
 .mr-lives { display: flex; gap: 6px; justify-self: start; background: rgba(29, 23, 51, .55); border-radius: 60px; padding: 10px 20px; border: 4px solid rgba(255,255,255,.12); }
@@ -41,7 +41,7 @@
 
 /* ---------- barre du boss ---------- */
 .mr-bossbar {
-  position: absolute; left: 60px; right: 60px; top: calc(134px - min(var(--ext-top), 60px)); height: 92px;
+  position: absolute; left: 60px; right: 60px; top: calc(134px - var(--ext-top)); height: 92px;
   display: none; align-items: center; gap: 16px;
 }
 .mr-bossbar.on { display: flex; animation: mr-drop .35s ease-out; }
@@ -65,11 +65,12 @@
 
 /* ---------- bandeaux ---------- */
 .mr-banner {
-  position: absolute; left: 50%; top: 1076px; transform: translateX(-50%);
-  max-width: 900px; white-space: nowrap; padding: 14px 34px; border-radius: 60px;
+  position: absolute; left: 50%; top: 1072px; transform: translateX(-50%);
+  max-width: 940px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 14px 34px; border-radius: 60px;
   background: rgba(20, 14, 40, .62); font-family: var(--body); font-weight: 800; font-size: 36px;
   display: none; align-items: center; gap: 14px; border: 3px solid rgba(255,255,255,.12);
 }
+.mr-banner span { overflow: hidden; text-overflow: ellipsis; }
 .mr-banner.on { display: flex; animation: mr-fade .4s ease-out; }
 .mr-banner img { width: 54px; height: 54px; border-radius: 50%; background: #3a1f45; border: 3px solid #1d1733; object-fit: cover; object-position: 50% 10%; }
 .mr-toast {
@@ -88,7 +89,8 @@
 @keyframes mr-shake { 0%, 100% { margin-left: 0; } 20% { margin-left: -16px; } 40% { margin-left: 14px; } 60% { margin-left: -10px; } 80% { margin-left: 6px; } }
 .mr-shake { animation: mr-shake .35s; }
 
-/* ---------- commandes du bas ---------- */
+/* ---------- commandes du bas (collées au bas de l'écran) ---------- */
+.mr-dock { position: absolute; left: 0; top: 0; width: 1000px; height: 1600px; transform: translateY(var(--ext-bottom)); pointer-events: none; }
 .mr-mana {
   position: absolute; left: 40px; top: 1196px; width: 270px; height: 120px; display: flex; align-items: center; gap: 10px;
 }
@@ -96,6 +98,13 @@
 .mr-mana b { font-size: 70px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; }
 .mr-mana.gain b { animation: mr-gain .25s; }
 @keyframes mr-gain { 50% { transform: scale(1.15); color: #bfe8ff; } }
+/* Mana hors élimination (archétype Sacrifice, copie) : « +X » qui s'envole du compteur. */
+.mr-mana { overflow: visible; }
+.mr-mana-float {
+  position: absolute; left: 96px; top: -10px; font-size: 54px; color: #bfe8ff; pointer-events: none; white-space: nowrap;
+  animation: mr-mana-float 1.2s ease-out forwards;
+}
+@keyframes mr-mana-float { 0% { opacity: 0; transform: translateY(20px) scale(.6); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-90px) scale(1); } }
 
 .mr-summon {
   position: absolute; left: 320px; top: 1176px; width: 360px; height: 168px; padding: 0;
@@ -110,12 +119,42 @@
 .mr-summon .cost svg { width: 34px; height: 40px; }
 .mr-summon.off { background: linear-gradient(#b9b4c8, #8c86a0); box-shadow: 0 12px 0 #1d1733, inset 0 6px 0 rgba(255,255,255,.35); }
 .mr-summon.off .cost { color: #ffd0d0; }
-.mr-summon.ready { animation: mr-ready 1.6s ease-in-out infinite; }
-@keyframes mr-ready { 50% { filter: brightness(1.12); } }
-.mr-extra { position: absolute; right: 40px; top: 1208px; width: 270px; height: 100px; display: flex; align-items: center; justify-content: flex-end; }
-.mr-board-count { font-family: var(--body); font-weight: 900; font-size: 32px; background: rgba(20,14,40,.5); border-radius: 30px; padding: 10px 22px; }
+.mr-extra {
+  position: absolute; right: 30px; top: 1170px; width: 280px; height: 180px; display: flex; flex-direction: column;
+  align-items: flex-end; justify-content: center; gap: 10px;
+}
+/* « Mana + » : rendement du mana (+20 % par niveau, 5 niveaux). */
+.mr-manaup {
+  position: relative; width: 250px; height: 112px; padding: 0 0 0 12px; border-radius: 30px; border: 6px solid var(--ink); color: #fff; cursor: pointer;
+  background: linear-gradient(#7fd2ff, #2f7fd6); box-shadow: 0 9px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.45);
+  display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; align-items: center; justify-content: center; column-gap: 10px;
+}
+.mr-manaup .t { grid-column: 1 / 3; font-size: 40px; line-height: 1; }
+.mr-manaup .lv { font-family: var(--body); font-weight: 900; font-size: 26px; color: #d8f2ff; }
+.mr-manaup .cost { display: flex; align-items: center; gap: 2px; font-size: 32px; }
+.mr-manaup .cost svg { width: 24px; height: 30px; }
+.mr-manaup:active:not(.off) { transform: translateY(7px); box-shadow: 0 2px 0 #1d1733; }
+.mr-manaup.off { filter: saturate(.3) brightness(.8); }
+.mr-manaup.max .cost { color: #ffe27a; }
+.mr-manaup.flash { animation: mr-cardflash .5s; }
+.mr-card .pct {
+  position: absolute; right: 6px; top: 8px; font-family: var(--body); font-weight: 900; font-size: 24px; color: #8dff9a;
+}
+/* Libellé d'amélioration et récompense de boss. */
+.mr-float-label {
+  position: absolute; left: 50%; top: 1110px; transform: translateX(-50%); max-width: 940px; text-align: center;
+  font-size: 36px; color: #8dff9a; pointer-events: none; animation: mr-float-label 1.7s ease-out forwards; z-index: 6;
+}
+@keyframes mr-float-label { 0% { opacity: 0; transform: translate(-50%, 20px); } 12% { opacity: 1; transform: translate(-50%, 0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px); } }
+.mr-boss-mana {
+  position: absolute; left: 0; right: 0; top: 520px; display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 110px; color: #bfe8ff; pointer-events: none; z-index: 6; animation: mr-boss-mana 2.2s ease-out forwards;
+}
+.mr-boss-mana svg { width: 90px; height: 108px; }
+@keyframes mr-boss-mana { 0% { opacity: 0; transform: scale(.3); } 12% { opacity: 1; transform: scale(1.2); } 22% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-80px); } }
+.mr-board-count { font-family: var(--body); font-weight: 900; font-size: 28px; background: rgba(20,14,40,.5); border-radius: 30px; padding: 6px 20px; }
 
-.mr-cards { position: absolute; left: 30px; right: 30px; top: 1378px; height: 200px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.mr-cards { position: absolute; left: 30px; right: 30px; top: 1372px; height: 200px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .mr-card {
   position: relative; height: 200px; padding: 0; border-radius: 26px; border: 6px solid var(--ink); cursor: pointer;
   background: linear-gradient(#5d7fd8, #2d3f8a); box-shadow: 0 9px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.3);
@@ -153,6 +192,18 @@
 .mr-info .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .mr-info .meta span { background: #ece6f8; border-radius: 14px; padding: 4px 12px; font-size: 24px; font-weight: 800; }
 @keyframes mr-pop { from { transform: scale(.8); opacity: 0; } }
+.mr-info .meta span.rng { background: #fff0b8; }
+.mr-info .meta span.grow { background: #ffd6dc; }
+.mr-info p.arch { color: #7a3fc8; font-size: 26px; }
+.mr-info p.next { color: #2f8a3c; font-size: 24px; }
+
+/* ---------- zone de touche (appui long) ---------- */
+.mr-range-tag {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); white-space: nowrap;
+  padding: 10px 28px; border-radius: 40px; background: rgba(29, 23, 51, .82); border: 5px solid #ffe680;
+  font-size: 40px; color: #ffe680; display: none; pointer-events: none; z-index: 4;
+}
+.mr-range-tag.on { display: block; animation: mr-pop .15s ease-out; }
 
 /* ---------- annonce de boss ---------- */
 .mr-announce {
@@ -162,7 +213,7 @@
 .mr-announce.on { display: grid; animation: mr-ann 2.4s ease-in-out forwards; }
 .mr-announce .box { text-align: center; transform-origin: 50% 40%; animation: mr-ann-box 2.4s ease-out forwards; }
 .mr-announce { font-family: var(--display); color: #fff; }
-.mr-announce .tag { font-size: 64px; line-height: 1; color: #ffe27a; letter-spacing: 2px; }
+.mr-announce .tag { white-space: nowrap; font-size: min(64px, 15vw); line-height: 1; color: #ffe27a; letter-spacing: 2px; }
 .mr-announce img { width: 270px; max-width: 72vw; display: block; margin: -6px auto -10px; filter: drop-shadow(0 8px 0 rgba(0,0,0,.35)); }
 .mr-announce .name { font-size: 38px; line-height: 1; }
 .mr-announce .sub { font-family: var(--body); font-weight: 800; font-size: 16px; margin-top: 8px; color: #ffd8d0; padding: 0 24px; }

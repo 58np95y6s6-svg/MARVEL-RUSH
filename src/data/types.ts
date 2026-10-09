@@ -37,11 +37,11 @@ export interface UnitDef {
   damage: number;          // dégâts de base au rang 1, niveau 1
   attackInterval: number;  // secondes entre deux attaques
   /**
-   * Portée d'attaque (§4.1 « Portées d'attaque ») : distance en cases entre le centre de la case de
-   * l'unité et l'ennemi, ou 'globale' (tout le chemin). Absent = globale. Plus la portée est courte,
-   * plus les dégâts sont élevés (longue ≈ 3,4, moyenne ≈ 2,4, courte ≈ 1,6).
+   * Portée d'attaque (§4.1 bis) : 'globale' = tout le chemin, sinon un rayon en cases mesuré depuis le
+   * centre de la case de l'unité jusqu'à l'ennemi (coordonnées de grille). Repères : courte 1.6,
+   * moyenne 2.4, longue 3.4.
    */
-  range?: number | 'globale';
+  range?: number | 'globale'; // absent = 'globale'
   ability: {
     name: string;          // ex. « Uni-Beam »
     description: string;   // texte affiché

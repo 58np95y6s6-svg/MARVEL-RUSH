@@ -20,7 +20,7 @@ Règles :
 | Étape | État | Agents |
 |---|---|---|
 | 0. Contrats et mise en ligne | Fait | Chef de projet |
-| 1. Moteur et Solo | En cours | Moteur, Game design, Direction artistique, Rendu |
+| 1. Moteur et Solo | Fait : combat Solo jouable sur les Toits de New York | Moteur, Game design, Direction artistique, Maps, Rendu |
 | 2. Toutes les unités, boss et maps | À faire | |
 | 3. Profils, sauvegarde, tutoriel, campagne | À faire | |
 | 4. Méta-jeu | À faire | |
@@ -37,7 +37,7 @@ Règles :
 
 ## Publications programmées
 
-Tâches automatiques créées à la demande du joueur. Chacune s'ouvre dans une nouvelle session cloud à minuit (heure de Paris). Elle fusionne la branche de l'extension dans `main`, vérifie les tests et le build, puis pousse, ce qui déclenche la mise en ligne. **Elle ne publie que si la ligne ci-dessous indique « prête à publier ».**
+Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris), chacune **réveille la session cloud du chef de projet**, qui a le droit de pousser sur le dépôt. Un test à blanc du 09/10 a montré qu'une session neuve créée par une tâche programmée ne peut pas pousser (erreur 403). Elle fusionne la branche de l'extension dans `main`, vérifie les tests et le build, puis pousse, ce qui déclenche la mise en ligne. **Elle ne publie que si la ligne ci-dessous indique « prête à publier ».**
 
 | Date (minuit, Paris) | Extension | Branche | État |
 |---|---|---|---|

@@ -2,20 +2,25 @@
 // Le moteur avance à pas fixe (20 ticks/s) ; la scène dessine à la fréquence de l'écran et interpole
 // la position des ennemis entre deux ticks. Coordonnées : écran logique 1000 × 1600 (src/maps/layout.ts),
 // mis à l'échelle et centré dans les zones sûres de l'écran.
-import { Application, BitmapText, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { dropAction, formationPartners } from '../engine';
+import { rankShape, tokenColor } from '../art';
+import { Application, BitmapText, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance } from '../engine';
 import { GRID_SIZE } from '../engine';
 import type { BossId, UnitId } from '../data/types';
 import type { MapDefX } from '../maps/kit';
-import { SCREEN, layoutFor, type SoloLayout } from '../maps/layout';
+import { SCREEN, layoutFor, type PathShape, type SoloLayout } from '../maps/layout';
+import { arenaForBoss } from '../maps';
 import type { AmbientAnim } from '../maps/kit';
 import { loadTexture } from '../art';
 import { UNITS } from '../data/units';
+import { boardGeometry, coveredSpans, unitRange, type BoardGeometry } from '../engine/geometry';
 import { LaneSampler } from './path';
 import {
   DMG_FONT, Numbers, Particles, Shots, formatDamage, installDamageFont, makeFxTextures, type FxTextures,
 } from './fx';
-import { fxSpec, UNIT_FX_COLOR } from './fxTable';
+// --- effets de combat (agent VFX) : signatures par unité, états, pouvoirs de boss
+import { CombatFx } from './fx/director';
 import {
   SIZES, bossTex, enemyTex, enemyWidth, loadLayer, minionTex, preloadBattle, preloadBoss, setRasterScale, tokenTex, type Pose,
 } from './textures';
@@ -23,6 +28,7 @@ import {
 const INK = 0x1d1733;
 const DT = 1 / 20;
 
+/** Mise à l'échelle de l'écran logique. `extTop`/`extBottom` : marge libre (px logiques) entre l'écran logique et les zones sûres. */
 export interface Fit { scale: number; x: number; y: number; width: number; height: number; extTop: number; extBottom: number }
 
 export interface SceneOptions {
@@ -94,10 +100,12 @@ export class BattleScene {
   private safe: () => [number, number, number, number];
 
   private world = new Container();
-  private ext = new Graphics();
-  private mapLayer = new Container();
-  private animLayer = new Container();
-  private pathLayer = new Container();
+  private sceneryLayer = new Container();
+  private arena: Container | null = null;
+  private arenaBoss: BossId | null = null;
+  private arenaFade = 0; // 1 : apparition, −1 : disparition
+  private tintOverlay = new Sprite(Texture.WHITE);
+  private tintTarget = 0;
   private boardFx = new Container();
   private unitLayer = new Container();
   private enemyLayer = new Container();
@@ -111,6 +119,7 @@ export class BattleScene {
   private parts!: Particles;
   private shots!: Shots;
   private numbers!: Numbers;
+  private vfx!: CombatFx; // effets de combat (src/render/fx/)
 
   private lanes = new Map<LaneId, LaneSampler>();
   private units: (UnitView | null)[] = Array.from({ length: GRID_SIZE }, () => null);
@@ -125,6 +134,16 @@ export class BattleScene {
   private flashT = 0;
   private flashMax = 0;
   private dragFrom = -1;
+  // Zone de touche (§4.1, « Portées d'attaque ») : disque doux limité à l'aire de jeu + chemin couvert surligné.
+  private geo: BoardGeometry;
+  private rangeLayer = new Container();
+  private rangeDisc = new Graphics();
+  private rangeMask = new Graphics();
+  private rangePath = new Graphics();
+  private rangeKey = '';
+  private rangeT = 0;
+  /** Case tenue par un appui long (zone + unités fusionnables surlignées), ou −1. */
+  private holdSlot = -1;
   private destroyed = false;
   private onResize = () => this.resize();
   private ro?: ResizeObserver;
@@ -136,6 +155,7 @@ export class BattleScene {
     this.safe = o.safe ?? (() => [0, 0, 0, 0]);
     this.layout = layoutFor('solo', o.map.shape) as SoloLayout;
     this.lanes.set('a', new LaneSampler(this.layout.lane));
+    this.geo = boardGeometry('solo', o.map.shape);
   }
 
   static async create(host: HTMLElement, o: SceneOptions): Promise<BattleScene> {
@@ -171,13 +191,18 @@ export class BattleScene {
 
     const stage = this.app.stage;
     stage.addChild(this.world);
-    this.world.addChild(this.ext, this.mapLayer, this.animLayer, this.pathLayer, this.boardFx, this.enemyLayer, this.unitLayer, this.shotLayer, this.partLayer, this.numLayer);
+    this.world.addChild(this.sceneryLayer, this.tintOverlay, this.boardFx, this.rangeLayer, this.enemyLayer, this.unitLayer, this.shotLayer, this.partLayer, this.numLayer);
+    this.initRange();
     stage.addChild(this.flashLayer);
     this.flashLayer.addChild(this.flash);
     this.flash.alpha = 0;
+    this.flash.visible = false;
     this.enemyLayer.sortableChildren = true;
     this.unitLayer.sortableChildren = true;
-    this.drawExtension();
+    this.tintOverlay.position.set(-3000, -4000);
+    this.tintOverlay.width = 7000;
+    this.tintOverlay.height = 9600;
+    this.tintOverlay.alpha = 0;
 
     try { await document.fonts.load('64px "Lilita One"'); } catch { /* police de repli */ }
     installDamageFont();
@@ -190,6 +215,14 @@ export class BattleScene {
       return true;
     });
     this.numbers = new Numbers(this.numLayer);
+    // --- effets de combat (agent VFX)
+    this.vfx = new CombatFx(this.app.renderer, { ground: this.boardFx, shots: this.shotLayer, top: this.partLayer }, {
+      cell: (slot) => this.cellCenter(slot),
+      enemy: (uid) => this.enemies.get(uid),
+      enemies: () => this.enemies.values(),
+      shake: (amp, dur) => this.shake(amp, dur),
+      flash: (alpha, dur, color) => this.screenFlash(alpha, dur, color),
+    });
 
     for (let i = 0; i < 15; i++) {
       const r = new Sprite(this.tex.ring);
@@ -209,47 +242,124 @@ export class BattleScene {
     this.syncUnits(true);
   }
 
-  private drawExtension(): void {
-    // Prolonge le ciel et le sol au-delà de l'écran logique (téléphones plus allongés que 10:16).
-    const p = this.map.palette;
-    const g = this.ext;
-    g.clear();
-    g.rect(-3000, -4000, 7000, 4000 + 1).fill(p['sky1'] ?? '#4b3f7e');
-    g.rect(-3000, SCREEN.h - 1, 7000, 4000).fill(p['ground2'] ?? p['ground'] ?? '#54496a');
-    g.rect(-3000, 0, 3000, SCREEN.h).fill(p['ground'] ?? '#5f5374');
-    g.rect(SCREEN.w, 0, 3000, SCREEN.h).fill(p['ground'] ?? '#5f5374');
+  /** Couleur moyenne d'une bande de la texture de fond (fractions de la largeur et de la hauteur). */
+  private sample(t: Texture, x0: number, y0: number, x1: number, y1: number): number | undefined {
+    const res = t.source.resource as unknown;
+    if (!(res instanceof HTMLCanvasElement)) return undefined;
+    try {
+      // Réduit la bande à 8 × 1 px sur un petit canevas, puis moyenne.
+      const c = document.createElement('canvas');
+      c.width = 8; c.height = 1;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      if (!g) return undefined;
+      const W = res.width, H = res.height;
+      g.drawImage(res, x0 * W, y0 * H, Math.max(1, (x1 - x0) * W), Math.max(1, (y1 - y0) * H), 0, 0, 8, 1);
+      const d = g.getImageData(0, 0, 8, 1).data;
+      let r = 0, gg = 0, b = 0;
+      for (let i = 0; i < 32; i += 4) { r += d[i]!; gg += d[i + 1]!; b += d[i + 2]!; }
+      return (Math.round(r / 8) << 16) | (Math.round(gg / 8) << 8) | Math.round(b / 8);
+    } catch { return undefined; }
   }
 
-  private async loadMap(): Promise<void> {
-    const m = this.map;
+  /**
+   * Décor complet d'une map (ou d'une arène) avec le tracé de la map en cours : prolongement des bords,
+   * fond, décor latéral, animations d'ambiance, chemin et plateau.
+   */
+  private async buildScenery(m: MapDefX, shape: PathShape): Promise<Container> {
+    const box = new Container();
+    const ext = new Graphics();
+    box.addChild(ext);
     const ids: ('fond' | 'decor' | 'chemin')[] = ['fond', 'decor', 'chemin'];
     const texs = await Promise.all(ids.map((id) => {
       const layer = m.layers.find((l) => l.id === id);
-      return layer ? loadLayer(`${m.id}-${id}`, () => layer.svg('solo', m.shape)) : Promise.resolve(null);
+      return layer ? loadLayer(`${m.id}-${shape}-${id}`, () => layer.svg('solo', shape)) : Promise.resolve(null);
     }));
-    ids.forEach((id, i) => {
-      const t = texs[i];
-      if (!t) return;
-      const s = new Sprite(t);
-      s.width = SCREEN.w;
-      s.height = SCREEN.h;
-      (id === 'chemin' ? this.pathLayer : this.mapLayer).addChild(s);
-    });
-    // Animations d'ambiance (taxis, nuages, balises…), chacune dans son sprite.
-    const list = m.anims('solo', m.shape);
+    const list = m.anims('solo', shape);
     const loaded = await Promise.all(list.map((a) => loadTexture(a.svg, Math.max(8, a.box.w * this.fit.scale), Math.min(2, window.devicePixelRatio || 1)).catch(() => null)));
+    // Les trois couches fixes (fond, décor, chemin et plateau) sont cuites en une seule texture à la
+    // taille de l'écran : un seul quad plein écran au lieu de trois (mémoire et remplissage du GPU).
+    const flat = new Container();
+    for (const t of texs) {
+      if (!t) continue;
+      const sp = new Sprite(t);
+      sp.width = SCREEN.w;
+      sp.height = SCREEN.h;
+      flat.addChild(sp);
+    }
+    const baked = this.app.renderer.generateTexture({
+      target: flat, frame: new Rectangle(0, 0, SCREEN.w, SCREEN.h),
+      resolution: Math.min(3, this.fit.scale * this.app.renderer.resolution),
+    });
+    flat.destroy({ children: true });
+    const bg = new Sprite(baked);
+    bg.width = SCREEN.w;
+    bg.height = SCREEN.h;
+    bg.label = 'baked';
+    box.addChild(bg);
+    // Animations d'ambiance (elles ne passent jamais sur le chemin ni sur la grille).
     list.forEach((a, i) => {
       const t = loaded[i];
       if (!t) return;
-      const s = new Sprite(t);
+      const sp = new Sprite(t);
       const ox = a.ox ?? a.box.x + a.box.w / 2, oy = a.oy ?? a.box.y + a.box.h / 2;
-      s.anchor.set((ox - a.box.x) / a.box.w, (oy - a.box.y) / a.box.h);
-      s.width = a.box.w;
-      s.height = a.box.h;
-      s.position.set(ox, oy);
-      this.animLayer.addChild(s);
-      this.anims.push({ a, s });
+      sp.anchor.set((ox - a.box.x) / a.box.w, (oy - a.box.y) / a.box.h);
+      sp.width = a.box.w;
+      sp.height = a.box.h;
+      sp.position.set(ox, oy);
+      box.addChild(sp);
+      this.anims.push({ a, s: sp });
     });
+    // Prolonge le décor au-delà de l'écran logique (téléphones plus allongés que 10:16)
+    // avec les couleurs des bords de la couche de fond.
+    const p = m.palette;
+    const fond = texs[0];
+    const top = fond ? this.sample(fond, 0, 0, 1, 0.004) : undefined;
+    const bottom = fond ? this.sample(fond, 0, 0.996, 1, 1) : undefined;
+    const left = fond ? this.sample(fond, 0, 0.3, 0.004, 0.9) : undefined;
+    const right = fond ? this.sample(fond, 0.996, 0.3, 1, 0.9) : undefined;
+    ext.rect(-3000, -4000, 7000, 4000 + 2).fill(top ?? p['sky1'] ?? '#4b3f7e');
+    ext.rect(-3000, SCREEN.h - 2, 7000, 4000).fill(bottom ?? p['ground'] ?? '#54496a');
+    ext.rect(-3000, 0, 3002, SCREEN.h).fill(left ?? p['ground'] ?? '#5f5374');
+    ext.rect(SCREEN.w - 2, 0, 3002, SCREEN.h).fill(right ?? p['ground'] ?? '#5f5374');
+    return box;
+  }
+
+  private async loadMap(): Promise<void> {
+    const box = await this.buildScenery(this.map, this.map.shape);
+    this.sceneryLayer.addChild(box);
+  }
+
+  /** Arrivée d'un gros boss : la map se transforme en son arène (fondu de 1 s, même tracé). */
+  private async enterArena(boss: BossId): Promise<void> {
+    const arena = arenaForBoss(boss);
+    if (!arena || this.arenaBoss === boss) return;
+    this.arenaBoss = boss;
+    const box = await this.buildScenery(arena, this.map.shape);
+    if (this.destroyed || this.arenaBoss !== boss) { this.dropScenery(box); return; }
+    if (this.arena) this.dropScenery(this.arena);
+    this.arena = box;
+    box.alpha = 0;
+    this.sceneryLayer.addChild(box);
+    this.arenaFade = 1;
+    const fx = arena.bossFx;
+    this.tintOverlay.tint = fx?.tint ? Number.parseInt(fx.tint.replace('#', ''), 16) : 0x000000;
+    this.tintTarget = fx?.tint ? (fx.tintAlpha ?? 0.15) : 0;
+  }
+
+  private dropScenery(box: Container): void {
+    // Les sprites d'ambiance du décor quittent la liste d'animation avant d'être détruits.
+    this.anims = this.anims.filter((x) => x.s.parent !== box);
+    const baked = box.children.find((c) => c.label === 'baked') as Sprite | undefined;
+    baked?.texture.destroy(true);
+    box.destroy({ children: true });
+  }
+
+  /** Mort du boss : retour à la map de départ. */
+  private leaveArena(): void {
+    if (!this.arenaBoss) return;
+    this.arenaBoss = null;
+    this.arenaFade = -1;
+    this.tintTarget = 0;
   }
 
   // ---------------------------------------------------------------- mise à l'échelle
@@ -262,9 +372,11 @@ export class BattleScene {
     const w = SCREEN.w * scale, h = SCREEN.h * scale;
     const x = sl + (aw - w) / 2;
     // Écran plus allongé que 10:16 : on garde un peu plus d'espace en haut (barre d'état, encoche).
+    // Écran plus allongé que 10:16 : la barre du haut et les commandes se collent aux bords (zones sûres
+    // comprises), le plateau descend un peu pour rester près des commandes.
     const spare = ah - h;
-    const y = st + spare * 0.5;
-    this.fit = { scale, x, y, width: w, height: h, extTop: (y) / scale, extBottom: (H - y - h) / scale };
+    const y = st + spare * 0.62;
+    this.fit = { scale, x, y, width: w, height: h, extTop: (y - st) / scale, extBottom: (spare - (y - st)) / scale };
   }
 
   resize(): void {
@@ -324,7 +436,8 @@ export class BattleScene {
     sprite.position.set(0, -SIZES.token * 0.42);
     pips.position.set(-100 * k, -SIZES.token * 0.42 - 100 * k);
     pips.scale.set(k);
-    body.addChild(sprite, pips);
+    // La plaque de rang (forme = niveau de fusion) passe derrière le portrait.
+    body.addChild(pips, sprite);
     root.addChild(glow, body, status);
     this.unitLayer.addChild(root);
     return {
@@ -333,18 +446,32 @@ export class BattleScene {
     };
   }
 
+  /**
+   * Plaque de rang façon Rush Royale : le nombre d'angles = le niveau de fusion
+   * (1 rond, 2 amande, 3 triangle… 7 heptagone). Après une fusion, la forme gagne ses angles un à un.
+   */
   private drawPips(v: UnitView, n: number): void {
     const g = v.pips;
     g.clear();
     if (n <= 0) return;
-    const gap = 17, w = v.rank * gap + 12, x0 = 100 - w / 2;
-    const rc = 0xffffff;
-    g.roundRect(x0, 166, w, 26, 13).fill(INK).stroke({ color: rarityColor(v.unit), width: 3 });
-    for (let i = 0; i < n; i++) {
-      const cx = x0 + 6 + gap / 2 + i * gap;
-      g.circle(cx, 179, 6.2).fill(0xfff4c2).stroke({ color: rarityColor(v.unit), width: 2.4 });
-      g.circle(cx - 1.8, 177.2, 1.8).fill(rc);
-    }
+    const rc = rarityColor(v.unit);
+    const col = tokenColor(v.unit);
+    const path = (scale: number) => {
+      const sh = rankShape(n, 100, 100, 96 * scale);
+      if (sh.kind === 'circle') g.circle(sh.cx, sh.cy, sh.r);
+      else if (sh.kind === 'lens') {
+        g.moveTo(sh.cx - sh.r, sh.cy)
+          .quadraticCurveTo(sh.cx, sh.cy - sh.bulge, sh.cx + sh.r, sh.cy)
+          .quadraticCurveTo(sh.cx, sh.cy + sh.bulge, sh.cx - sh.r, sh.cy)
+          .closePath();
+      } else g.poly(sh.points.flat(), true);
+    };
+    // Plaque à la couleur du personnage, contour d'encre, liseré intérieur de rareté, reflet.
+    path(1);
+    g.fill(col).stroke({ color: INK, width: 7, join: 'round' });
+    path(0.9);
+    g.stroke({ color: rc, width: 4, join: 'round' });
+    g.ellipse(100, 34, 36, 10).fill({ color: 0xffffff, alpha: 0.3 });
     v.pipsShown = n;
   }
 
@@ -555,22 +682,15 @@ export class BattleScene {
       case 'attack': {
         if (ev.player !== this.player) break;
         const v = this.units[ev.slot];
-        if (v) v.attackT = 0;
-        this.attackFx(ev.slot, ev.unit, ev.fx, ev.targets);
+        if (v && (v.attackT < 0 || v.attackT > 0.19)) v.attackT = 0;
+        this.vfx.attack(ev.slot, ev.unit, ev.fx, ev.targets);
         break;
       }
       case 'ability': {
         if (ev.player !== this.player) break;
         const v = this.units[ev.slot];
-        if (v) { v.attackT = 0; v.flashT = 0; }
-        const c = this.cellCenter(ev.slot);
-        const col = UNIT_FX_COLOR[ev.unit] ?? 0xffffff;
-        this.shots.ring(c.x, c.y, col, 120, 0.5);
-        this.numbers.show(ev.name, c.x, c.y - 60, { color: col, size: 30, life: 1.1 });
-        for (const t of ev.targets) {
-          const e = this.enemies.get(t);
-          if (e) this.shots.ring(e.x, e.y - 30, col, 70, 0.35);
-        }
+        if (v && v.attackT < 0) v.attackT = 0;
+        this.vfx.ability(ev.slot, ev.unit, ev.name, ev.targets);
         break;
       }
       case 'hit': {
@@ -580,8 +700,8 @@ export class BattleScene {
         if (ev.damage <= 0) {
           this.numbers.show('Bloqué', v.x, v.y - v.width * 0.8, { color: 0x9fd8ff, size: 26, life: 0.6 });
         } else if (ev.crit) {
-          this.numbers.show(formatDamage(ev.damage) + '!', v.x, v.y - v.width * 0.8, { color: 0xffd23a, size: 62, life: 1 });
-          this.parts.burst(this.tex.star, v.x, v.y - v.width * 0.4, 5, 0xffb03a, 320, 0.35, 0.5);
+          this.numbers.show(formatDamage(ev.damage) + '!', v.x, v.y - v.width * 0.8, { color: 0xffd23a, size: 62, life: 1, crit: true });
+          this.vfx.crit(v.x, v.y - v.width * 0.4);
         } else {
           v.dmgAcc += ev.damage;
         }
@@ -598,17 +718,17 @@ export class BattleScene {
         break;
       }
       case 'bossSpawn':
+        this.shake(16, 0.9);
+        preloadBoss(ev.boss);
+        void this.enterArena(ev.boss);
+        break;
       case 'miniBossSpawn':
         this.shake(16, 0.9);
         preloadBoss(ev.boss);
         break;
       case 'bossPower': {
         for (const v of this.enemies.values()) if (v.kind === 'boss' || v.kind === 'giant') v.powerT = 0;
-        if (ev.player === this.player) for (const s of ev.slots) {
-          const c = this.cellCenter(s);
-          this.shots.ring(c.x, c.y, 0xc0263a, 100, 0.5);
-          this.parts.burst(this.tex.spark, c.x, c.y, 10, 0xff5a7a, 340, 0.5, 0.6);
-        }
+        if (ev.player === this.player) this.vfx.bossPower(ev.boss, ev.slots, ev.name);
         this.shake(6, 0.3);
         break;
       }
@@ -621,65 +741,12 @@ export class BattleScene {
         break;
       }
       case 'waveStart':
+        this.leaveArena();
         if (this.engine.state.upcomingBoss) preloadBoss(this.engine.state.upcomingBoss.boss);
         break;
       default:
         break;
     }
-  }
-
-  private attackFx(slot: number, unit: UnitId, fx: string, targets: number[]): void {
-    const spec = fxSpec(fx, unit);
-    const c = this.cellCenter(slot);
-    const x0 = c.x, y0 = c.y - 20;
-    const first = targets.length ? this.enemies.get(targets[0]!) : undefined;
-    if (spec.shake) this.shake(spec.shake, 0.18);
-    if (spec.beam && targets.length) {
-      // Rayon vers la cible la plus éloignée de l'unité.
-      let far = first, best = -1;
-      for (const t of targets) {
-        const e = this.enemies.get(t);
-        if (!e) continue;
-        const d = Math.hypot(e.x - x0, e.y - y0);
-        if (d > best) { best = d; far = e; }
-      }
-      if (far) {
-        const dx = far.x - x0, dy = far.y - 30 - y0, L = Math.hypot(dx, dy) || 1;
-        const x1 = x0 + (dx / L) * (L + 200), y1 = y0 + (dy / L) * (L + 200);
-        this.shots.beam(x0, y0, x1, y1, spec.color, spec.beam, 0.3);
-        this.shots.beam(x0, y0, x1, y1, 0xffffff, spec.beam * 0.35, 0.3);
-      }
-      for (const t of targets) { const e = this.enemies.get(t); if (e) this.parts.burst(this.tex.spark, e.x, e.y - 30, 4, spec.color, 240, 0.3, 0.5); }
-      return;
-    }
-    if (spec.chain) {
-      let px = x0, py = y0;
-      for (const t of targets) {
-        const e = this.enemies.get(t);
-        if (!e) continue;
-        const ey = e.y - e.width * 0.35;
-        if (spec.style === 'orb' || spec.style === 'arrow') {
-          if (px === x0 && py === y0) this.shots.fire(spec.style, px, py, t, spec.color, spec.size ?? 1);
-          else this.shots.bolt(px, py, e.x, ey, spec.color, 6);
-        } else {
-          this.shots.bolt(px, py, e.x, ey, spec.color, 9);
-        }
-        px = e.x; py = ey;
-      }
-      return;
-    }
-    if (spec.all) {
-      for (const t of targets) this.shots.fire(spec.style, x0, y0, t, spec.color, spec.size ?? 1);
-    } else if (targets.length) {
-      this.shots.fire(spec.style, x0, y0, targets[0]!, spec.color, spec.size ?? 1);
-      for (let i = 1; i < targets.length; i++) {
-        const e = this.enemies.get(targets[i]!);
-        if (e) this.parts.burst(this.tex.spark, e.x, e.y - 30, 4, spec.color, 220, 0.3, 0.45);
-      }
-    }
-    if (spec.ring && first) this.shots.ring(first.x, first.y - first.width * 0.3, spec.color, spec.ring, 0.35);
-    // Éclair de tir au départ.
-    this.parts.emit(this.tex.dot, x0, y0, { color: spec.color, life: 0.15, s0: 1.2, s1: 2 });
   }
 
   private flushDamage(v: EnemyView): void {
@@ -709,33 +776,138 @@ export class BattleScene {
     const v = this.units[slot];
     const u = this.me.grid[slot];
     if (!v || !u) return false;
+    this.hideHold();
     this.dragFrom = slot;
     v.dragging = true;
     v.returnT = -1;
     v.root.zIndex = 100;
     v.glow.visible = true;
     v.glow.tint = 0xffffff;
+    this.markTargets(slot);
+    return true;
+  }
+
+  /** Illumine les unités fusionnables avec celle de `slot` (même unité, même rang), assombrit les autres. */
+  private markTargets(slot: number, formation = false): void {
+    const u = this.me.grid[slot];
+    this.clearTargets();
+    if (!u) return;
+    // Appui long : les partenaires de formation (Loki alignés) s'illuminent aussi.
+    const partners = formation ? formationPartners(this.me.grid, slot) : [];
     let k = 0;
     for (let i = 0; i < GRID_SIZE; i++) {
       const w = this.units[i];
       const o = this.me.grid[i];
       if (!w || !o || i === slot) continue;
-      const ok = o.unit === u.unit && o.rank === u.rank && u.rank < 7;
-      w.dim = !ok;
+      // Fusion, copie (Loki), promotion (Coco), échange (Vanellope) : même règle que le moteur.
+      const ok = dropAction(u, o) !== null;
+      const lit = ok || partners.includes(i);
+      w.dim = !lit;
       w.target = ok;
-      if (ok) {
+      if (lit) {
         const r = this.targetRings[k++]!;
         r.visible = true;
         r.position.set(w.rx, w.ry);
       }
     }
-    return true;
+  }
+
+  private clearTargets(): void {
+    for (const w of this.units) if (w) { w.dim = false; w.target = false; }
+    for (const r of this.targetRings) r.visible = false;
   }
 
   moveDrag(x: number, y: number): void {
     const v = this.dragFrom >= 0 ? this.units[this.dragFrom] : null;
     if (!v) return;
     v.root.position.set(x, y - 30);
+    // Zone qu'aurait l'unité glissée sur la case compatible survolée.
+    const over = this.slotAt(x, y);
+    if (over >= 0 && over !== this.dragFrom && this.isTarget(over)) this.showRange(over, v.shown);
+    else this.hideRange();
+  }
+
+  // ---------------------------------------------------------------- portée et appui long
+
+  private initRange(): void {
+    const L = this.layout, g = L.board.grid, half = L.lane.width / 2;
+    // Aire de jeu : la grille et la bande du chemin qui l'entoure.
+    let x0 = g.x, y0 = g.y, x1 = g.x + g.w, y1 = g.y + g.h;
+    for (const p of L.lane.points) {
+      x0 = Math.min(x0, p.x - half); y0 = Math.min(y0, p.y - half);
+      x1 = Math.max(x1, p.x + half); y1 = Math.max(y1, p.y + half);
+    }
+    this.rangeMask.roundRect(x0, y0, x1 - x0, y1 - y0, 40).fill({ color: 0xffffff });
+    this.rangeDisc.mask = this.rangeMask;
+    this.rangeLayer.addChild(this.rangeDisc, this.rangeMask, this.rangePath);
+    this.rangeLayer.visible = false;
+  }
+
+  /** Affiche la zone de touche qu'a (ou aurait) l'unité `unit` posée sur `slot`. */
+  showRange(slot: number, unit: UnitId): void {
+    const key = `${slot}:${unit}`;
+    if (key === this.rangeKey && this.rangeLayer.visible) return;
+    this.rangeKey = key;
+    const range = unitRange(unit);
+    const lane = this.layout.lane, cell = this.layout.board.cell;
+    const color = 0xffe680;
+    const d = this.rangeDisc, p = this.rangePath;
+    d.clear();
+    p.clear();
+    if (Number.isFinite(range)) {
+      const c = this.cellCenter(slot), R = range * cell;
+      // Disque doux : anneaux empilés, plus denses vers le centre, et un bord net.
+      for (let i = 0; i < 5; i++) d.circle(c.x, c.y, R * (1 - i * 0.16)).fill({ color, alpha: 0.09 });
+      d.circle(c.x, c.y, R).stroke({ width: 5, color, alpha: 0.8 });
+    }
+    // Parties du chemin couvertes, échantillonnées comme le moteur (src/engine/geometry.ts).
+    const spans = coveredSpans(this.geo, 0, 'a', slot, range);
+    const s = this.lanes.get('a')!;
+    const passes: [number, number, number][] = [[lane.width * 1.1, color, 0.22], [lane.width * 0.55, color, 0.35], [9, 0xfffbe0, 0.95]];
+    for (const [width, col, alpha] of passes) {
+      for (const [a, b] of spans) {
+        const n = Math.max(2, Math.ceil((b - a) * lane.cells * 6));
+        for (let i = 0; i <= n; i++) {
+          s.at((a + ((b - a) * i) / n) * lane.cells);
+          if (i === 0) p.moveTo(s.x, s.y); else p.lineTo(s.x, s.y);
+        }
+        p.stroke({ width, color: col, alpha, cap: 'round', join: 'round' });
+      }
+    }
+    this.rangeLayer.visible = true;
+    this.rangeLayer.alpha = 0;
+    this.rangeT = 0;
+  }
+
+  hideRange(): void {
+    this.rangeKey = '';
+    this.rangeLayer.visible = false;
+  }
+
+  /** Appui long sur une unité : sa zone de touche et les unités avec lesquelles elle peut fusionner. */
+  showHold(slot: number): boolean {
+    const v = this.units[slot];
+    const u = this.me.grid[slot];
+    if (!v || !u || this.dragFrom >= 0) return false;
+    this.holdSlot = slot;
+    v.glow.visible = true;
+    v.glow.tint = 0xffffff;
+    this.markTargets(slot, true);
+    this.showRange(slot, u.status.transformedInto ?? u.unit);
+    return true;
+  }
+
+  hideHold(): void {
+    if (this.holdSlot < 0) return;
+    const v = this.units[this.holdSlot];
+    if (v && !v.dragging && v.flashT < 0) v.glow.visible = false;
+    this.holdSlot = -1;
+    this.clearTargets();
+    this.hideRange();
+  }
+
+  get holding(): number {
+    return this.holdSlot;
   }
 
   isTarget(slot: number): boolean {
@@ -745,8 +917,8 @@ export class BattleScene {
   /** Fin du glisser : `merged` vrai si une fusion a été demandée (la vue reste sur la cible en attendant le tick). */
   endDrag(dropSlot: number, merged: boolean): void {
     const v = this.dragFrom >= 0 ? this.units[this.dragFrom] : null;
-    for (const w of this.units) if (w) { w.dim = false; w.target = false; }
-    for (const r of this.targetRings) r.visible = false;
+    this.clearTargets();
+    this.hideRange();
     if (v) {
       v.dragging = false;
       v.glow.visible = false;
@@ -771,6 +943,21 @@ export class BattleScene {
     const t = this.time;
     const a = paused ? 1 : Math.min(1, Math.max(0, alpha));
 
+    // Fondu vers l'arène du boss, et retour.
+    if (this.arena && this.arenaFade !== 0) {
+      this.arena.alpha = Math.max(0, Math.min(1, this.arena.alpha + this.arenaFade * dt));
+      if (this.arenaFade < 0 && this.arena.alpha <= 0) {
+        this.dropScenery(this.arena);
+        this.arena = null;
+        this.arenaFade = 0;
+      } else if (this.arenaFade > 0 && this.arena.alpha >= 1) this.arenaFade = 0;
+    }
+    if (this.tintOverlay.alpha !== this.tintTarget) {
+      const d = this.tintTarget - this.tintOverlay.alpha;
+      this.tintOverlay.alpha = Math.abs(d) < 0.01 ? this.tintTarget : this.tintOverlay.alpha + Math.sign(d) * Math.min(Math.abs(d), dt * 0.4);
+    }
+    this.tintOverlay.visible = this.tintOverlay.alpha > 0.005;
+
     // Décor animé.
     for (const { a: an, s } of this.anims) animate(an, s, t);
 
@@ -782,6 +969,15 @@ export class BattleScene {
       this.renderUnit(v, dt, pulse);
     }
     for (const r of this.targetRings) if (r.visible) { r.scale.set(1.45 + 0.12 * pulse); r.alpha = 0.6 + 0.4 * pulse; }
+    if (this.rangeLayer.visible) {
+      this.rangeT += dt;
+      this.rangeLayer.alpha = Math.min(1, this.rangeT / 0.12);
+      this.rangePath.alpha = 0.75 + 0.25 * Math.sin(t * 5);
+    }
+    if (this.holdSlot >= 0) {
+      const h = this.units[this.holdSlot];
+      if (h && h.flashT < 0) { h.glow.visible = true; h.glow.alpha = 0.6 + 0.4 * pulse; }
+    }
 
     // Ennemis (positions interpolées).
     for (const v of this.enemies.values()) {
@@ -793,6 +989,7 @@ export class BattleScene {
     this.shots.update(dt);
     this.parts.update(dt);
     this.numbers.update(dt);
+    this.vfx.update(dt);
 
     // Tremblement d'écran.
     if (this.shakeT > 0) {
@@ -805,7 +1002,8 @@ export class BattleScene {
     if (this.flashT > 0) {
       this.flashT -= dt;
       this.flash.alpha = Math.max(0, this.flashMax * (this.flashT / 0.35));
-    } else if (this.flash.alpha) this.flash.alpha = 0;
+      this.flash.visible = true;
+    } else if (this.flash.visible) { this.flash.alpha = 0; this.flash.visible = false; }
 
     this.app.render();
   }
@@ -816,9 +1014,9 @@ export class BattleScene {
     if (v.attackT >= 0) {
       v.attackT += dt;
       const t = v.attackT;
-      if (t < 0.08) { pose = 1; const k = t / 0.08; sx = 1 + 0.08 * k; sy = 1 - 0.08 * k; }
-      else if (t < 0.22) { pose = 2; const k = (t - 0.08) / 0.14; sx = 1.08 - 0.14 * Math.sin(k * Math.PI) - 0.08 * k; sy = 0.92 + 0.2 * Math.sin(k * Math.PI) + 0.08 * k; }
-      else if (t < 0.3) { const k = (t - 0.22) / 0.08; sx = 1 - 0.0 * k; sy = 1; }
+      if (t < 0.09) { pose = 1; const k = t / 0.09; sx = 1 + 0.08 * k; sy = 1 - 0.08 * k; }
+      else if (t < 0.19) { pose = 2; const k = (t - 0.09) / 0.1; sx = 1.08 - 0.14 * Math.sin(k * Math.PI) - 0.08 * k; sy = 0.92 + 0.2 * Math.sin(k * Math.PI) + 0.08 * k; }
+      else if (t < 0.26) pose = 0;
       else v.attackT = -1;
     }
     const tex = tokenTex(v.shown, pose) ?? tokenTex(v.shown, 0);
@@ -934,6 +1132,7 @@ export class BattleScene {
     this.shots?.clear();
     this.parts?.clear();
     this.numbers?.clear();
+    this.vfx?.clear();
     this.app.destroy({ removeView: true }, { children: true, texture: false, textureSource: false });
   }
 }

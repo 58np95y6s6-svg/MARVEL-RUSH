@@ -26,7 +26,10 @@ export const ENEMIES: Record<EnemyKind, EnemyKindDef> = {
 export const WAVE_RULES = {
   duration: 30,          // secondes de vague
   baseHp: 100,           // PV d'un ennemi normal en vague 1
-  hpGrowth: 1.18,        // PV = baseHp × hpGrowth^(vague-1)
+  hpGrowth: 1.18,        // PV = baseHp × hpGrowth^(vague-1) × earlyHpMul(vague)
+  /** Début de partie plus doux : PV ×earlyHpStart en vague 1, remontant linéairement jusqu'à ×1 en vague earlyHpUntil. */
+  earlyHpStart: 0.7,
+  earlyHpUntil: 12,
   baseSpeed: 2,          // cases par seconde d'un ennemi normal
   /** Rythme des boss (§4.3), remplaçable par GameConfig.bossRhythm. */
   smallBossEvery: 5,     // petit boss (lieutenant) : vagues 5, 15, 25…
@@ -41,6 +44,18 @@ export const WAVE_RULES = {
   spawnIntervalMin: 0.6,
   minionEvery: 3,        // dans ces vagues, une apparition sur 3 est un groupe de sbires
 };
+
+/** Allègement des PV des premières vagues (lieutenant de la vague 5 et premier gros boss compris). */
+export function earlyHpMul(wave: number): number {
+  const { earlyHpStart: a, earlyHpUntil: n } = WAVE_RULES;
+  if (wave >= n) return 1;
+  return a + ((1 - a) * Math.max(0, wave - 1)) / (n - 1);
+}
+
+/** PV d'un ennemi normal à la vague `wave` (avant le multiplicateur de script). */
+export function waveHp(wave: number): number {
+  return WAVE_RULES.baseHp * Math.pow(WAVE_RULES.hpGrowth, wave - 1) * earlyHpMul(wave);
+}
 
 /**
  * Composition d'une vague : poids de chaque type selon la vague.
