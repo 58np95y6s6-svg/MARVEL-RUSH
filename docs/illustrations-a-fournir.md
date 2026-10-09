@@ -13,7 +13,7 @@ Pour chaque image reçue :
 
 **Marvel** : ✅ ironman, ✅ spiderman, ✅ hulk, ✅ thor, ✅ strange (Doctor Strange), ✅ venom, ✅ cmarvel, ✅ cap, ✅ loki, ✅ bucky (Soldat de l'hiver), ✅ hawkeye, ✅ falcon, ✅ widow, ✅ shangchi.
 
-**Disney** : ✅ moana (Vaïana & Pua), ✅ maui, ✅ pocahontas (& Meeko), ✅ mulan (& Mushu), ✅ merida (Rebelle), ✅ ariel (& Sébastien), ✅ foxhound (Rox & Rouky), ✅ tiana (& Naveen), nemo (& Dory), ✅ coco (Miguel), ✅ nickjudy (Nick & Judy), ✅ buzzwoody (Buzz & Woody), ✅ rapunzel (Raiponce & Pascal), ✅ vanralph (Vanellope & Ralph).
+**Disney** : ✅ moana (Vaïana & Pua), ✅ maui, ✅ pocahontas (& Meeko), ✅ mulan (& Mushu), ✅ merida (Rebelle), ✅ ariel (& Sébastien), ✅ foxhound (Rox & Rouky), ✅ tiana (& Naveen), ✅ nemo (& Dory), ✅ coco (Miguel), ✅ nickjudy (Nick & Judy), ✅ buzzwoody (Buzz & Woody), ✅ rapunzel (Raiponce & Pascal), ✅ vanralph (Vanellope & Ralph).
 
 **Boss** : jafar (& Iago), cruella, ursula, malefique, galactus, bouffon (Bouffon Vert), ✅ thanos.
 
