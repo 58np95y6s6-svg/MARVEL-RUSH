@@ -1,0 +1,472 @@
+<title>Marvel Rush · Héros A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: codex de héros — une carte par héros : scène animée (boucle d'attaque) à gauche, fiche technique + 3 poses clés à droite */
+:root{
+  --sheet:#e2e2e8;
+  --card:#f4f4f8;
+  --edge:#d2d1dc;
+  --ink:#1d1733;
+  --muted:#5e5976;
+  --gold:#f6c64a;
+  --leg:#f2a93b; --epi:#9b59e6; --rare:#3c8bf0;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+  --body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --dur:2.6s;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--sheet);color:var(--ink);font-family:var(--body);font-weight:600;line-height:1.45;
+  background-image:radial-gradient(circle,rgba(29,23,51,.06) 1.2px,transparent 1.3px);background-size:14px 14px}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-inline:16px}
+
+/* En-tête */
+header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:end;margin-bottom:26px}
+.logo{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,8vw,4.4rem);line-height:.9;margin:0;color:var(--gold);letter-spacing:.01em;
+  text-shadow:3px 0 var(--ink),-3px 0 var(--ink),0 3px var(--ink),0 -3px var(--ink),2px 2px var(--ink),-2px -2px var(--ink),2px -2px var(--ink),-2px 2px var(--ink),0 7px 0 #b8322f,3px 7px 0 var(--ink),-3px 7px 0 var(--ink),0 10px 0 var(--ink)}
+.logo span{color:#e8413b}
+.sub{font-family:var(--display);font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 0}
+.controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.legend{font-size:.84rem;color:var(--muted);max-width:32ch;text-align:right;margin:0}
+button{font:inherit;font-family:var(--display);letter-spacing:.05em;text-transform:uppercase;font-size:.85rem;background:var(--ink);color:var(--gold);border:0;border-radius:999px;padding:9px 18px;cursor:pointer;box-shadow:0 3px 0 #000}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
+button:focus-visible{outline:3px solid var(--rare);outline-offset:3px}
+
+/* Cartes */
+.cards{display:grid;gap:22px}
+.card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:22px;background:var(--card);border:2px solid var(--edge);border-radius:28px;padding:18px;box-shadow:0 6px 0 var(--edge)}
+.stageWrap{position:relative;min-width:0}
+.stage{display:block;width:100%;max-width:100%;aspect-ratio:1/1;border-radius:22px;border:4px solid var(--rar);
+  background:radial-gradient(circle at 50% 36%,#fff 0,var(--tint) 58%,var(--tint2) 100%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.6),0 4px 0 var(--ink)}
+.badge{position:absolute;left:14px;top:14px;font-family:var(--display);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:#fff;padding:4px 10px;border-radius:999px;display:flex;gap:6px;align-items:center}
+.badge i{width:8px;height:8px;border-radius:50%;background:#ff4f4f;box-shadow:0 0 0 0 rgba(255,79,79,.6);animation:rec 1.4s infinite}
+@keyframes rec{50%{box-shadow:0 0 0 5px rgba(255,79,79,0)}}
+.side{min-width:0;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.num{font-family:var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,4vw,2.3rem);line-height:1;margin:0;text-wrap:balance}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--display);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--ink);color:var(--gold)}
+.chip.r{background:var(--rar);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.stats{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 10px;margin:0;font-size:.8rem;align-items:center}
+.stats dt{font-family:var(--display);letter-spacing:.04em;color:var(--muted);text-transform:uppercase;font-size:.72rem}
+.stats dd{margin:0;display:flex;gap:4px}
+.stats dd span{flex:1;max-width:34px;height:10px;border-radius:4px;background:#dcdbe5;border:2px solid transparent}
+.stats dd span.on{background:var(--rar);border-color:var(--ink)}
+.desc{display:grid;gap:6px;font-size:.88rem}
+.desc p{margin:0}
+.desc b{font-family:var(--display);font-weight:400;letter-spacing:.03em}
+.poses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:auto}
+figure{margin:0;display:flex;flex-direction:column;gap:5px;align-items:center}
+.tile{display:block;width:100%;max-width:100%;aspect-ratio:1/1;border-radius:16px;border:2px solid var(--edge);background:radial-gradient(circle at 50% 38%,#fff 0,var(--tint) 85%)}
+figcaption{font-family:var(--display);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+footer{margin-top:26px;font-size:.8rem;color:var(--muted);max-width:70ch}
+
+@media (max-width:760px){.card{grid-template-columns:minmax(0,1fr)}header{grid-template-columns:minmax(0,1fr)}.controls{align-items:flex-start}.legend{text-align:left}}
+
+/* ---- Moteur d'animation ---- */
+.arm,.body,.headT,.grow{transform-box:view-box}
+.fx,.pop,.ring,.wig{transform-box:fill-box;transform-origin:center}
+.fx{animation:pulse .5s ease-in-out infinite alternate}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 5s linear infinite}
+.wig{transform-origin:50% 100%;animation:wig .45s ease-in-out infinite alternate}
+@keyframes pulse{from{transform:scale(.9);opacity:.85}to{transform:scale(1.07);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+
+.anim .w-wind,.anim .w-rel,.anim .w-act{opacity:0}
+.anim .w-rest{animation:wRest var(--dur) infinite step-end}
+.anim .w-wind{animation:wWind var(--dur) infinite step-end}
+.anim .w-rel{animation:wRel var(--dur) infinite step-end}
+.anim .w-act{animation:wAct var(--dur) infinite step-end}
+.anim .w-notrel{animation:wNot var(--dur) infinite step-end}
+@keyframes wRest{0%{opacity:1}16%{opacity:0}82%{opacity:1}}
+@keyframes wWind{0%{opacity:0}16%{opacity:1}49%{opacity:0}}
+@keyframes wRel{0%{opacity:0}49%{opacity:1}82%{opacity:0}}
+@keyframes wAct{0%{opacity:0}16%{opacity:1}82%{opacity:0}}
+@keyframes wNot{0%{opacity:1}49%{opacity:0}82%{opacity:1}}
+.anim .grow{animation:grow var(--dur) infinite}
+@keyframes grow{0%,49%{transform:scaleX(0)}55%,100%{transform:scaleX(1)}}
+.anim .pop{animation:pop var(--dur) infinite}
+@keyframes pop{0%,49%{transform:scale(.3)}54%{transform:scale(1.18)}60%,100%{transform:scale(1)}}
+.anim .ring{animation:ring var(--dur) infinite ease-out}
+@keyframes ring{0%,49%{transform:scale(.2);opacity:1}78%,100%{transform:scale(1.35);opacity:0}}
+.anim.shake .scene{animation:shake var(--dur) infinite}
+@keyframes shake{0%,50%{transform:translate(0,0)}52%{transform:translate(-5px,3px)}54%{transform:translate(5px,-2px)}56%{transform:translate(-4px,1px)}58%{transform:translate(3px,-1px)}61%,100%{transform:translate(0,0)}}
+
+.paused *{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){.anim *,.fx,.spin,.wig,.badge i{animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1 class="logo">MARVEL <span>RUSH</span></h1>
+      <p class="sub">Codex des héros · Pack Marvel · Planche A</p>
+    </div>
+    <div class="controls">
+      <button id="toggle" type="button" aria-pressed="false">Pause</button>
+      <p class="legend">Chaque scène joue la boucle d’attaque du héros : repos, préparation, frappe. Les trois poses clés sont à droite.</p>
+    </div>
+  </header>
+  <main class="cards" id="sheet"></main>
+  <footer>Visuels de prototype dessinés en SVG. Raretés et statistiques sont des propositions à équilibrer en test.</footer>
+</div>
+
+<script>
+const O='#1d1733', SK='#ffd3ad', SKD='#e9a982';
+let n=0;
+const f=v=>(+v).toFixed(1);
+
+/* ---------- primitives de dessin ---------- */
+function shaded(shape,base,dark,dx=-8,dy=-7){
+  const id='c'+(n++);
+  return `<clipPath id="${id}">${shape('')}</clipPath>${shape(`fill="${dark}"`)}<g clip-path="url(#${id})"><g transform="translate(${dx} ${dy})">${shape(`fill="${base}"`)}</g></g>${shape(`fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"`)}`;
+}
+function clip(shape,content){const id='k'+(n++);return `<clipPath id="${id}">${shape('')}</clipPath><g clip-path="url(#${id})">${content}</g>`}
+const gloss=(x,y,rx,ry,r=-35,o=.55)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${r} ${x} ${y})" fill="#fff" opacity="${o}"/>`;
+const limb=(x1,y1,x2,y2,c,w)=>`<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${O}" stroke-width="${w+9}" stroke-linecap="round"/><path d="M${x1} ${y1}L${x2} ${y2}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/><path d="M${x1-w*.22} ${y1}L${x2-w*.22} ${y2}" stroke="#fff" stroke-width="${f(w*.18)}" stroke-linecap="round" opacity=".28"/>`;
+const hand=(x,y,c,r=11)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${O}" stroke-width="4.5"/><circle cx="${f(x-r*.35)}" cy="${f(y-r*.35)}" r="${f(r*.3)}" fill="#fff" opacity=".5"/>`;
+function star(x,y,R,r,k,rot=0){x=+x;y=+y;const a=[];for(let i=0;i<k*2;i++){const t=rot+Math.PI*i/k,rr=i%2?r:R;a.push(f(x+Math.cos(t)*rr)+','+f(y+Math.sin(t)*rr))}return a.join(' ')}
+const glow=(x,y,r,c)=>`<g class="fx"><circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity=".22"/><circle cx="${x}" cy="${y}" r="${f(r*.62)}" fill="${c}" opacity=".5"/><circle cx="${x}" cy="${y}" r="${f(r*.3)}" fill="#fff"/></g>`;
+const burst=(x,y,R,c,c2='#fff')=>`<g class="fx"><polygon points="${star(x,y,R,R*.5,9)}" fill="${c}" stroke="${O}" stroke-width="4" stroke-linejoin="round"/><polygon points="${star(x,y,R*.58,R*.3,9,.35)}" fill="${c2}"/></g>`;
+const beam=(x1,y1,x2,y2,w,c)=>`<g class="fx"><path d="M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}" stroke="${c}" stroke-width="${w+18}" stroke-linecap="round" opacity=".25"/><path d="M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}" stroke="${O}" stroke-width="${w+8}" stroke-linecap="round"/><path d="M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/><path d="M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}" stroke="#fff" stroke-width="${f(w*.38)}" stroke-linecap="round"/></g>`;
+const bolt=(pts,c='#7fd8ff')=>{const d='M'+pts.map(p=>p.join(' ')).join(' L');return `<g class="fx"><path d="${d}" stroke="${O}" stroke-width="10" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="6" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round"/></g>`};
+function sparks(x,y,r,c,k=8){let s='';for(let i=0;i<k;i++){const a=i*2*Math.PI/k+.2;s+=`<path d="M${f(x+Math.cos(a)*r*.6)} ${f(y+Math.sin(a)*r*.6)}L${f(x+Math.cos(a)*r)} ${f(y+Math.sin(a)*r)}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${f(x+Math.cos(a)*r*.6)} ${f(y+Math.sin(a)*r*.6)}L${f(x+Math.cos(a)*r)} ${f(y+Math.sin(a)*r)}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`}return `<g class="fx">${s}</g>`}
+function mandala(x,y,r){
+  let t='';for(let i=0;i<16;i++){const a=i*Math.PI/8;t+=`<path d="M${f(x+Math.cos(a)*r*.8)} ${f(y+Math.sin(a)*r*.8)}L${f(x+Math.cos(a)*r*.94)} ${f(y+Math.sin(a)*r*.94)}"/>`}
+  return `<g class="spin"><circle cx="${x}" cy="${y}" r="${r}" fill="#ff9b2f" fill-opacity=".16" stroke="#ff9b2f" stroke-opacity=".35" stroke-width="${f(r*.18)}"/><g stroke="#ffad40" stroke-width="2.6" fill="none"><circle cx="${x}" cy="${y}" r="${r}"/><circle cx="${x}" cy="${y}" r="${f(r*.7)}"/><polygon points="${star(x,y,r*.7,r*.7,4)}"/><polygon points="${star(x,y,r*.7,r*.7,4,Math.PI/4)}"/>${t}</g><circle cx="${x}" cy="${y}" r="${f(r*.18)}" fill="#fff3d6"/></g>`;
+}
+const torsoD='M58 202 C56 160 70 138 100 136 C130 138 144 160 142 202Z';
+const torso=(c,d,path=torsoD)=>shaded(a=>`<path d="${path}" ${a}/>`,c,d,-10,-4);
+const headS=a=>`<circle cx="100" cy="84" r="56" ${a}/>`;
+const head=(c,d)=>shaded(headS,c,d)+gloss(76,50,14,8);
+const cheeks=`<ellipse cx="70" cy="108" rx="8" ry="5" fill="#ff7c7c" opacity=".38"/><ellipse cx="130" cy="108" rx="8" ry="5" fill="#ff7c7c" opacity=".38"/>`;
+const mirror=s=>`<g transform="translate(200 0) scale(-1 1)">${s}</g>`;
+const shadow=(rx=60)=>`<ellipse cx="100" cy="207" rx="${rx}" ry="8" fill="${O}" opacity=".16"/>`;
+
+function face(p,o={}){
+  let s='';const ec=o.eye||O, br=o.brow||O;
+  [[80,1],[120,-1]].forEach(([x,d])=>{
+    const ry=p==2?8.5:10;
+    s+=`<ellipse cx="${x}" cy="95" rx="7.5" ry="${ry}" fill="${ec}"/>`;
+    if(ec!==O) s+=`<ellipse cx="${x}" cy="${f(95-ry*.45)}" rx="6.5" ry="${f(ry*.45)}" fill="${O}" opacity=".45"/>`;
+    s+=`<circle cx="${x+2.5}" cy="${p==2?91:90}" r="3.2" fill="#fff"/><circle cx="${x-2.5}" cy="99" r="1.5" fill="#fff" opacity=".85"/>`;
+    s+=p>0?`<path d="M${x-11*d} 78 L${x+9*d} 85" stroke="${br}" stroke-width="5.5" stroke-linecap="round"/>`
+          :`<path d="M${x-9} 80 Q${x} 74 ${x+9} 80" stroke="${br}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`;
+  });
+  if(!o.noMouth){
+    if(p==0) s+=`<path d="M92 115 Q100 121 108 115" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+    else if(p==1) s+=`<path d="M91 117 Q100 114 109 116" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+    else s+=`<path d="M89 111 Q100 109 111 111 Q109 128 100 129 Q91 128 89 111Z" fill="#7a1f2b" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M91 112 H109" stroke="#fff" stroke-width="3"/><path d="M94 123 Q100 120 106 123" stroke="#e85a6e" stroke-width="3" fill="none"/>`;
+  }
+  return s+(o.noCheeks?'':cheeks);
+}
+
+/* ---------- contexte de pose : statique (0,1,2) ou animé ---------- */
+const WIN={'0':'rest','1':'wind','2':'rel','1,2':'act','0,1':'notrel'};
+function tip(c,side,p,d){const [sx,sy]=c.sh[side];const a=c.poses[p][side]*Math.PI/180;return [sx-Math.sin(a)*d,sy+Math.cos(a)*d]}
+function dirOf(c,side,p){const a=c.poses[p][side]*Math.PI/180;return [-Math.sin(a),Math.cos(a)]}
+const bodyT=b=>{const [tx,ty,r,sx,sy]=b||[0,0,0,1,1];return `translate(${tx}px,${ty}px) rotate(${r}deg) scale(${sx},${sy})`};
+const headT=h=>{const [tx,ty,s]=h||[0,0,1];return `translate(${tx}px,${ty}px) scale(${s})`};
+function ctx(c,mode){
+  const A=mode==='anim';
+  return {
+    when:(list,svg)=>A?`<g class="w-${WIN[list.join()]}">${svg}</g>`:(list.includes(mode)?svg:''),
+    byPose:fn=>A?[0,1,2].map(i=>`<g class="w-${['rest','wind','rel'][i]}">${fn(i)}</g>`).join(''):fn(mode),
+    arm:(side,inner)=>{const [sx,sy]=c.sh[side];return `<g class="arm arm${side}" style="transform-origin:${sx}px ${sy}px;${A?'':`transform:rotate(${c.poses[mode][side]}deg)`}">${inner(sx,sy)}</g>`},
+    body:svg=>`<g class="body" style="transform-origin:100px 206px;${A?'':`transform:${bodyT(c.poses[mode].body)}`}">${svg}</g>`,
+    head:svg=>`<g class="headT" style="transform-origin:100px 132px;${A?'':`transform:${headT(c.poses[mode].head)}`}">${svg}</g>`,
+  };
+}
+function beamFrom(c,side,d,len,w,col){
+  const [x0,y0]=tip(c,side,2,d),[dx,dy]=dirOf(c,side,2);
+  return `<g class="grow" style="transform-origin:${f(x0)}px ${f(y0)}px">${beam(x0,y0,x0+dx*len,y0+dy*len,w,col)}</g><g class="pop">${burst(f(x0),f(y0),19,col)}</g>`;
+}
+
+/* ---------- héros ---------- */
+const roster=[
+{
+  id:'ironman',name:'Iron Man',role:'Dégâts',rarity:'Légendaire',rar:'var(--leg)',tint:'#ffd8c8',tint2:'#f4a98f',stats:[4,3,4],
+  atk:'Rayon répulseur sur la cible la plus proche.',skill:'Uni-Beam : toutes les 10 s, un laser de poitrine transperce toute la ligne.',
+  sh:{L:[68,150],R:[132,150]},
+  poses:[{L:12,R:-12},{L:24,R:-150,body:[-2,-3,-3,1,1]},{L:34,R:-96,body:[-7,0,-5,1,1]}],
+  draw(x){
+    const R='#d8312f',RD='#9c1b24',G='#f6c64a',GD='#cf962a',C='#6fe9ff';
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+38,R,15)+`<rect x="${sx-9}" y="${sy+19}" width="18" height="7" rx="3" fill="${G}" stroke="${O}" stroke-width="3"/>`+hand(sx,sy+38,R)
+      +x.when([1,2],glow(sx,sy+49,15,C));
+    let b=torso(R,RD);
+    b+=shaded(a=>`<path d="M78 138 Q100 147 122 138 L117 152 Q100 158 83 152Z" ${a}/>`,G,GD,-3,-3);
+    b+=shaded(a=>`<path d="M84 180 L116 180 L121 203 L79 203Z" ${a}/>`,G,GD,-3,-3)+`<path d="M86 191 H114 M100 180 V203" stroke="${GD}" stroke-width="2.5"/>`;
+    b+=`<path d="M64 170 Q70 186 66 200 M136 170 Q130 186 134 200" stroke="${RD}" stroke-width="3" fill="none"/>`;
+    b+=x.when([1,2],glow(100,167,26,C));
+    b+=`<circle cx="100" cy="167" r="11" fill="#e4fdff" stroke="${O}" stroke-width="4"/><circle cx="100" cy="167" r="6" fill="none" stroke="${C}" stroke-width="3"/>`;
+    b+=head(R,RD)+`<path d="M100 30 V60" stroke="${RD}" stroke-width="3" stroke-linecap="round"/>`;
+    const ear=`<circle cx="45" cy="96" r="9" fill="${G}" stroke="${O}" stroke-width="3.5"/><circle cx="45" cy="96" r="3.5" fill="${GD}"/>`;
+    b+=ear+mirror(ear);
+    b+=shaded(a=>`<path d="M62 76 Q100 64 138 76 Q140 114 122 132 Q100 142 78 132 Q60 114 62 76Z" ${a}/>`,G,GD,-4,-4);
+    b+=`<path d="M70 114 Q100 130 130 114" stroke="${GD}" stroke-width="2.5" fill="none"/>`+gloss(84,78,10,4,-12,.5);
+    b+=x.byPose(p=>{
+      const eL=p==0?`<path d="M70 90 L95 95 L93 103 L72 99Z"/>`:`<path d="M70 92 L95 96 L93 102 L72 98Z"/>`;
+      const g=p?`<g class="fx"><ellipse cx="82" cy="96" rx="18" ry="9" fill="${C}" opacity=".5"/><ellipse cx="118" cy="96" rx="18" ry="9" fill="${C}" opacity=".5"/></g>`:'';
+      return g+`<g fill="#eaffff" stroke="${O}" stroke-width="3.5" stroke-linejoin="round">${eL}${mirror(eL)}</g>`;
+    });
+    b+=`<path d="M86 124 L114 124" stroke="${O}" stroke-width="3.5" stroke-linecap="round"/>`;
+    b+=x.arm('L',armIn)+x.arm('R',armIn);
+    b+=shaded(a=>`<circle cx="64" cy="147" r="15" ${a}/>`,R,RD,-4,-4)+shaded(a=>`<circle cx="136" cy="147" r="15" ${a}/>`,R,RD,-4,-4);
+    b+=gloss(60,141,5,3,-30,.6)+gloss(132,141,5,3,-30,.6);
+    b+=x.when([2],beamFrom(this,'R',50,120,20,C));
+    return shadow()+x.body(b);
+  }
+},
+{
+  id:'spiderman',name:'Spider-Man',role:'Contrôle',rarity:'Épique',rar:'var(--epi)',tint:'#d5e0ff',tint2:'#93abef',stats:[2,5,3],
+  atk:'Tir de toile rapide.',skill:'Toile collante : ralentit de 30 %, cumulable jusqu’à immobiliser.',
+  sh:{L:[68,150],R:[132,150]},
+  poses:[{L:12,R:-12},{L:150,R:-40,body:[0,8,-3,1.05,.92]},{L:30,R:-118,body:[5,-6,5,1,1]}],
+  draw(x){
+    const R='#e0322f',RD='#a61e27',B='#2f5fd0',BD='#1e3f95';
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+38,R,15)+`<path d="M${sx-7} ${sy+16} L${sx+7} ${sy+22} M${sx-7} ${sy+26} L${sx+7} ${sy+30}" stroke="${RD}" stroke-width="1.6"/>`+hand(sx,sy+38,R)
+      +`<rect x="${sx-6}" y="${sy+28}" width="12" height="5" rx="2" fill="#c9ced8" stroke="${O}" stroke-width="2.5"/>`;
+    let b=torso(B,BD);
+    const panel=a=>`<path d="M80 138 Q100 133 120 138 L127 203 L73 203Z" ${a}/>`;
+    b+=shaded(panel,R,RD,-5,-3);
+    let w='';for(let i=0;i<7;i++){w+=`<path d="M100 150 L${70+i*10} 210"/>`}w+=`<path d="M76 168 Q100 176 124 168 M74 188 Q100 198 126 188"/>`;
+    b+=clip(panel,`<g stroke="${O}" stroke-width="1.5" fill="none" opacity=".45">${w}</g>`);
+    b+=`<g stroke="${O}" stroke-width="2.8" fill="none" stroke-linecap="round"><ellipse cx="100" cy="164" rx="4.5" ry="9" fill="${O}"/><path d="M96 158 L85 150 L83 142 M104 158 L115 150 L117 142 M96 163 L82 165 M104 163 L118 165 M96 168 L86 180 M104 168 L114 180"/></g>`;
+    b+=head(R,RD);
+    let web='';for(let i=0;i<12;i++){const a=i*Math.PI/6;web+=`<path d="M100 92 L${f(100+Math.cos(a)*70)} ${f(92+Math.sin(a)*70)}"/>`}
+    web+=`<circle cx="100" cy="92" r="22"/><circle cx="100" cy="92" r="40"/><circle cx="100" cy="92" r="58"/>`;
+    b+=clip(headS,`<g stroke="${O}" stroke-width="1.8" fill="none" opacity=".5">${web}</g>`)+headS(`fill="none" stroke="${O}" stroke-width="5"`)+gloss(76,50,14,8);
+    b+=x.byPose(p=>{
+      const d=[`M66 78 Q86 74 96 98 Q82 110 68 100 Q60 88 66 78Z`,`M66 86 Q86 82 96 99 Q82 108 68 101 Q62 93 66 86Z`,`M63 72 Q88 68 98 98 Q82 113 66 103 Q57 88 63 72Z`][p];
+      const l=`<path d="${d}" fill="${O}" transform="translate(0 0) scale(1)" stroke="${O}" stroke-width="9" stroke-linejoin="round"/><path d="${d}" fill="#fbfdff"/><path d="M70 84 Q82 82 88 92" stroke="#cfe0ff" stroke-width="3" fill="none"/>`;
+      return l+mirror(l);
+    });
+    b+=x.arm('L',armIn)+x.arm('R',armIn);
+    const [hx,hy]=tip(this,'R',1,40);
+    b+=x.when([1],sparks(hx,hy,20,'#fff'));
+    const [wx,wy]=tip(this,'R',2,44),[dx,dy]=dirOf(this,'R',2),ex=wx+dx*120,ey=wy+dy*120;
+    let sp='';for(let i=0;i<8;i++){const a=i*Math.PI/4;sp+=`<path d="M${f(ex)} ${f(ey)} L${f(ex+Math.cos(a)*20)} ${f(ey+Math.sin(a)*20)}"/>`}
+    b+=x.when([2],`<g class="grow" style="transform-origin:${f(wx)}px ${f(wy)}px"><path d="M${f(wx)} ${f(wy)} L${f(ex)} ${f(ey)}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${f(wx)} ${f(wy)} L${f(ex)} ${f(ey)}" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g><g class="pop"><g stroke="${O}" stroke-width="6" stroke-linecap="round">${sp}</g><g stroke="#fff" stroke-width="2.6" stroke-linecap="round">${sp}</g><circle cx="${f(ex)}" cy="${f(ey)}" r="11" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="${f(ex)}" cy="${f(ey)}" r="5" fill="#fff"/></g>`+`<g class="pop">${sparks(wx,wy,16,'#fff',6)}</g>`);
+    return shadow()+x.body(b);
+  }
+},
+{
+  id:'hulk',name:'Hulk',role:'Dégâts de zone',rarity:'Légendaire',rar:'var(--leg)',tint:'#d6f0c4',tint2:'#9fd27f',stats:[5,1,1],shake:true,
+  atk:'Coup de poing lent mais très puissant.',skill:'Rage, puis Hulk Smash : étourdit tous les ennemis autour.',
+  sh:{L:[62,148],R:[138,148]},
+  poses:[{L:16,R:-16},{L:155,R:-155,body:[0,-12,0,.96,1.07]},{L:24,R:-24,body:[0,4,0,1.12,.88]}],
+  draw(x){
+    const G='#5cb83a',GD='#3b8424',H='#262035',PU='#7b3fb0',PUD='#53278a';
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+44,G,22)+`<path d="M${sx+3} ${sy+12} Q${sx-2} ${sy+22} ${sx+4} ${sy+32}" stroke="${GD}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`+hand(sx,sy+46,G,17)
+      +`<path d="M${sx-9} ${sy+50} H${sx+9} M${sx-8} ${sy+56} H${sx+8}" stroke="${GD}" stroke-width="2.5" stroke-linecap="round"/>`;
+    let g='';
+    g+=x.when([2],`<g class="ring"><ellipse cx="100" cy="206" rx="120" ry="16" fill="none" stroke="#f2c95a" stroke-width="6"/></g><g class="ring"><ellipse cx="100" cy="206" rx="80" ry="10" fill="#f2c95a" opacity=".45"/></g>`
+      +`<g class="pop"><path d="M30 206 L14 200 L2 206 M170 206 L186 199 L200 206 M100 207 L92 214 M60 207 L52 213" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`
+      +`<g class="pop" fill="#a9825a" stroke="${O}" stroke-width="3" stroke-linejoin="round"><polygon points="0,170 14,160 18,176"/><polygon points="190,162 206,156 204,174"/><polygon points="-22,190 -8,182 -8,198"/><polygon points="216,186 230,180 230,196"/><polygon points="40,150 50,144 52,156"/><polygon points="152,146 164,142 162,154"/></g>`);
+    let b=torso(G,GD,'M42 203 C40 156 64 132 100 130 C136 132 160 156 158 203Z');
+    b+=`<path d="M70 160 Q85 170 98 160 M102 160 Q115 170 130 160 M92 176 H108 M93 188 H107" stroke="${GD}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+    b+=shaded(a=>`<path d="M43 184 L55 191 L66 183 L78 191 L90 183 L102 191 L114 183 L126 191 L138 183 L148 190 L157 184 L158 203 L42 203Z" ${a}/>`,PU,PUD,-4,-3);
+    b+=head(G,GD);
+    b+=shaded(a=>`<path d="M46 82 Q42 28 100 24 Q158 28 154 82 L144 62 L134 74 L122 52 L110 68 L98 48 L86 68 L74 52 L64 72 L56 58Z" ${a}/>`,'#3d3553',H,-4,-4)+gloss(84,38,12,4,-10,.35);
+    b+=x.byPose(p=>{
+      let s=`<path d="M66 ${p?80:82} L94 90 L92 97 L68 ${p?90:91}Z M134 ${p?80:82} L106 90 L108 97 L132 ${p?90:91}Z" fill="${H}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      if(p==2) s+=`<path d="M74 102 L90 100 M126 102 L110 100" stroke="${O}" stroke-width="4.5" stroke-linecap="round"/>`;
+      else s+=`<ellipse cx="82" cy="102" rx="6" ry="6.5" fill="${O}"/><ellipse cx="118" cy="102" rx="6" ry="6.5" fill="${O}"/><circle cx="84" cy="100" r="2.2" fill="#fff"/><circle cx="120" cy="100" r="2.2" fill="#fff"/>`;
+      if(p==1){
+        s+=`<path d="M78 112 Q100 106 122 112 Q120 140 100 141 Q80 140 78 112Z" fill="#6e1a29" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M80 113 Q100 108 120 113 L118 120 Q100 116 82 120Z" fill="#fff" stroke="${O}" stroke-width="2"/><path d="M90 134 Q100 128 110 134" stroke="#e85a6e" stroke-width="4" fill="none"/>`;
+        s+=`<g stroke="#e8413b" stroke-width="3.5" stroke-linecap="round"><path d="M124 46 Q130 50 136 46 M126 54 Q130 50 126 44 M134 54 Q130 50 134 44"/></g>`;
+      } else {
+        const mh=p==2?18:12;
+        s+=`<rect x="82" y="114" width="36" height="${mh}" rx="4" fill="#fff" stroke="${O}" stroke-width="3.5"/><path d="M82 ${114+mh/2} H118 M91 114 V${114+mh} M100 114 V${114+mh} M109 114 V${114+mh}" stroke="${O}" stroke-width="2"/>`;
+      }
+      return s;
+    });
+    b+=x.arm('L',armIn)+x.arm('R',armIn);
+    const [lx,ly]=tip(this,'L',1,48),[rx,ry]=tip(this,'R',1,48);
+    b+=x.when([1],sparks(lx,ly-6,26,'#f2c95a',7)+sparks(rx,ry-6,26,'#f2c95a',7));
+    const [ax,ay]=tip(this,'L',2,48),[bx,by]=tip(this,'R',2,48);
+    b+=x.when([2],`<g class="pop">${burst(f(ax),f(ay),24,'#f2c95a')}</g><g class="pop">${burst(f(bx),f(by),24,'#f2c95a')}</g>`);
+    return shadow(74)+x.body(b)+g;
+  }
+},
+{
+  id:'thor',name:'Thor',role:'Dégâts en chaîne',rarity:'Légendaire',rar:'var(--leg)',tint:'#d8e3ff',tint2:'#8fa7de',stats:[4,2,3],shake:true,
+  atk:'Coup de marteau électrique.',skill:'Éclair en chaîne : la foudre rebondit sur 3 à 5 ennemis.',
+  sh:{L:[68,150],R:[132,150]},
+  poses:[{L:14,R:-58},{L:34,R:-148,body:[-3,-6,-6,1,1.03]},{L:18,R:-36,body:[5,6,7,1.04,.95]}],
+  draw(x){
+    const HR='#f2c14e',HRD='#cf952a',A='#5a6278',AD='#3c4255',S='#d9dfe9',SD='#a3acbd',CP='#d42e35',CPD='#991c25';
+    const sleeve=(sx,sy)=>limb(sx,sy,sx,sy+38,A,15)+`<rect x="${sx-9}" y="${sy+24}" width="18" height="8" rx="3" fill="${S}" stroke="${O}" stroke-width="3"/>`;
+    const armL=(sx,sy)=>sleeve(sx,sy)+hand(sx,sy+38,SK);
+    const armR=(sx,sy)=>sleeve(sx,sy)
+      +`<rect x="${sx-5}" y="${sy+32}" width="10" height="36" rx="4" fill="#8a5a32" stroke="${O}" stroke-width="4"/><path d="M${sx-5} ${sy+46} L${sx+5} ${sy+42} M${sx-5} ${sy+54} L${sx+5} ${sy+50}" stroke="#5b3a1e" stroke-width="2.5"/>`
+      +shaded(a=>`<rect x="${sx-26}" y="${sy+62}" width="52" height="30" rx="6" ${a}/>`,'#cfd5e0','#8d95a8',-4,-4)
+      +`<path d="M${sx-20} ${sy+72} H${sx+20}" stroke="#8d95a8" stroke-width="4" stroke-linecap="round"/><path d="M${sx-16} ${sy+82} l6 -4 l6 4 l6 -4 l6 4 l6 -4" stroke="#8d95a8" stroke-width="2" fill="none"/>`
+      +hand(sx,sy+38,SK)
+      +x.when([1,2],bolt([[sx-30,sy+70],[sx-40,sy+60],[sx-34,sy+56],[sx-46,sy+44]])+bolt([[sx+30,sy+84],[sx+42,sy+80],[sx+38,sy+92],[sx+50,sy+96]]));
+    let b=shaded(a=>`<path d="M52 140 Q24 176 28 204 L172 204 Q176 176 148 140Z" ${a}/>`,CP,CPD,8,-4)+`<path d="M44 170 Q40 190 42 204 M156 170 Q160 190 158 204" stroke="${CPD}" stroke-width="3" fill="none"/>`;
+    b+=shaded(a=>`<path d="M44 84 Q38 140 62 154 L138 154 Q162 140 156 84Z" ${a}/>`,HR,HRD,-4,-4);
+    b+=torso(A,AD);
+    b+=[[82,158],[118,158],[82,184],[118,184]].map(([cx,cy])=>`<circle cx="${cx}" cy="${cy}" r="8.5" fill="${S}" stroke="${O}" stroke-width="3.5"/><circle cx="${cx}" cy="${cy}" r="4" fill="${SD}"/><circle cx="${cx-2.5}" cy="${cy-2.5}" r="2" fill="#fff"/>`).join('');
+    b+=`<path d="M60 142 Q70 136 80 144 L76 150Z M140 142 Q130 136 120 144 L124 150Z" fill="${CP}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+    b+=head(SK,SKD);
+    const BR='#e2ad3e',BRD='#b9822a';
+    b+=shaded(a=>`<path d="M56 90 Q55 126 74 142 Q88 155 100 155 Q112 155 126 142 Q145 126 144 90 Q139 110 126 117 Q114 111 100 113 Q86 111 74 117 Q61 110 56 90Z" ${a}/>`,BR,BRD,-3,-4);
+    b+=`<path d="M70 124 Q74 138 84 146 M130 124 Q126 138 116 146 M92 132 Q94 144 98 150 M108 132 Q106 144 102 150" stroke="${BRD}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+    b+=x.byPose(p=>face(p,{eye:'#2d5bb5',noCheeks:true}));
+    b+=`<path d="M78 115 Q88 103 100 109 Q112 103 122 115 Q111 119 100 115 Q89 119 78 115Z" fill="${BR}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M84 112 Q91 108 98 111" stroke="#f6d27a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    b+=shaded(a=>`<path d="M44 80 Q46 26 100 24 Q154 26 156 80 Q100 62 44 80Z" ${a}/>`,S,SD,-4,-4)+`<path d="M48 74 Q100 58 152 74" stroke="${SD}" stroke-width="3" fill="none"/>`;
+    const wing=`<path d="M50 62 Q16 52 6 18 Q30 38 48 42 Q26 26 26 4 Q48 28 60 46Z" fill="#fff" stroke="${O}" stroke-width="4" stroke-linejoin="round"/><path d="M48 52 Q30 44 22 30 M52 44 Q38 32 34 18" stroke="#c6cfdd" stroke-width="2.5" fill="none"/>`;
+    b+=wing+mirror(wing)+gloss(78,38,12,5,-20);
+    b+=x.arm('L',armL)+x.arm('R',armR);
+    const [hx,hy]=tip(this,'R',2,78);
+    b+=x.when([2],`<g class="pop">${bolt([[hx+28,-6],[hx+12,40],[hx+26,48],[hx+4,110],[hx+18,116],[hx,hy-12]])}</g><g class="pop">${burst(f(hx),f(hy),26,'#bfeaff')}</g><g class="ring"><ellipse cx="${f(hx)}" cy="${f(hy)}" rx="44" ry="10" fill="none" stroke="#7fd8ff" stroke-width="5"/></g><g class="pop">${bolt([[hx,hy],[hx-22,hy-6],[hx-30,hy+4],[hx-54,hy-2]])}${bolt([[hx,hy],[hx+20,hy-10],[hx+30,hy],[hx+52,hy-8]])}</g>`);
+    return shadow()+x.body(b);
+  }
+},
+{
+  id:'strange',name:'Doctor Strange',role:'Soutien · contrôle',rarity:'Épique',rar:'var(--epi)',tint:'#ffe0c4',tint2:'#f2ad74',stats:[2,3,4],
+  atk:'Projectile magique.',skill:'Portail : renvoie un ennemi au début du chemin.',
+  sh:{L:[68,150],R:[132,150]},
+  poses:[{L:12,R:-12},{L:128,R:-128,body:[0,-7,0,1,1]},{L:86,R:-86,body:[0,-10,0,1,1]}],
+  draw(x){
+    const T='#2c4fa3',TD='#1c3477',C='#c8283a',CD='#8c1726',H='#2b2232',GY='#cfcfd9';
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+38,C,16)+`<rect x="${sx-9}" y="${sy+26}" width="18" height="9" rx="3" fill="#9a6a3c" stroke="${O}" stroke-width="3"/>`+hand(sx,sy+40,SK)
+      +x.when([1],mandala(sx,sy+56,16))+x.when([2],mandala(sx,sy+70,30));
+    let b=shaded(a=>`<path d="M48 140 Q32 178 36 204 L164 204 Q168 178 152 140Z" ${a}/>`,C,CD,6,-4);
+    const collar=`<path d="M46 150 Q16 96 38 32 Q56 86 74 132Z" fill="${C}" stroke="${O}" stroke-width="5" stroke-linejoin="round"/><path d="M42 132 Q28 96 38 52" stroke="${CD}" stroke-width="4" fill="none"/>`;
+    b+=collar+mirror(collar);
+    b+=torso(T,TD);
+    b+=`<path d="M80 140 L120 200 M120 140 L80 200" stroke="#9a6a3c" stroke-width="6"/><path d="M80 140 L120 200 M120 140 L80 200" stroke="${O}" stroke-width="1.5" opacity=".4"/>`;
+    const flap=`<path d="M58 203 C56 162 66 142 82 138 L86 203Z" fill="${C}" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>`;
+    b+=flap+mirror(flap);
+    b+=x.when([1,2],glow(100,152,20,'#7dff9c'));
+    b+=`<circle cx="100" cy="152" r="11" fill="#f2c14e" stroke="${O}" stroke-width="4"/>`;
+    b+=x.byPose(p=>p?`<ellipse cx="100" cy="152" rx="6" ry="5" fill="#9dffb5" stroke="${O}" stroke-width="1.5"/><circle cx="100" cy="152" r="2" fill="${O}"/>`:`<path d="M94 152 Q100 148 106 152" stroke="${O}" stroke-width="2.5" fill="none"/>`);
+    b+=head(SK,SKD);
+    b+=shaded(a=>`<path d="M44 86 Q40 28 100 26 Q156 28 156 82 Q132 50 100 54 Q66 56 44 86Z" ${a}/>`,'#3b3145',H,-3,-3)+gloss(86,36,12,4,-10,.3);
+    b+=`<path d="M46 74 Q44 88 50 100 L56 98 Q52 86 54 74Z" fill="${GY}" stroke="${O}" stroke-width="2.5"/><path d="M154 74 Q156 88 150 100 L144 98 Q148 86 146 74Z" fill="${GY}" stroke="${O}" stroke-width="2.5"/>`;
+    b+=x.byPose(p=>{
+      let s=face(p,{noMouth:true,noCheeks:true,eye:p==2?'#ff8a1e':O});
+      s+=`<path d="M86 113 Q100 106 114 113" stroke="${H}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+      s+=p==2?`<path d="M92 117 Q100 115 108 117 Q106 124 100 125 Q94 124 92 117Z" fill="#7a1f2b" stroke="${O}" stroke-width="3"/>`:`<path d="M93 118 L107 118" stroke="${O}" stroke-width="3" stroke-linecap="round"/>`;
+      return s+`<path d="M92 125 Q100 136 108 125 Q106 141 100 143 Q94 141 92 125Z" fill="${H}"/>`;
+    });
+    b+=x.arm('L',armIn)+x.arm('R',armIn);
+    b+=x.when([2],`<g class="pop">${sparks(100,84,100,"#ffad40",12)}</g>`);
+    return shadow()+x.body(b);
+  }
+},
+{
+  id:'venom',name:'Venom',role:'Exécution',rarity:'Épique',rar:'var(--epi)',tint:'#dcdbef',tint2:'#9c9ac4',stats:[4,3,1],
+  atk:'Coup de griffes au corps à corps.',skill:'Dévorer : exécute un ennemi sous 15 % de PV et se renforce.',
+  sh:{L:[66,150],R:[134,150]},
+  poses:[{L:16,R:-16},{L:58,R:-58,body:[0,8,0,1.07,.9]},{L:108,R:-108,body:[0,-3,0,.98,1.05],head:[0,10,1.17]}],
+  draw(x){
+    const B='#25222f',BD='#100f18',HL='#7d8ed0',TG='#e2507a';
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+38,B,16)+hand(sx,sy+38,B,12)
+      +`<g fill="#f4f4ff" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"><polygon points="${sx-9},${sy+44} ${sx-7},${sy+58} ${sx-3},${sy+46}"/><polygon points="${sx-3},${sy+48} ${sx},${sy+62} ${sx+3},${sy+48}"/><polygon points="${sx+3},${sy+46} ${sx+7},${sy+58} ${sx+9},${sy+44}"/></g>`;
+    const tend=(d,cls='')=>`<g class="${cls}"><path d="${d}" stroke="${O}" stroke-width="15" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${B}" stroke-width="8" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${HL}" stroke-width="1.6" fill="none" opacity=".7"/></g>`;
+    let b='';
+    b+=x.when([1],`<g class="wig">${tend('M66 146 Q30 132 32 100 Q34 82 18 70')}</g>`+mirror(`<g class="wig">${tend('M66 146 Q30 132 32 100 Q34 82 18 70')}</g>`));
+    b+=torso(B,BD,'M52 203 C50 158 68 136 100 134 C132 136 150 158 148 203Z');
+    const leg=`<g stroke="#f4f4ff" stroke-width="7" fill="none" stroke-linecap="round"><path d="M95 156 Q80 146 64 142"/><path d="M95 164 Q82 178 78 202"/></g>`;
+    b+=leg+mirror(leg)+`<path d="M100 146 Q90 160 100 177 Q110 160 100 146Z" fill="#f4f4ff" stroke="${O}" stroke-width="2.5"/>`;
+    b+=x.when([2],`<g class="pop">${tend('M138 152 Q186 162 204 132 Q218 110 240 112')}${tend('M134 172 Q174 202 210 184 Q226 176 240 190')}</g>`+mirror(`<g class="pop">${tend('M138 152 Q186 162 204 132 Q218 110 240 112')}${tend('M134 172 Q174 202 210 184 Q226 176 240 190')}</g>`));
+    const hs=a=>`<ellipse cx="100" cy="84" rx="62" ry="55" ${a}/>`;
+    let h=shaded(hs,B,BD)+gloss(74,48,15,7,-35,.4)+gloss(124,44,6,3,20,.35)+`<path d="M46 70 Q70 50 92 66" stroke="${HL}" stroke-width="3" fill="none" opacity=".7"/>`;
+    h+=x.byPose(p=>{
+      const eye=p==0?`<path d="M50 60 Q78 54 98 84 L88 86 L82 102 Q60 92 50 60Z"/>`:`<path d="M48 54 Q80 50 100 86 L89 88 L83 104 Q58 94 48 54Z"/>`;
+      let s=`<g fill="#fbfbff" stroke="${O}" stroke-width="4.5" stroke-linejoin="round">${eye}${mirror(eye)}</g>`;
+      const open=[122,142,152][p];
+      s+=`<path d="M54 102 Q100 120 146 102 Q100 ${open} 54 102Z" fill="#4a0f22" stroke="${O}" stroke-width="4" stroke-linejoin="round"/>`;
+      const q=(t,y1)=>[(1-t)**2*54+2*(1-t)*t*100+t*t*146,(1-t)**2*102+2*(1-t)*t*y1+t*t*102];
+      let teeth='';
+      for(let i=1;i<12;i++){const [tx,ty]=q(i/12,120);teeth+=`<polygon points="${f(tx-3.6)},${f(ty-1)} ${f(tx+3.6)},${f(ty-1)} ${f(tx)},${f(ty+9)}"/>`;}
+      for(let i=1;i<11;i++){const [tx,ty]=q((i+.5)/12,open);teeth+=`<polygon points="${f(tx-3.4)},${f(ty+1)} ${f(tx+3.4)},${f(ty+1)} ${f(tx)},${f(ty-8)}"/>`;}
+      s+=`<g fill="#fff" stroke="${O}" stroke-width="1.6" stroke-linejoin="round">${teeth}</g>`;
+      if(p) s+=shaded(a=>`<path d="M94 ${open-16} Q86 ${open+(p==2?24:10)} 100 ${open+(p==2?40:24)} Q114 ${open+(p==2?48:30)} 112 ${open+(p==2?26:14)} Q108 ${open} 108 ${open-16}Z" ${a}/>`,TG,'#a52f58',-3,-3);
+      if(p) s+=`<path d="M60 108 Q58 116 61 122" stroke="#bfe3ff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`;
+      return s;
+    });
+    b+=x.head(h);
+    b+=x.arm('L',armIn)+x.arm('R',armIn);
+    const [hx,hy]=tip(this,'R',2,52),[gx,gy]=tip(this,'L',2,52);
+    b+=x.when([2],`<g class="pop"><path d="M${f(hx-6)} ${f(hy-18)} l18 10 M${f(hx-6)} ${f(hy-6)} l20 6 M${f(hx-6)} ${f(hy+6)} l18 2" stroke="#c7d0ff" stroke-width="4" stroke-linecap="round"/></g>`+mirror(`<g class="pop"><path d="M${f(200-gx-6)} ${f(gy-18)} l18 10 M${f(200-gx-6)} ${f(gy-6)} l20 6 M${f(200-gx-6)} ${f(gy+6)} l18 2" stroke="#c7d0ff" stroke-width="4" stroke-linecap="round"/></g>`));
+    return shadow(64)+x.body(b);
+  }
+},
+{
+  id:'cmarvel',name:'Captain Marvel',role:'Dégâts',rarity:'Rare',rar:'var(--rare)',tint:'#ffe7c2',tint2:'#f6bd6a',stats:[4,3,4],
+  atk:'Rafale photonique.',skill:'Mode binaire : dégâts doublés pendant 5 s après une charge.',
+  sh:{L:[68,150],R:[132,150]},
+  poses:[{L:12,R:-12},{L:38,R:-38,body:[0,-12,0,1,1]},{L:30,R:-98,body:[4,-12,-4,1,1]}],
+  draw(x){
+    const B='#1f3d8f',BD='#142a63',R='#d5303a',RD='#9b1d27',G='#f6c64a',GD='#cf962a',HR='#f1c75a',HRD='#cf9a2f',PH='#ffb648';
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+38,B,15)+`<path d="M${sx} ${sy+4} V${sy+30}" stroke="${G}" stroke-width="3"/>`+hand(sx,sy+38,R)+x.when([1,2],glow(sx,sy+42,17,PH));
+    let b='';
+    b+=x.when([1,2],`<g class="fx"><ellipse cx="100" cy="112" rx="96" ry="104" fill="${PH}" opacity=".16"/><ellipse cx="100" cy="112" rx="78" ry="88" fill="${PH}" opacity=".14"/></g>`);
+    b+=torso(B,BD);
+    b+=shaded(a=>`<path d="M84 137 Q100 141 116 137 L121 203 L79 203Z" ${a}/>`,R,RD,-4,-3);
+    b+=`<path d="M84 137 L79 203 M116 137 L121 203" stroke="${G}" stroke-width="3.5"/><path d="M60 186 Q100 196 140 186" stroke="${G}" stroke-width="5" fill="none"/><path d="M60 186 Q100 196 140 186" stroke="${O}" stroke-width="1.5" fill="none" opacity=".35"/>`;
+    b+=x.when([1,2],glow(100,160,24,PH));
+    b+=`<polygon points="${star(100,160,16,7,5,-Math.PI/2)}" fill="${G}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>`;
+    b+=head(SK,SKD);
+    b+=shaded(a=>`<path d="M44 92 Q36 30 98 24 Q160 26 156 90 Q150 64 134 58 Q114 74 84 62 Q62 68 44 92Z" ${a}/>`,HR,HRD,-4,-4);
+    b+=x.byPose(p=>p?shaded(a=>`<path d="M84 32 Q90 -2 116 6 Q104 16 110 30Z" ${a}/>`,'#fff1b8',HR,-2,-2):shaded(a=>`<path d="M88 30 Q96 6 116 12 Q104 18 108 30Z" ${a}/>`,HR,HRD,-2,-2));
+    b+=x.when([1,2],`<g class="fx"><path d="M50 70 Q60 40 98 32 Q140 34 150 70" stroke="#fff6d0" stroke-width="5" fill="none" opacity=".8" stroke-linecap="round"/></g>`);
+    b+=gloss(76,40,12,5,-30,.45);
+    b+=x.byPose(p=>face(p,{eye:p?'#ff9f1e':'#2a3f86'}));
+    b+=x.arm('L',armIn)+x.arm('R',armIn);
+    b+=x.when([1],`${sparks(100,96,104,"#ffd27a",12)}`);
+    b+=x.when([2],beamFrom(this,'R',46,130,24,PH));
+    return shadow()+x.body(b);
+  }
+}];
+
+/* ---------- CSS d'animation propre à chaque héros ---------- */
+function seg(name,v){
+  return `@keyframes ${name}{0%,10%{transform:${v[0]};animation-timing-function:cubic-bezier(.25,.8,.35,1)}34%,46%{transform:${v[1]};animation-timing-function:cubic-bezier(.85,0,1,.55)}52%,72%{transform:${v[2]};animation-timing-function:cubic-bezier(.45,0,.3,1)}92%,100%{transform:${v[0]}}}`;
+}
+let css='';
+roster.forEach(c=>{
+  const P=c.poses,id=c.id;
+  ['L','R'].forEach(s=>{css+=seg(`${id}-${s}`,P.map(p=>`rotate(${p[s]}deg)`))+`.s-${id}.anim .arm${s}{animation:${id}-${s} var(--dur) infinite}`});
+  css+=seg(`${id}-B`,P.map(p=>bodyT(p.body)))+`.s-${id}.anim .body{animation:${id}-B var(--dur) infinite}`;
+  if(P.some(p=>p.head)) css+=seg(`${id}-H`,P.map(p=>headT(p.head)))+`.s-${id}.anim .headT{animation:${id}-H var(--dur) infinite}`;
+});
+document.head.insertAdjacentHTML('beforeend',`<style>${css}</style>`);
+
+/* ---------- rendu ---------- */
+const labels=['Fiche','Action 1','Action 2'];
+const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const svg=(c,mode,cls,label)=>`<svg class="${cls}" viewBox="-40 -5 280 220" role="img" aria-label="${esc(c.name)}, ${label}"><g class="scene">${c.draw(ctx(c,mode))}</g></svg>`;
+const bars=v=>[1,2,3,4,5].map(i=>`<span class="${i<=v?'on':''}"></span>`).join('');
+document.getElementById('sheet').innerHTML=roster.map((c,i)=>`
+  <article class="card" style="--tint:${c.tint};--tint2:${c.tint2};--rar:${c.rar}">
+    <div class="stageWrap">
+      ${svg(c,'anim',`stage anim s-${c.id}${c.shake?' shake':''}`,'animation d’attaque')}
+      <span class="badge"><i></i>Attaque</span>
+    </div>
+    <div class="side">
+      <div class="top"><span class="num">${String(i+1).padStart(2,'0')}</span><h2>${esc(c.name)}</h2></div>
+      <div class="chips"><span class="chip">${esc(c.role)}</span><span class="chip r">${esc(c.rarity)}</span></div>
+      <dl class="stats">
+        <dt>Dégâts</dt><dd>${bars(c.stats[0])}</dd>
+        <dt>Vitesse</dt><dd>${bars(c.stats[1])}</dd>
+        <dt>Portée</dt><dd>${bars(c.stats[2])}</dd>
+      </dl>
+      <div class="desc">
+        <p><b>Attaque</b> · ${esc(c.atk)}</p>
+        <p><b>Compétence</b> · ${esc(c.skill)}</p>
+      </div>
+      <div class="poses">${[0,1,2].map(p=>`<figure>${svg(c,p,'tile',labels[p])}<figcaption>${labels[p]}</figcaption></figure>`).join('')}</div>
+    </div>
+  </article>`).join('');
+
+const btn=document.getElementById('toggle');
+btn.addEventListener('click',()=>{const on=document.body.classList.toggle('paused');btn.textContent=on?'Lecture':'Pause';btn.setAttribute('aria-pressed',on)});
+</script>
