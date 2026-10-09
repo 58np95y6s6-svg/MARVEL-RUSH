@@ -6,12 +6,15 @@
 
 ## 0. Ton rôle et l'objectif
 
-Tu es un développeur de jeux web senior. Tu construis **Marvel Rush**, un clone jouable du jeu mobile **Rush Royale** (tower defense avec fusion d'unités), avec :
+Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Marvel Rush**, un clone jouable du jeu mobile **Rush Royale** (tower defense avec fusion d'unités), avec :
 
 - les personnages **Marvel** et **Disney** du dépôt, dans le style graphique de ses planches ;
 - un système de **tirages** avec deux packs, **Marvel** et **Disney** ;
 - trois modes : **Solo**, **Coop à 2** et **Duel à 2** ;
+- des **maps par univers** et des **arènes de boss** (§7 bis) ;
 - une **PWA** installable, accessible uniquement par un **lien secret** (usage privé entre deux personnes).
+
+Tu pilotes une **équipe d’agents spécialisés** (§1 bis) : un agent par grosse tâche.
 
 Toute l'interface est **en français**. Le jeu est **mobile d'abord**, en portrait, et doit être fluide sur un iPhone ou un Android récent.
 
@@ -29,6 +32,38 @@ Usage strictement personnel : pas de monétisation, pas de vraie monnaie, pas d'
 | `design/references/style-*.jpg` | Les références de style : chibi, contours épais, ombrage cel-shading, reflets brillants. |
 
 **Réutilise le code de dessin des planches.** Ne redessine pas les personnages. Extrais les primitives (`shaded`, `limb`, `hand`, `glow`, `burst`, `beam`, `bolt`, `sparks`, `mandala`, `face`, `mirror`…) et les fonctions `draw` de chaque personnage dans un module `src/art/`. Ce module génère, pour chaque unité, une chaîne SVG par pose (0 repos, 1 préparation, 2 frappe), que tu convertis en textures au chargement.
+
+---
+
+## 1 bis. Organisation : une équipe d'agents spécialisés
+
+Tu es l'**agent chef de projet**. Tu ne codes pas tout toi-même : pour chaque grosse tâche, tu **engages un sous-agent spécialisé** (outil Agent ou Task, ou une session séparée), avec une mission, des fichiers attribués et des critères de fin clairs.
+
+Les agents travaillent **en parallèle** quand leurs tâches sont indépendantes, chacun dans son dossier ou sa branche (`git worktree` si possible). Tous partagent les **contrats** que tu fixes en premier :
+- les types de données dans `src/data/` ;
+- le protocole réseau dans `src/net/protocol.ts` ;
+- l'interface moteur ↔ rendu (`EngineState`, `EngineEvent`, `Command`).
+
+| Agent | Mission | Fichiers attribués | Livrable et critère de fin |
+|---|---|---|---|
+| **Chef de projet** (toi) | Découper le travail, fixer les contrats, lancer et relancer les agents, relire, fusionner et tenir le journal d'avancement | `docs/`, contrats, README | Chaque étape du §10 livrée, testée et commitée |
+| **Game design et stratégie** | Règles de combat, chiffres des unités, pouvoirs des boss, courbe des vagues, bonus d'équipe, synergies, et un deck « méta » par pack | `src/data/*`, `docs/equilibrage.md` | Un simulateur headless qui joue 1 000 parties par deck et montre qu'aucun deck ne domine (écart de vague moyenne < 20 %) |
+| **Direction artistique (personnages)** | Extraire le SVG des planches, générer les textures des 3 poses, les skins Hiver et Néon, les jetons de plateau et les effets | `src/art/` | Atlas de textures de toutes les unités et de tous les boss, plus une page de prévisualisation `/#dev/art` |
+| **Maps et environnements** | Concevoir et dessiner les maps par univers et les arènes de boss (§7 bis) : chemins, décors, animations d'ambiance, transitions | `src/maps/`, `src/art/maps/` | 12 maps, 7 variantes et 6 arènes jouables, avec une page de prévisualisation `/#dev/maps` |
+| **Moteur de jeu** | Simulation pure à pas fixe : plateau, invocation, fusion, mana, ciblage, compétences, vagues, boss, rng | `src/engine/` | Tests Vitest verts sur chaque règle et chaque compétence ; même graine = même partie |
+| **Rendu et animations** | Scène PixiJS, interpolation, animations d'attaque, particules, chiffres de dégâts, tremblements d'écran | `src/render/` | 60 i/s avec 15 unités et 60 ennemis par plateau sur un téléphone moyen |
+| **Réseau multijoueur** | PeerJS, salon, lien d'invitation, hôte qui fait autorité, instantanés, reconnexion | `src/net/` | Coop et Duel jouables entre deux téléphones en 4G et en Wi-Fi ; test de déconnexion et reconnexion |
+| **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, skins, monnaie, sauvegarde | `src/meta/` | Test de 100 000 tirages conforme aux taux ; sauvegarde résistante au rechargement |
+| **Interface et expérience** | Tous les écrans HTML/CSS, navigation, animation d'ouverture des packs, accessibilité, lisibilité à 375 px | `src/ui/` | Parcours complet sans blocage, de l'accueil à la fin de partie |
+| **Audio** | Effets WebAudio (invocation, fusion, coups, boss) et une ambiance musicale par univers | `src/audio/` | Sons sur chaque événement clé, bouton muet persistant |
+| **PWA, déploiement et accès** | Manifest, icônes, service worker, lien secret, `noindex`, script de déploiement | `src/pwa/`, `src/access/`, config | Installation sur iOS et Android, Solo hors ligne, page neutre sans la clé |
+| **Qualité (QA)** | Relire chaque livraison, écrire les tests de bout en bout (Playwright), tester sur mobile, ouvrir les bugs aux bons agents | `tests/`, `e2e/` | Les critères d'acceptation du §11 passent tous |
+
+Règles de travail :
+- **Brief.** Chaque brief d'agent contient : la mission, les fichiers attribués, les contrats à respecter, les sections de ce prompt à lire, le critère de fin et le format du compte rendu (5 lignes maximum, plus les limites connues).
+- **Contrats.** Un agent ne modifie pas les fichiers d'un autre. S'il a besoin d'un changement de contrat, il te le demande.
+- **Relecture.** Après chaque livraison, l'agent QA relit et teste avant que tu fusionnes.
+- **Journal.** Tiens `docs/journal.md` à jour : qui fait quoi, l'état de chaque agent, les décisions prises.
 
 ---
 
@@ -218,7 +253,7 @@ Chaque appareil a sa propre collection. Ta copine et toi aurez chacun la vôtre.
 - **Polices** : Lilita One pour les titres et les boutons, Nunito pour le texte.
 - **Logo** : « MARVEL RUSH », jaune `#f6c64a` (« RUSH » en rouge `#e8413b`), contour sombre épais et relief, comme dans l'en-tête des planches.
 - **Couleurs de rareté** : Rare `#3c8bf0`, Épique `#9b59e6`, Légendaire `#f2a93b`, Boss `#c0263a`.
-- **Plateau** : cases arrondies façon jetons, fond clair. Le chemin est une piste pavée qui contourne la grille. Décor selon le mode : ville Marvel en solo, île océane en coop, arène en duel.
+- **Plateau** : cases arrondies façon jetons, posées sur la map de la partie (§7 bis). Le chemin change de forme et de matière selon la map.
 - **Unités sur le plateau** : jeton rond avec le personnage en buste, les **pastilles de rang** (1 à 7) en bas et un liseré de couleur de rareté.
 - **Animation d'attaque** : alterne les textures de pose (repos → préparation → frappe), avec un léger écrasement-étirement et les effets de la planche (rayon, éclair, toile, bulles…), adaptés pour PixiJS (particules et sprites).
 - **Ennemis** : les sbires des planches, plus des ennemis génériques dans le même style (créatures-feuilles, slimes, robots). Barre de PV au-dessus de chaque ennemi.
@@ -228,19 +263,83 @@ Chaque appareil a sa propre collection. Ta copine et toi aurez chacun la vôtre.
 
 ---
 
+## 7 bis. Maps par univers et arènes de boss
+
+Chaque partie se joue sur une **map** liée à l'univers d'un personnage. Quand un boss arrive, la map se **transforme en son arène** : fondu de 1 s, le ciel change, le décor bascule et la musique change. À la mort du boss, on revient à la map de départ.
+
+### Règles communes
+- **Même style que les personnages** : formes rondes, contours épais `#1d1733`, ombrage en deux tons, couleurs saturées, vue de dessus légèrement inclinée (comme Rush Royale).
+- **Lisibilité d'abord** : le décor reste **désaturé et plus sombre** que les unités et les ennemis, et rien d'animé ne passe sur le chemin ou sur la grille.
+- Chaque map définit :
+  - un **tracé de chemin** (en U, en S, en spirale ou en zigzag autour de la grille, même longueur totale à ±10 % pour rester équitable) ;
+  - une **matière de chemin** ;
+  - **3 couches de décor** (fond, décor latéral, détails animés) ;
+  - **2 ou 3 animations d'ambiance** ;
+  - une **palette** ;
+  - une **ambiance sonore**.
+- En **Coop**, la map est symétrique, avec le chemin commun au centre. En **Duel**, chaque joueur a sa moitié de map.
+- **Choix de la map** :
+  - en Solo, l'univers majoritaire du deck décide, ou le joueur choisit parmi les maps débloquées ;
+  - en multi, l'hôte choisit.
+  - Une nouvelle map se débloque toutes les 5 vagues atteintes.
+- **Modificateur léger par map** (option activable dans les réglages, désactivée par défaut en Duel), par exemple « Océan : ralentissements +10 % ».
+
+### Maps Marvel
+
+| Map | Univers | Chemin | Décor et ambiance | Modificateur (option) |
+|---|---|---|---|---|
+| Toits de New York | Spider-Man | Toits reliés par des passerelles | Château d'eau, gratte-ciel au coucher du soleil, toiles entre les antennes, taxis jaunes en bas | Rapides +10 % de vitesse |
+| Atelier Stark | Iron Man | Tapis roulant métallique | Hologrammes bleus, bras robotisés, armures en vitrine, étincelles | Dégâts des rayons +10 % |
+| Asgard et le Bifrost | Thor, Loki | Pont arc-en-ciel | Palais doré, montagnes flottantes, aurores, éclairs lointains | Chaînes +1 rebond |
+| Sanctum Sanctorum | Doctor Strange | Parquet qui se replie (effet kaléidoscope) | Bibliothèque, artefacts flottants, portails orange | Recharges de compétences −10 % |
+| Base des Avengers | Captain America, Black Widow, Falcon, Œil de faucon, Soldat de l'hiver | Piste d'entraînement | Hangar, Quinjet, cibles d'entraînement, drapeau | Aucun |
+| Temple des Dix Anneaux | Shang-Chi, Captain Marvel | Pont de pierre au-dessus de l'eau | Forêt de bambous, lanternes, dragon d'eau en fond | Combos +10 % |
+
+### Maps Disney
+
+| Map | Univers | Chemin | Décor et ambiance | Modificateur (option) |
+|---|---|---|---|---|
+| Île de Motunui | Vaïana, Maui | Sable et rochers au bord du lagon | Cocotiers, pirogue, vagues animées, Te Fiti en fond | Contrôles +10 % de durée |
+| Palais impérial | Mulan | Pavés de la Cité interdite | Toits rouges, lanternes, cerisiers, feux d'artifice | Brûlures +10 % |
+| Royaume des morts | Coco | Pont de pétales de souci | Ville colorée la nuit, alebrijes lumineux, guirlandes | Une résurrection de plus par partie |
+| Zootopie | Judy & Nick | Avenue de Savanna Central | Quartiers climatisés (toundra et jungle), voitures miniatures | Ralentissements +10 % |
+| Chambre d'Andy | Buzz & Woody | Circuit de petites voitures | Lit, cubes, papier peint à nuages, jouets qui bougent | Aucun |
+| Sugar Rush | Vanellope & Ralph | Piste de course en bonbons | Montagnes de gâteaux, sucettes, glitchs de pixels | Boucliers ennemis −1 coup |
+
+Les autres personnages Disney (Pocahontas, Rebelle, Ariel, Tiana, Nemo & Dory, Raiponce, Rox & Rouky) déclinent ces maps en **variantes** à débloquer : Forêt de Pocahontas, Highlands de Rebelle, Atlantica, Bayou de La Nouvelle-Orléans, Récif de Nemo, Tour de Raiponce, Forêt de Rox & Rouky. Chacune garde un tracé existant avec un nouveau décor.
+
+### Arènes de boss
+
+| Boss | Arène | Décor et effets | Pendant le boss |
+|---|---|---|---|
+| Jafar & Iago | Caverne aux Merveilles / palais d'Agrabah | Tête de tigre en sable, trésors, fumée rouge, sable qui coule | Spirales hypnotiques au sol, ciel rouge |
+| Cruella | Manoir De Vil, Londres | Salon noir et blanc, fourrures, voiture rouge, brouillard vert | Le décor passe en noir et blanc, seuls les effets restent colorés |
+| Ursula | Antre sous-marin | Squelette de baleine, âmes-polypes, bulles, lumière de nautile | Ondulation de tout l'écran, bulles qui remontent |
+| Maléfique | Montagne interdite | Château noir, ronces, corbeaux, flammes vertes | Ronces qui poussent sur les bords, flammes vertes |
+| Galactus | Planète dévorée, espace | Planète qui se fissure, étoiles, nébuleuse violette | Fond qui tourne lentement, débris qui flottent, écran qui tremble par moments |
+| Bouffon Vert | New York, nuit d'Halloween / Oscorp | Pleine lune, citrouilles, tour Oscorp, chauves-souris | Éclairs verts, explosions de citrouilles en fond |
+
+### Mise en œuvre
+- Tout est en **SVG converti en textures** (comme les personnages), avec un parallaxe léger sur 2 ou 3 couches. Pas d'images externes.
+- Chaque map est un fichier de données (`src/maps/<id>.ts`) : tracé du chemin (points), palette, couches, animations, son, modificateur. Le moteur ne lit que le **tracé** et le **modificateur** ; tout le reste sert au rendu.
+- Une page de prévisualisation `/#dev/maps` montre chaque map et chaque arène, avec la transition vers le boss.
+
+---
+
 ## 8. Écrans
 
-1. **Accueil** : logo animé, boutons **Solo**, **Coop à 2**, **Duel à 2**, puis **Tirages**, **Collection**, **Decks**, et un compteur d'éclats.
-2. **Tirages** : les deux packs côte à côte, prix, taux, compteur de garantie.
-3. **Collection** : grille de toutes les unités, celles qu'on n'a pas en silhouette. La fiche d'une unité montre sa boucle d'attaque animée, ses statistiques, sa compétence, son niveau, ses cartes et ses skins.
-4. **Decks** : composition par glisser-déposer, bonus d'équipe.
-5. **Salon multi** : créer, inviter, attendre, choix du deck, « Prêt ».
-6. **Partie** :
+1. **Accueil** : logo animé sur la map préférée en fond, boutons **Solo**, **Coop à 2**, **Duel à 2**, puis **Tirages**, **Collection**, **Decks**, **Maps**, et un compteur d'éclats.
+2. **Maps** : galerie des maps et des arènes, avec l'aperçu animé, l'univers, le modificateur et la condition de déblocage.
+3. **Tirages** : les deux packs côte à côte, prix, taux, compteur de garantie.
+4. **Collection** : grille de toutes les unités, celles qu'on n'a pas en silhouette. La fiche d'une unité montre sa boucle d'attaque animée, ses statistiques, sa compétence, son niveau, ses cartes et ses skins.
+5. **Decks** : composition par glisser-déposer, bonus d'équipe.
+6. **Salon multi** : créer, inviter, attendre, choix du deck, « Prêt ».
+7. **Partie** :
    - en haut : vies, vague, minuteur, barre du boss ;
    - au milieu : chemin et plateau(x) ;
    - en bas : mana, bouton **Invoquer** avec son coût, les 5 boutons d'amélioration du deck, emotes.
-7. **Fin de partie** : vague atteinte ou victoire/défaite, éclats gagnés, bouton « Rejouer » (qui renvoie au salon en multi).
-8. **Réglages** : pseudo, son, vibrations, réinitialiser la sauvegarde (avec confirmation dans la page).
+8. **Fin de partie** : vague atteinte ou victoire/défaite, éclats gagnés, bouton « Rejouer » (qui renvoie au salon en multi).
+9. **Réglages** : pseudo, son, vibrations, réinitialiser la sauvegarde (avec confirmation dans la page).
 
 ---
 
@@ -253,6 +352,8 @@ src/
   engine/     simulation pure : état, ticks, ciblage, compétences, vagues, boss, rng, commandes
   net/        Transport (PeerJS), protocole, hôte et invité, reconnexion
   render/     scène PixiJS, plateau, unités, ennemis, effets, interpolation
+  maps/       données des maps et des arènes de boss (tracé, palette, couches, modificateur)
+  audio/      effets et ambiances WebAudio
   ui/         écrans HTML/CSS
   meta/       collection, tirages, monnaie, decks, sauvegarde
   pwa/        manifest, icônes, service worker
@@ -264,15 +365,16 @@ tests/        tests du moteur, des tirages et de la synchronisation
 
 ## 10. Étapes de livraison
 
-Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commit par étape.
+Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commit par étape. Entre parenthèses, les agents engagés (§1 bis) ; ceux d'une même étape travaillent en parallèle.
 
-1. **Moteur et Solo** : plateau, invocation, fusion, mana, vagues, 6 unités Marvel, ennemis, un boss. Jouable en local.
-2. **Toutes les unités et tous les boss** : les 28 unités, les 6 boss avec leurs sbires, les bonus d'équipe. Tests sur chaque compétence.
-3. **Méta-jeu** : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins, sauvegarde.
-4. **Coop à 2** en P2P : salon, lien d'invitation, synchronisation, reconnexion.
-5. **Duel à 2**.
-6. **PWA et lien secret** : installation, hors ligne pour le Solo, `noindex`, page neutre sans la clé.
-7. **Finitions** : sons, vibrations, performances (60 i/s visés avec 15 unités et 60 ennemis par plateau sur un téléphone moyen), README de déploiement.
+0. **Contrats** (chef de projet) : types, protocole, interface moteur ↔ rendu, squelette du projet, journal.
+1. **Moteur et Solo** (moteur, game design, rendu, direction artistique, QA) : plateau, invocation, fusion, mana, vagues, 6 unités Marvel, ennemis, un boss, la map « Toits de New York ». Jouable en local.
+2. **Toutes les unités, tous les boss et toutes les maps** (game design, direction artistique, maps, moteur, QA) : les 28 unités, les 6 boss avec leurs sbires et leurs arènes, les 12 maps et leurs variantes, les bonus d'équipe. Tests sur chaque compétence, simulateur d'équilibrage.
+3. **Méta-jeu** (méta et économie, interface, direction artistique) : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins, sauvegarde.
+4. **Coop à 2** en P2P (réseau, interface, QA) : salon, lien d'invitation, synchronisation, reconnexion, map symétrique.
+5. **Duel à 2** (réseau, game design, QA).
+6. **PWA et lien secret** (PWA et déploiement, QA) : installation, hors ligne pour le Solo, `noindex`, page neutre sans la clé.
+7. **Finitions** (audio, rendu, QA) : sons et ambiances par map, vibrations, performances (60 i/s visés avec 15 unités et 60 ennemis par plateau sur un téléphone moyen), README de déploiement.
 
 ---
 
@@ -282,6 +384,8 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 - [ ] Le jeu s'installe sur l'écran d'accueil (iOS et Android) et le Solo marche en mode avion.
 - [ ] Invocation, fusion (même unité et même rang uniquement), amélioration et coût croissant fonctionnent comme dans Rush Royale.
 - [ ] Les 28 unités et les 6 boss ont leurs compétences et leurs animations, dans le style des planches.
+- [ ] Les 12 maps, leurs 7 variantes et les 6 arènes de boss sont jouables, et la transition vers l'arène se déclenche à l'arrivée de chaque boss.
+- [ ] Le journal `docs/journal.md` montre quel agent a livré chaque partie, et chaque livraison a été relue par l'agent QA.
 - [ ] Les deux packs respectent les taux affichés et la garantie (testé sur 100 000 tirages simulés).
 - [ ] Deux téléphones sur des réseaux différents (4G et Wi-Fi) jouent ensemble en Coop puis en Duel grâce au lien d'invitation, avec un décalage perçu inférieur à 150 ms.
 - [ ] Si l'invité ferme l'onglet et revient dans les 30 s, la partie reprend.
