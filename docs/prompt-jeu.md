@@ -19,6 +19,16 @@ Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Ma
 
 Tu pilotes une **équipe d’agents spécialisés** (§1 bis) : un agent par grosse tâche.
 
+**Principe directeur : tout est calé sur Rush Royale**, qui est très bien fait. Quand ce prompt ne précise pas un détail, reproduis ce que fait Rush Royale, et ne réinvente rien. Cela vaut pour :
+- la disposition de l'écran de combat : chemin en haut, grille au centre, bouton Invoquer en bas au centre avec son coût, mana à gauche, améliorations du deck en rangée sous la grille ;
+- le geste de fusion (glisser une unité sur sa jumelle, les cases compatibles s'illuminent) ;
+- le rythme des vagues, l'annonce et la barre du boss ;
+- l'écran de fin de partie et ses récompenses ;
+- la navigation par onglets en bas de l'écran (Boutique/Tirages, Collection/Deck, Combat au centre, Campagne, Profil) ;
+- les coffres, les cartes, les montées de niveau et les talents.
+
+L'agent **Game design** rédige `docs/reference-rush-royale.md`, qui liste les écrans, les gestes et les règles de Rush Royale à reproduire, et chaque agent s'y réfère.
+
 Toute l'interface est **en français**. Le jeu est **mobile d'abord**, en portrait, et doit être fluide sur un iPhone ou un Android récent.
 
 Usage strictement personnel : pas de monétisation, pas de vraie monnaie, pas d'indexation publique.
@@ -59,7 +69,8 @@ Les agents travaillent **en parallèle** quand leurs tâches sont indépendantes
 | **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, skins, monnaie | `src/meta/` | Test de 100 000 tirages conforme aux taux |
 | **Campagne et progression** | Les 6 chapitres et 60 niveaux, objectifs et étoiles, récompenses, talents (2 options × 3 paliers × 28 unités), niveau de compte, Survie et records | `src/campaign/`, `src/data/talents.ts` | Campagne jouable de bout en bout ; un nouveau profil débloque un personnage en moins de 20 min de jeu |
 | **Backend, profils et sauvegarde** | Supabase : profils, code de récupération, liaison du duo, présence, invitations, sauvegarde local d'abord avec synchronisation, parties en cours, règles RLS | `src/cloud/`, `supabase/` | Deux profils sur deux téléphones gardent chacun leur progression ; une partie Coop arrêtée reprend plus tard ; mode avion puis resynchronisation sans perte |
-| **Interface et expérience** | Tous les écrans HTML/CSS, navigation, animation d'ouverture des packs, accessibilité, lisibilité à 375 px | `src/ui/` | Parcours complet sans blocage, de l'accueil à la fin de partie |
+| **Interface et expérience** | Tous les écrans HTML/CSS, navigation par onglets façon Rush Royale, animation d'ouverture des packs, accessibilité, lisibilité à 375 px | `src/ui/` | Parcours complet sans blocage, de l'accueil à la fin de partie |
+| **Tutoriel et prise en main** | Tutoriel guidé du §5.0 : scénario, main animée, assombrissement, bulles du guide, combat scénarisé, astuces contextuelles, sauvegarde par étape | `src/tutorial/` | Un joueur qui n'a jamais vu Rush Royale finit le tutoriel seul en moins de 4 minutes ; reprise à la bonne étape après fermeture |
 | **Audio** | Effets WebAudio (invocation, fusion, coups, boss) et une ambiance musicale par univers | `src/audio/` | Sons sur chaque événement clé, bouton muet persistant |
 | **PWA, déploiement et accès** | Manifest, icônes, service worker, lien secret, `noindex`, dépôt GitHub public, GitHub Actions et GitHub Pages, secrets | `src/pwa/`, `src/access/`, `.github/workflows/` | Installation sur iOS et Android, Solo hors ligne, page neutre sans la clé, déploiement automatique à chaque push, aucun secret dans le dépôt |
 | **Qualité (QA)** | Relire chaque livraison, écrire les tests de bout en bout (Playwright), tester sur mobile, ouvrir les bugs aux bons agents | `tests/`, `e2e/` | Les critères d'acceptation du §11 passent tous |
@@ -193,6 +204,37 @@ Le bonus s'active si le **deck** contient l'équipe complète. Liste complète d
 ---
 
 ## 5. Modes de jeu
+
+### 5.0 Tutoriel guidé (premier lancement)
+
+Comme dans Rush Royale, le joueur ne lit rien : il **apprend en jouant**, avec une main animée qui montre quoi toucher, un **assombrissement** de tout le reste de l'écran et des **bulles courtes** dites par un personnage guide (Spider-Man pour le pack Marvel, Vaïana pour le pack Disney, selon le deck de départ choisi). Pendant une étape, seule l'action demandée est possible.
+
+**Partie 1 — Premier combat (scénarisé, impossible à perdre)**
+1. « Des ennemis arrivent ! Touche **Invoquer**. » Une unité apparaît. Les ennemis sont très faibles et le mana est fourni.
+2. Le joueur invoque encore jusqu'à avoir **deux unités identiques**. Le tirage est truqué pour que ça arrive vite.
+3. « Fais glisser une unité sur sa **jumelle** pour les **fusionner**. » La main montre le geste et les cases compatibles brillent. On voit le rang passer à 2 pastilles et la nouvelle unité aléatoire.
+4. « Les unités plus fortes ont **plus de pastilles**. » Une deuxième fusion est guidée.
+5. « Touche le bouton d'**amélioration** sous la grille : toutes les unités de ce type deviennent plus fortes. »
+6. « Un **boss** arrive ! » Annonce plein écran, puis un boss faible avec un pouvoir montré au ralenti et expliqué en une phrase.
+7. Victoire : l'écran de fin explique les **éclats** et l'**XP**.
+
+**Partie 2 — Le méta-jeu, guidé dans les menus**
+8. « Ouvre ton **premier pack** » : un tirage gratuit garanti Épique, avec l'animation complète.
+9. « Mets ta nouvelle unité dans ton **deck** » : glisser-déposer guidé, explication du bonus d'équipe s'il y en a un.
+10. « Lance le **niveau 1** de la campagne » : premier vrai niveau, avec juste des rappels discrets (« Pense à fusionner ! » si le plateau est plein).
+
+**Plus tard, des astuces au bon moment** (une seule fois chacune), comme dans Rush Royale :
+- le ciblage des unités (premier, aléatoire, fort), quand on obtient une unité « fort » ;
+- les talents, à la première unité niveau 5 ;
+- les bonus d'équipe, quand une équipe est presque complète ;
+- les pouvoirs de chaque boss, à sa première apparition ;
+- « Jouer à deux », quand on atteint le niveau de compte 3.
+
+**Règles**
+- Le tutoriel est **sauvegardé étape par étape** : si on ferme l'app, on reprend à la même étape.
+- Il propose « **Passer le tutoriel** » (avec confirmation dans la page) et « **Revoir le tutoriel** » dans les Réglages.
+- La partenaire suit **le même tutoriel** à la création de son profil. « Jouer à deux » ne s'ouvre qu'après la partie 1, ou en rejoignant une invitation (avec un mini-tutoriel de 3 bulles sur la Coop).
+- Durée visée : **moins de 4 minutes** pour les parties 1 et 2.
 
 ### 5.1 Solo — le cœur de la progression
 
@@ -416,6 +458,7 @@ src/
   maps/       données des maps et des arènes de boss (tracé, palette, couches, modificateur)
   audio/      effets et ambiances WebAudio
   ui/         écrans HTML/CSS
+  tutorial/   scénario du tutoriel, surcouche de guidage, astuces contextuelles
   meta/       collection, tirages, monnaie, decks
   campaign/   chapitres, niveaux, étoiles, récompenses, talents, niveau de compte, survie
   cloud/      Supabase : profils, sync local d'abord, présence, invitations, parties sauvegardées
@@ -435,7 +478,7 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 0. **Contrats et mise en ligne** (chef de projet, PWA et déploiement) : types, protocole, interface moteur ↔ rendu, squelette du projet, journal ; dépôt GitHub public créé et poussé, workflow GitHub Pages actif dès le premier jour (même avec une page vide), pour que chaque étape soit testable en ligne.
 1. **Moteur et Solo** (moteur, game design, rendu, direction artistique, QA) : plateau, invocation, fusion, mana, vagues, 6 unités Marvel, ennemis, un boss, la map « Toits de New York ». Jouable en local.
 2. **Toutes les unités, tous les boss et toutes les maps** (game design, direction artistique, maps, moteur, QA) : les 28 unités, les 6 boss avec leurs sbires et leurs arènes, les 12 maps et leurs variantes, les bonus d'équipe. Tests sur chaque compétence, simulateur d'équilibrage.
-3. **Profils, sauvegarde et campagne Solo** (backend, campagne et progression, interface, QA) : profils, code de récupération, sauvegarde en ligne local d'abord, reprise des parties Solo, les 6 chapitres, étoiles, talents, niveau de compte, Survie.
+3. **Profils, sauvegarde, tutoriel et campagne Solo** (backend, campagne et progression, tutoriel, interface, QA) : profils, code de récupération, sauvegarde en ligne local d'abord, reprise des parties Solo, **tutoriel guidé**, les 6 chapitres, étoiles, talents, niveau de compte, Survie.
 4. **Méta-jeu** (méta et économie, interface, direction artistique) : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins.
 5. **Jouer à deux : Coop** (réseau, backend, interface, QA) : liaison du duo, présence, invitations, salon, lien de secours, synchronisation, reconnexion, map symétrique, sauvegarde et reprise des parties communes.
 6. **Duel à 2** (réseau, game design, QA), historique et score du duo.
@@ -456,6 +499,8 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 - [ ] Deux téléphones sur des réseaux différents (4G et Wi-Fi) jouent ensemble en Coop puis en Duel grâce au lien d'invitation, avec un décalage perçu inférieur à 150 ms.
 - [ ] Si l'invité ferme l'onglet et revient dans les 30 s, la partie reprend.
 - [ ] Toute l'interface est en français, lisible sur un écran de 375 px de large.
+- [ ] Un nouveau profil est guidé pas à pas (invoquer, fusionner, améliorer, boss, pack, deck, niveau 1) en moins de 4 minutes, sans pouvoir se bloquer ; le tutoriel reprend à la bonne étape après fermeture.
+- [ ] Une personne qui connaît Rush Royale retrouve ses repères : mêmes gestes, même disposition de l'écran de combat, même boucle de progression.
 - [ ] Deux profils sur deux téléphones progressent chacun de leur côté ; après réinstallation, le code de récupération restaure toute la progression.
 - [ ] Une partie Solo fermée en cours de route reprend à la même vague, y compris sur un autre appareil.
 - [ ] Une partie Coop arrêtée se retrouve dans « Parties en cours » chez les deux joueurs et reprend à la même vague.
