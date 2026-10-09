@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10h',
+    title: 'Ouverture de packs',
+    date: '10 octobre 2026',
+    items: [
+      'Ouverture de pack façon booster : déchire le sachet du doigt, la lumière qui s’en échappe annonce ta meilleure carte (et ça tremble fort pour un Légendaire !).',
+      'Révélation des cartes : retourne-les une à une ou d’un coup, les Épiques et Légendaires arrivent en grand (ralenti doré pour un Légendaire), avec « NOUVEAU ! » ou la barre de cartes qui se remplit.',
+      'Nouveau récapitulatif du lot avec les nouveaux héros en tête, et un bouton « Encore ! » pour enchaîner un tirage.',
+    ],
+  },
+  {
     id: '2026-10-10g',
     title: 'Campagne, tirages et collection',
     date: '10 octobre 2026',

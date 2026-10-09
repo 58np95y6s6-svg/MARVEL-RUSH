@@ -72,25 +72,44 @@ export function mountPulls(host: HTMLElement, o: { overlay: HTMLElement; go: (ha
   render(getProfile());
   const off = onProfileChange(render);
 
+  /** Libellé du bouton « Encore ! » du récapitulatif, ou null si on ne peut pas retirer le même lot. */
+  function againLabel(packId: PullPackId, kind: '1' | '10' | 'free'): string | null {
+    const p = getProfile();
+    if (!p || !wrap.isConnected) return null;
+    // Pendant le tutoriel guidé, on ne propose pas d'enchaîner (l'étape suivante attend).
+    if (!p.tutorialDone) return null;
+    if (kind === 'free') {
+      const left = freePullsFor(p, packId);
+      return left > 0 ? `Encore !<small>${Math.min(10, left)} offert${Math.min(10, left) > 1 ? 's' : ''}</small>` : null;
+    }
+    const n = kind === '10' ? 10 : 1;
+    const price = pullPrice(packId, n);
+    return p.shards >= price ? `Encore ×${n}<small>${icon('eclats')}${fmt(price)}</small>` : null;
+  }
+
   async function open(packId: PullPackId, kind: '1' | '10' | 'free'): Promise<void> {
     if (busy) return;
-    const p = getProfile();
-    if (!p) return;
-    let results: PullResult[] | null = null;
-    // L'achat est enregistré avant l'animation : fermer l'app en plein tirage ne perd rien.
-    busy = true;
-    try {
-      await updateProfile((q) => {
-        results = kind === 'free' ? openFreePulls(q, packId) : buyPulls(q, packId, kind === '10' ? 10 : 1);
-      });
-    } finally { busy = false; }
-    const res = results as PullResult[] | null;
-    if (!res || !res.length) { toast('Pas assez d’éclats.', 'warn'); render(getProfile()); return; }
-    busy = true;
-    await playPackOpening(o.overlay, getPullPack(packId), res);
-    busy = false;
-    render(getProfile());
-    emitMeta('packOpened', { pack: packId, results: res, free: kind === 'free' });
+    // « Encore ! » relance le même tirage tant que le joueur le demande (et peut le payer).
+    for (;;) {
+      const p = getProfile();
+      if (!p) return;
+      let results: PullResult[] | null = null;
+      // L'achat est enregistré avant l'animation : fermer l'app en plein tirage ne perd rien.
+      busy = true;
+      try {
+        await updateProfile((q) => {
+          results = kind === 'free' ? openFreePulls(q, packId) : buyPulls(q, packId, kind === '10' ? 10 : 1);
+        });
+      } finally { busy = false; }
+      const res = results as PullResult[] | null;
+      if (!res || !res.length) { toast('Pas assez d’éclats.', 'warn'); render(getProfile()); return; }
+      busy = true;
+      const end = await playPackOpening(o.overlay, getPullPack(packId), res, { again: againLabel(packId, kind) });
+      busy = false;
+      render(getProfile());
+      emitMeta('packOpened', { pack: packId, results: res, free: kind === 'free' });
+      if (end !== 'again' || !wrap.isConnected || !againLabel(packId, kind)) return;
+    }
   }
 
   function contentSheet(packId: PullPackId): void {
