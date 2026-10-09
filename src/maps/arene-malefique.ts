@@ -1,7 +1,7 @@
 // Arène de Maléfique : Montagne interdite. Château noir, ronces, corbeaux, flammes vertes.
 // Pendant le boss : ronces qui poussent sur les bords, flammes vertes.
 
-import { type Ctx, type Painter, INK, across, at, cel, defineMap, glow, groundShadow, n1, pathS, polyS, rectS, scene, spots, peaks } from './kit';
+import { type Ctx, type Painter, INK, across, at, cel, defineMap, glow, groundShadow, n1, polyS, rectS, scene, spots, peaks } from './kit';
 
 const pal = {
   bg: '#0c0c14',
@@ -80,4 +80,3 @@ export const areneMalefique = defineMap({
 
 export default areneMalefique;
 
-void pathS;

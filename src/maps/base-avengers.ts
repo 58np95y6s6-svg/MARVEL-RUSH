@@ -70,10 +70,10 @@ function anims(c: Ctx) {
   const sky = c.mode === 'solo' ? 120 : 45;
   return [
     at('Drapeau au vent', 'sway', a, 48, `<rect x="${a.x - 34}" y="${a.y - 30}" width="6" height="80" fill="#56627a" stroke="${INK}" stroke-width="3"/>` + flag(a.x + 4, a.y - 8), { period: 2.2, amp: 4, ox: a.x - 31, oy: a.y + 50 }),
-    at('Radar', 'sway', b, 40, dish(b.x, b.y + 10), { period: 4, amp: 18, oy: b.y + 10 }),
+    at('Base en activité', 'sway', b, 40, dish(b.x, b.y + 10), { period: 4, amp: 18, oy: b.y + 10 }),
     across('Quinjet en patrouille', sky, 18, (x, y) => `<g transform="translate(${x} ${y}) scale(.5)">${quinjet(0, 40, 1, () => 0)}</g>`, { w: 110, h: 50 }, { phase: 0.2 }),
-    at('Cibles d\'entraînement', 'bob', d, 36, target(d.x, d.y + 30, 0.55, () => 0), { period: 2.6, amp: 5 }),
-    at('Balises', 'blink', e, 16, `<circle cx="${e.x}" cy="${e.y}" r="8" fill="${pal.stripe}" stroke="${INK}" stroke-width="3"/>`, { period: 1.2, min: 0.2 }),
+    at('Base en activité', 'bob', d, 36, target(d.x, d.y + 30, 0.55, () => 0), { period: 2.6, amp: 5 }),
+    at('Base en activité', 'blink', e, 16, `<circle cx="${e.x}" cy="${e.y}" r="8" fill="${pal.stripe}" stroke="${INK}" stroke-width="3"/>`, { period: 1.2, min: 0.2 }),
   ];
 }
 

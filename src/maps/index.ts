@@ -22,6 +22,13 @@ import { bayou } from './bayou';
 import { recifNemo } from './recif-nemo';
 import { tourRaiponce } from './tour-raiponce';
 import { foretRoxRouky } from './foret-rox-rouky';
+import { areneJafar } from './arene-jafar';
+import { areneCruella } from './arene-cruella';
+import { areneUrsula } from './arene-ursula';
+import { areneMalefique } from './arene-malefique';
+import { areneGalactus } from './arene-galactus';
+import { areneBouffon } from './arene-bouffon';
+import { areneThanos } from './arene-thanos';
 
 /** Maps d'univers (12) puis variantes Disney (7), dans l'ordre de déblocage. */
 export const MAPS: MapDefX[] = [
@@ -31,7 +38,7 @@ export const MAPS: MapDefX[] = [
 ];
 
 /** Arènes de boss, une par boss. */
-export const ARENAS: MapDefX[] = [];
+export const ARENAS: MapDefX[] = [areneJafar, areneCruella, areneUrsula, areneMalefique, areneGalactus, areneBouffon, areneThanos];
 
 export const ALL_MAPS: MapDefX[] = [...MAPS, ...ARENAS];
 

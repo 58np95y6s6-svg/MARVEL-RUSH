@@ -265,7 +265,7 @@ export function zonesFor(L: AnyLayout): Zones {
   return {
     sky: { x: 0, y: 0, w: 1000, h: 110 },
     low: { x: 0, y: 1290, w: 1000, h: 310 },
-    strip: { y: 1300, x0: -160, x1: 1160 },
+    strip: { y: 1345, x0: -160, x1: 1160 },
     sides: [{ x: 0, y: 340, w: 165, h: 260 }, { x: 0, y: 800, w: 165, h: 290 }],
   };
 }

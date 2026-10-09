@@ -74,11 +74,11 @@ function anims(c: Ctx) {
     `<rect x="${x - 8}" y="${y - 18}" width="20" height="12" rx="4" fill="#bfe4f6" stroke="${INK}" stroke-width="3"/>` +
     flat(circleS(x - 14, y + 10, 6), '#2b2540', 3) + flat(circleS(x + 14, y + 10, 6), '#2b2540', 3);
   return [
-    at('Toupie', 'sway', a, 40, top(a.x, a.y), { period: 0.9, amp: 10, oy: a.y + 26 }),
-    at('Ballon qui rebondit', 'bob', b, 40, ball(b.x, b.y + 26, 0.85, () => 0), { period: 1.2, amp: 10 }),
+    at('Jouets qui bougent', 'sway', a, 40, top(a.x, a.y), { period: 0.9, amp: 10, oy: a.y + 26 }),
+    at('Jouets qui bougent', 'bob', b, 40, ball(b.x, b.y + 26, 0.85, () => 0), { period: 1.2, amp: 10 }),
     across('Voiture téléguidée', c.mode === 'solo' ? 1135 : 1320, 7, car, { w: 60, h: 36 }),
-    at('Cube qui tremble', 'sway', d, 34, block(pal.green, 'B')(d.x, d.y + 26, 0.8, () => 0), { period: 1.6, amp: 5, oy: d.y + 26 }),
-    at('Étoile de shérif', 'pulse', e, 24, `<path d="M${e.x} ${e.y - 18} l5 11 h12 l-9 8 l4 12 l-12 -7 l-12 7 l4 -12 l-9 -8 h12z" fill="${pal.yellow}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`, { period: 2, amp: 0.12 }),
+    at('Jouets qui bougent', 'sway', d, 34, block(pal.green, 'B')(d.x, d.y + 26, 0.8, () => 0), { period: 1.6, amp: 5, oy: d.y + 26 }),
+    at('Jouets qui bougent', 'pulse', e, 24, `<path d="M${e.x} ${e.y - 18} l5 11 h12 l-9 8 l4 12 l-12 -7 l-12 7 l4 -12 l-9 -8 h12z" fill="${pal.yellow}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`, { period: 2, amp: 0.12 }),
   ];
 }
 

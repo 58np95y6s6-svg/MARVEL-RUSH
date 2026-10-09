@@ -74,11 +74,11 @@ function anims(c: Ctx) {
   const flake = (x: number, y: number) => sparkle(x, y, 10, '#ffffff') + sparkle(x + 22, y + 18, 7, '#ffffff') + sparkle(x - 18, y + 24, 6, '#ffffff');
   const lowY = c.mode === 'solo' ? 1130 : 1320;
   return [
-    across('Voitures miniatures', lowY, 8, car, { w: 64, h: 40 }),
-    across('Voitures miniatures', lowY + 30, 11, (x, y) => car(x, y).replace(new RegExp(pal.car, 'g'), '#4a8ad8'), { w: 64, h: 40 }, { reverse: true, phase: 0.4 }),
+    across('Circulation miniature', lowY, 8, car, { w: 64, h: 40 }),
+    across('Circulation miniature', lowY + 30, 11, (x, y) => car(x, y).replace(new RegExp(pal.car, 'g'), '#4a8ad8'), { w: 64, h: 40 }, { reverse: true, phase: 0.4 }),
     at('Flocons de la toundra', 'bob', a, 36, flake(a.x, a.y - 10), { period: 3.2, amp: 8 }),
     at('Brume de la jungle', 'pulse', b, 40, `<ellipse cx="${b.x}" cy="${b.y}" rx="34" ry="14" fill="#dff0e6" opacity=".55"/><ellipse cx="${b.x + 12}" cy="${b.y - 10}" rx="20" ry="10" fill="#dff0e6" opacity=".45"/>`, { period: 4, amp: 0.12 }),
-    at('Feux de circulation', 'blink', e, 16, `<circle cx="${e.x}" cy="${e.y}" r="8" fill="#6ae06a" stroke="${INK}" stroke-width="3"/>`, { period: 2.4, min: 0.2 }),
+    at('Circulation miniature', 'blink', e, 16, `<circle cx="${e.x}" cy="${e.y}" r="8" fill="#6ae06a" stroke="${INK}" stroke-width="3"/>`, { period: 2.4, min: 0.2 }),
     at('Flocons de la toundra', 'blink', d, 30, flake(d.x - 4, d.y - 12), { period: 2, min: 0.3 }),
   ];
 }

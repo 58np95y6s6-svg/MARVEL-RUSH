@@ -35,9 +35,11 @@ const shard: Painter = (x, y, s) =>
 function stonesArc(cx: number, cy: number, r: number): string {
   const cols = Object.values(STONES);
   return cols.map((col, i) => {
-    const a = Math.PI * (1.1 + (i * 0.8) / 5);
-    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.55;
-    return `<circle cx="${n1(x)}" cy="${n1(y)}" r="26" fill="${col}" opacity=".25"/>` + cel(pathS(`M${n1(x)} ${n1(y - 16)} L${n1(x + 12)} ${n1(y)} L${n1(x)} ${n1(y + 16)} L${n1(x - 12)} ${n1(y)}Z`), col, { dx: 4, dy: 0, sw: 4 });
+    const a = Math.PI * (1.12 + (i * 0.76) / 5);
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.42;
+    return `<circle cx="${n1(x)}" cy="${n1(y)}" r="46" fill="${col}" opacity=".2"/><circle cx="${n1(x)}" cy="${n1(y)}" r="32" fill="${col}" opacity=".3"/>` +
+      cel(pathS(`M${n1(x)} ${n1(y - 26)} L${n1(x + 19)} ${n1(y)} L${n1(x)} ${n1(y + 26)} L${n1(x - 19)} ${n1(y)}Z`), col, { dx: 6, dy: 0, sw: 5 }) +
+      `<path d="M${n1(x - 6)} ${n1(y - 12)} L${n1(x)} ${n1(y - 18)}" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/>`;
   }).join('');
 }
 
@@ -46,10 +48,10 @@ function backdrop(c: Ctx): string {
     texture: 'spots', pad: '#8e6250', padMargin: 0.85,
     horizon: (base) => {
       // ciel orange, planète Titan fendue, anneau de débris
-      let s = `<circle cx="250" cy="${base - 150}" r="90" fill="#e8783a" stroke="${INK}" stroke-width="5"/><path d="M180 ${base - 210} L240 ${base - 150} L210 ${base - 100}" stroke="${INK}" stroke-width="5" fill="none"/>`;
-      s += `<ellipse cx="250" cy="${base - 150}" rx="150" ry="22" fill="none" stroke="#c8784a" stroke-width="8" opacity=".7"/>`;
-      s += stonesArc(700, base - 30, 220);
+      let s = `<circle cx="830" cy="${base - 190}" r="70" fill="#e8783a" stroke="${INK}" stroke-width="5"/><path d="M780 ${base - 236} L820 ${base - 190} L800 ${base - 150}" stroke="${INK}" stroke-width="5" fill="none"/>`;
+      s += `<ellipse cx="830" cy="${base - 190}" rx="120" ry="18" fill="none" stroke="#c8784a" stroke-width="7" opacity=".7"/>`;
       s += `<path d="M-10 ${base + 10} L40 ${base - 70} L120 ${base - 40} L170 ${base - 110} L250 ${base - 50} L330 ${base - 80} L380 ${base - 30} L470 ${base - 90} L560 ${base - 40} L640 ${base - 100} L720 ${base - 50} L800 ${base - 120} L880 ${base - 60} L940 ${base - 90} L1010 ${base - 40} L1010 ${base + 30} L-10 ${base + 30}Z" fill="#5a3426" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>`;
+      s += stonesArc(500, base - 40, 330);
       return s;
     },
   });
@@ -82,7 +84,7 @@ export const areneThanos = defineMap({
   frameKind: 'stone',
   palette: pal,
   backdrop,
-  props: { big: [brokenColumn], med: [rubble, shard], small: [shard, rubble] },
+  props: { big: [brokenColumn, (x, y, s, r) => shard(x, y, s * 1.8, r)], med: [rubble, brokenColumn, shard], small: [shard, rubble] },
   gate: (x, y, s) => groundShadow(x, y, 66 * s) +
     cel(pathS(`M${n1(x - 60 * s)} ${n1(y)} L${n1(x - 50 * s)} ${n1(y - 110 * s)} L${n1(x + 50 * s)} ${n1(y - 110 * s)} L${n1(x + 60 * s)} ${n1(y)}Z`), pal.ruin, { dx: 10, dy: 0 }) +
     flat2(x, y, s),

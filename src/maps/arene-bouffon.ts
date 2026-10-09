@@ -1,7 +1,7 @@
 // Arène du Bouffon Vert : New York, nuit d'Halloween, tour Oscorp. Pleine lune, citrouilles,
 // chauves-souris. Pendant le boss : éclairs verts, explosions de citrouilles en fond.
 
-import { type Ctx, type Painter, INK, across, at, cel, circleS, defineMap, flat, glow, groundShadow, n1, pathS, rectS, scene, spots, stars, SW } from './kit';
+import { type Ctx, type Painter, INK, across, at, cel, defineMap, flat, glow, groundShadow, n1, pathS, rectS, scene, spots, stars, SW } from './kit';
 
 const pal = {
   bg: '#0e0c1c',
@@ -80,4 +80,3 @@ export const areneBouffon = defineMap({
 
 export default areneBouffon;
 
-void circleS;

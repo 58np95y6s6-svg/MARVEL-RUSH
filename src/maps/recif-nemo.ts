@@ -39,7 +39,7 @@ function anims(c: Ctx) {
     at('Anémones qui ondulent', 'sway', a, 40, anemone(a.x, a.y + 30, 0.7, () => 0), { period: 3, amp: 6, oy: a.y + 30 }),
     at('Anémones qui ondulent', 'sway', b, 40, anemone(b.x, b.y + 30, 0.7, () => 0), { period: 3.4, amp: 6, oy: b.y + 30, phase: 0.5 }),
     at('Bulles', 'bob', d, 30, [[0, 10, 7], [10, -6, 5], [-6, -20, 4]].map(([dx, dy, r]) => `<circle cx="${d.x + dx!}" cy="${d.y + dy!}" r="${r}" fill="#eafaff" fill-opacity=".35" stroke="#eafaff" stroke-width="2.5"/>`).join(''), { period: 2, amp: 10 }),
-    at('Poisson curieux', 'bob', e, 30, blue(e.x, e.y), { period: 2.4, amp: 6 }),
+    at('Banc de poissons', 'bob', e, 30, blue(e.x, e.y), { period: 2.4, amp: 6 }),
   ];
 }
 

@@ -1,7 +1,7 @@
 // Arène d'Ursula : antre sous-marin. Squelette de baleine, âmes-polypes, bulles, lumière de
 // nautile. Pendant le boss : ondulation de tout l'écran, bulles qui remontent.
 
-import { type Ctx, type Painter, INK, SW, at, cel, circleS, defineMap, ellS, glow, groundShadow, n1, pathS, scene, spots } from './kit';
+import { type Ctx, type Painter, INK, at, cel, circleS, defineMap, glow, groundShadow, n1, pathS, scene, spots } from './kit';
 import { seaweed } from './atlantica';
 
 const pal = {
@@ -76,4 +76,3 @@ export const areneUrsula = defineMap({
 
 export default areneUrsula;
 
-void SW; void ellS;
