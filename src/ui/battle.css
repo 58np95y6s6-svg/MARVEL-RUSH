@@ -31,6 +31,14 @@
 .mr-wave-n { font-size: 46px; line-height: 1; letter-spacing: .5px; }
 .mr-wave-t { font-size: 34px; line-height: 1.1; color: #ffe27a; font-variant-numeric: tabular-nums; }
 .mr-wave-t.boss { color: #ff8a7a; }
+.mr-top-r { justify-self: end; display: flex; gap: 14px; align-items: center; }
+.mr-speed {
+  width: 96px; height: 96px; border-radius: 28px; border: 6px solid var(--ink); padding: 0; cursor: pointer;
+  background: linear-gradient(#8a7fb8, #4b4280); box-shadow: 0 8px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.3);
+  color: #fff; font-family: var(--display); font-size: 50px; line-height: 1;
+}
+.mr-speed.on { background: linear-gradient(#ffe27a, #f2a93b); color: #fff; }
+.mr-speed:active { transform: translateY(6px); box-shadow: 0 2px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.3); }
 .mr-pause {
   justify-self: end; width: 96px; height: 96px; border-radius: 28px; border: 6px solid var(--ink);
   background: linear-gradient(#78b7ff, #3b6fd6); box-shadow: 0 8px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.35);

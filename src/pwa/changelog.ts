@@ -30,6 +30,7 @@ export const CHANGELOG: ReleaseNote[] = [
     items: [
       'Chaque partie commence par un compte à rebours 3, 2, 1, GO ! : place déjà tes héros avant l’arrivée des ennemis.',
       'Pocahontas a de nouveaux cheveux au vent, en mèches souples.',
+      'Nouveau bouton ×2 en haut de l’écran de combat (campagne et Solo Infini) : la partie va deux fois plus vite, ton choix est mémorisé.',
     ],
   },
   {

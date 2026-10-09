@@ -108,7 +108,21 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const wave = el('div', 'mr-wave', '<div class="mr-wave-n mr-outline">Vague 1</div><div class="mr-wave-t mr-outline">0:30</div>');
   const pauseBtn = el('button', 'mr-pause', '<i></i>');
   pauseBtn.setAttribute('aria-label', 'Pause');
-  top.append(lives, wave, pauseBtn);
+  // Vitesse ×1 / ×2 (Solo : campagne et infini), mémorisée sur l'appareil.
+  const speedBtn = el('button', 'mr-speed mr-outline-s');
+  speedBtn.setAttribute('data-tuto', 'speed');
+  let userSpeed = 1;
+  try { if (localStorage.getItem('mr-speed') === '2') userSpeed = 2; } catch { /* stockage indisponible */ }
+  const showSpeed = (): void => { speedBtn.textContent = `×${userSpeed}`; speedBtn.classList.toggle('on', userSpeed === 2); };
+  showSpeed();
+  speedBtn.addEventListener('click', () => {
+    userSpeed = userSpeed === 2 ? 1 : 2;
+    try { localStorage.setItem('mr-speed', String(userSpeed)); } catch { /* stockage indisponible */ }
+    showSpeed();
+  });
+  const topRight = el('div', 'mr-top-r');
+  topRight.append(speedBtn, pauseBtn);
+  top.append(lives, wave, topRight);
   const waveN = wave.firstElementChild as HTMLElement, waveT = wave.lastElementChild as HTMLElement;
   const hearts = [...lives.querySelectorAll<SVGElement>('.mr-heart')];
 
@@ -640,10 +654,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
     // En Solo, la partie ralentit à 25 % pendant la lecture d'une bulle d'info.
-    const rate = speed * (infoSlot >= 0 ? 0.25 : 1);
+    const rate = speed * userSpeed * (infoSlot >= 0 ? 0.25 : 1);
     acc += dt * rate;
     let steps = 0;
-    const maxSteps = Math.max(4, Math.ceil(speed * 3));
+    const maxSteps = Math.max(4, Math.ceil(speed * userSpeed * 3));
     while (acc >= DT && steps < maxSteps) {
       acc -= DT;
       steps++;
