@@ -81,7 +81,9 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
 // ───────────── État initial ─────────────
 
 function shuffledBosses(ctx: Ctx): BossId[] {
-  const arr = ROTATING_BOSSES.slice();
+  const excluded = ctx.cfg.script?.excludeBosses ?? [];
+  let arr = ROTATING_BOSSES.filter((b) => !excluded.includes(b));
+  if (arr.length === 0) arr = ROTATING_BOSSES.slice();
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.min(i, Math.floor(spawnRand(ctx) * (i + 1)));
     [arr[i], arr[j]] = [arr[j]!, arr[i]!];
@@ -111,7 +113,8 @@ function initState(cfg: GameConfig): SimState {
     spawnRng: deriveSeed(cfg.seed, 2),
     nextUid: 1,
     spawnTimer: 0, spawnCount: 0, waveElapsed: 0,
-    pendingBoss: null, nextBigBoss: null, minionMaster: null, bossOrder: [], bossIdx: 0,
+    pendingBoss: null, nextBigBoss: null, minionMaster: null, bossOrder: [], bossIdx: 0, scriptedBossIdx: 0,
+    currentBoss: null, currentBossSmall: false, bossVictory: false,
     paused: false, prevPhase: 'vague', awaitingVictory: false,
     queue: [],
   };
@@ -160,7 +163,13 @@ function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
   const s = ctx.cfg.script;
   const r = rhythm(ctx.cfg);
   if (s?.bossId && (s.bossAtWave === undefined || s.bossAtWave === wave || s.miniBoss)) return s.bossId;
-  if (infinite(ctx.cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'thanos';
+  const order = s?.bossOrder;
+  if (order && ctx.st.scriptedBossIdx < order.length) {
+    const id = order[ctx.st.scriptedBossIdx]!;
+    if (consume) ctx.st.scriptedBossIdx++;
+    return id;
+  }
+  if (infinite(ctx.cfg) && r.thanos > 0 && wave % r.thanos === 0 && !s?.excludeBosses?.includes('thanos')) return 'thanos';
   shuffleBag(ctx);
   const id = ctx.st.bossOrder[ctx.st.bossIdx]!;
   if (consume) ctx.st.bossIdx++;
@@ -183,6 +192,7 @@ function startWave(ctx: Ctx, wave: number): void {
   st.pendingBoss = kind === 'gros' ? bigBossFor(ctx, wave, true) : null;
   const nb = nextBigWave(cfg, kind === 'gros' ? wave + 1 : wave);
   st.nextBigBoss = bigBossFor(ctx, nb, false);
+  st.upcomingBoss = st.nextBigBoss ? { boss: st.nextBigBoss, inWaves: nb - wave } : undefined;
   // Sbires du prochain gros boss dans les 2 vagues qui le précèdent.
   st.minionMaster = !kind && nb - wave <= WAVE_RULES.minionWavesBefore ? st.nextBigBoss : null;
   setPhase(ctx, 'vague');
@@ -303,6 +313,8 @@ function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
     },
   });
   emit(ctx, { type: 'miniBossSpawn', enemy: e.uid, boss: master });
+  st.currentBoss = master;
+  st.currentBossSmall = true;
   st.bossRageIn = BOSS_STATS.rageAfter;
   setPhase(ctx, 'boss');
 }
@@ -317,9 +329,21 @@ function spawnBigBoss(ctx: Ctx, boss: BossId): void {
     bossId: boss, x: { powerIn: def.power.interval, rageIn: BOSS_STATS.rageAfter },
   });
   emit(ctx, { type: 'bossSpawn', enemy: e.uid, boss, lane });
+  st.currentBoss = boss;
+  st.currentBossSmall = false;
   st.pendingBoss = null;
   st.bossRageIn = BOSS_STATS.rageAfter;
   setPhase(ctx, 'boss');
+}
+
+/** script.endOnBossKill : le boss qui vient de tomber est-il le boss imposé du niveau ? */
+function imposedBossDefeated(ctx: Ctx): boolean {
+  const s = ctx.cfg.script!;
+  const st = ctx.st;
+  if (s.miniBoss && !s.bossId) return st.currentBossSmall && st.currentBoss === s.miniBoss;
+  if (s.bossId) return !st.currentBossSmall && st.currentBoss === s.bossId;
+  if (s.bossOrder?.length) return !st.currentBossSmall && st.scriptedBossIdx >= s.bossOrder.length && st.currentBoss === s.bossOrder[s.bossOrder.length - 1];
+  return !st.currentBossSmall;
 }
 
 function bossAlive(ctx: Ctx): boolean {
@@ -346,6 +370,10 @@ function updateWave(ctx: Ctx): void {
     if (!bossAlive(ctx)) {
       st.bossRageIn = undefined;
       st.phase = 'vague';
+      if (ctx.cfg.script?.endOnBossKill && imposedBossDefeated(ctx)) {
+        st.bossVictory = true;
+        return;
+      }
       waveFinished(ctx);
     }
   }
@@ -527,6 +555,7 @@ function checkEnd(ctx: Ctx): void {
   if (st.result) return;
   let res: EngineState['result'];
   if (st.lives <= 0) res = { outcome: 'defaite', wave: st.wave };
+  if (!res && st.bossVictory) res = { outcome: 'victoire', wave: st.wave };
   if (!res && st.awaitingVictory && !st.enemies.some(isAlive)) {
     res = { outcome: 'victoire', wave: st.wave };
   }

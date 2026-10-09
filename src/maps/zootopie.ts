@@ -2,7 +2,7 @@
 // voitures miniatures.
 
 import {
-  type Ctx, type Painter, INK, P, SW, across, at, cel, circleS, cloud, defineMap, flat, gloss, groundShadow, n1, pathS,
+  type Ctx, type Painter, INK, P, SW, across, at, cel, circleS, cloud, defineMap, flat, groundShadow, n1, pathS,
   polyS, rectS, scene, spots, sparkle,
 } from './kit';
 
@@ -105,4 +105,3 @@ export const zootopie = defineMap({
 
 export default zootopie;
 
-void gloss;

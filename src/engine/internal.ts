@@ -79,6 +79,13 @@ export interface SimState extends EngineState {
   /** Boss dont les sbires se mêlent à la vague en cours (les 2 vagues avant un gros boss). */
   minionMaster: BossId | null;
   bossOrder: BossId[];
+  /** Index dans script.bossOrder (ordre imposé des gros boss). */
+  scriptedBossIdx: number;
+  /** Boss en cours (gros boss, ou maître du petit boss) et s'il s'agit d'un petit boss. */
+  currentBoss: BossId | null;
+  currentBossSmall: boolean;
+  /** script.endOnBossKill : le boss imposé est vaincu. */
+  bossVictory: boolean;
   bossIdx: number;
   paused: boolean;
   prevPhase: EngineState['phase'];

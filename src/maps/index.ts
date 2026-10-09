@@ -9,9 +9,18 @@ import { asgardBifrost } from './asgard-bifrost';
 import { sanctumSanctorum } from './sanctum-sanctorum';
 import { baseAvengers } from './base-avengers';
 import { templeDixAnneaux } from './temple-dix-anneaux';
+import { ileMotunui } from './ile-motunui';
+import { palaisImperial } from './palais-imperial';
+import { royaumeDesMorts } from './royaume-des-morts';
+import { zootopie } from './zootopie';
+import { chambreAndy } from './chambre-andy';
+import { sugarRush } from './sugar-rush';
 
 /** Maps d'univers (12) puis variantes Disney (7), dans l'ordre de déblocage. */
-export const MAPS: MapDefX[] = [toitsNewYork, atelierStark, asgardBifrost, sanctumSanctorum, baseAvengers, templeDixAnneaux];
+export const MAPS: MapDefX[] = [
+  toitsNewYork, atelierStark, asgardBifrost, sanctumSanctorum, baseAvengers, templeDixAnneaux,
+  ileMotunui, palaisImperial, royaumeDesMorts, zootopie, chambreAndy, sugarRush,
+];
 
 /** Arènes de boss, une par boss. */
 export const ARENAS: MapDefX[] = [];

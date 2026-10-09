@@ -15,6 +15,7 @@
 
 import type { AwakeningPassiveDef, TalentDef, UnitId } from '../data/types';
 import { TALENTS, TALENT_TIER_LEVELS } from '../data/talents';
+import { AWAKENINGS } from '../data/awakenings';
 
 let catalog: readonly TalentDef[] = TALENTS;
 
@@ -58,27 +59,14 @@ export function applyTalentParams(base: Record<string, number>, talents: readonl
 
 // ───────────── Éveils (§6.6) ─────────────
 // Gains cumulés par étoile : +6 % de dégâts et +4 % de vitesse d'attaque (appliqués dans combat.ts).
-// Passifs débloqués à ★2/4/6/8/10, lus dans src/data/awakenings.ts dès que le fichier existe
-// (chargement automatique par import.meta.glob : aucun câblage à faire), ou fournis par
-// setAwakeningCatalog. Leurs params suivent la même convention que les talents.
+// Passifs débloqués à ★2/4/6/8/10, lus dans src/data/awakenings.ts (remplaçables par
+// setAwakeningCatalog). Leurs params suivent la même convention que les talents.
 
 export const AWAKENING_DAMAGE = 0.06;
 export const AWAKENING_ATTACK_SPEED = 0.04;
 export const AWAKENING_MAX = 10;
 
-function discoverAwakenings(): AwakeningPassiveDef[] {
-  const mods = import.meta.glob<Record<string, unknown>>('../data/awakenings.ts', { eager: true });
-  for (const mod of Object.values(mods)) {
-    for (const v of Object.values(mod)) {
-      if (Array.isArray(v) && v.every((d) => d && typeof d === 'object' && 'star' in d && 'unit' in d && 'params' in d)) {
-        return v as AwakeningPassiveDef[];
-      }
-    }
-  }
-  return [];
-}
-
-let awakeningCatalog: readonly AwakeningPassiveDef[] = discoverAwakenings();
+let awakeningCatalog: readonly AwakeningPassiveDef[] = AWAKENINGS;
 
 /** Remplace le catalogue des passifs d'éveil (tests, équilibrage). */
 export function setAwakeningCatalog(defs: readonly AwakeningPassiveDef[]): void {

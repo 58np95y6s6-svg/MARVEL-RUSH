@@ -39,7 +39,7 @@ export { RARITY_COLORS };
 
 function wrap(fr: Frame, body: string, label: string): string {
   const [x, y, w, h] = fr.viewBox;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${label}">${body}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}">${body}</svg>`;
 }
 
 const cache = new Map<string, string>();

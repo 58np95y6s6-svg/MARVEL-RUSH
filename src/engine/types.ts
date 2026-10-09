@@ -92,6 +92,7 @@ export interface EnemyInstance {
   effects: { slow?: number; slowFor?: number; stunFor?: number; burn?: number; burnFor?: number; marked?: number; markedFor?: number; armorBreak?: number };
   bossId?: BossId;            // présent si c'est un boss
   minionOf?: BossId;          // présent si c'est un sbire
+  giant?: boolean;            // lieutenant ou sbire géant : dessiné en taille ×2
 }
 
 export interface LaneState {
@@ -111,6 +112,8 @@ export interface EngineState {
   lanes: LaneState[];
   lives: number;              // vies (partagées en Coop)
   enemies: EnemyInstance[];
+  /** Prochain gros boss et nombre de vagues avant lui (bandeau « 1 vague avant le boss X »). */
+  upcomingBoss?: { boss: BossId; inWaves: number };
   bossRageIn?: number;        // secondes avant la rage du boss en cours
   result?: { outcome: 'victoire' | 'defaite'; winner?: PlayerId; wave: number };
 }
