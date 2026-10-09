@@ -11,6 +11,17 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10a',
+    title: 'Premier combat jouable',
+    date: '10 octobre 2026',
+    items: [
+      'Solo Infini sur les Toits de New York avec le deck Marvel de départ.',
+      'Invoque, fais glisser une unité sur sa jumelle pour la fusionner, améliore ton deck en partie.',
+      'Lieutenant toutes les 5 vagues, gros boss toutes les 10, avec annonce, barre de vie et arène.',
+      'Touche une unité pour lire sa compétence ; le jeu ralentit le temps de la lire.',
+    ],
+  },
+  {
     id: '2026-10-09b',
     title: 'Installation simplifiée',
     date: '9 octobre 2026',

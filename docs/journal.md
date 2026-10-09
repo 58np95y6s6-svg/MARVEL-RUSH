@@ -20,7 +20,7 @@ Règles :
 | Étape | État | Agents |
 |---|---|---|
 | 0. Contrats et mise en ligne | Fait | Chef de projet |
-| 1. Moteur et Solo | En cours | Moteur, Game design, Direction artistique, Rendu |
+| 1. Moteur et Solo | Fait : combat Solo jouable sur les Toits de New York | Moteur, Game design, Direction artistique, Maps, Rendu |
 | 2. Toutes les unités, boss et maps | À faire | |
 | 3. Profils, sauvegarde, tutoriel, campagne | À faire | |
 | 4. Méta-jeu | À faire | |

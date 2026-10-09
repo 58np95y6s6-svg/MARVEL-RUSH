@@ -10,7 +10,7 @@ export type Pose = 0 | 1 | 2;
 
 /** Taille d'affichage (px logiques) des éléments, sur l'écran logique 1000 × 1600. */
 export const SIZES = {
-  token: 128,
+  token: 142,
   enemy: 118,
   enemyGros: 150,
   enemyRapide: 104,

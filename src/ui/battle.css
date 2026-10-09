@@ -14,7 +14,7 @@
 
 /* ---------- barre du haut ---------- */
 .mr-top {
-  position: absolute; left: 24px; right: 24px; top: calc(14px - min(var(--ext-top), 60px));
+  position: absolute; left: 24px; right: 24px; top: calc(14px - var(--ext-top));
   height: 104px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
 }
 .mr-lives { display: flex; gap: 6px; justify-self: start; background: rgba(29, 23, 51, .55); border-radius: 60px; padding: 10px 20px; border: 4px solid rgba(255,255,255,.12); }
@@ -41,7 +41,7 @@
 
 /* ---------- barre du boss ---------- */
 .mr-bossbar {
-  position: absolute; left: 60px; right: 60px; top: calc(134px - min(var(--ext-top), 60px)); height: 92px;
+  position: absolute; left: 60px; right: 60px; top: calc(134px - var(--ext-top)); height: 92px;
   display: none; align-items: center; gap: 16px;
 }
 .mr-bossbar.on { display: flex; animation: mr-drop .35s ease-out; }
@@ -65,11 +65,12 @@
 
 /* ---------- bandeaux ---------- */
 .mr-banner {
-  position: absolute; left: 50%; top: 1076px; transform: translateX(-50%);
-  max-width: 900px; white-space: nowrap; padding: 14px 34px; border-radius: 60px;
+  position: absolute; left: 50%; top: 1072px; transform: translateX(-50%);
+  max-width: 940px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 14px 34px; border-radius: 60px;
   background: rgba(20, 14, 40, .62); font-family: var(--body); font-weight: 800; font-size: 36px;
   display: none; align-items: center; gap: 14px; border: 3px solid rgba(255,255,255,.12);
 }
+.mr-banner span { overflow: hidden; text-overflow: ellipsis; }
 .mr-banner.on { display: flex; animation: mr-fade .4s ease-out; }
 .mr-banner img { width: 54px; height: 54px; border-radius: 50%; background: #3a1f45; border: 3px solid #1d1733; object-fit: cover; object-position: 50% 10%; }
 .mr-toast {
@@ -88,7 +89,8 @@
 @keyframes mr-shake { 0%, 100% { margin-left: 0; } 20% { margin-left: -16px; } 40% { margin-left: 14px; } 60% { margin-left: -10px; } 80% { margin-left: 6px; } }
 .mr-shake { animation: mr-shake .35s; }
 
-/* ---------- commandes du bas ---------- */
+/* ---------- commandes du bas (collées au bas de l'écran) ---------- */
+.mr-dock { position: absolute; left: 0; top: 0; width: 1000px; height: 1600px; transform: translateY(var(--ext-bottom)); pointer-events: none; }
 .mr-mana {
   position: absolute; left: 40px; top: 1196px; width: 270px; height: 120px; display: flex; align-items: center; gap: 10px;
 }
@@ -110,12 +112,10 @@
 .mr-summon .cost svg { width: 34px; height: 40px; }
 .mr-summon.off { background: linear-gradient(#b9b4c8, #8c86a0); box-shadow: 0 12px 0 #1d1733, inset 0 6px 0 rgba(255,255,255,.35); }
 .mr-summon.off .cost { color: #ffd0d0; }
-.mr-summon.ready { animation: mr-ready 1.6s ease-in-out infinite; }
-@keyframes mr-ready { 50% { filter: brightness(1.12); } }
 .mr-extra { position: absolute; right: 40px; top: 1208px; width: 270px; height: 100px; display: flex; align-items: center; justify-content: flex-end; }
 .mr-board-count { font-family: var(--body); font-weight: 900; font-size: 32px; background: rgba(20,14,40,.5); border-radius: 30px; padding: 10px 22px; }
 
-.mr-cards { position: absolute; left: 30px; right: 30px; top: 1378px; height: 200px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.mr-cards { position: absolute; left: 30px; right: 30px; top: 1372px; height: 200px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .mr-card {
   position: relative; height: 200px; padding: 0; border-radius: 26px; border: 6px solid var(--ink); cursor: pointer;
   background: linear-gradient(#5d7fd8, #2d3f8a); box-shadow: 0 9px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.3);
@@ -162,7 +162,7 @@
 .mr-announce.on { display: grid; animation: mr-ann 2.4s ease-in-out forwards; }
 .mr-announce .box { text-align: center; transform-origin: 50% 40%; animation: mr-ann-box 2.4s ease-out forwards; }
 .mr-announce { font-family: var(--display); color: #fff; }
-.mr-announce .tag { font-size: 64px; line-height: 1; color: #ffe27a; letter-spacing: 2px; }
+.mr-announce .tag { white-space: nowrap; font-size: min(64px, 15vw); line-height: 1; color: #ffe27a; letter-spacing: 2px; }
 .mr-announce img { width: 270px; max-width: 72vw; display: block; margin: -6px auto -10px; filter: drop-shadow(0 8px 0 rgba(0,0,0,.35)); }
 .mr-announce .name { font-size: 38px; line-height: 1; }
 .mr-announce .sub { font-family: var(--body); font-weight: 800; font-size: 16px; margin-top: 8px; color: #ffd8d0; padding: 0 24px; }

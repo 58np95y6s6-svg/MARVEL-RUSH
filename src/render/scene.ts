@@ -2,12 +2,13 @@
 // Le moteur avance à pas fixe (20 ticks/s) ; la scène dessine à la fréquence de l'écran et interpole
 // la position des ennemis entre deux ticks. Coordonnées : écran logique 1000 × 1600 (src/maps/layout.ts),
 // mis à l'échelle et centré dans les zones sûres de l'écran.
-import { Application, BitmapText, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, BitmapText, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance } from '../engine';
 import { GRID_SIZE } from '../engine';
 import type { BossId, UnitId } from '../data/types';
 import type { MapDefX } from '../maps/kit';
-import { SCREEN, layoutFor, type SoloLayout } from '../maps/layout';
+import { SCREEN, layoutFor, type PathShape, type SoloLayout } from '../maps/layout';
+import { arenaForBoss } from '../maps';
 import type { AmbientAnim } from '../maps/kit';
 import { loadTexture } from '../art';
 import { UNITS } from '../data/units';
@@ -23,6 +24,7 @@ import {
 const INK = 0x1d1733;
 const DT = 1 / 20;
 
+/** Mise à l'échelle de l'écran logique. `extTop`/`extBottom` : marge libre (px logiques) entre l'écran logique et les zones sûres. */
 export interface Fit { scale: number; x: number; y: number; width: number; height: number; extTop: number; extBottom: number }
 
 export interface SceneOptions {
@@ -94,10 +96,12 @@ export class BattleScene {
   private safe: () => [number, number, number, number];
 
   private world = new Container();
-  private ext = new Graphics();
-  private mapLayer = new Container();
-  private animLayer = new Container();
-  private pathLayer = new Container();
+  private sceneryLayer = new Container();
+  private arena: Container | null = null;
+  private arenaBoss: BossId | null = null;
+  private arenaFade = 0; // 1 : apparition, −1 : disparition
+  private tintOverlay = new Sprite(Texture.WHITE);
+  private tintTarget = 0;
   private boardFx = new Container();
   private unitLayer = new Container();
   private enemyLayer = new Container();
@@ -171,13 +175,17 @@ export class BattleScene {
 
     const stage = this.app.stage;
     stage.addChild(this.world);
-    this.world.addChild(this.ext, this.mapLayer, this.animLayer, this.pathLayer, this.boardFx, this.enemyLayer, this.unitLayer, this.shotLayer, this.partLayer, this.numLayer);
+    this.world.addChild(this.sceneryLayer, this.tintOverlay, this.boardFx, this.enemyLayer, this.unitLayer, this.shotLayer, this.partLayer, this.numLayer);
     stage.addChild(this.flashLayer);
     this.flashLayer.addChild(this.flash);
     this.flash.alpha = 0;
+    this.flash.visible = false;
     this.enemyLayer.sortableChildren = true;
     this.unitLayer.sortableChildren = true;
-    this.drawExtension();
+    this.tintOverlay.position.set(-3000, -4000);
+    this.tintOverlay.width = 7000;
+    this.tintOverlay.height = 9600;
+    this.tintOverlay.alpha = 0;
 
     try { await document.fonts.load('64px "Lilita One"'); } catch { /* police de repli */ }
     installDamageFont();
@@ -209,47 +217,124 @@ export class BattleScene {
     this.syncUnits(true);
   }
 
-  private drawExtension(): void {
-    // Prolonge le ciel et le sol au-delà de l'écran logique (téléphones plus allongés que 10:16).
-    const p = this.map.palette;
-    const g = this.ext;
-    g.clear();
-    g.rect(-3000, -4000, 7000, 4000 + 1).fill(p['sky1'] ?? '#4b3f7e');
-    g.rect(-3000, SCREEN.h - 1, 7000, 4000).fill(p['ground2'] ?? p['ground'] ?? '#54496a');
-    g.rect(-3000, 0, 3000, SCREEN.h).fill(p['ground'] ?? '#5f5374');
-    g.rect(SCREEN.w, 0, 3000, SCREEN.h).fill(p['ground'] ?? '#5f5374');
+  /** Couleur moyenne d'une bande de la texture de fond (fractions de la largeur et de la hauteur). */
+  private sample(t: Texture, x0: number, y0: number, x1: number, y1: number): number | undefined {
+    const res = t.source.resource as unknown;
+    if (!(res instanceof HTMLCanvasElement)) return undefined;
+    try {
+      // Réduit la bande à 8 × 1 px sur un petit canevas, puis moyenne.
+      const c = document.createElement('canvas');
+      c.width = 8; c.height = 1;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      if (!g) return undefined;
+      const W = res.width, H = res.height;
+      g.drawImage(res, x0 * W, y0 * H, Math.max(1, (x1 - x0) * W), Math.max(1, (y1 - y0) * H), 0, 0, 8, 1);
+      const d = g.getImageData(0, 0, 8, 1).data;
+      let r = 0, gg = 0, b = 0;
+      for (let i = 0; i < 32; i += 4) { r += d[i]!; gg += d[i + 1]!; b += d[i + 2]!; }
+      return (Math.round(r / 8) << 16) | (Math.round(gg / 8) << 8) | Math.round(b / 8);
+    } catch { return undefined; }
   }
 
-  private async loadMap(): Promise<void> {
-    const m = this.map;
+  /**
+   * Décor complet d'une map (ou d'une arène) avec le tracé de la map en cours : prolongement des bords,
+   * fond, décor latéral, animations d'ambiance, chemin et plateau.
+   */
+  private async buildScenery(m: MapDefX, shape: PathShape): Promise<Container> {
+    const box = new Container();
+    const ext = new Graphics();
+    box.addChild(ext);
     const ids: ('fond' | 'decor' | 'chemin')[] = ['fond', 'decor', 'chemin'];
     const texs = await Promise.all(ids.map((id) => {
       const layer = m.layers.find((l) => l.id === id);
-      return layer ? loadLayer(`${m.id}-${id}`, () => layer.svg('solo', m.shape)) : Promise.resolve(null);
+      return layer ? loadLayer(`${m.id}-${shape}-${id}`, () => layer.svg('solo', shape)) : Promise.resolve(null);
     }));
-    ids.forEach((id, i) => {
-      const t = texs[i];
-      if (!t) return;
-      const s = new Sprite(t);
-      s.width = SCREEN.w;
-      s.height = SCREEN.h;
-      (id === 'chemin' ? this.pathLayer : this.mapLayer).addChild(s);
-    });
-    // Animations d'ambiance (taxis, nuages, balises…), chacune dans son sprite.
-    const list = m.anims('solo', m.shape);
+    const list = m.anims('solo', shape);
     const loaded = await Promise.all(list.map((a) => loadTexture(a.svg, Math.max(8, a.box.w * this.fit.scale), Math.min(2, window.devicePixelRatio || 1)).catch(() => null)));
+    // Les trois couches fixes (fond, décor, chemin et plateau) sont cuites en une seule texture à la
+    // taille de l'écran : un seul quad plein écran au lieu de trois (mémoire et remplissage du GPU).
+    const flat = new Container();
+    for (const t of texs) {
+      if (!t) continue;
+      const sp = new Sprite(t);
+      sp.width = SCREEN.w;
+      sp.height = SCREEN.h;
+      flat.addChild(sp);
+    }
+    const baked = this.app.renderer.generateTexture({
+      target: flat, frame: new Rectangle(0, 0, SCREEN.w, SCREEN.h),
+      resolution: Math.min(3, this.fit.scale * this.app.renderer.resolution),
+    });
+    flat.destroy({ children: true });
+    const bg = new Sprite(baked);
+    bg.width = SCREEN.w;
+    bg.height = SCREEN.h;
+    bg.label = 'baked';
+    box.addChild(bg);
+    // Animations d'ambiance (elles ne passent jamais sur le chemin ni sur la grille).
     list.forEach((a, i) => {
       const t = loaded[i];
       if (!t) return;
-      const s = new Sprite(t);
+      const sp = new Sprite(t);
       const ox = a.ox ?? a.box.x + a.box.w / 2, oy = a.oy ?? a.box.y + a.box.h / 2;
-      s.anchor.set((ox - a.box.x) / a.box.w, (oy - a.box.y) / a.box.h);
-      s.width = a.box.w;
-      s.height = a.box.h;
-      s.position.set(ox, oy);
-      this.animLayer.addChild(s);
-      this.anims.push({ a, s });
+      sp.anchor.set((ox - a.box.x) / a.box.w, (oy - a.box.y) / a.box.h);
+      sp.width = a.box.w;
+      sp.height = a.box.h;
+      sp.position.set(ox, oy);
+      box.addChild(sp);
+      this.anims.push({ a, s: sp });
     });
+    // Prolonge le décor au-delà de l'écran logique (téléphones plus allongés que 10:16)
+    // avec les couleurs des bords de la couche de fond.
+    const p = m.palette;
+    const fond = texs[0];
+    const top = fond ? this.sample(fond, 0, 0, 1, 0.004) : undefined;
+    const bottom = fond ? this.sample(fond, 0, 0.996, 1, 1) : undefined;
+    const left = fond ? this.sample(fond, 0, 0.3, 0.004, 0.9) : undefined;
+    const right = fond ? this.sample(fond, 0.996, 0.3, 1, 0.9) : undefined;
+    ext.rect(-3000, -4000, 7000, 4000 + 2).fill(top ?? p['sky1'] ?? '#4b3f7e');
+    ext.rect(-3000, SCREEN.h - 2, 7000, 4000).fill(bottom ?? p['ground'] ?? '#54496a');
+    ext.rect(-3000, 0, 3002, SCREEN.h).fill(left ?? p['ground'] ?? '#5f5374');
+    ext.rect(SCREEN.w - 2, 0, 3002, SCREEN.h).fill(right ?? p['ground'] ?? '#5f5374');
+    return box;
+  }
+
+  private async loadMap(): Promise<void> {
+    const box = await this.buildScenery(this.map, this.map.shape);
+    this.sceneryLayer.addChild(box);
+  }
+
+  /** Arrivée d'un gros boss : la map se transforme en son arène (fondu de 1 s, même tracé). */
+  private async enterArena(boss: BossId): Promise<void> {
+    const arena = arenaForBoss(boss);
+    if (!arena || this.arenaBoss === boss) return;
+    this.arenaBoss = boss;
+    const box = await this.buildScenery(arena, this.map.shape);
+    if (this.destroyed || this.arenaBoss !== boss) { this.dropScenery(box); return; }
+    if (this.arena) this.dropScenery(this.arena);
+    this.arena = box;
+    box.alpha = 0;
+    this.sceneryLayer.addChild(box);
+    this.arenaFade = 1;
+    const fx = arena.bossFx;
+    this.tintOverlay.tint = fx?.tint ? Number.parseInt(fx.tint.replace('#', ''), 16) : 0x000000;
+    this.tintTarget = fx?.tint ? (fx.tintAlpha ?? 0.15) : 0;
+  }
+
+  private dropScenery(box: Container): void {
+    // Les sprites d'ambiance du décor quittent la liste d'animation avant d'être détruits.
+    this.anims = this.anims.filter((x) => x.s.parent !== box);
+    const baked = box.children.find((c) => c.label === 'baked') as Sprite | undefined;
+    baked?.texture.destroy(true);
+    box.destroy({ children: true });
+  }
+
+  /** Mort du boss : retour à la map de départ. */
+  private leaveArena(): void {
+    if (!this.arenaBoss) return;
+    this.arenaBoss = null;
+    this.arenaFade = -1;
+    this.tintTarget = 0;
   }
 
   // ---------------------------------------------------------------- mise à l'échelle
@@ -262,9 +347,11 @@ export class BattleScene {
     const w = SCREEN.w * scale, h = SCREEN.h * scale;
     const x = sl + (aw - w) / 2;
     // Écran plus allongé que 10:16 : on garde un peu plus d'espace en haut (barre d'état, encoche).
+    // Écran plus allongé que 10:16 : la barre du haut et les commandes se collent aux bords (zones sûres
+    // comprises), le plateau descend un peu pour rester près des commandes.
     const spare = ah - h;
-    const y = st + spare * 0.5;
-    this.fit = { scale, x, y, width: w, height: h, extTop: (y) / scale, extBottom: (H - y - h) / scale };
+    const y = st + spare * 0.62;
+    this.fit = { scale, x, y, width: w, height: h, extTop: (y - st) / scale, extBottom: (spare - (y - st)) / scale };
   }
 
   resize(): void {
@@ -337,13 +424,14 @@ export class BattleScene {
     const g = v.pips;
     g.clear();
     if (n <= 0) return;
-    const gap = 17, w = v.rank * gap + 12, x0 = 100 - w / 2;
-    const rc = 0xffffff;
-    g.roundRect(x0, 166, w, 26, 13).fill(INK).stroke({ color: rarityColor(v.unit), width: 3 });
+    // Pastilles plus grosses que sur la planche : lisibles à 375 px de large.
+    const gap = 25, w = v.rank * gap + 12, x0 = 100 - w / 2, cy = 178;
+    const rc = rarityColor(v.unit);
+    g.roundRect(x0, cy - 16, w, 32, 16).fill(INK).stroke({ color: rc, width: 3.5 });
     for (let i = 0; i < n; i++) {
       const cx = x0 + 6 + gap / 2 + i * gap;
-      g.circle(cx, 179, 6.2).fill(0xfff4c2).stroke({ color: rarityColor(v.unit), width: 2.4 });
-      g.circle(cx - 1.8, 177.2, 1.8).fill(rc);
+      g.circle(cx, cy, 9).fill(0xfff4c2).stroke({ color: rc, width: 3 });
+      g.circle(cx - 2.6, cy - 2.6, 2.8).fill(0xffffff);
     }
     v.pipsShown = n;
   }
@@ -555,18 +643,17 @@ export class BattleScene {
       case 'attack': {
         if (ev.player !== this.player) break;
         const v = this.units[ev.slot];
-        if (v) v.attackT = 0;
+        if (v && (v.attackT < 0 || v.attackT > 0.19)) v.attackT = 0;
         this.attackFx(ev.slot, ev.unit, ev.fx, ev.targets);
         break;
       }
       case 'ability': {
         if (ev.player !== this.player) break;
         const v = this.units[ev.slot];
-        if (v) { v.attackT = 0; v.flashT = 0; }
+        if (v && v.attackT < 0) v.attackT = 0;
         const c = this.cellCenter(ev.slot);
         const col = UNIT_FX_COLOR[ev.unit] ?? 0xffffff;
-        this.shots.ring(c.x, c.y, col, 120, 0.5);
-        this.numbers.show(ev.name, c.x, c.y - 60, { color: col, size: 30, life: 1.1 });
+        this.shots.ring(c.x, c.y, col, 95, 0.4);
         for (const t of ev.targets) {
           const e = this.enemies.get(t);
           if (e) this.shots.ring(e.x, e.y - 30, col, 70, 0.35);
@@ -598,6 +685,10 @@ export class BattleScene {
         break;
       }
       case 'bossSpawn':
+        this.shake(16, 0.9);
+        preloadBoss(ev.boss);
+        void this.enterArena(ev.boss);
+        break;
       case 'miniBossSpawn':
         this.shake(16, 0.9);
         preloadBoss(ev.boss);
@@ -621,6 +712,7 @@ export class BattleScene {
         break;
       }
       case 'waveStart':
+        this.leaveArena();
         if (this.engine.state.upcomingBoss) preloadBoss(this.engine.state.upcomingBoss.boss);
         break;
       default:
@@ -631,8 +723,13 @@ export class BattleScene {
   private attackFx(slot: number, unit: UnitId, fx: string, targets: number[]): void {
     const spec = fxSpec(fx, unit);
     const c = this.cellCenter(slot);
-    const x0 = c.x, y0 = c.y - 20;
     const first = targets.length ? this.enemies.get(targets[0]!) : undefined;
+    // Départ au bord du jeton, du côté de la cible : l'effet ne couvre pas le personnage.
+    let x0 = c.x, y0 = c.y - 20;
+    if (first) {
+      const dx = first.x - c.x, dy = first.y - 40 - c.y, L = Math.hypot(dx, dy) || 1;
+      x0 = c.x + (dx / L) * 58; y0 = c.y + (dy / L) * 58;
+    }
     if (spec.shake) this.shake(spec.shake, 0.18);
     if (spec.beam && targets.length) {
       // Rayon vers la cible la plus éloignée de l'unité.
@@ -679,7 +776,7 @@ export class BattleScene {
     }
     if (spec.ring && first) this.shots.ring(first.x, first.y - first.width * 0.3, spec.color, spec.ring, 0.35);
     // Éclair de tir au départ.
-    this.parts.emit(this.tex.dot, x0, y0, { color: spec.color, life: 0.15, s0: 1.2, s1: 2 });
+    this.parts.emit(this.tex.dot, x0, y0, { color: spec.color, life: 0.12, s0: 0.5, s1: 0.9, a0: 0.8 });
   }
 
   private flushDamage(v: EnemyView): void {
@@ -771,6 +868,21 @@ export class BattleScene {
     const t = this.time;
     const a = paused ? 1 : Math.min(1, Math.max(0, alpha));
 
+    // Fondu vers l'arène du boss, et retour.
+    if (this.arena && this.arenaFade !== 0) {
+      this.arena.alpha = Math.max(0, Math.min(1, this.arena.alpha + this.arenaFade * dt));
+      if (this.arenaFade < 0 && this.arena.alpha <= 0) {
+        this.dropScenery(this.arena);
+        this.arena = null;
+        this.arenaFade = 0;
+      } else if (this.arenaFade > 0 && this.arena.alpha >= 1) this.arenaFade = 0;
+    }
+    if (this.tintOverlay.alpha !== this.tintTarget) {
+      const d = this.tintTarget - this.tintOverlay.alpha;
+      this.tintOverlay.alpha = Math.abs(d) < 0.01 ? this.tintTarget : this.tintOverlay.alpha + Math.sign(d) * Math.min(Math.abs(d), dt * 0.4);
+    }
+    this.tintOverlay.visible = this.tintOverlay.alpha > 0.005;
+
     // Décor animé.
     for (const { a: an, s } of this.anims) animate(an, s, t);
 
@@ -805,7 +917,8 @@ export class BattleScene {
     if (this.flashT > 0) {
       this.flashT -= dt;
       this.flash.alpha = Math.max(0, this.flashMax * (this.flashT / 0.35));
-    } else if (this.flash.alpha) this.flash.alpha = 0;
+      this.flash.visible = true;
+    } else if (this.flash.visible) { this.flash.alpha = 0; this.flash.visible = false; }
 
     this.app.render();
   }
@@ -816,9 +929,9 @@ export class BattleScene {
     if (v.attackT >= 0) {
       v.attackT += dt;
       const t = v.attackT;
-      if (t < 0.08) { pose = 1; const k = t / 0.08; sx = 1 + 0.08 * k; sy = 1 - 0.08 * k; }
-      else if (t < 0.22) { pose = 2; const k = (t - 0.08) / 0.14; sx = 1.08 - 0.14 * Math.sin(k * Math.PI) - 0.08 * k; sy = 0.92 + 0.2 * Math.sin(k * Math.PI) + 0.08 * k; }
-      else if (t < 0.3) { const k = (t - 0.22) / 0.08; sx = 1 - 0.0 * k; sy = 1; }
+      if (t < 0.09) { pose = 1; const k = t / 0.09; sx = 1 + 0.08 * k; sy = 1 - 0.08 * k; }
+      else if (t < 0.19) { pose = 2; const k = (t - 0.09) / 0.1; sx = 1.08 - 0.14 * Math.sin(k * Math.PI) - 0.08 * k; sy = 0.92 + 0.2 * Math.sin(k * Math.PI) + 0.08 * k; }
+      else if (t < 0.26) pose = 0;
       else v.attackT = -1;
     }
     const tex = tokenTex(v.shown, pose) ?? tokenTex(v.shown, 0);
