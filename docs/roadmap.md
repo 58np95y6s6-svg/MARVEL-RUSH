@@ -33,6 +33,21 @@ Idée validée par le joueur, à détailler quand la version 1 sera terminée.
 - Mêmes règles d'éveil (★1 à ★10) et de talents pour les héros DC, plus 5 passifs par héros.
 - Illustrations de fiches DC à ajouter dans le dépôt privé, puis à chiffrer comme les autres.
 
+## Règle pour chaque extension : les archétypes de stratégie
+
+Demande du joueur : chaque extension doit proposer des capacités de stratégie du même genre que celles de la version 1. Le moteur les gère de façon **générique** (clés de paramètres de compétence), donc une extension n'a qu'à les attribuer à ses héros.
+
+| Archétype | Effet | Version 1 | DC |
+|---|---|---|---|
+| Sacrifice → mana | Fusionnée ou détruite : gain de mana croissant avec le niveau (10, 25, 45, 70, 100, 140, 190) | Black Widow | Harley Quinn |
+| Copieur | Glissé sur un allié de même niveau, devient sa copie à −25 % d'attaque, sans limite | Loki | Martian Manhunter |
+| Booster de fusion | Glissé sur un allié de même niveau, disparaît et le fait monter d'un niveau (il garde son identité) | Coco (Miguel) | Robin |
+| Croissance | Dégâts qui grandissent avec le temps et les éliminations, sans plafond, gardés en partie à la fusion | Venom | Supergirl |
+| Mana par élimination | Mana à chaque élimination, croissant avec le niveau | Tiana & Naveen | Catwoman |
+| Boost de vitesse | Aura de cadence aux voisins | Captain America, Pocahontas | Cyborg |
+
+Transformers et Pixar devront couvrir les six archétypes (au moins un héros chacun), en plus de leur mécanique propre.
+
 ## Mise à jour suivante : extension TRANSFORMERS (publication le 25/10)
 
 Liste définitive, établie par le chef de projet à la demande du joueur.
