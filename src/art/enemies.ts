@@ -1,6 +1,6 @@
 // Ennemis génériques (§7) dans le style des sbires des planches : créatures-feuilles, slimes, petits robots.
 // Repère des sbires : sol à y = 207, centre x = 100, regard vers la droite (sens de la marche).
-import { O, f, shaded, gloss, glow, limb, star, shadow, clip } from './primitives';
+import { O, f, shaded, gloss, glow, limb, star, shadow, clip, mirror } from './primitives';
 import { scallop } from './kits/disneyA';
 
 export type EnemyLook = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier';
@@ -80,22 +80,24 @@ function robotBody(): string {
   return s;
 }
 const BODIES = [leafBody, slimeBody, robotBody];
-/** Haut du corps (pour poser un casque) par famille. */
-const TOP = [128, 124, 128];
+/** Hauteur du bord du casque par famille (juste au-dessus des yeux). */
+const TOP = [142, 144, 134];
 
 /* ---------- variantes de type ---------- */
-function helmet(top: number): string {
-  const y = top + 2;
-  const dome = (a: string): string => `<path d="M62 ${y + 22} Q60 ${y - 14} 100 ${y - 16} Q140 ${y - 14} 138 ${y + 22} Q100 ${y + 12} 62 ${y + 22}Z" ${a}/>`;
-  return shaded(dome, STEEL, STEELD, -4, -4) + gloss(80, y - 6, 9, 3.5, -20, 0.7) +
-    `<path d="M64 ${y + 16} Q100 ${y + 6} 136 ${y + 16}" stroke="${STEELD}" stroke-width="3" fill="none"/>` +
-    [70, 85, 115, 130].map((cx) => `<circle cx="${cx}" cy="${y + 14 - (cx > 80 && cx < 120 ? 3 : 0)}" r="2.2" fill="${STEELD}" stroke="${O}" stroke-width="1.4"/>`).join('') +
-    `<polygon points="100,${y - 30} 94,${y - 14} 106,${y - 14}" fill="${STEEL}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+function helmet(rim: number): string {
+  const y = rim;
+  const dome = (a: string): string => `<path d="M64 ${y} Q62 ${y - 34} 100 ${y - 36} Q138 ${y - 34} 136 ${y} Q100 ${y - 8} 64 ${y}Z" ${a}/>`;
+  return shaded(dome, STEEL, STEELD, -4, -4) + gloss(82, y - 24, 9, 3.5, -20, 0.7) +
+    `<path d="M66 ${y - 6} Q100 ${y - 14} 134 ${y - 6}" stroke="${STEELD}" stroke-width="3" fill="none"/>` +
+    [72, 86, 114, 128].map((cx) => `<circle cx="${cx}" cy="${y - 8 - (cx > 80 && cx < 120 ? 3 : 0)}" r="2.2" fill="${STEELD}" stroke="${O}" stroke-width="1.4"/>`).join('') +
+    `<polygon points="100,${y - 50} 94,${y - 34} 106,${y - 34}" fill="${STEEL}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
 }
+/** Épaulières et ceinture d'acier : l'armure ne cache pas le visage. */
 function plate(): string {
-  return shaded((a) => `<path d="M70 168 Q100 160 130 168 L126 192 Q100 200 74 192Z" ${a}/>`, STEEL, STEELD, -3, -3) +
-    `<path d="M100 164 V196" stroke="${STEELD}" stroke-width="2.5"/>` +
-    [[78, 174], [122, 174], [80, 188], [120, 188]].map(([cx, cy]) => `<circle cx="${cx}" cy="${cy}" r="2.2" fill="#fff" stroke="${O}" stroke-width="1.4"/>`).join('');
+  const pad = (a: string): string => `<path d="M50 168 Q50 148 66 146 Q78 148 78 162 Q66 172 50 168Z" ${a}/>`;
+  const p = shaded(pad, STEEL, STEELD, -3, -3) + `<circle cx="64" cy="156" r="2.2" fill="#fff" stroke="${O}" stroke-width="1.4"/>`;
+  return p + mirror(p) + shaded((a) => `<path d="M66 188 Q100 196 134 188 L134 198 Q100 206 66 198Z" ${a}/>`, STEEL, STEELD, -2, -2) +
+    `<rect x="94" y="189" width="12" height="11" rx="2" fill="#f2c14e" stroke="${O}" stroke-width="2"/>`;
 }
 function shield(family: number): string {
   if (family === 2) {
@@ -124,16 +126,18 @@ export function drawEnemy(kind: EnemyLook, variant = 0): string {
   const fam = ((Math.floor(variant) % 3) + 3) % 3;
   const body = BODIES[fam]!();
   const top = TOP[fam]!;
+  const sc = (k: number, inner: string, rot = 0): string =>
+    `<g transform="translate(100 207) scale(${k})${rot ? ` rotate(${rot})` : ''} translate(-100 -207)">${inner}</g>`;
   switch (kind) {
     case 'rapide':
-      return shadow(32, 207, 0.16) + `<g transform="translate(100 207) scale(.8) rotate(8) translate(-100 -207)">${speedLines()}${body}</g>`;
+      return shadow(36, 207, 0.16) + sc(0.92, speedLines() + body, 8);
     case 'gros':
-      return shadow(58, 207, 0.18) + `<g transform="translate(100 207) scale(1.3) translate(-100 -207)">${body}</g>`;
+      return shadow(62, 207, 0.18) + sc(1.42, body);
     case 'blinde':
-      return shadow(44, 207, 0.17) + body + plate() + helmet(top);
+      return shadow(48, 207, 0.17) + sc(1.12, body + plate() + helmet(top));
     case 'bouclier':
-      return shadow(46, 207, 0.17) + body + shield(fam);
+      return shadow(48, 207, 0.17) + sc(1.12, body + shield(fam));
     default:
-      return shadow(42, 207, 0.16) + body;
+      return shadow(46, 207, 0.16) + sc(1.12, body);
   }
 }

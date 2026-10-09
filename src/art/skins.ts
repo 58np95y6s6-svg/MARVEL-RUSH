@@ -35,6 +35,9 @@ const mixHue = (h: number, target: number, t: number): number => {
   return (h + d * t + 360) % 360;
 };
 
+/** Teintes de peau (claires à foncées) : on les garde reconnaissables dans les skins. */
+const isSkin = (c: HSL): boolean => c.h >= 12 && c.h <= 36 && c.s >= 0.25 && c.l >= 0.3 && c.l <= 0.92;
+
 /* ---------- parcours du SVG en suivant les groupes d'effets ---------- */
 const FX = /\bclass="(?:[^"]*\s)?(fx|pop|ring|grow|spin|spinF|hit|fly|gather|boom|suck|float)\b/;
 const COLOR_ATTR = /\b(fill|stroke|stop-color)="(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})"/g;
@@ -79,6 +82,7 @@ export function neonSkin(svg: string, uidFn: (k: string) => string): string {
     const c = toHsl(hex);
     if (fx) return toHex({ h: c.h, s: c.s < 0.1 ? 0 : 1, l: clamp(0.55 + c.l * 0.3, 0, 0.92) });
     if (c.l > 0.9) return hex; // reflets et blancs
+    if (isSkin(c)) return toHex({ h: c.h, s: clamp(c.s * 0.85), l: c.l * 0.9 }); // le visage reste lisible
     return toHex({ h: c.h, s: clamp(c.s * 0.75), l: 0.08 + c.l * 0.24 });
   });
   const id = uidFn('neon');
@@ -107,18 +111,21 @@ export function snowDecor(kind: 'unit' | 'boss' = 'unit'): { back: string; front
     `<polygon points="${star(-4, 176, 5, 1.6, 4)}" fill="#fff" stroke="${O}" stroke-width="1.6"/><polygon points="${star(206, 172, 5, 1.6, 4)}" fill="#fff" stroke="${O}" stroke-width="1.6"/>`;
   return { back, front };
 }
+function mixRgb(a: string, b: string, t: number): string {
+  const x = parseHex(a), y = parseHex(b);
+  return '#' + x.map((v, i) => Math.round(v + ((y[i] ?? 0) - v) * t).toString(16).padStart(2, '0')).join('');
+}
 export function winterSkin(svg: string): string {
   return remap(svg, (hex, _attr, fx) => {
     if (hex === O) return hex;
     const c = toHsl(hex);
     if (c.l > 0.92) return '#f4fbff';
-    if (fx) return toHex({ h: mixHue(c.h, 195, 0.8), s: clamp(0.55 + c.s * 0.4), l: clamp(0.62 + c.l * 0.3, 0, 0.94) });
-    const skinLike = c.h > 10 && c.h < 45 && c.s > 0.35 && c.l > 0.6;
-    const t = skinLike ? 0.25 : 0.7;
-    return toHex({
-      h: mixHue(c.h, 205, t),
-      s: clamp(c.s * (1 - t * 0.45) + 0.06),
-      l: clamp(c.l + (0.78 - c.l) * (skinLike ? 0.25 : 0.42)),
-    });
+    if (fx) return mixRgb(hex, '#e8fbff', 0.55);
+    if (isSkin(c)) return toHex({ h: c.h, s: clamp(c.s * 0.7), l: clamp(c.l + (0.95 - c.l) * 0.18) });
+    // glace : on garde la luminance (le jaune devient blanc givré, le rouge bleu moyen, le noir bleu nuit)
+    const [r, g, b] = parseHex(hex);
+    const Y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    const ice = toHex({ h: 206 + (c.h > 180 && c.h < 300 ? 10 : 0), s: 0.55, l: clamp(0.2 + Y * 0.74) });
+    return mixRgb(ice, hex, 0.18);
   });
 }

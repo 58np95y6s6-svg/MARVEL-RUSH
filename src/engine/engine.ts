@@ -328,6 +328,7 @@ function bossAlive(ctx: Ctx): boolean {
 
 function updateWave(ctx: Ctx): void {
   const st = ctx.st;
+  if (st.lives <= 0) return;
   if (st.phase === 'vague') {
     if (st.awaitingVictory) return;
     st.waveElapsed += DT;

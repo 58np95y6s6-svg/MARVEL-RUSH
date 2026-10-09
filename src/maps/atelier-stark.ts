@@ -9,8 +9,8 @@ import {
 const pal = {
   bg: '#141a2c',
   sky1: '#1f2a4a', sky2: '#3d5a86',
-  ground: '#3a4258', ground2: '#333a4f',
-  path: '#5d6680', pathEdge: '#9aa4bb', pathDeco: '#2c3247',
+  ground: '#4a5470', ground2: '#424b65',
+  path: '#a3abc0', pathEdge: '#6f7891', pathDeco: '#7b849d',
   frame: '#8e98ad', frameLight: '#c9d1e0', frameShade: '#5f6880',
   cellA: '#e7ecf4', cellB: '#d4dbe8',
   accent: '#e8413b', portal: '#5fd4ff',

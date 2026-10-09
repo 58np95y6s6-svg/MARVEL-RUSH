@@ -108,13 +108,14 @@ export const THANOS: CharDef = {
       s += evilMouth(p, 100, 131, 13);
       return s;
     });
-    b += x.arm('L', armL) + x.arm('R', armR);
-    // épaulières dorées par-dessus les bras
+    // épaulières dorées par-dessus les bras (le bras du gant passe devant quand il est levé)
     const pad = (a: string): string => `<path d="M24 156 Q22 124 50 120 Q78 124 78 152 Q50 164 24 156Z" ${a}/>`;
     const pads = shaded(pad, G, GD, -4, -4) + `<path d="M28 146 Q50 154 76 144" stroke="${GD}" stroke-width="3" fill="none"/>` + gloss(40, 130, 9, 4, -30, 0.55);
-    b += pads + mirror(pads);
-    // préparation : le gant levé, les six Pierres s'allument
     const [gx, gy] = tip(this, 'R', 1, 52);
+    b += x.when([1], `<g class="fx"><circle cx="${f(gx)}" cy="${f(gy)}" r="44" fill="#fff6d0" opacity=".28"/></g>`);
+    b += x.arm('L', armL) + pads;
+    b += x.mode > 0 ? mirror(pads) + x.arm('R', armR) : x.arm('R', armR) + mirror(pads);
+    // préparation : le gant levé, les six Pierres s'allument
     const cols = Object.values(STONES);
     let rays = '';
     cols.forEach((c, i) => {
@@ -122,7 +123,7 @@ export const THANOS: CharDef = {
       const x1 = gx + Math.cos(a) * 26, y1 = gy + Math.sin(a) * 26, x2 = gx + Math.cos(a) * 52, y2 = gy + Math.sin(a) * 52;
       rays += `<path d="M${f(x1)} ${f(y1)} L${f(x2)} ${f(y2)}" stroke="${O}" stroke-width="9" stroke-linecap="round"/><path d="M${f(x1)} ${f(y1)} L${f(x2)} ${f(y2)}" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`;
     });
-    b += x.when([1], `<g class="fx"><circle cx="${f(gx)}" cy="${f(gy)}" r="40" fill="#fff6d0" opacity=".35"/></g>${rays}` + cols.map((c, i) => `<polygon points="${star(gx + Math.cos(i * 1.05) * 62, gy + 14 + Math.sin(i * 1.05) * 30, 7, 2.4, 4)}" fill="${c}" stroke="${O}" stroke-width="2"/>`).join(''));
+    b += x.when([1], rays + cols.map((c, i) => `<polygon points="${star(gx + Math.cos(i * 1.05) * 62, gy + 14 + Math.sin(i * 1.05) * 30, 7, 2.4, 4)}" fill="${c}" stroke="${O}" stroke-width="2"/>`).join(''));
     // claquement de doigts : éclair blanc
     const [sx2, sy2] = tip(this, 'R', 2, 72);
     const fl = uid('flash');
@@ -140,7 +141,7 @@ export const THANOS: CharDef = {
 /* ---------- Outrider : bête grise et blanche à quatre bras, rapide, en meute ---------- */
 export const OUTRIDER: CharDef = {
   id: 'outrider', name: 'Outriders',
-  poses: [{}, { body: [-8, 4, -8, 1.02, 0.94] }, { body: [16, -6, 10, 1.05, 1.04] }],
+  poses: [{}, { body: [-8, 4, -8, 1.02, 0.94] }, { body: [6, -4, 6, 1.04, 1.03] }],
   draw(this: CharDef, x: Ctx): string {
     const W = '#e4e5ec', WD = '#a5a8b8', DK = '#4a4858', DKD = '#2b2a36', BO = '#fffbe6';
     const p = x.mode;
@@ -174,11 +175,16 @@ export const OUTRIDER: CharDef = {
     // bras supérieurs griffus
     const claws = (cx: number, cy: number): string =>
       `<g fill="${BO}" stroke="${O}" stroke-width="2.2" stroke-linejoin="round"><polygon points="${cx - 5},${cy} ${cx - 2},${cy + 12} ${cx + 1},${cy}"/><polygon points="${cx + 1},${cy + 1} ${cx + 5},${cy + 12} ${cx + 7},${cy}"/><polygon points="${cx + 6},${cy - 2} ${cx + 13},${cy + 7} ${cx + 11},${cy - 4}"/></g>`;
-    const R1 = ([[166, 180], [128, 104], [184, 158]] as const)[p];
-    const R2 = ([[180, 172], [146, 98], [194, 146]] as const)[p];
-    b += limb(116, 152, R1[0], R1[1], WD, 10) + hand(R1[0], R1[1], WD, 8) + claws(R1[0] - 2, R1[1] + 4);
-    b += limb(128, 156, R2[0], R2[1], W, 11) + hand(R2[0], R2[1], W, 9) + claws(R2[0] - 1, R2[1] + 5);
-    const fxg = x.when([2], `<g class="pop"><path d="M188 128 l18 26 M198 122 l16 24 M206 120 l10 16" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M188 128 l18 26 M198 122 l16 24 M206 120 l10 16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g>`) +
+    // [épaule, coude, main] pour chaque bras supérieur
+    const A1 = ([[[116, 152], [130, 180], [156, 186]], [[116, 152], [112, 122], [130, 100]], [[116, 152], [140, 158], [164, 148]]] as const)[p];
+    const A2 = ([[[128, 154], [150, 178], [176, 176]], [[128, 154], [134, 122], [152, 104]], [[128, 154], [152, 146], [176, 130]]] as const)[p];
+    const arm = (q: readonly (readonly [number, number])[], c: string, w: number): string => {
+      const [s0, e0, h0] = [q[0]!, q[1]!, q[2]!];
+      return limb(s0[0], s0[1], e0[0], e0[1], c, w) + limb(e0[0], e0[1], h0[0], h0[1], c, w - 1) +
+        `<circle cx="${e0[0]}" cy="${e0[1]}" r="${w / 2 + 1}" fill="${c}"/>` + hand(h0[0], h0[1], c, 8) + claws(h0[0] - 1, h0[1] + 4);
+    };
+    b += arm(A1, WD, 10) + arm(A2, W, 11);
+    const fxg = x.when([2], `<g class="pop"><path d="M160 96 l16 24 M170 90 l16 24 M180 88 l10 16" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M160 96 l16 24 M170 90 l16 24 M180 88 l10 16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g>`) +
       x.when([1], sparks(140, 106, 18, '#ffe23a', 6));
     return shadow(54, 207, 0.18) + x.body(b) + fxg;
   },

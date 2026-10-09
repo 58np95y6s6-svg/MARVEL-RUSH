@@ -104,7 +104,7 @@ export function tokenSvg(id: UnitId, rank: number, skin: Skin = 'classique', opt
   return cached(`t-${id}-${rk}-${skin}-${rar}`, () => {
     const e = unitEntry(id);
     const rc = RARITY_COLORS[rar];
-    const [t1, t2] = unitTint(id);
+    const [t1, t2] = skin === 'neon' ? ['#4a3f7a', '#120d24'] : skin === 'hiver' ? ['#eaf7ff', '#9cc8ea'] : unitTint(id);
     const g = uid('tg'), c = uid('tc'), rg = uid('tr');
     const fig = applySkin(drawPose(e, 0), skin, 'unit');
     let s = `<defs><radialGradient id="${g}" cx=".5" cy=".38" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="${t1}"/><stop offset="1" stop-color="${t2}"/></radialGradient>` +

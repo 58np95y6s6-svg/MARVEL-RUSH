@@ -4,9 +4,14 @@ import type { BossId, UnitId } from '../data/types';
 import type { MapDefX } from './kit';
 import type { Universe } from './types';
 import { toitsNewYork } from './toits-new-york';
+import { atelierStark } from './atelier-stark';
+import { asgardBifrost } from './asgard-bifrost';
+import { sanctumSanctorum } from './sanctum-sanctorum';
+import { baseAvengers } from './base-avengers';
+import { templeDixAnneaux } from './temple-dix-anneaux';
 
 /** Maps d'univers (12) puis variantes Disney (7), dans l'ordre de déblocage. */
-export const MAPS: MapDefX[] = [toitsNewYork];
+export const MAPS: MapDefX[] = [toitsNewYork, atelierStark, asgardBifrost, sanctumSanctorum, baseAvengers, templeDixAnneaux];
 
 /** Arènes de boss, une par boss. */
 export const ARENAS: MapDefX[] = [];

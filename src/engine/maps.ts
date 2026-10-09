@@ -29,3 +29,21 @@ export function registerMaps(maps: readonly MapLengths[]): void {
 export function mapLengths(id: string): MapLengths | undefined {
   return registry.get(id);
 }
+
+/**
+ * Modificateurs de map (§7 bis) lus par le moteur dans GameConfig.mapModifiers :
+ *   fastSpeed          vitesse des rapides +x (0.1 = +10 %)
+ *   beamDamage         dégâts des rayons (Uni-Beam, laser de Buzz) +x
+ *   chainBounces       rebonds supplémentaires (Thor, flèche électrique)
+ *   cooldownReduction  recharges des compétences −x
+ *   comboDamage        dégâts des anneaux de Shang-Chi +x
+ *   controlDuration    durée des contrôles +x
+ *   burnDamage         brûlures +x
+ *   extraRevive        résurrections de Coco en plus, par partie
+ *   slowPower          force des ralentissements +x
+ *   shieldHits         coups de bouclier ennemis (−1 = un de moins)
+ */
+export const MAP_MODIFIER_KEYS = [
+  'fastSpeed', 'beamDamage', 'chainBounces', 'cooldownReduction', 'comboDamage',
+  'controlDuration', 'burnDamage', 'extraRevive', 'slowPower', 'shieldHits',
+] as const;
