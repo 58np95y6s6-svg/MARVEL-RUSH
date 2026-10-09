@@ -136,47 +136,54 @@ export function rankShapePath(rank: number): string {
 }
 
 /**
- * Portrait rond d'un jeton (sans plaque) : le rendu du combat dessine la plaque de rang lui-même,
- * pour l'animer à chaque fusion sans une texture par niveau.
+ * Couleur de plaque propre à chaque personnage : contraste avec ses couleurs dominantes, et assez
+ * différente des autres pour qu'on reconnaisse chaque héros d'un coup d'œil sur le plateau.
  */
-export function tokenPortraitSvg(id: UnitId, pose: PoseIdx = 0, skin: Skin = 'classique', opts: TokenOpts = {}): string {
-  const rar = opts.rarity ?? unitRarity(id);
-  return cached(`tp-${id}-${pose}-${skin}-${rar}`, () => wrap(TOKEN_FRAME, portraitBody(id, pose, skin, rar), `${unitEntry(id).def.name}`));
-}
-
-function portraitBody(id: UnitId, pose: PoseIdx, skin: Skin, rar: Rarity): string {
-  const e = unitEntry(id);
-  const rc = RARITY_COLORS[rar];
-  const [t1, t2] = skin === 'neon' ? ['#4a3f7a', '#120d24'] : skin === 'hiver' ? ['#eaf7ff', '#9cc8ea'] : unitTint(id);
-  const g = uid('tg'), c = uid('tc');
-  const R = TOKEN_PORTRAIT_R, cx = RANK_PLATE.cx, cy = RANK_PLATE.cy;
-  const fig = applySkin(drawPose(e, pose), skin, 'unit');
-  let s = `<defs><radialGradient id="${g}" cx=".5" cy=".38" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="${t1}"/><stop offset="1" stop-color="${t2}"/></radialGradient>` +
-    `<clipPath id="${c}"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath></defs>`;
-  s += `<circle cx="${cx}" cy="${cy}" r="${R + 5}" fill="${rc}" stroke="${O}" stroke-width="4"/>`;
-  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${g})" stroke="${O}" stroke-width="4"/>`;
-  s += `<g clip-path="url(#${c})"><g transform="translate(${cx} ${cy + 10}) scale(.56) translate(-100 -118)">${fig}</g></g>`;
-  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${O}" stroke-width="4"/>`;
-  s += gloss(cx - 28, cy - 37, 13, 5, -38, 0.45);
-  return s;
+export const TOKEN_COLORS: Record<string, string> = {
+  ironman: '#3fc9e8', spiderman: '#ffd23f', hulk: '#d94fd0', thor: '#22b5a0', strange: '#5fd068',
+  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#e8414b', bucky: '#f2b632',
+  hawkeye: '#46d6a8', falcon: '#59b8ff', widow: '#3ee0e0', shangchi: '#3b62e0',
+  moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
+  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
+  nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
+};
+/** Couleur de plaque d'un personnage (repli : couleur claire de sa planche). */
+export function tokenColor(id: UnitId): string {
+  return TOKEN_COLORS[id] ?? unitTint(id)[1];
 }
 
 /**
- * Jeton de plateau façon Rush Royale : plaque à la couleur de rareté dont la FORME donne le niveau
- * de fusion (nombre d'angles = niveau, de 1 rond à 7 heptagone), avec le portrait rond du personnage.
+ * Figure seule d'un jeton (fond transparent, sans cadre) : le personnage est posé directement
+ * dans sa plaque de rang, que le rendu du combat dessine et anime lui-même.
+ */
+export function tokenPortraitSvg(id: UnitId, pose: PoseIdx = 0, skin: Skin = 'classique', _opts: TokenOpts = {}): string {
+  return cached(`tp-${id}-${pose}-${skin}`, () => wrap(TOKEN_FRAME, figureBody(id, pose, skin), `${unitEntry(id).def.name}`));
+}
+
+function figureBody(id: UnitId, pose: PoseIdx, skin: Skin): string {
+  const fig = applySkin(drawPose(unitEntry(id), pose), skin, 'unit');
+  return `<g transform="translate(${RANK_PLATE.cx} ${RANK_PLATE.cy + 22}) scale(.74) translate(-100 -118)">${fig}</g>`;
+}
+
+/**
+ * Jeton de plateau façon Rush Royale : le personnage posé directement dans une plaque dont la FORME
+ * donne le niveau de fusion (nombre d'angles = niveau, de 1 rond à 7 heptagone). La plaque a la couleur
+ * propre au personnage ; un fin liseré intérieur rappelle sa rareté.
  */
 export function tokenSvg(id: UnitId, rank: number, skin: Skin = 'classique', opts: TokenOpts = {}): string {
   const rk = Math.max(1, Math.min(7, Math.round(rank)));
   const rar = opts.rarity ?? unitRarity(id);
   return cached(`t-${id}-${rk}-${skin}-${rar}`, () => {
     const rc = RARITY_COLORS[rar];
+    const col = skin === 'neon' ? '#2a2150' : skin === 'hiver' ? '#bfe6ff' : tokenColor(id);
     const pg = uid('tpg');
-    let s = `<defs><linearGradient id="${pg}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`;
+    let s = `<defs><linearGradient id="${pg}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></linearGradient></defs>`;
     s += `<ellipse cx="100" cy="192" rx="66" ry="7" fill="${O}" opacity=".22"/>`;
     const d = rankShapePath(rk);
-    s += `<path d="${d}" fill="${rc}" stroke="${O}" stroke-width="7" stroke-linejoin="round"/>`;
+    s += `<path d="${d}" fill="${col}" stroke="${O}" stroke-width="7" stroke-linejoin="round"/>`;
     s += `<path d="${d}" fill="url(#${pg})"/>`;
-    s += portraitBody(id, 0, skin, rar);
+    s += `<path d="${d}" fill="none" stroke="${rc}" stroke-width="4" stroke-linejoin="round" transform="translate(100 100) scale(.9) translate(-100 -100)"/>`;
+    s += figureBody(id, 0, skin);
     return wrap(TOKEN_FRAME, s, `${unitEntry(id).def.name}, niveau ${rk}`);
   });
 }

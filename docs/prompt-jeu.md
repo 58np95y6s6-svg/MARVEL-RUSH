@@ -471,7 +471,7 @@ L'**Éveil** est la progression la plus longue du jeu, au-delà du niveau 10. Ch
 - **Logo** : « MARVEL RUSH », jaune `#f6c64a` (« RUSH » en rouge `#e8413b`), contour sombre épais et relief, comme dans l'en-tête des planches.
 - **Couleurs de rareté** : Rare `#3c8bf0`, Épique `#9b59e6`, Légendaire `#f2a93b`, Boss `#c0263a`.
 - **Plateau** : cases arrondies façon jetons, posées sur la map de la partie (§7 bis). Le chemin change de forme et de matière selon la map.
-- **Unités sur le plateau** : portrait rond du personnage posé sur une **plaque à la couleur de la rareté dont la forme donne le niveau de fusion** : le nombre d'angles = le niveau (1 rond, 2 amande, 3 triangle, 4 losange, 5 pentagone, 6 hexagone, 7 heptagone). À chaque fusion, la forme gagne ses angles un à un.
+- **Unités sur le plateau** : personnage posé **directement, sans cadre rond**, sur une **plaque dont la forme donne le niveau de fusion** (couleur propre à chaque héros, contrastée avec ses couleurs et distincte des autres ; fin liseré intérieur de la couleur de rareté) : le nombre d'angles = le niveau (1 rond, 2 amande, 3 triangle, 4 losange, 5 pentagone, 6 hexagone, 7 heptagone). À chaque fusion, la forme gagne ses angles un à un.
 - **Animation d'attaque** : alterne les textures de pose (repos → préparation → frappe), avec un léger écrasement-étirement et les effets de la planche (rayon, éclair, toile, bulles…), adaptés pour PixiJS (particules et sprites).
 - **Ennemis** : les sbires des planches, plus des ennemis génériques dans le même style (créatures-feuilles, slimes, robots). Barre de PV au-dessus de chaque ennemi.
 - **Boss** : grand sprite, barre de PV en haut de l'écran avec nom et portrait, annonce « BOSS ! » plein écran avec un tremblement de l'écran.

@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10b2',
+    title: 'Nouveaux jetons',
+    date: '10 octobre 2026',
+    items: [
+      'Plus de cadre rond : chaque héros est posé directement dans la forme de son niveau.',
+      'Chaque héros a sa propre couleur de forme, pour le reconnaître d’un coup d’œil.',
+      'Un fin liseré intérieur rappelle la rareté (bleu, violet, or).',
+    ],
+  },
+  {
     id: '2026-10-10b',
     title: 'Niveaux de fusion façon Rush Royale',
     date: '10 octobre 2026',

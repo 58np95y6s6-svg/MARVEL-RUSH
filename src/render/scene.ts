@@ -2,7 +2,7 @@
 // Le moteur avance à pas fixe (20 ticks/s) ; la scène dessine à la fréquence de l'écran et interpole
 // la position des ennemis entre deux ticks. Coordonnées : écran logique 1000 × 1600 (src/maps/layout.ts),
 // mis à l'échelle et centré dans les zones sûres de l'écran.
-import { rankShape } from '../art';
+import { rankShape, tokenColor } from '../art';
 import { Application, BitmapText, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance } from '../engine';
 import { GRID_SIZE } from '../engine';
@@ -431,18 +431,23 @@ export class BattleScene {
     g.clear();
     if (n <= 0) return;
     const rc = rarityColor(v.unit);
-    const sh = rankShape(n);
-    const stroke = { color: INK, width: 7, join: 'round' as const };
-    if (sh.kind === 'circle') g.circle(sh.cx, sh.cy, sh.r);
-    else if (sh.kind === 'lens') {
-      g.moveTo(sh.cx - sh.r, sh.cy)
-        .quadraticCurveTo(sh.cx, sh.cy - sh.bulge, sh.cx + sh.r, sh.cy)
-        .quadraticCurveTo(sh.cx, sh.cy + sh.bulge, sh.cx - sh.r, sh.cy)
-        .closePath();
-    } else g.poly(sh.points.flat(), true);
-    g.fill(rc).stroke(stroke);
-    // Reflet en haut de la plaque.
-    g.ellipse(sh.kind === 'polygon' ? 100 : 100, 30, 34, 9).fill({ color: 0xffffff, alpha: 0.28 });
+    const col = tokenColor(v.unit);
+    const path = (scale: number) => {
+      const sh = rankShape(n, 100, 100, 96 * scale);
+      if (sh.kind === 'circle') g.circle(sh.cx, sh.cy, sh.r);
+      else if (sh.kind === 'lens') {
+        g.moveTo(sh.cx - sh.r, sh.cy)
+          .quadraticCurveTo(sh.cx, sh.cy - sh.bulge, sh.cx + sh.r, sh.cy)
+          .quadraticCurveTo(sh.cx, sh.cy + sh.bulge, sh.cx - sh.r, sh.cy)
+          .closePath();
+      } else g.poly(sh.points.flat(), true);
+    };
+    // Plaque à la couleur du personnage, contour d'encre, liseré intérieur de rareté, reflet.
+    path(1);
+    g.fill(col).stroke({ color: INK, width: 7, join: 'round' });
+    path(0.9);
+    g.stroke({ color: rc, width: 4, join: 'round' });
+    g.ellipse(100, 34, 36, 10).fill({ color: 0xffffff, alpha: 0.3 });
     v.pipsShown = n;
   }
 
