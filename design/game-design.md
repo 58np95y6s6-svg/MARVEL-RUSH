@@ -50,6 +50,7 @@ Les chiffres (%, secondes, rebonds) sont des valeurs de départ à équilibrer e
 | Maléfique | **Sommeil maudit** : endort une ligne de héros | Gardes gobelins | Armure élevée |
 | Galactus | **Dévoreur** : détruit un héros aléatoire toutes les X s | Drones cosmiques | Volent, ignorent certains contrôles |
 | Bouffon Vert | **Bombes citrouilles** : bombardent et étourdissent | Citrouilles volantes | Explosent à l'arrivée |
+| **Thanos** (boss final) | **Gant de l'infini** : toutes les 8 s, le pouvoir d'une Pierre au hasard ; à 30 % de PV, **Claquement de doigts** | Outriders | Très rapides, arrivent en meute |
 
 ## Bonus d'équipe
 

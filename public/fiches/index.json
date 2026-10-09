@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "salt": "marvel-rush-fiches-v1",
+  "ids": [
+    "cap",
+    "cmarvel",
+    "hawkeye",
+    "hulk",
+    "ironman",
+    "spiderman",
+    "thanos",
+    "thor",
+    "venom",
+    "widow"
+  ]
+}

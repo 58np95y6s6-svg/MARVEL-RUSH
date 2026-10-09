@@ -4,12 +4,22 @@
 import { get, set } from 'idb-keyval';
 
 const STORE_KEY = 'mr-acces';
+/** Clé brute, gardée sur l'appareil pour déchiffrer les illustrations (voir fiches.ts). */
+export const RAW_KEY_STORE = 'mr-cle';
 const EXPECTED = (import.meta.env.VITE_ACCESS_KEY_HASH ?? '').trim().toLowerCase();
 
 async function sha256(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+let sessionKey: string | null = null;
+
+/** Clé d'accès brute (lien secret), si connue sur cet appareil. */
+export async function getAccessKey(): Promise<string | null> {
+  if (sessionKey) return sessionKey;
+  try { return ((await get(RAW_KEY_STORE)) as string | undefined) ?? null; } catch { return null; }
 }
 
 /** Lit les paramètres du fragment d'URL (#k=…&room=…). */
@@ -20,7 +30,10 @@ export function hashParams(): URLSearchParams {
 /** Renvoie true si l'accès est autorisé. Retire la clé de la barre d'adresse. */
 export async function checkAccess(): Promise<boolean> {
   // Clé non configurée (développement ou premier déploiement) : accès libre.
-  if (!EXPECTED) return true;
+  if (!EXPECTED) {
+    sessionKey = hashParams().get('k');
+    return true;
+  }
 
   const params = hashParams();
   const key = params.get('k');
@@ -29,7 +42,8 @@ export async function checkAccess(): Promise<boolean> {
     const rest = params.toString();
     history.replaceState(null, '', location.pathname + location.search + (rest ? `#${rest}` : ''));
     if ((await sha256(key)) === EXPECTED) {
-      try { await set(STORE_KEY, EXPECTED); } catch { /* stockage indisponible : accès pour cette visite seulement */ }
+      sessionKey = key;
+      try { await set(STORE_KEY, EXPECTED); await set(RAW_KEY_STORE, key); } catch { /* stockage indisponible : accès pour cette visite seulement */ }
       return true;
     }
   }

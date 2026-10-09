@@ -43,6 +43,7 @@ Usage strictement personnel : pas de monétisation, pas de vraie monnaie, pas d'
 | `design/planches/1-marvel-a.html` à `4-disney-b.html` | Le **code SVG de chaque personnage** : fonction `draw(ctx)`, 3 poses (repos, préparation, frappe), effets, palette. |
 | `design/planches/5-boss-sbires.html` | Le code SVG des 6 boss et de leurs sbires, dans le traitement « méchant » (visage dans l'ombre, yeux lumineux). |
 | `design/references/style-*.jpg` | Les références de style : chibi, contours épais, ombrage cel-shading, reflets brillants. |
+| `public/fiches/` | Les **illustrations de fiches** (art de comics réaliste) de 10 personnages, dont Thanos, **chiffrées**. Voir §6.5. |
 
 **Réutilise le code de dessin des planches.** Ne redessine pas les personnages. Extrais les primitives (`shaded`, `limb`, `hand`, `glow`, `burst`, `beam`, `bolt`, `sparks`, `mandala`, `face`, `mirror`…) et les fonctions `draw` de chaque personnage dans un module `src/art/`. Ce module génère, pour chaque unité, une chaîne SVG par pose (0 repos, 1 préparation, 2 frappe), que tu convertis en textures au chargement.
 
@@ -153,6 +154,20 @@ Six boss en rotation aléatoire. Chacun applique son **pouvoir toutes les 6 s** 
 | Maléfique | Sommeil maudit : endort une ligne entière pendant 3 s |
 | Galactus | Dévoreur : détruit une unité aléatoire de rang ≤ 3 |
 | Bouffon Vert | Bombes citrouilles : étourdit 3 unités pendant 2 s |
+
+**Thanos, boss final** (hors rotation) :
+- Il arrive au **dernier niveau de la campagne** (chapitre 6, niveau 10) et toutes les **15 vagues** en Survie et en Coop.
+- PV ×2 par rapport aux autres boss.
+- **Gant de l'infini** : toutes les 8 s, il utilise le pouvoir d'une Pierre au hasard, annoncé par la couleur de la Pierre :
+  - Puissance (violet) : étourdit 3 unités pendant 2 s ;
+  - Espace (bleu) : échange 2 unités ;
+  - Réalité (rouge) : transforme une unité en une autre unité du deck, au même rang ;
+  - Âme (orange) : vole 20 % du mana ;
+  - Temps (vert) : soigne Thanos de 5 % ;
+  - Esprit (jaune) : hypnotise 2 unités pendant 4 s.
+- **Claquement de doigts**, une fois, à 30 % de PV : fond blanc, silence d'une seconde, puis 3 unités au hasard perdent la moitié de leurs rangs (minimum 1).
+- **Sbires** : les Outriders, très rapides, en meute.
+- **Arène** : Titan, planète en ruines au ciel orange, avec les six Pierres qui brillent en fond.
 
 Si le boss n'est pas tué en **45 s**, il passe en **rage** : vitesse ×2.
 
@@ -345,6 +360,20 @@ Le Solo est le **mode principal** : c'est là que chaque joueur avance à son ry
 
 Chaque **profil** a sa propre collection, sauvegardée en ligne et retrouvée sur n'importe quel appareil.
 
+
+### 6.5 Illustrations de fiches
+- Certains personnages ont une **grande illustration** (art de comics) : Spider-Man, Iron Man, Thor, Œil de faucon, Captain Marvel, Captain America, Black Widow, Venom, Hulk, et Thanos pour les boss. D'autres s'ajouteront.
+- Où elle s'affiche :
+  - en fond de la **fiche de collection**, plein cadre, avec un dégradé sombre en bas ; le personnage **chibi animé** est posé par-dessus, en bas à gauche, avec ses statistiques ;
+  - à l'**ouverture d'un pack**, au moment où la carte se retourne, quand le personnage tiré en a une ;
+  - dans l'**annonce plein écran du boss** pour Thanos.
+- Un personnage sans illustration garde une fiche avec son chibi en grand sur un fond aux couleurs de son univers.
+- **Les illustrations ne sont jamais en clair dans le dépôt public.**
+  - Les originaux sont dans le dépôt **privé** `marvel-rush-assets`.
+  - Le dépôt public ne contient que les copies **chiffrées** (`public/fiches/<id>.bin`, AES-GCM, clé dérivée du lien secret par PBKDF2) et `index.json`.
+  - Le jeu les déchiffre sur l'appareil avec `src/access/fiches.ts` (`ficheUrl(id)`). Sans la clé, la fonction renvoie `null`.
+  - Pour en ajouter : `node scripts/encrypt-assets.mjs <clé> <dossier des originaux>`.
+
 ---
 
 ## 7. Direction artistique
@@ -418,6 +447,7 @@ Les autres personnages Disney (Pocahontas, Rebelle, Ariel, Tiana, Nemo & Dory, R
 | Maléfique | Montagne interdite | Château noir, ronces, corbeaux, flammes vertes | Ronces qui poussent sur les bords, flammes vertes |
 | Galactus | Planète dévorée, espace | Planète qui se fissure, étoiles, nébuleuse violette | Fond qui tourne lentement, débris qui flottent, écran qui tremble par moments |
 | Bouffon Vert | New York, nuit d'Halloween / Oscorp | Pleine lune, citrouilles, tour Oscorp, chauves-souris | Éclairs verts, explosions de citrouilles en fond |
+| Thanos | Titan | Planète en ruines, ciel orange, débris en orbite, les six Pierres en fond | La Pierre utilisée colore tout l'écran ; flash blanc et silence au Claquement de doigts |
 
 ### Mise en œuvre
 - Tout est en **SVG converti en textures** (comme les personnages), avec un parallaxe léger sur 2 ou 3 couches. Pas d'images externes.

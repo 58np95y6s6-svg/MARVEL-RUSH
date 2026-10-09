@@ -12,7 +12,7 @@ export type UnitId =
   | 'moana' | 'maui' | 'pocahontas' | 'mulan' | 'merida' | 'ariel' | 'foxhound'
   | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph';
 
-export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon';
+export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos';
 
 export type EnemyKind = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier' | 'sbire';
 
