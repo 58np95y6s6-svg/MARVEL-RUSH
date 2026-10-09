@@ -125,7 +125,14 @@ Règles de travail :
 
 ### 4.1 Plateau
 - Chaque joueur a une grille de **3 lignes × 5 colonnes** (15 cases).
-- Les ennemis suivent un **chemin** qui longe le plateau. Toutes les unités du plateau peuvent toucher n'importe quel ennemi du chemin : la portée est globale, comme dans Rush Royale. Seule la stratégie de **ciblage** compte.
+- Les ennemis suivent un **chemin** qui longe le plateau.
+- **Portées d'attaque (choix du joueur, différent de Rush Royale)** : chaque unité a une zone de touche. **La place d'une unité sur la grille devient stratégique.**
+  - **Globale** : tout le chemin (tireurs : Iron Man, Œil de faucon, Rebelle, Captain Marvel, Falcon…).
+  - **Longue** (≈ 3,4 cases), **moyenne** (≈ 2,4 cases) et **courte** (≈ 1,6 case, corps à corps : Hulk, Venom, Mulan, Rox & Rouky, Vanellope & Ralph, Shang-Chi…).
+  - La portée se mesure depuis le centre de la case de l'unité jusqu'à l'ennemi, en cases. Une unité ne vise que les ennemis dans sa zone ; le ciblage (premier, aléatoire, fort) s'applique ensuite.
+  - Plus la portée est courte, plus l'unité frappe fort : les valeurs sont équilibrées au simulateur.
+  - **Garder le doigt appuyé sur une unité** affiche sa zone de touche, en surlignant la partie du chemin couverte. Pendant le glisser d'une fusion, la zone de la case visée s'affiche aussi. Une pression courte ouvre la fiche.
+  - Le tutoriel l'explique avec une astuce dès la première unité à courte portée.
 - **3 vies** par joueur. Un ennemi normal qui atteint la fin du chemin retire 1 vie. Un boss qui l'atteint retire toutes les vies.
 
 ### 4.2 Mana, invocation, fusion, amélioration
