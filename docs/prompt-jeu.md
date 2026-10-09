@@ -370,7 +370,7 @@ Chaque **profil** a sa propre collection, sauvegardée en ligne et retrouvée su
   - dans l'**annonce plein écran du boss** pour Thanos.
 - Un personnage sans illustration garde une fiche avec son chibi en grand sur un fond aux couleurs de son univers.
 - **Les illustrations ne sont jamais en clair dans le dépôt public.**
-  - Les originaux sont dans le dépôt **privé** `marvel-rush-assets`.
+  - Les originaux sont dans le dépôt **privé** `D-p-t-photo-marvel`.
   - Le dépôt public ne contient que les copies **chiffrées** (`public/fiches/<id>.bin`, AES-GCM, clé dérivée du lien secret par PBKDF2) et `index.json`.
   - Le jeu les déchiffre sur l'appareil avec `src/access/fiches.ts` (`ficheUrl(id)`). Sans la clé, la fonction renvoie `null`.
   - Pour en ajouter : `node scripts/encrypt-assets.mjs <clé> <dossier des originaux>`.

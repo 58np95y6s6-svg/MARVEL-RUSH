@@ -1,7 +1,7 @@
 // Chiffre les illustrations de fiches avec la clé d'accès secrète.
 // Usage : node scripts/encrypt-assets.mjs <clé> <dossier-des-originaux>
 // Les originaux (fichiers <id>.webp) ne doivent JAMAIS être commités dans ce dépôt public :
-// ils vivent dans le dépôt privé marvel-rush-assets. Seules les copies chiffrées vont dans public/fiches/.
+// ils vivent dans le dépôt privé D-p-t-photo-marvel. Seules les copies chiffrées vont dans public/fiches/.
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, extname, basename } from 'node:path';
 import { webcrypto as crypto } from 'node:crypto';
