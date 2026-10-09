@@ -461,6 +461,20 @@ Les autres personnages Disney (Pocahontas, Rebelle, Ariel, Tiana, Nemo & Dory, R
 
 Chaque écran suit les captures et les règles de `design/references/ecrans/README.md` : cadres épais avec relief, gros boutons en dégradé, cartes à cadre de rareté, bandeaux d'information semi-transparents.
 
+**Style application, jamais de page web.** L'interface doit donner l'impression d'une vraie app mobile native, propre et claire :
+- **La page ne défile jamais.** `html` et `body` font exactement la hauteur de l'écran (`100dvh`), avec `overflow: hidden` et `overscroll-behavior: none` : pas de rebond, pas de pull-to-refresh, pas de barre d'adresse qui bouge.
+- **Chaque écran est une vue plein écran** en trois zones fixes : un en-tête (monnaies et profil), un contenu, et la **barre d'onglets en bas**, fixe, façon Rush Royale.
+- **Seul le contenu peut défiler**, et seulement quand il est plus haut que l'écran (grille de collection, liste des niveaux de campagne, historique) : défilement interne (`overflow-y: auto`, `-webkit-overflow-scrolling: touch`), avec une barre de défilement discrète et des fondus en haut et en bas de la zone.
+- **L'écran de combat ne défile jamais**, même dans sa zone de contenu : tout tient à l'écran, du 375 × 667 au 430 × 932.
+- **Respect des zones sûres** (encoche, barre d'accueil) avec `env(safe-area-inset-*)`.
+- **Gestes d'app** :
+  - pas de sélection de texte ni de menu contextuel sur les éléments de jeu (`user-select: none`, `-webkit-touch-callout: none`) ;
+  - pas de zoom (`touch-action: manipulation`) ;
+  - pas de surlignage bleu au toucher ;
+  - un retour visuel immédiat à chaque pression.
+- **Navigation par transitions** (glissement ou fondu de 200 à 250 ms) entre les vues, jamais par rechargement. Les fenêtres (fiche d'unité, confirmation, récompenses) s'ouvrent en **panneaux qui montent du bas** ou en modales centrées, avec un fond assombri.
+- Ce qui précède est garanti par une feuille de style de base commune (`src/ui/base.css`) et un composant de vue (`src/ui/view.ts`) que tous les écrans utilisent.
+
 1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Survie**, **Jouer à deux**, **Tirages**, **Collection**, **Decks**, **Maps**. En haut : avatar, niveau de compte, éclats, et la pastille de présence de la partenaire.
 2. **Campagne** : carte des 6 chapitres, niveaux avec leurs étoiles, coffres d'étoiles, prochain personnage à débloquer.
 3. **Jouer à deux / Mon duo** : liaison des profils, présence, « Inviter à jouer », invitations reçues, **parties communes en cours** à reprendre, historique et score du duo.
@@ -532,6 +546,7 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 - [ ] Deux téléphones sur des réseaux différents (4G et Wi-Fi) jouent ensemble en Coop puis en Duel grâce au lien d'invitation, avec un décalage perçu inférieur à 150 ms.
 - [ ] Si l'invité ferme l'onglet et revient dans les 30 s, la partie reprend.
 - [ ] Toute l'interface est en français, lisible sur un écran de 375 px de large.
+- [ ] Aucun écran ne fait défiler la page : seules les zones de contenu prévues défilent en interne ; pas de rebond, de zoom ni de sélection de texte ; l'écran de combat tient sans défilement du 375 × 667 au 430 × 932.
 - [ ] Un nouveau profil est guidé pas à pas (invoquer, fusionner, améliorer, boss, pack, deck, niveau 1) en moins de 4 minutes, sans pouvoir se bloquer ; le tutoriel reprend à la bonne étape après fermeture.
 - [ ] Une personne qui connaît Rush Royale retrouve ses repères : mêmes gestes, même disposition de l'écran de combat, même boucle de progression.
 - [ ] Deux profils sur deux téléphones progressent chacun de leur côté ; après réinstallation, le code de récupération restaure toute la progression.

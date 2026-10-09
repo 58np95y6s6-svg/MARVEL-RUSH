@@ -1,0 +1,55 @@
+/* Base commune : style application native, la page ne défile jamais (§8). */
+:root {
+  --ink: #1d1733;
+  --gold: #f6c64a;
+  --red: #e8413b;
+  --rare: #3c8bf0;
+  --epique: #9b59e6;
+  --legendaire: #f2a93b;
+  --boss: #c0263a;
+  --display: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --body: 'Nunito', system-ui, sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  inset: 0;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  font-family: var(--body);
+  color: var(--ink);
+  background: var(--ink);
+}
+body, button, .no-select { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#app { position: fixed; inset: 0; overflow: hidden; }
+img, svg, canvas { -webkit-user-drag: none; }
+
+/* Vue plein écran : en-tête, contenu, barre d'onglets. */
+.view {
+  position: absolute; inset: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+  overflow: hidden;
+}
+.view > .view-header, .view > .view-footer { flex: none; }
+.view > .view-footer { padding-bottom: var(--safe-bottom); }
+/* Seule zone autorisée à défiler, et seulement si son contenu dépasse. */
+.scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+.no-scroll { overflow: hidden !important; }
