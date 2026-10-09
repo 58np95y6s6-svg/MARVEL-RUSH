@@ -11,6 +11,15 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10f',
+    title: 'Compte à rebours',
+    date: '10 octobre 2026',
+    items: [
+      'Chaque partie commence par un compte à rebours 3, 2, 1, GO ! : place déjà tes héros avant l’arrivée des ennemis.',
+      'Pocahontas a de nouveaux cheveux au vent, en mèches souples.',
+    ],
+  },
+  {
     id: '2026-10-10e',
     title: 'Nouvelles stratégies et équilibrage',
     date: '10 octobre 2026',
