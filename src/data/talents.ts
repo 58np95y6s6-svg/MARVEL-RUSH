@@ -16,7 +16,9 @@
 //   armorPierce      fraction d'armure ignorée (1 = toute)
 //   stunDuration / stunChance  étourdissement appliqué par l'attaque
 //   burnPerSecond / burnDuration  brûlure (fraction des dégâts du coup par seconde)
-// Les autres clés sont propres à la compétence de l'unité ; leur nom reprend le paramètre visé.
+// Les autres clés sont propres à la compétence de l'unité : avec suffixe, elles visent un paramètre de
+// `ability.params` (src/data/units.ts) ; sans suffixe, ce sont de nouvelles mécaniques
+// (`…Bonus` = fraction ajoutée, `…Factor` = multiplicateur direct).
 
 import type { TalentDef, UnitId } from './types';
 
@@ -42,7 +44,7 @@ export const TALENTS: TalentDef[] = [
     ['Faisceau élargi', 'Uni-Beam inflige 260 % des dégâts au lieu de 200 %.', { beamDamageAdd: 0.6 }],
     ['Micro-missiles', 'Une attaque sur 5 tire 3 missiles à 60 % sur des ennemis aléatoires.', { missileEveryAttacks: 5, missileCount: 3, missileDamage: 0.6 }],
     ['Mark LXXXV', 'Uni-Beam balaie tout le chemin au lieu d’une seule ligne.', { beamAllLines: 1 }],
-    ['Surcharge', 'Uni-Beam ignore l’armure et inflige ×2 aux boss.', { beamArmorPierce: 1, beamBossDamageMul: 2 }],
+    ['Surcharge', 'Uni-Beam ignore l’armure et inflige ×2 aux boss.', { beamArmorPierce: 1, beamBossFactor: 2 }],
   ),
   ...u('spiderman',
     ['Toile renforcée', 'Ralentit de 15 % par cumul au lieu de 10 %.', { slowPerStackAdd: 0.05 }],
@@ -50,7 +52,7 @@ export const TALENTS: TalentDef[] = [
     ['Cocon', 'À 3 cumuls, immobilise 1,5 s au lieu de 1 s.', { rootDurationAdd: 0.5 }],
     ['Double lance-toile', 'Chaque tir touche un ennemi de plus.', { extraTargets: 1 }],
     ['Toile géante', 'L’immobilisation s’étend aux ennemis à moins d’1 case de la cible.', { rootSplashRadius: 1 }],
-    ['Iron Spider', '+50 % de dégâts contre les ennemis ralentis ou immobilisés.', { damageVsSlowedMul: 1.5 }],
+    ['Iron Spider', '+50 % de dégâts contre les ennemis ralentis ou immobilisés.', { slowedDamageBonus: 0.5 }],
   ),
   ...u('hulk',
     ['Smash tous les 6 coups', 'Hulk Smash se déclenche tous les 6 coups au lieu de 8.', { smashEveryHitsAdd: -2 }],
@@ -64,7 +66,7 @@ export const TALENTS: TalentDef[] = [
     ['Éclair +2 rebonds', 'L’éclair rebondit sur 2 ennemis de plus (maximum 7).', { chainAdd: 2, chainMaxAdd: 2 }],
     ['Étourdit 0,3 s', 'Chaque ennemi touché par l’éclair est étourdi 0,3 s.', { stunDuration: 0.3 }],
     ['Foudre conductrice', 'Chaque rebond perd 10 % de dégâts au lieu de 20 %.', { falloffAdd: -0.1 }],
-    ['Stormbreaker', '+40 % de dégâts sur la première cible de l’éclair.', { firstTargetMul: 1.4 }],
+    ['Stormbreaker', '+40 % de dégâts sur la première cible de l’éclair.', { firstTargetBonus: 0.4 }],
     ['Dieu du tonnerre', 'Toutes les 10 s, un orage frappe 5 ennemis aléatoires à 300 %.', { stormEvery: 10, stormTargets: 5, stormDamage: 3 }],
     ['Digne de Mjolnir', '+60 % de dégâts contre les boss, sans perte au rebond sur un boss.', { bossDamageMul: 1.6, noFalloffOnBoss: 1 }],
   ),
@@ -90,7 +92,7 @@ export const TALENTS: TalentDef[] = [
     ['Binaire prolongé', 'Le mode binaire dure 7 s au lieu de 5 s.', { binaryDurationAdd: 2 }],
     ['Rafale', 'En mode binaire, les tirs éclaboussent à 30 %.', { binarySplash: 0.3 }],
     ['Supernova', 'Dégâts ×3 en mode binaire au lieu de ×2.', { binaryMulAdd: 1 }],
-    ['Énergie cosmique', '+50 % de vitesse d’attaque en mode binaire.', { binaryAttackSpeedMul: 1.5 }],
+    ['Énergie cosmique', '+50 % de vitesse d’attaque en mode binaire.', { binaryHaste: 0.5 }],
   ),
   ...u('cap',
     ['Bouclier en vibranium', 'Le bouclier rebondit sur 5 ennemis au lieu de 3.', { bouncesAdd: 2 }],
@@ -104,9 +106,9 @@ export const TALENTS: TalentDef[] = [
     ['Maître des illusions', 'La transformation dure 15 s au lieu de 10 s.', { transformDurationAdd: 5 }],
     ['Dague empoisonnée', 'Les coups empoisonnent : 15 % des dégâts par seconde pendant 3 s.', { burnPerSecond: 0.15, burnDuration: 3 }],
     ['Chaos', '20 % de chance de faire reculer l’ennemi touché au lieu de 10 %.', { knockbackChanceAdd: 0.1 }],
-    ['Duplicité', 'Pendant la transformation, Loki compte comme 1 rang de plus.', { transformRankAdd: 1 }],
+    ['Duplicité', 'Pendant la transformation, Loki compte comme 1 rang de plus.', { transformRankBonus: 1 }],
     ['Illusions multiples', 'À chaque transformation, une copie illusoire apparaît 10 s sur une case vide.', { illusionCopies: 1, illusionDuration: 10 }],
-    ['Roi d’Asgard', '+40 % de dégâts pendant la transformation.', { transformDamageMul: 1.4 }],
+    ['Roi d’Asgard', '+40 % de dégâts pendant la transformation.', { transformDamageBonus: 0.4 }],
   ),
   ...u('bucky',
     ['Bras de métal', 'Une attaque sur 3 est critique au lieu d’une sur 4.', { critEveryAdd: -1 }],
@@ -114,7 +116,7 @@ export const TALENTS: TalentDef[] = [
     ['Commotion', 'Le critique étourdit 1 s au lieu de 0,5 s.', { critStunAdd: 0.5 }],
     ['Balle perforante', 'Ignore l’armure et détruit 1 coup de bouclier de plus.', { armorPierce: 1, shieldHitsExtra: 1 }],
     ['Programme Hydra', 'Le critique éclabousse à 50 % autour de la cible.', { critSplash: 0.5 }],
-    ['Tueur de géants', '+40 % de dégâts contre les gros ennemis et les boss.', { bigDamageMul: 1.4, bossDamageMul: 1.4 }],
+    ['Tueur de géants', '+40 % de dégâts contre les gros ennemis et les boss.', { bigDamageBonus: 0.4, bossDamageMul: 1.4 }],
   ),
   ...u('hawkeye',
     ['Pointe explosive', 'La flèche explosive éclabousse à 75 % au lieu de 50 %.', { explosiveSplashAdd: 0.25 }],
@@ -130,7 +132,7 @@ export const TALENTS: TalentDef[] = [
     ['Double marquage', 'Redwing marque les 2 ennemis les plus forts.', { markTargetsAdd: 1 }],
     ['Ailes d’acier', '+25 % de vitesse d’attaque.', { attackSpeedMul: 1.25 }],
     ['Frappe aérienne', 'Un ennemi marqué qui meurt explose : 100 % des dégâts autour.', { markExplosion: 1 }],
-    ['Bouclier étoilé', 'La marque dure 8 s et compte double sur les boss.', { markDurationAdd: 4, markBossMul: 2 }],
+    ['Bouclier étoilé', 'La marque dure 8 s et compte double sur les boss.', { markDurationAdd: 4, markBossFactor: 2 }],
   ),
   ...u('widow',
     ['Morsure venimeuse', 'Un coup sur 4 paralyse au lieu d’un sur 5.', { paralyzeEveryAdd: -1 }],
@@ -211,7 +213,7 @@ export const TALENTS: TalentDef[] = [
     ['Langue agile', 'La langue tire un ennemi toutes les 9 s au lieu de 12 s.', { abilityCooldownAdd: -3 }],
     ['Pourboire', '10 % de chance de gagner 5 de mana à chaque élimination par Tiana.', { tipChance: 0.1, tipMana: 5 }],
     ['Lucioles', 'Les tirs ralentissent de 15 % pendant 1 s.', { slow: 0.15, slowDuration: 1 }],
-    ['Rêve accompli', 'Le mana de début de vague est doublé quand un boss arrive.', { bossWaveManaMul: 2 }],
+    ['Rêve accompli', 'Le mana de début de vague est doublé quand un boss arrive.', { bossWaveManaFactor: 2 }],
     ['Mama Odie', 'La langue avale l’ennemi attrapé s’il a moins de 30 % de PV (sauf boss).', { swallowThreshold: 0.3 }],
   ),
   ...u('nemo',
@@ -250,7 +252,7 @@ export const TALENTS: TalentDef[] = [
     ['Fleur magique', 'Les unités adjacentes gagnent +25 % de dégâts au lieu de +15 %.', { auraDamageAdd: 0.1 }],
     ['Coup de poêle', '+30 % de dégâts pour Raiponce.', { damageMul: 1.3 }],
     ['Cheveux de 20 m', 'L’aura touche aussi les cases en diagonale.', { auraDiagonal: 1 }],
-    ['Pascal camouflé', 'Les effets de boss durent 50 % moins longtemps sur tout le plateau.', { bossEffectDurationMul: 0.5 }],
+    ['Pascal camouflé', 'Les effets de boss durent 50 % moins longtemps sur tout le plateau.', { bossEffectDurationFactor: 0.5 }],
     ['Soleil de Corona', 'Toutes les 10 s, retire les effets de boss de tout le plateau.', { boardCleanseEvery: 10 }],
     ['Lanternes flottantes', 'Les unités adjacentes gagnent aussi +15 % de vitesse d’attaque.', { auraAttackSpeed: 0.15 }],
   ),
