@@ -34,3 +34,15 @@ Règles :
 - Étape 0 : Vite 6, TypeScript strict, PixiJS 8, Vitest 3, vite-plugin-pwa 1. Interface en TypeScript sans framework.
 - Le site est servi sous `/MARVEL-RUSH/` (GitHub Pages). La variable `VITE_BASE` permet de changer ce chemin.
 - Sans le secret `VITE_ACCESS_KEY_HASH`, l'accès reste libre, pour que le premier déploiement soit visible. Dès que le secret est ajouté, la page neutre « 404 » s'affiche sans la clé.
+
+## Publications programmées
+
+Tâches automatiques créées à la demande du joueur. Chacune s'ouvre dans une nouvelle session cloud à minuit (heure de Paris). Elle fusionne la branche de l'extension dans `main`, vérifie les tests et le build, puis pousse, ce qui déclenche la mise en ligne. **Elle ne publie que si la ligne ci-dessous indique « prête à publier ».**
+
+| Date (minuit, Paris) | Extension | Branche | État |
+|---|---|---|---|
+| Dimanche 18/10/2026 | DC Comics | `extension/dc` | en préparation |
+| Dimanche 25/10/2026 | Transformers | `extension/transformers` | en préparation |
+| Dimanche 01/11/2026 | Pixar | `extension/pixar` | en préparation |
+
+Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
