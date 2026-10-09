@@ -56,7 +56,7 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 
 ### 2 bis. Extension DC : bandes de puissance
 
-Mêmes bandes que ci-dessus (Rare 0,95 – 1,05, Épique 1,03 – 1,12, Légendaire 1,08 – 1,18). IP mesuré le 9 octobre 2026 avec `scripts/simulate.ts` (80 parties, niveau 1, témoin `depart-marvel` = 10,24 vagues, Falcon remplacé par l'unité testée), **avec la portée globale** (le moteur de la branche DC n'applique pas encore les portées du §4.1). La colonne « Dégâts » donne la valeur actuelle, **compensation de portée comprise** (courte +20 %, courte-moyenne +15 %, moyenne +10 %) : à remesurer après la fusion de `main` qui applique les portées.
+Mêmes bandes que ci-dessus (Rare 0,95 – 1,05, Épique 1,03 – 1,12, Légendaire 1,08 – 1,18). IP mesuré le 9 octobre 2026 avec `scripts/simulate.ts` (80 parties, niveau 1, témoin `depart-marvel` = 10,24 vagues, Falcon remplacé par l'unité testée), **avec la portée globale** (le moteur de la branche DC n'applique pas encore les portées du §4.1). La colonne « Dégâts » donne la valeur actuelle, **compensation de portée comprise** (courte +20 %, courte-moyenne +15 %, moyenne +10 %) : à remesurer après la fusion de `main` qui applique les portées (fait : voir §2 quater).
 
 | Unité | Rareté | Rôle | Portée | Dégâts / cadence | IP mesuré | Bande | Vigilance |
 |---|---|---|---|---|---|---|---|
@@ -161,6 +161,55 @@ Mesures (Solo Infini, niveau 1, toits de New York, graines 1..100) :
 | Deck « mana » (Spider-Man, Œil de faucon, Widow, Tiana, Pocahontas) | 15,99 (14,70 sans « Mana + ») | −7 % |
 
 Aucun emballement économique : les decks « mana » restent sous le témoin (le mana ne compense pas les dégâts perdus). « Mana + » vaut +3 % (T0 : 16,75 → 17,20) à +9 % (deck mana : 14,70 → 15,99). À surveiller : Tiana un peu faible (−10 %) ; la Croissance de Venom en parties très longues (courbe en puissance 0,75, sans plafond) ; la Formation de Loki (+30 % et zone) n'est pas mesurée par le bot.
+
+## 2 quater. Extension DC : portées, archétypes et rééquilibrage (octobre 2026)
+
+Après la fusion de `main` (portées, cadence par rang, archétypes, économie), les valeurs du §2 bis (mesurées en portée globale) sont remplacées par celles-ci.
+
+**Portées** : globale Superman, Cyborg, Green Arrow ; longue (3,4) Green Lantern, Supergirl, Martian Manhunter ; moyenne (2,4) Batman, Wonder Woman, Shazam, Aquaman (2,0 auparavant, seules quatre valeurs sont permises) ; courte (1,6) Flash, Robin, Batgirl, Catwoman, Harley Quinn.
+
+**Dégâts** : même mise à l'échelle que Marvel et Disney, appliquée aux dégâts DC sans leur ancienne compensation de portée (÷1,2 courte, ÷1,15 Aquaman, ÷1,1 moyenne) : globale ×1,22, longue ×1,22 × 1,4, moyenne ×1,22 × 1,7, courte ×1,22 × 3. Puis, les quatre Rares de courte portée étant trop faibles ensemble (deck `dc-rares` à 13,65 contre 16,72 pour le départ Marvel, mur au premier gros boss), +75 % pour elles et +20 % pour Flash : leur DPS (≈ 135-145/s) reste sous Rox & Rouky (≈ 210/s).
+
+| Héros | Portée | Dégâts / cadence | Archétype |
+|---|---|---|---|
+| Batman | moyenne | 55 / 0,9 s | — |
+| Superman | globale | 59 / 1,2 s | — |
+| Wonder Woman | moyenne | 83 / 1,1 s | — |
+| Green Lantern | longue | 41 / 0,8 s | Formation (+15 % par Lantern aligné, zone 40 % à 3) |
+| Flash | courte | 22 × 3 / 0,5 s | Échangeur (+20 % de cadence 5 s aux nouvelles voisines) |
+| Aquaman | moyenne | 58 / 1,1 s | — |
+| Cyborg | globale | 26 / 0,8 s | Boost de vitesse (+15 % aux voisines ; surcharge ramenée à +20 %) |
+| Supergirl | longue | 48 / 1,0 s | Croissance (+0,004/s, +0,03 par élimination, 0,28 × points^0,75, moitié gardée en fusion ; l'Éruption à 8 éliminations reste) |
+| Shazam | moyenne | 38 / 1,0 s | — |
+| Martian Manhunter | longue | 41 / 1,0 s | Copieur (−25 %) |
+| Robin | courte | 96 / 0,7 s | Booster de fusion (talent/éveil : +25 / +10 de mana par promotion, clé générique `promoteMana`) |
+| Batgirl | courte | 100 / 0,75 s | — |
+| Catwoman | courte | 86 / 0,6 s | Mana par élimination (remplace le vol de mana) |
+| Harley Quinn | courte | 90 / 0,8 s | Sacrifice → mana |
+| Green Arrow | globale | 20 / 0,8 s | — |
+
+**Indice de puissance** (deck témoin Spider-Man, Œil de faucon, Captain Marvel, Black Widow + le héros testé, 100 parties ; Falcon = 16,72) : Robin 17,32, Batgirl 17,07, Catwoman 17,23, Harley 17,34, Green Arrow 17,38, Flash 17,14, Aquaman 17,17, Cyborg 17,46, Supergirl 16,94, Shazam 17,41, Martian 16,92, Batman 17,30, Superman 17,07, Wonder Woman 17,31, Green Lantern 17,15 (Batman à Green Lantern mesurés avant le dernier réglage des Rares). Tous entre 1,01 et 1,04 : dans les bandes (le témoin écrase les écarts entre raretés).
+
+**Résultats** (Solo Infini, niveau 1, toits de New York, graines 1..100, rotation « tous les univers ») :
+
+| Deck | Bot de référence | `--casual` |
+|---|---|---|
+| Départ Marvel | 16,72 | 15,53 |
+| Départ Disney | 17,41 | 16,03 |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | **20,22** | **19,65** |
+| Méta Disney | 17,19 | — |
+| `dc-rares` (Robin, Batgirl, Catwoman, Harley, Green Arrow) | 17,23 (avant réglage : 13,65) | 12,43 (avant : 10,01) |
+| `meta-dc` (Superman, Batman, Wonder Woman, Green Lantern, Flash) | **19,11** (−5,5 % du méta Marvel) | **17,89** (−9,0 %) |
+| `bat-famille` | 19,09 | 14,09 |
+| `cosmiques` | 17,88 | — |
+| `riches-archers` | 18,98 | — |
+| Archétypes DC (Harley, Martian, Robin, Supergirl, Catwoman) | 17,84 | — |
+| Coop (50 parties) : départ Marvel / méta Marvel / méta DC / `dc-rares` | 15,24 / 15,16 / 18,86 / 9,60 | — |
+
+**À surveiller** :
+- `dc-rares` avec le joueur occasionnel (12,43, vague 10 passée à 37 %) : quatre corps à corps placés au hasard tapent peu le gros boss. Un débutant qui ne joue que des Rares DC bute sur la vague 10 ; les decks de départ restent Marvel et Disney.
+- Coop et corps à corps : `dc-rares` (9,60) et un deck de corps à corps de la version 1 (Rox & Rouky, Shang-Chi, Venom, Mulan, Œil de faucon : 9,67) ne passent jamais la vague 10 en Coop avec le bot. Problème des portées courtes en Coop, pas propre à DC : à traiter sur `main` (portée courte 1,8 ou placement du bot).
+- Le bot n'exploite ni l'échange (Flash) ni la formation (Green Lantern) : leur valeur réelle est sous-estimée.
 
 ## 3. Le simulateur (`scripts/simulate.ts`)
 

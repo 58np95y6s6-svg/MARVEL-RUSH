@@ -309,7 +309,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'flash', name: 'Flash', pack: 'dc', rarity: 'epique', role: 'Multi-coups',
-    targeting: 'premier', damage: 18, attackInterval: 0.5, range: 1.6,
+    targeting: 'premier', damage: 22, attackInterval: 0.5, range: 1.6,
     ability: {
       name: 'Super-vitesse',
       description: 'Chaque attaque frappe 3 fois (idéal contre les boucliers). Toutes les 12 s, Flash fait le tour du chemin et frappe chaque ennemi à 300 %. Échangeur : glisse Flash sur une alliée de même rang (autre héros), ils échangent leurs cases en un éclair, sans limite ; la Force véloce donne alors +20 % de cadence à ses nouvelles voisines pendant 5 s.',
@@ -363,7 +363,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'robin', name: 'Robin', pack: 'dc', rarity: 'rare', role: 'Acrobate',
-    targeting: 'premier', damage: 55, attackInterval: 0.7, range: 1.6,
+    targeting: 'premier', damage: 96, attackInterval: 0.7, range: 1.6,
     ability: {
       name: 'Bâton de combat',
       description: 'Booster de fusion : glisse Robin sur une alliée de même rang (autre héros) ; il lui passe le relais, disparaît et l’alliée gagne 1 rang. Une attaque sur 3 balaie 2 ennemis. Disciple : +20 % de dégâts s’il est à côté de Batman ou de Batgirl.',
@@ -372,7 +372,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'batgirl', name: 'Batgirl', pack: 'dc', rarity: 'rare', role: 'Malus / anti-armure',
-    targeting: 'fort', damage: 61, attackInterval: 0.75, range: 1.6,
+    targeting: 'fort', damage: 100, attackInterval: 0.75, range: 1.6,
     ability: {
       name: 'Piratage d’Oracle',
       description: 'Toutes les 8 s, elle pirate l’ennemi le plus fort : son bouclier tombe et son armure baisse de 30 %.',
@@ -381,7 +381,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'catwoman', name: 'Catwoman', pack: 'dc', rarity: 'rare', role: 'Économie / ralentissement',
-    targeting: 'aleatoire', damage: 52, attackInterval: 0.6, range: 1.6,
+    targeting: 'aleatoire', damage: 86, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Cambriolage',
       description: 'Cambriolage : chaque ennemi touché par Catwoman rapporte du mana en plus quand il est éliminé (+1 au rang 1, jusqu’à +8 au rang 7). Un coup de fouet sur 5 ralentit de 30 % pendant 2 s.',
@@ -390,7 +390,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'harley', name: 'Harley Quinn', pack: 'dc', rarity: 'rare', role: 'Chaos',
-    targeting: 'aleatoire', damage: 52, attackInterval: 0.8, range: 1.6,
+    targeting: 'aleatoire', damage: 90, attackInterval: 0.8, range: 1.6,
     ability: {
       name: 'Maillet chaotique',
       description: 'Effet au hasard à chaque coup : gros maillet (×2,5 et recul d’une case), bombe à confettis (éclaboussure 60 %), tarte à la crème (étourdit 1 s) ou « Oups ! » (×0,5). Sacrifice : fusionnée ou détruite, elle tire sa révérence et rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190).',

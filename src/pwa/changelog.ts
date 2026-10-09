@@ -17,6 +17,8 @@ export const CHANGELOG: ReleaseNote[] = [
     items: [
       'Nouveau Pack DC, aux mêmes prix, taux et garantie que les packs Marvel et Disney.',
       '15 héros DC : Batman, Superman, Wonder Woman, Green Lantern, Flash, Aquaman, Cyborg, Supergirl, Shazam, Martian Manhunter, Robin, Batgirl, Catwoman, Harley Quinn et Green Arrow, chacun avec sa compétence, ses talents et ses 5 passifs d’éveil.',
+      'Les stratégies arrivent chez DC : Harley Quinn se sacrifie pour du mana, Martian Manhunter copie un allié, Robin fait monter un allié d’un niveau, Supergirl grandit sans limite, Catwoman rapporte du mana sur chaque ennemi touché, Cyborg accélère ses voisins, Flash échange sa place et les Green Lantern alignés se renforcent.',
+      'Chaque héros DC a sa portée (toute la map, longue, moyenne ou courte), sa couleur de jeton et ses effets d’attaque : batarangs, vision thermique, lasso de vérité, constructions de l’anneau, éclairs de Flash, kraken, foudre de Shazam, maillet de Harley…',
       'Nouvelles équipes : Justice League, Trinité, Bat-famille, Lanternes et cosmiques, Sirènes de Gotham, et deux équipes entre univers, Les Riches (Iron Man et Batman) et Les Archers (Œil de faucon, Green Arrow et Rebelle).',
       'Cinq nouveaux méchants : le Joker, Lex Luthor, Bane, Sinestro et Black Adam, avec leurs lieutenants et leurs sbires (clowns, robots LexCorp, mercenaires, Corps Sinestro, soldats de Kahndaq).',
       'Darkseid, boss final de l’extension : Rayons Oméga, Boom Tube et Équation d’Anti-Vie.',
