@@ -39,6 +39,8 @@ export interface GameConfig {
     noLifeLoss?: boolean;
     bossAtWave?: number;
     bossId?: BossId;
+    /** Campagne, niveaux 5 : un sbire géant du boss du chapitre (PV ×8, taille ×2) remplace le boss. */
+    miniBoss?: BossId;
     paused?: boolean;           // le tutoriel peut figer la simulation
   };
 }
