@@ -75,6 +75,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     seed: o.seed ?? (Math.random() * 2 ** 31) >>> 0,
     mapId: map.id,
     players: [{ id: me, deck: o.deck.slice(), levels: {}, talents: {} }],
+    prepTime: 3, // compte à rebours de début de partie : on peut déjà placer des unités
   };
   const engine: Engine = createEngine(config);
 
@@ -160,6 +161,24 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const pauseModal = el('div', 'mr-modal', `<div class="mr-panel"><h2 class="mr-outline-s">Pause</h2><p>La partie est en attente.</p><div class="row"><button class="mr-btn green" data-a="resume">Reprendre</button><button class="mr-btn" data-a="home">Abandonner</button></div></div>`);
   const endModal = el('div', 'mr-modal');
   wrap.append(announce, pauseModal, endModal);
+  // Compte à rebours de début de partie (3, 2, 1, GO !) : les unités se placent déjà.
+  const countdown = el('div', 'mr-countdown');
+  wrap.append(countdown);
+  let countdownShown = -1;
+  let pendingWavePop = 0;
+  function updateCountdown(left: number): void {
+    const n = left > 0 ? Math.ceil(left - 1e-6) : 0;
+    if (n === countdownShown) return;
+    countdownShown = n;
+    countdown.innerHTML = n > 0
+      ? `<span class="mr-outline">${n}</span><small>Place tes héros !</small>`
+      : '<span class="mr-outline go">GO !</span>';
+    countdown.classList.remove('tick'); void countdown.offsetWidth; countdown.classList.add('tick');
+    if (n === 0) setTimeout(() => {
+      countdown.remove();
+      if (pendingWavePop) { popWave(pendingWavePop); pendingWavePop = 0; }
+    }, 700);
+  }
 
   // ---------------------------------------------------------------- état local
   let scene: BattleScene | null = null;
@@ -203,6 +222,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   function updateHud(): void {
     const st = engine.state;
+    if (countdown.isConnected) updateCountdown(st.countdown ?? 0);
     const p = st.players[0]!;
     const m = Math.floor(p.mana);
     if (m !== cache.mana) {
@@ -364,7 +384,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
           }
           break;
         case 'waveStart':
-          if (bossWaveKind(engine.config, ev.wave) === null) popWave(ev.wave);
+          if (bossWaveKind(engine.config, ev.wave) === null) {
+            if ((engine.state.countdown ?? 0) > 0) pendingWavePop = ev.wave; // après le « GO ! »
+            else popWave(ev.wave);
+          }
           break;
         case 'bossSpawn':
           announceBoss(ev.boss, false);
