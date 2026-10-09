@@ -33,33 +33,78 @@ Idée validée par le joueur, à détailler quand la version 1 sera terminée.
 - Mêmes règles d'éveil (★1 à ★10) et de talents pour les héros DC, plus 5 passifs par héros.
 - Illustrations de fiches DC à ajouter dans le dépôt privé, puis à chiffrer comme les autres.
 
-## Mise à jour suivante : extension TRANSFORMERS
+## Mise à jour suivante : extension TRANSFORMERS (publication le 25/10)
 
-Idée du joueur, à détailler plus tard.
-- **Pack Transformers** : les Autobots en héros. Par exemple Optimus Prime, Bumblebee, Ironhide, Ratchet, Jazz, Arcee, Grimlock, Wheeljack, Hot Rod, Elita-1.
-- **Mécanique propre à cet univers : la transformation.** Chaque Autobot alterne entre un **mode robot** (attaque forte, lente) et un **mode véhicule** (rapide, attaque les ennemis les plus avancés). Elle se déclenche automatiquement, ou d'un appui sur l'unité, avec une animation de transformation.
-- **Méchants Decepticons** : Starscream, Soundwave, Shockwave, Devastator (boss géant formé de plusieurs Decepticons), **Megatron** en boss final, et **Unicron** comme boss cosmique des modes infinis.
-- **Maps** : Cybertron, une base Autobot, une autoroute, Kalis et l'Arche ; Unicron comme arène.
-- **+30 niveaux** de campagne (3 chapitres, Solo et Coop), boss infinis prolongés.
-- **Style** : rester dans le chibi des planches, avec des robots aux formes arrondies, des contours épais et des visières lumineuses.
+Liste définitive, établie par le chef de projet à la demande du joueur.
 
-## Puis : extension PIXAR
+**Mécanique propre à l'extension : la transformation.** Chaque Autobot alterne entre un **mode robot** (frappe forte et lente, sur l'ennemi le plus fort) et un **mode véhicule** (rapide, sur l'ennemi le plus avancé), toutes les 8 s ou d'un appui sur l'unité, avec une animation de transformation.
 
-Idée du joueur, à détailler plus tard.
-- **Pack Pixar** : de nouveaux personnages, par exemple :
-  - les Indestructibles (M. Indestructible, Elastigirl, Violette, Flèche, Jack-Jack) ;
-  - Monstres & Cie (Sulli et Bob) ;
-  - Cars (Flash McQueen et Martin) ;
-  - Là-haut (Carl et Russell) ;
-  - Vice-Versa (Joie et Colère) ;
-  - Ratatouille (Rémy) ;
-  - WALL-E et EVE ;
-  - Luca ;
-  - Alerte Rouge (Mei en panda roux).
-- **Personnages Pixar déjà dans le pack Disney** : Nemo & Dory, Coco, Buzz & Woody, Rebelle. **À décider avec le joueur** au moment de l'extension : soit ils restent dans le pack Disney (rien ne change pour les profils existants), soit ils passent dans le pack Pixar (les profils les gardent, seul le pack d'origine change).
-- **Méchants Pixar** : Syndrome, Randall, Lotso, Chick Hicks, Charles Muntz, AUTO (le robot de WALL-E), et un boss final à choisir.
-- **Maps** : Monstropolis, Radiator Springs, Paradise Falls, le quartier général des émotions, l'Axiom, Portorosso.
-- **+30 niveaux** de campagne, boss infinis prolongés.
+**Pack Transformers : 15 Autobots**
+
+| id | Héros | Rareté | Mode robot | Mode véhicule |
+|---|---|---|---|---|
+| optimus | Optimus Prime | Légendaire | Hache d'énergie, onde de choc | Camion : charge qui repousse |
+| bumblebee | Bumblebee | Rare | Canon du bras | Voiture jaune : rafales rapides |
+| ironhide | Ironhide | Épique | Double canon lourd | Fourgon : dégâts de zone |
+| ratchet | Ratchet | Rare | Soigne : retire les malus des voisins | Ambulance : vitesse aux voisins |
+| jazz | Jazz | Rare | Projecteur aveuglant (étourdit) | Voiture de sport : mana à chaque élimination |
+| arcee | Arcee | Épique | Lames, coups critiques | Moto : vise les plus rapides |
+| grimlock | Grimlock | Légendaire | Épée et bouclier | Dinobot T-rex : souffle de feu |
+| wheeljack | Wheeljack | Épique | Grenades expérimentales (effet aléatoire) | Voiture de course : piège sur le chemin |
+| hotrod | Hot Rod | Épique | Tir double | Bolide : traînée de flammes |
+| elita | Elita-1 | Rare | Tir de précision | Voiture : marque l'ennemi le plus fort |
+| bulkhead | Bulkhead | Rare | Boulet de démolition | Tout-terrain : écrasement |
+| sideswipe | Sideswipe | Rare | Lames tournoyantes | Voiture : traverse plusieurs ennemis |
+| prowl | Prowl | Rare | Analyse : +dégâts aux voisins | Voiture de police : ralentit |
+| mirage | Mirage | Épique | Invisibilité, critiques garantis | Voiture : leurres |
+| ultramagnus | Ultra Magnus | Légendaire | Marteau, bouclier d'équipe | Porte-voitures : renforce toute la ligne |
+
+**Decepticons**
+- 5 gros boss : **Starscream** (missiles en piqué), **Soundwave** (brouillage : désactive les améliorations), **Shockwave** (rayon qui transforme une unité), **Devastator** (géant formé de 6 Constructicons, se reforme une fois), **Blitzwing** (alterne glace et feu).
+- Boss final : **Megatron**.
+- Boss cosmique des modes infinis : **Unicron**, à la vague 150.
+- Sbires : drones Vehicons, Insecticons, Constructicons, Seekers, Sweeps.
+
+**Maps** : Cybertron, la base Autobot, l'autoroute, Mission City, l'Arche, la Lune de Cybertron.
+**Arènes** : le ciel (Starscream), la station radar (Soundwave), le labo de Kaon (Shockwave), la carrière (Devastator), la toundra (Blitzwing), le Némésis (Megatron), l'espace d'Unicron.
+**Campagne** : chapitres 10 à 12 (+30 niveaux Solo et +30 Coop), Megatron au chapitre 12, niveau 10.
+**Équipes** : Autobots, Dinobots, Aériens ; inter-univers « Les Machines » (Iron Man, Cyborg, Optimus Prime).
+
+## Puis : extension PIXAR (publication le 01/11)
+
+Liste définitive, établie par le chef de projet à la demande du joueur.
+
+**Décision sur les personnages Pixar déjà dans le pack Disney** (Nemo & Dory, Coco, Buzz & Woody, Rebelle) : **ils restent dans le pack Disney**. Rien ne change pour les profils existants. Le pack Pixar n'apporte que des personnages nouveaux.
+
+**Pack Pixar : 15 unités** (beaucoup de duos, comme le pack Disney)
+
+| id | Unité | Rareté | Compétence (idée) |
+|---|---|---|---|
+| mrincredible | M. Indestructible | Légendaire | Coup de poing qui étourdit toute une ligne |
+| elastigirl | Elastigirl | Épique | Bras élastiques : frappe les ennemis de tête de loin |
+| frozone | Frozone | Épique | Pont de glace : gèle le chemin, ralentit |
+| violetflash | Violette & Flèche | Rare | Champ de force (Violette) et frappes ultra-rapides (Flèche) |
+| sullimike | Sulli & Bob | Épique | Rugissement qui fait reculer, Bob compte les points |
+| mcqueen | Flash McQueen & Martin | Rare | Turbo : vitesse d'attaque, Martin remorque un ennemi en arrière |
+| carlrussell | Carl & Russell | Rare | Ballons : soulèvent un ennemi hors du chemin pendant 2 s |
+| joysadness | Joie & Tristesse | Épique | Souvenirs : bonus ou malus aléatoires |
+| remy | Rémy & Linguini | Rare | Recette : mana bonus à chaque vague |
+| walleeve | WALL-E & EVE | Légendaire | Compacteur et rayon d'EVE |
+| lucaalberto | Luca & Alberto | Rare | Vague de mer, transformation en monstre marin |
+| mei | Mei (panda roux) | Épique | Panda géant : écrase les ennemis |
+| jessie | Jessie & Pile-Poil | Rare | Lasso et galop : tire les ennemis en arrière |
+| ianbarley | Ian & Barley | Épique | Sorts aléatoires du bâton magique |
+| joe | Joe & 22 | Légendaire | Musique de l'âme : galvanise tout le plateau |
+
+**Méchants**
+- 5 gros boss : **Syndrome** (Omnidroïde), **Randall** (camouflage), **Lotso** (benne, tri des jouets), **Hopper** (nuée de sauterelles), **Charles Muntz** (dirigeable, chiens).
+- Boss final : **l'Empereur Zurg**.
+- Sbires : robots de Syndrome, monstres de Monstropolis, jouets de Sunnyside, sauterelles, chiens de Muntz, robots de Zurg.
+
+**Maps** : Metroville, Monstropolis, Radiator Springs, Paradise Falls, le quartier général des émotions, l'Axiom, Portorosso.
+**Arènes** : l'île de Nomanisan (Syndrome), l'usine de portes (Randall), Sunnyside (Lotso), l'île aux fourmis (Hopper), le dirigeable (Muntz), la planète Z (Zurg).
+**Campagne** : chapitres 13 à 15 (+30 niveaux Solo et +30 Coop), Zurg au chapitre 15, niveau 10.
+**Équipes** : Les Indestructibles, Monstres & Cie, Émotions ; inter-univers « Toy Story » (Buzz & Woody + Jessie & Pile-Poil).
 
 ## Exigence dès la version 1 : un jeu extensible
 
