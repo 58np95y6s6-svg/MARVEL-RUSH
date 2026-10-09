@@ -20,6 +20,7 @@
 @keyframes mr-bob { 50% { transform: translateY(-8px); } }
 .mr-home-mode { margin: 0; font-weight: 800; font-size: 15px; opacity: .9; }
 .mr-home .mr-play { width: min(78vw, 300px); font-size: 40px; padding: 16px 0 18px; border-radius: 24px; }
+.mr-home .mr-codex { width: min(64vw, 240px); font-size: 22px; }
 .mr-home .mr-tuto { width: min(64vw, 240px); font-size: 22px; }
 .mr-home .mr-tuto small { display: block; font-family: var(--body); font-weight: 800; font-size: 13px; opacity: .85; }
 .mr-home-foot { padding: 12px 16px calc(16px + var(--safe-bottom)); font-weight: 700; font-size: 14px; opacity: .75; }

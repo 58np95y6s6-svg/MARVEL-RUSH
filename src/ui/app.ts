@@ -1,5 +1,6 @@
 // Navigation par fragment d'URL : accueil, combat, pages de développement.
 //   #            accueil
+//   #encyclopedie[/mechants|/heros/<id>|/mechant/<id>]  encyclopédie des héros et des méchants
 //   #combat      combat Solo Infini (deck Marvel de départ, Toits de New York)
 //   #dev/fast    combat accéléré (×8 ; #dev/fast/16 pour ×16)
 //   #dev/art     prévisualisation des personnages
@@ -12,6 +13,10 @@ import { STARTER_DECKS } from '../data/units';
 type Cleanup = () => void;
 let cleanup: Cleanup | null = null;
 let root: HTMLElement;
+/** Écran Encyclopédie monté : ses sous-routes (onglet, fiche) le mettent à jour sans le remonter. */
+let codex: { update(sub: string): void } | null = null;
+/** Vrai si l'Encyclopédie a été ouverte depuis l'accueil : son bouton retour revient en arrière. */
+let codexFromHome = false;
 
 function go(hash: string): void {
   if (location.hash === hash || (hash === '' && !location.hash)) void route();
@@ -19,10 +24,25 @@ function go(hash: string): void {
 }
 
 async function route(): Promise<void> {
+  const h = location.hash.replace(/^#/, '');
+  if (h === 'encyclopedie' || h.startsWith('encyclopedie/')) {
+    const sub = h.slice('encyclopedie'.length).replace(/^\//, '');
+    if (codex) { codex.update(sub); return; }
+    cleanup?.();
+    cleanup = null;
+    root.innerHTML = '';
+    const { mountCodex } = await import('./codex');
+    const c = mountCodex(root, {
+      onHome: () => { if (codexFromHome) { codexFromHome = false; history.back(); } else go(''); },
+    }, sub);
+    codex = c;
+    cleanup = () => { c.destroy(); codex = null; };
+    return;
+  }
+  codexFromHome = false;
   cleanup?.();
   cleanup = null;
   root.innerHTML = '';
-  const h = location.hash.replace(/^#/, '');
   // La clé d'accès (#k=…) a déjà été retirée par la porte d'entrée.
   if (h.startsWith('dev/art')) {
     const { mountArtPreview } = await import('../art/preview');
@@ -59,7 +79,10 @@ async function route(): Promise<void> {
     return;
   }
   const { mountHome } = await import('./home');
-  cleanup = mountHome(root, { onPlay: () => go('#combat') });
+  cleanup = mountHome(root, {
+    onPlay: () => go('#combat'),
+    onCodex: () => { codexFromHome = true; go('#encyclopedie'); },
+  });
 }
 
 /** Les pages de développement sont des pages longues : on y autorise le défilement. */

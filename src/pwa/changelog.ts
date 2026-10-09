@@ -11,6 +11,17 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10d5',
+    title: 'Encyclopédie et mode portrait',
+    date: '10 octobre 2026',
+    items: [
+      'Nouvelle Encyclopédie depuis l’accueil : tous les héros, classés par extension, type, rareté ou éveil, avec recherche et tri.',
+      'Touche un héros pour voir sa fiche complète : compétence, portée, dégâts, talents, passifs d’éveil et équipes.',
+      'Nouvel onglet Méchants : les pouvoirs de chaque boss, leurs sbires, leurs lieutenants et les Pierres de Thanos.',
+      'Le jeu reste en mode portrait : téléphone couché, un écran invite à le redresser.',
+    ],
+  },
+  {
     id: '2026-10-10d',
     title: 'Attaques revisitées',
     date: '10 octobre 2026',
