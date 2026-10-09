@@ -10,9 +10,12 @@ Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Ma
 
 - les personnages **Marvel** et **Disney** du dépôt, dans le style graphique de ses planches ;
 - un système de **tirages** avec deux packs, **Marvel** et **Disney** ;
-- trois modes : **Solo**, **Coop à 2** et **Duel à 2** ;
+- un **mode Solo central** : une campagne qui fait progresser le compte et débloque des personnages et des talents (§5.1) ;
+- deux modes à deux, **Coop** et **Duel**, pour jouer ensemble quand on le décide ;
+- **deux profils sauvegardés en ligne** (toi et ta partenaire) : chacun progresse de son côté, et les deux se retrouvent dans une partie commune (§5.4) ;
 - des **maps par univers** et des **arènes de boss** (§7 bis) ;
-- une **PWA** installable, accessible uniquement par un **lien secret** (usage privé entre deux personnes).
+- une **PWA** installable, accessible par un **lien secret** (usage privé entre deux personnes) ;
+- un code **publié sur GitHub en dépôt public** et un jeu **déployé sur GitHub Pages**. Tu me fournis tous les liens (§12).
 
 Tu pilotes une **équipe d’agents spécialisés** (§1 bis) : un agent par grosse tâche.
 
@@ -53,10 +56,12 @@ Les agents travaillent **en parallèle** quand leurs tâches sont indépendantes
 | **Moteur de jeu** | Simulation pure à pas fixe : plateau, invocation, fusion, mana, ciblage, compétences, vagues, boss, rng | `src/engine/` | Tests Vitest verts sur chaque règle et chaque compétence ; même graine = même partie |
 | **Rendu et animations** | Scène PixiJS, interpolation, animations d'attaque, particules, chiffres de dégâts, tremblements d'écran | `src/render/` | 60 i/s avec 15 unités et 60 ennemis par plateau sur un téléphone moyen |
 | **Réseau multijoueur** | PeerJS, salon, lien d'invitation, hôte qui fait autorité, instantanés, reconnexion | `src/net/` | Coop et Duel jouables entre deux téléphones en 4G et en Wi-Fi ; test de déconnexion et reconnexion |
-| **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, skins, monnaie, sauvegarde | `src/meta/` | Test de 100 000 tirages conforme aux taux ; sauvegarde résistante au rechargement |
+| **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, skins, monnaie | `src/meta/` | Test de 100 000 tirages conforme aux taux |
+| **Campagne et progression** | Les 6 chapitres et 60 niveaux, objectifs et étoiles, récompenses, talents (2 options × 3 paliers × 28 unités), niveau de compte, Survie et records | `src/campaign/`, `src/data/talents.ts` | Campagne jouable de bout en bout ; un nouveau profil débloque un personnage en moins de 20 min de jeu |
+| **Backend, profils et sauvegarde** | Supabase : profils, code de récupération, liaison du duo, présence, invitations, sauvegarde local d'abord avec synchronisation, parties en cours, règles RLS | `src/cloud/`, `supabase/` | Deux profils sur deux téléphones gardent chacun leur progression ; une partie Coop arrêtée reprend plus tard ; mode avion puis resynchronisation sans perte |
 | **Interface et expérience** | Tous les écrans HTML/CSS, navigation, animation d'ouverture des packs, accessibilité, lisibilité à 375 px | `src/ui/` | Parcours complet sans blocage, de l'accueil à la fin de partie |
 | **Audio** | Effets WebAudio (invocation, fusion, coups, boss) et une ambiance musicale par univers | `src/audio/` | Sons sur chaque événement clé, bouton muet persistant |
-| **PWA, déploiement et accès** | Manifest, icônes, service worker, lien secret, `noindex`, script de déploiement | `src/pwa/`, `src/access/`, config | Installation sur iOS et Android, Solo hors ligne, page neutre sans la clé |
+| **PWA, déploiement et accès** | Manifest, icônes, service worker, lien secret, `noindex`, dépôt GitHub public, GitHub Actions et GitHub Pages, secrets | `src/pwa/`, `src/access/`, `.github/workflows/` | Installation sur iOS et Android, Solo hors ligne, page neutre sans la clé, déploiement automatique à chaque push, aucun secret dans le dépôt |
 | **Qualité (QA)** | Relire chaque livraison, écrire les tests de bout en bout (Playwright), tester sur mobile, ouvrir les bugs aux bons agents | `tests/`, `e2e/` | Les critères d'acceptation du §11 passent tous |
 
 Règles de travail :
@@ -74,8 +79,17 @@ Règles de travail :
 - **Moteur de simulation pur TypeScript**, totalement séparé du rendu : il tourne à pas de temps fixe (20 ticks/s), sans accès au DOM. Il prend des **commandes** en entrée et produit un **état** et des **événements** en sortie. Il utilise un générateur aléatoire à **graine** (par exemple mulberry32).
 - **Réseau : PeerJS** (WebRTC DataChannel, P2P, sans serveur de jeu). Isole-le derrière une interface `Transport` pour pouvoir le remplacer par Supabase Realtime si le P2P échoue sur certains réseaux.
 - **PWA** : `vite-plugin-pwa` (manifest et service worker). Le mode Solo doit marcher hors ligne.
-- **Stockage** : IndexedDB (via `idb-keyval`) pour le profil, la collection, les decks et la monnaie, avec une sauvegarde de secours dans `localStorage`.
-- **Hébergement** : statique (GitHub Pages, Netlify ou Vercel). Déploiement en une commande, documenté dans le README.
+- **Sauvegarde en ligne et présence : Supabase** (offre gratuite) :
+  - authentification anonyme et code de récupération ;
+  - une table `profiles` (progression complète en JSON, avec version et date de mise à jour) ;
+  - une table `saved_games` (parties en cours) ;
+  - Realtime Presence pour savoir si l'autre joueur est en ligne et l'inviter.
+  - Les clés publiques Supabase passent par des variables d'environnement (secrets GitHub Actions), jamais en dur dans le code.
+- **Stockage local** : IndexedDB (via `idb-keyval`) en **local d'abord** : le jeu marche hors ligne et se synchronise avec Supabase dès que le réseau revient. En cas de conflit, la version la plus récente l'emporte, avec une fusion par champ pour la collection (on ne perd jamais une unité obtenue).
+- **Code et hébergement** :
+  - code dans un **dépôt GitHub public** ;
+  - déploiement automatique sur **GitHub Pages** par GitHub Actions à chaque push sur `main` ;
+  - script SQL de création des tables Supabase versionné dans `supabase/`.
 - **Tests** : Vitest sur le moteur (fusion, mana, tirages, compétences, synchronisation).
 
 ---
@@ -88,6 +102,7 @@ Règles de travail :
 - Ajoute `<meta name="robots" content="noindex,nofollow">` et un `robots.txt` qui interdit tout.
 - Documente dans le README comment générer une clé et le lien à envoyer.
 - Ce n'est pas une vraie sécurité, seulement une discrétion suffisante pour un usage privé. Dis-le dans le README.
+- Comme le **dépôt est public**, la clé elle-même ne doit **jamais** apparaître dans le code ni dans l'historique git : seul son hash, injecté par un secret GitHub Actions au build. Les données Supabase sont protégées par des règles RLS : chaque profil ne lit et n'écrit que ses propres données, et une partie commune n'est accessible qu'à ses deux joueurs.
 
 ---
 
@@ -177,12 +192,36 @@ Le bonus s'active si le **deck** contient l'équipe complète. Liste complète d
 
 ---
 
-## 5. Les trois modes de jeu
+## 5. Modes de jeu
 
-### 5.1 Solo — Survie
-- Un seul plateau. Il faut tenir le plus de vagues possible.
-- Le meilleur score (vague atteinte) est enregistré localement.
-- Fonctionne **hors ligne**.
+### 5.1 Solo — le cœur de la progression
+
+Le Solo est le **mode principal** : c'est là que chaque joueur avance à son rythme, de son côté, et débloque l'essentiel du contenu. Il marche **hors ligne** et se synchronise ensuite.
+
+**Campagne**
+- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts.
+- Chaque chapitre compte **10 niveaux** sur les maps de sa zone. Le niveau 5 est un **mini-boss** (un sbire géant), le niveau 10 un **boss** dans son arène.
+- **Objectif de chaque niveau** : tenir un nombre de vagues fixé, plus une **contrainte bonus** pour la 3e étoile (« sans perdre de vie », « avec au moins 2 unités Disney », « boss tué en moins de 30 s »…).
+- **1 à 3 étoiles** par niveau. Les étoiles ouvrent les chapitres suivants et les coffres d'étoiles.
+
+**Ce que le Solo débloque**
+- **Personnages** : chaque chapitre terminé offre un personnage garanti de sa zone, en plus des tirages. Exemple : finir « Océan » donne Vaïana & Pua.
+- **Talents** (compétences avancées, comme dans Rush Royale) : chaque unité a **3 paliers de talents**, aux niveaux 5, 7 et 9. À chaque palier, on choisit **1 talent parmi 2**. Exemples :
+  - Thor : « Éclair +2 rebonds » ou « Étourdit 0,3 s » ;
+  - Hulk : « Smash tous les 6 coups » ou « Rage max +80 % ».
+
+  Les paliers se débloquent avec des **parchemins de talent** gagnés en campagne. L'agent game design écrit les 2 options de chaque palier pour les 28 unités.
+- **Niveau de compte** (XP gagnée dans tous les modes) : il débloque les maps, les emplacements de deck (jusqu'à 3), le coffre quotidien et les cadres de profil.
+- **Éclats** pour les tirages, et cartes d'unités en récompense.
+
+**Survie infinie**
+- Elle se débloque après le chapitre 1 : tenir le plus de vagues possible.
+- **Record personnel** sauvegardé, et un **classement à deux** (ton record contre celui de ta partenaire).
+- Des récompenses aux paliers 10, 20 et 30 vagues.
+
+**Sauvegarde des parties en cours**
+- Une partie Solo est **sauvegardée automatiquement à chaque vague**.
+- Si on ferme l'app, on reprend exactement là où on en était, sur n'importe quel appareil connecté au même profil.
 
 ### 5.2 Coop à 2 (comme la coop de Rush Royale)
 - **Deux plateaux** : le tien en bas, celui de ton partenaire en haut, de part et d'autre d'un **chemin commun**. Les unités des deux joueurs attaquent les mêmes ennemis.
@@ -197,7 +236,20 @@ Le bonus s'active si le **deck** contient l'équipe complète. Liste complète d
 - Tu vois en haut le plateau de l'adversaire, en miniature et en lecture seule.
 - Le premier à 0 vie perd. Si les deux tiennent jusqu'à la vague 15, c'est la mort subite : les PV des ennemis doublent à chaque vague.
 
-### 5.4 Architecture du multijoueur
+### 5.4 Deux profils : jouer chacun de son côté ou ensemble
+
+- **Deux profils**, un par joueur. Au premier lancement, chacun crée le sien : pseudo et avatar (un personnage possédé). L'app affiche un **code de récupération** (12 caractères) pour retrouver le profil sur un autre appareil.
+- **Chacun sa progression** : campagne, collection, niveaux, talents, éclats, decks et records sont propres à chaque profil et **sauvegardés en ligne** (§2). Jouer seul ne touche jamais à la progression de l'autre.
+- **Lier les deux profils** : dans « Mon duo », un joueur génère un code ou un lien de liaison et l'autre l'accepte. Les profils deviennent **partenaires**.
+- **Jouer ensemble quand on le décide** :
+  - **Présence** : on voit si sa partenaire est en ligne et ce qu'elle fait (« en campagne, chapitre 3 », « dans les tirages »…).
+  - Le bouton **« Inviter à jouer »** choisit le mode (Coop ou Duel) et la map, puis envoie l'invitation, qui s'affiche chez l'autre. Si elle est hors ligne, l'invitation attend et une notification PWA est envoyée si elle l'a autorisée.
+  - Le **lien d'invitation** du §5.5 reste disponible en secours.
+- **Une partie commune profite aux deux** : chaque joueur gagne son XP, ses éclats et ses récompenses sur son propre profil. Les cartes ne s'échangent pas, mais on peut offrir une unité *pendant* la partie (Coop).
+- **Parties communes sauvegardées** : l'hôte enregistre l'état complet de la partie Coop à chaque vague dans `saved_games`. Les deux joueurs peuvent **arrêter et reprendre plus tard** depuis « Parties en cours ». Le Duel ne se met pas en pause : en cas d'abandon, la partie est perdue.
+- **Historique à deux** : les dernières parties communes (mode, map, vague atteinte, vainqueur) et le score du duo (victoires de chacun en Duel, meilleure vague en Coop).
+
+### 5.5 Architecture du multijoueur
 - **L'hôte fait autorité** : le joueur qui crée la partie fait tourner le moteur complet (les deux plateaux et le chemin).
 - L'invité envoie seulement des **commandes** (`summon`, `merge {from,to}`, `powerup {unitId}`, `gift {slot}`, `emote`).
 - L'hôte diffuse un **instantané compact** de l'état 10 fois par seconde, plus les **événements** (coups, éliminations, pouvoirs) pour que les effets visuels se déclenchent chez l'invité. L'invité interpole entre deux instantanés.
@@ -216,7 +268,13 @@ Le bonus s'active si le **deck** contient l'équipe complète. Liste complète d
 ## 6. Collection, tirages et progression
 
 ### 6.1 Monnaie (fictive, aucun achat réel)
-- **Éclats** : +100 par victoire en duel ou par vague 10 atteinte, +40 par défaite, +10 par vague en survie, et un coffre quotidien de +150.
+- **Éclats** :
+  - campagne : +30 par étoile la première fois, +10 en rejouant ;
+  - Survie : +10 par vague ;
+  - Duel : +100 par victoire, +40 par défaite ;
+  - Coop : +10 par vague, pour chacun ;
+  - coffre quotidien : +150.
+- **Parchemins de talent** : gagnés en campagne (coffres d'étoiles et boss de chapitre).
 - Au premier lancement : **1 000 éclats** offerts et un deck de départ de 5 unités, au choix :
   - **Marvel** : Spider-Man, Œil de faucon, Falcon, Captain Marvel, Black Widow ;
   - **Disney** : Pocahontas, Rebelle, Tiana, Nemo & Dory, Rox & Rouky.
@@ -243,7 +301,7 @@ Le bonus s'active si le **deck** contient l'équipe complète. Liste complète d
 - **5 unités différentes** par deck, en mélangeant librement les packs. Jusqu'à 3 decks enregistrés.
 - L'écran Deck montre les bonus d'équipe actifs ou presque actifs (« Il manque Thor pour Avengers 3 »).
 
-Chaque appareil a sa propre collection. Ta copine et toi aurez chacun la vôtre.
+Chaque **profil** a sa propre collection, sauvegardée en ligne et retrouvée sur n'importe quel appareil.
 
 ---
 
@@ -328,18 +386,21 @@ Les autres personnages Disney (Pocahontas, Rebelle, Ariel, Tiana, Nemo & Dory, R
 
 ## 8. Écrans
 
-1. **Accueil** : logo animé sur la map préférée en fond, boutons **Solo**, **Coop à 2**, **Duel à 2**, puis **Tirages**, **Collection**, **Decks**, **Maps**, et un compteur d'éclats.
-2. **Maps** : galerie des maps et des arènes, avec l'aperçu animé, l'univers, le modificateur et la condition de déblocage.
-3. **Tirages** : les deux packs côte à côte, prix, taux, compteur de garantie.
-4. **Collection** : grille de toutes les unités, celles qu'on n'a pas en silhouette. La fiche d'une unité montre sa boucle d'attaque animée, ses statistiques, sa compétence, son niveau, ses cartes et ses skins.
-5. **Decks** : composition par glisser-déposer, bonus d'équipe.
-6. **Salon multi** : créer, inviter, attendre, choix du deck, « Prêt ».
-7. **Partie** :
+1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Survie**, **Jouer à deux**, **Tirages**, **Collection**, **Decks**, **Maps**. En haut : avatar, niveau de compte, éclats, et la pastille de présence de la partenaire.
+2. **Campagne** : carte des 6 chapitres, niveaux avec leurs étoiles, coffres d'étoiles, prochain personnage à débloquer.
+3. **Jouer à deux / Mon duo** : liaison des profils, présence, « Inviter à jouer », invitations reçues, **parties communes en cours** à reprendre, historique et score du duo.
+4. **Talents** : depuis la fiche d'une unité, les 3 paliers et le choix entre 2 talents à chaque palier.
+5. **Maps** : galerie des maps et des arènes, avec l'aperçu animé, l'univers, le modificateur et la condition de déblocage.
+6. **Tirages** : les deux packs côte à côte, prix, taux, compteur de garantie.
+7. **Collection** : grille de toutes les unités, celles qu'on n'a pas en silhouette. La fiche d'une unité montre sa boucle d'attaque animée, ses statistiques, sa compétence, son niveau, ses cartes et ses skins.
+8. **Decks** : composition par glisser-déposer, bonus d'équipe.
+9. **Salon multi** : créer, inviter, attendre, choix du deck, « Prêt ».
+10. **Partie** :
    - en haut : vies, vague, minuteur, barre du boss ;
    - au milieu : chemin et plateau(x) ;
    - en bas : mana, bouton **Invoquer** avec son coût, les 5 boutons d'amélioration du deck, emotes.
-8. **Fin de partie** : vague atteinte ou victoire/défaite, éclats gagnés, bouton « Rejouer » (qui renvoie au salon en multi).
-9. **Réglages** : pseudo, son, vibrations, réinitialiser la sauvegarde (avec confirmation dans la page).
+11. **Fin de partie** : vague atteinte ou victoire/défaite, éclats gagnés, bouton « Rejouer » (qui renvoie au salon en multi).
+12. **Réglages et profil** : pseudo, avatar, code de récupération (afficher et copier), récupérer un profil, son, vibrations, notifications, état de la synchronisation, réinitialiser (avec confirmation dans la page).
 
 ---
 
@@ -355,9 +416,13 @@ src/
   maps/       données des maps et des arènes de boss (tracé, palette, couches, modificateur)
   audio/      effets et ambiances WebAudio
   ui/         écrans HTML/CSS
-  meta/       collection, tirages, monnaie, decks, sauvegarde
+  meta/       collection, tirages, monnaie, decks
+  campaign/   chapitres, niveaux, étoiles, récompenses, talents, niveau de compte, survie
+  cloud/      Supabase : profils, sync local d'abord, présence, invitations, parties sauvegardées
   pwa/        manifest, icônes, service worker
   access/     vérification du lien secret
+supabase/     schéma SQL, règles RLS, fonctions
+.github/workflows/  build, tests et déploiement GitHub Pages
 tests/        tests du moteur, des tirages et de la synchronisation
 ```
 
@@ -367,14 +432,15 @@ tests/        tests du moteur, des tirages et de la synchronisation
 
 Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commit par étape. Entre parenthèses, les agents engagés (§1 bis) ; ceux d'une même étape travaillent en parallèle.
 
-0. **Contrats** (chef de projet) : types, protocole, interface moteur ↔ rendu, squelette du projet, journal.
+0. **Contrats et mise en ligne** (chef de projet, PWA et déploiement) : types, protocole, interface moteur ↔ rendu, squelette du projet, journal ; dépôt GitHub public créé et poussé, workflow GitHub Pages actif dès le premier jour (même avec une page vide), pour que chaque étape soit testable en ligne.
 1. **Moteur et Solo** (moteur, game design, rendu, direction artistique, QA) : plateau, invocation, fusion, mana, vagues, 6 unités Marvel, ennemis, un boss, la map « Toits de New York ». Jouable en local.
 2. **Toutes les unités, tous les boss et toutes les maps** (game design, direction artistique, maps, moteur, QA) : les 28 unités, les 6 boss avec leurs sbires et leurs arènes, les 12 maps et leurs variantes, les bonus d'équipe. Tests sur chaque compétence, simulateur d'équilibrage.
-3. **Méta-jeu** (méta et économie, interface, direction artistique) : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins, sauvegarde.
-4. **Coop à 2** en P2P (réseau, interface, QA) : salon, lien d'invitation, synchronisation, reconnexion, map symétrique.
-5. **Duel à 2** (réseau, game design, QA).
-6. **PWA et lien secret** (PWA et déploiement, QA) : installation, hors ligne pour le Solo, `noindex`, page neutre sans la clé.
-7. **Finitions** (audio, rendu, QA) : sons et ambiances par map, vibrations, performances (60 i/s visés avec 15 unités et 60 ennemis par plateau sur un téléphone moyen), README de déploiement.
+3. **Profils, sauvegarde et campagne Solo** (backend, campagne et progression, interface, QA) : profils, code de récupération, sauvegarde en ligne local d'abord, reprise des parties Solo, les 6 chapitres, étoiles, talents, niveau de compte, Survie.
+4. **Méta-jeu** (méta et économie, interface, direction artistique) : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins.
+5. **Jouer à deux : Coop** (réseau, backend, interface, QA) : liaison du duo, présence, invitations, salon, lien de secours, synchronisation, reconnexion, map symétrique, sauvegarde et reprise des parties communes.
+6. **Duel à 2** (réseau, game design, QA), historique et score du duo.
+7. **PWA, lien secret et mise en ligne** (PWA et déploiement, QA) : installation, hors ligne pour le Solo, `noindex`, page neutre sans la clé, dépôt public, déploiement GitHub Pages automatique.
+8. **Finitions** (audio, rendu, QA) : sons et ambiances par map, vibrations, performances (60 i/s visés avec 15 unités et 60 ennemis par plateau sur un téléphone moyen), README de déploiement.
 
 ---
 
@@ -390,11 +456,24 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 - [ ] Deux téléphones sur des réseaux différents (4G et Wi-Fi) jouent ensemble en Coop puis en Duel grâce au lien d'invitation, avec un décalage perçu inférieur à 150 ms.
 - [ ] Si l'invité ferme l'onglet et revient dans les 30 s, la partie reprend.
 - [ ] Toute l'interface est en français, lisible sur un écran de 375 px de large.
+- [ ] Deux profils sur deux téléphones progressent chacun de leur côté ; après réinstallation, le code de récupération restaure toute la progression.
+- [ ] Une partie Solo fermée en cours de route reprend à la même vague, y compris sur un autre appareil.
+- [ ] Une partie Coop arrêtée se retrouve dans « Parties en cours » chez les deux joueurs et reprend à la même vague.
+- [ ] L'invitation depuis « Mon duo » arrive chez la partenaire en ligne en moins de 3 s.
+- [ ] La campagne (6 chapitres) est jouable de bout en bout, débloque des personnages et des talents, et un nouveau profil peut finir le chapitre 1 avec son deck de départ.
+- [ ] Le dépôt GitHub est public, ne contient aucun secret (clé d'accès, clés Supabase), et chaque push sur `main` redéploie GitHub Pages.
 
 ---
 
 ## 12. Ce que tu me rends à chaque étape
 
-- Ce qui marche, comment le tester (commande et URL), et les limites connues.
-- Pour l'étape 4 : la procédure exacte pour jouer à deux (créer, partager le lien, rejoindre).
-- À la fin : le lien de déploiement à garder secret et la façon de changer la clé.
+- Ce qui marche, comment le tester (commande **et URL en ligne**), et les limites connues.
+- **Tous les liens, à chaque étape** :
+  - le **dépôt GitHub public** (`https://github.com/<compte>/<depot>`) ;
+  - la page **GitHub Actions** du dernier déploiement ;
+  - l'**URL GitHub Pages** du jeu ;
+  - le **lien secret complet** à ouvrir sur mon téléphone (`https://<compte>.github.io/<depot>/#k=<CLE>`), donné **uniquement dans ta réponse**, jamais commité ;
+  - le **lien à envoyer à ma partenaire** (le même lien secret ; elle crée son profil à la première ouverture).
+- Pour l'étape 5 : la procédure exacte pour jouer à deux (lier nos profils, voir l'autre en ligne, inviter, reprendre une partie commune).
+- La procédure pour **créer le projet Supabase** (offre gratuite), exécuter le schéma de `supabase/` et ajouter les secrets dans GitHub : écris-la pas à pas pour quelqu'un qui ne code pas, et fais toi-même tout ce que tes accès te permettent.
+- À la fin : comment changer la clé d'accès et comment récupérer un profil sur un nouveau téléphone.
