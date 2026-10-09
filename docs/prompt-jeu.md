@@ -68,8 +68,8 @@ Les agents travaillent **en parallèle** quand leurs tâches sont indépendantes
 | **Moteur de jeu** | Simulation pure à pas fixe : plateau, invocation, fusion, mana, ciblage, compétences, vagues, boss, rng | `src/engine/` | Tests Vitest verts sur chaque règle et chaque compétence ; même graine = même partie |
 | **Rendu et animations** | Scène PixiJS, interpolation, animations d'attaque, particules, chiffres de dégâts, tremblements d'écran | `src/render/` | 60 i/s avec 15 unités et 60 ennemis par plateau sur un téléphone moyen |
 | **Réseau multijoueur** | PeerJS, salon, lien d'invitation, hôte qui fait autorité, instantanés, reconnexion | `src/net/` | Coop (niveaux et infini) jouable entre deux téléphones en 4G et en Wi-Fi ; test de déconnexion et reconnexion |
-| **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, skins, monnaie | `src/meta/` | Test de 100 000 tirages conforme aux taux |
-| **Campagne et progression** | Les 6 chapitres et 60 niveaux, objectifs et étoiles, récompenses, talents (2 options × 3 paliers × 28 unités), niveau de compte, Survie et records | `src/campaign/`, `src/data/talents.ts` | Campagne jouable de bout en bout ; un nouveau profil débloque un personnage en moins de 20 min de jeu |
+| **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, **éveils et cristaux d'éveil**, skins, monnaies | `src/meta/` | Test de 100 000 tirages conforme aux taux |
+| **Campagne et progression** | Les 6 chapitres et 60 niveaux, objectifs et étoiles, récompenses, talents (2 options × 3 paliers × 28 unités), niveau de compte, Solo Infini et records | `src/campaign/`, `src/data/talents.ts` | Campagne jouable de bout en bout ; un nouveau profil débloque un personnage en moins de 20 min de jeu |
 | **Backend, profils et sauvegarde** | Supabase : profils, code de récupération, liaison du duo, présence, invitations, sauvegarde local d'abord avec synchronisation, parties en cours, règles RLS | `src/cloud/`, `supabase/` | Deux profils sur deux téléphones gardent chacun leur progression ; une partie Coop arrêtée reprend plus tard ; mode avion puis resynchronisation sans perte |
 | **Interface et expérience** | Tous les écrans HTML/CSS, navigation par onglets façon Rush Royale, animation d'ouverture des packs, accessibilité, lisibilité à 375 px | `src/ui/` | Parcours complet sans blocage, de l'accueil à la fin de partie |
 | **Tutoriel et prise en main** | Tutoriel guidé du §5.0 : scénario, main animée, assombrissement, bulles du guide, combat scénarisé, astuces contextuelles, sauvegarde par étape | `src/tutorial/` | Un joueur qui n'a jamais vu Rush Royale finit le tutoriel seul en moins de 4 minutes ; reprise à la bonne étape après fermeture |
@@ -280,10 +280,11 @@ Le Solo est le **mode principal** : c'est là que chaque joueur avance à son ry
 - **Niveau de compte** (XP gagnée dans tous les modes) : il débloque les maps, les emplacements de deck (jusqu'à 3), le coffre quotidien et les cadres de profil.
 - **Éclats** pour les tirages, et cartes d'unités en récompense.
 
-**Survie infinie**
-- Elle se débloque après le chapitre 1 : tenir le plus de vagues possible.
+**Solo Infini**
+- Il se débloque après le chapitre 1 de la campagne. Seul, on tient le plus de vagues possible : un petit boss toutes les 5 vagues, un gros toutes les 10, Thanos à la 50.
+- **Récompenses par palier atteint**, comme en Coop Infini (§5.2), mais en version solo : bronze à 10, argent à 20, or à 30, héroïque à 40, légendaire à 50 (Thanos vaincu), puis +300 éclats et 1 parchemin tous les 10. C'est la **principale source de cristaux d'éveil** (§6.6).
 - **Record personnel** sauvegardé, et un **classement à deux** (ton record contre celui de ta partenaire).
-- Des récompenses aux paliers 10, 20 et 30 vagues.
+- Une partie se met en pause et se reprend plus tard (sauvegarde à chaque vague).
 
 **Sauvegarde des parties en cours**
 - Une partie Solo est **sauvegardée automatiquement à chaque vague**.
@@ -357,7 +358,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 ### 6.1 Monnaie (fictive, aucun achat réel)
 - **Éclats** :
   - campagne : +30 par étoile la première fois, +10 en rejouant ;
-  - Survie : +10 par vague ;
+  - Solo Infini : +10 par vague et les coffres de palier ;
   - Coop Niveaux : +30 par étoile la première fois, pour chacun ;
   - Coop Infini : +10 par vague et les coffres de palier (§5.2), pour chacun ;
   - coffre quotidien : +150.
@@ -404,6 +405,53 @@ Chaque **profil** a sa propre collection, sauvegardée en ligne et retrouvée su
   - Le jeu les déchiffre sur l'appareil avec `src/access/fiches.ts` (`ficheUrl(id)`). Sans la clé, la fonction renvoie `null`.
   - Pour en ajouter : `node scripts/encrypt-assets.mjs <clé> <dossier des originaux>`.
 
+
+### 6.6 Éveils des personnages
+
+L'**Éveil** est la progression la plus longue du jeu, au-delà du niveau 10. Chaque éveil rend un personnage plus fort pour toujours, sur ton profil, et débloque des **passifs**. **L'éveil maximal doit demander des mois de jeu** : c'est l'objectif à long terme.
+
+**Conditions**
+- L'éveil s'ouvre quand le personnage atteint le **niveau de collection 10**.
+- Chaque éveil demande **des copies du même personnage** (doublons obtenus aux tirages, en plus de ceux qui servent aux niveaux) **et des cristaux d'éveil** (✦), une monnaie dédiée.
+
+| Éveil | Copies du personnage | Cristaux ✦ | Gain (cumulé) | Débloque |
+|---|---|---|---|---|
+| ★1 | 5 | 100 | Attaque +6 %, vitesse d'attaque +4 % | — |
+| ★2 | 10 | 200 | +12 % / +8 % | **Passif 1** |
+| ★3 | 15 | 400 | +18 % / +12 % | — |
+| ★4 | 20 | 700 | +24 % / +16 % | **Passif 2** |
+| ★5 | 30 | 1 000 | +30 % / +20 % | Aura sur le jeton |
+| ★6 | 40 | 1 500 | +36 % / +24 % | **Passif 3** |
+| ★7 | 50 | 2 000 | +42 % / +28 % | — |
+| ★8 | 70 | 3 000 | +48 % / +32 % | **Passif 4** |
+| ★9 | 90 | 4 000 | +54 % / +36 % | — |
+| ★10 (max) | 120 | 6 000 | +60 % / +40 % | **Passif ultime** et apparence « Éveillé » (cadre doré animé, effets d'attaque améliorés) |
+| **Total** | **450 copies** | **18 900 ✦** | | |
+
+- Les copies demandées sont les mêmes pour toutes les raretés. Un Légendaire, tiré à 4 %, est donc **bien plus long** à éveiller qu'un Rare : c'est voulu.
+- **Passifs** : 5 par personnage (★2, ★4, ★6, ★8, ★10), dans l'esprit de sa compétence. Exemples :
+  - Hulk : « Chaque Smash rend 5 de mana », « La Rage ne retombe plus entre deux vagues », puis en ultime « Hulk Smash frappe tout le chemin » ;
+  - Spider-Man : « Les toiles ralentissent aussi les boss de 10 % », puis en ultime « Toile géante : immobilise toute la vague 2 s une fois par vague ».
+
+  L'agent Game design écrit les 140 passifs (28 × 5), chiffrés, dans `src/data/awakenings.ts`.
+
+**Cristaux d'éveil (✦), gagnés lentement**
+- Solo Infini et Coop Infini : 20 ✦ au palier 10, 40 au 20, 80 au 30, 120 au 40, 200 au 50, puis +30 tous les 10.
+- Premier gros boss vaincu de la journée : 15 ✦. Thanos vaincu : 100 ✦.
+- Campagne : 3 étoiles sur un niveau de boss, la première fois : 25 ✦.
+- Coffre quotidien : 5 ✦.
+- Doublons d'un personnage déjà à ★10 : convertis en 5 ✦ chacun.
+- **Rythme visé** (l'agent Game design le vérifie et l'écrit dans `docs/equilibrage.md`) :
+  - premier ★1 dans la première semaine de jeu régulier ;
+  - ★5 sur un personnage Rare en 2 à 3 mois ;
+  - ★10 sur un Légendaire en **plus de 8 mois**.
+- **Aucun achat**, aucun raccourci.
+
+**Affichage**
+- Étoiles d'éveil sur la carte et sur le jeton de plateau. Aura à partir de ★5, cadre doré animé à ★10.
+- Écran **Éveil** depuis la fiche du personnage : les 10 étoiles, les copies et cristaux possédés et demandés, l'aperçu des gains et du prochain passif, et une animation d'éveil soignée (le personnage s'illumine, les étoiles se remplissent, le passif se révèle).
+
+**Moteur** : `PlayerSetup.awakening` (0 à 10 par unité). Les gains de l'éveil s'ajoutent au niveau et aux talents, et les passifs sont lus dans `src/data/awakenings.ts`.
 ---
 
 ## 7. Direction artistique
@@ -504,7 +552,7 @@ Chaque écran suit les captures et les règles de `design/references/ecrans/READ
 - **Navigation par transitions** (glissement ou fondu de 200 à 250 ms) entre les vues, jamais par rechargement. Les fenêtres (fiche d'unité, confirmation, récompenses) s'ouvrent en **panneaux qui montent du bas** ou en modales centrées, avec un fond assombri.
 - Ce qui précède est garanti par une feuille de style de base commune (`src/ui/base.css`) et un composant de vue (`src/ui/view.ts`) que tous les écrans utilisent.
 
-1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Survie**, **Jouer à deux**, **Tirages**, **Collection**, **Decks**, **Maps**. En haut : avatar, niveau de compte, éclats, et la pastille de présence de la partenaire.
+1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Solo Infini**, **Jouer à deux**, **Tirages**, **Collection**, **Decks**, **Maps**. En haut : avatar, niveau de compte, éclats, et la pastille de présence de la partenaire.
 2. **Campagne** : carte des 6 chapitres, niveaux avec leurs étoiles, coffres d'étoiles, prochain personnage à débloquer.
 3. **Jouer à deux / Mon duo** : liaison des profils, présence, « Inviter à jouer », invitations reçues, **parties communes en cours** à reprendre, historique et score du duo.
 4. **Talents** : depuis la fiche d'une unité, les 3 paliers et le choix entre 2 talents à chaque palier.
@@ -536,7 +584,7 @@ src/
   ui/         écrans HTML/CSS
   tutorial/   scénario du tutoriel, surcouche de guidage, astuces contextuelles
   meta/       collection, tirages, monnaie, decks
-  campaign/   chapitres, niveaux, étoiles, récompenses, talents, niveau de compte, survie
+  campaign/   chapitres, niveaux, étoiles, récompenses, talents, éveils, niveau de compte, Solo Infini
   cloud/      Supabase : profils, sync local d'abord, présence, invitations, parties sauvegardées
   pwa/        manifest, icônes, service worker
   access/     vérification du lien secret
@@ -554,7 +602,7 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 0. **Contrats et mise en ligne** (chef de projet, PWA et déploiement) : types, protocole, interface moteur ↔ rendu, squelette du projet, journal ; dépôt GitHub public créé et poussé, workflow GitHub Pages actif dès le premier jour (même avec une page vide), pour que chaque étape soit testable en ligne.
 1. **Moteur et Solo** (moteur, game design, rendu, direction artistique, QA) : plateau, invocation, fusion, mana, vagues, 6 unités Marvel, ennemis, un boss, la map « Toits de New York ». Jouable en local.
 2. **Toutes les unités, tous les boss et toutes les maps** (game design, direction artistique, maps, moteur, QA) : les 28 unités, les 6 boss avec leurs sbires et leurs arènes, les 12 maps et leurs variantes, les bonus d'équipe. Tests sur chaque compétence, simulateur d'équilibrage.
-3. **Profils, sauvegarde, tutoriel et campagne Solo** (backend, campagne et progression, tutoriel, interface, QA) : profils, code de récupération, sauvegarde en ligne local d'abord, reprise des parties Solo, **tutoriel guidé**, les 6 chapitres, étoiles, talents, niveau de compte, Survie.
+3. **Profils, sauvegarde, tutoriel et campagne Solo** (backend, campagne et progression, tutoriel, interface, QA) : profils, code de récupération, sauvegarde en ligne local d'abord, reprise des parties Solo, **tutoriel guidé**, les 6 chapitres, étoiles, talents, niveau de compte, Solo Infini.
 4. **Méta-jeu** (méta et économie, interface, direction artistique) : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins.
 5. **Jouer à deux : Coop** (réseau, backend, interface, QA) : liaison du duo, présence, invitations, salon, lien de secours, synchronisation, reconnexion, map symétrique, sauvegarde et reprise des parties communes.
 6. **Coop Niveaux et Coop Infini** (réseau, campagne, game design, QA) : campagne à deux, paliers et coffres de l'infini, record et historique du duo.
@@ -582,6 +630,8 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 - [ ] Une partie Solo fermée en cours de route reprend à la même vague, y compris sur un autre appareil.
 - [ ] Une partie Coop arrêtée se retrouve dans « Parties en cours » chez les deux joueurs et reprend à la même vague.
 - [ ] L'invitation depuis « Mon duo » arrive chez la partenaire en ligne en moins de 3 s.
+- [ ] L'Éveil fonctionne de ★1 à ★10 (copies + cristaux), avec ses gains et ses 5 passifs, et le simulateur d'économie confirme qu'un ★10 Légendaire demande plus de 8 mois de jeu régulier.
+- [ ] Le Solo Infini donne ses coffres de palier et ses cristaux d'éveil, et se reprend après fermeture.
 - [ ] La campagne (6 chapitres) est jouable de bout en bout, débloque des personnages et des talents, et un nouveau profil peut finir le chapitre 1 avec son deck de départ.
 - [ ] Le dépôt GitHub est public, ne contient aucun secret (clé d'accès, clés Supabase), et chaque push sur `main` redéploie GitHub Pages.
 

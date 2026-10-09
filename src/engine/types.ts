@@ -25,6 +25,8 @@ export interface PlayerSetup {
   deck: UnitId[];                          // 5 unités différentes
   levels: Partial<Record<UnitId, number>>; // niveau de collection 1..10
   talents: Partial<Record<UnitId, ('a' | 'b')[]>>; // choix par palier
+  /** Éveil 0..10 par unité (§6.6) : attaque +6 % et vitesse d'attaque +4 % par étoile, passifs à ★2/4/6/8/10. */
+  awakening?: Partial<Record<UnitId, number>>;
 }
 
 export interface GameConfig {

@@ -65,3 +65,11 @@ export interface PackDef {
   rates: Record<Rarity, number>; // somme = 1
   pityLegendary: number;         // Légendaire garanti au plus tard à ce tirage
 }
+
+export interface AwakeningPassiveDef {
+  unit: UnitId;
+  star: 2 | 4 | 6 | 8 | 10;   // étoile d'éveil qui débloque ce passif
+  name: string;
+  description: string;
+  params: Record<string, number>;
+}
