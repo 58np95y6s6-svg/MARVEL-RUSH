@@ -172,7 +172,7 @@ export function mountMapPreview(root: HTMLElement): () => void {
       card.appendChild(ph.node);
       card.appendChild(el('div', 'font-size:12px;line-height:1.4;color:#5e5976',
         `<b>Chemin</b> ${map.pathMaterial}<br><b>Ambiance</b> ${[...new Set(map.ambience)].join(' · ')}<br><b>Son</b> ${map.sound}` +
-        (map.modifiers ? `<br><b>Modificateur</b> ${Object.entries(map.modifiers).map(([k, x]) => `${k} ${x > 0 ? '+' : ''}${Math.round(x * 100)} %`).join(', ')}` : '') +
+        (map.modifiers ? `<br><b>Modificateur</b> ${Object.entries(map.modifiers).map(([k, x]) => `${k} ${x > 0 ? '+' : ''}${Math.abs(x) >= 1 ? x : `${Math.round(x * 100)} %`}`).join(', ')}` : '') +
         (map.bossFx ? `<br><b>Boss</b> ${map.bossFx.description}` : '') +
         (arena ? `<br><b>Transition</b> vers ${arena.name} toutes les 4 s` : '')));
       grid.appendChild(card);
