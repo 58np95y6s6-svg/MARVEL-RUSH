@@ -1,7 +1,7 @@
-// Progression du joueur sur chaque héros (collection). POINT D'ACCROCHE : il n'y a pas encore de
-// profil ni de collection (méta-jeu à venir). getHeroProgress renvoie pour l'instant une valeur par
-// défaut ; le futur système de profil (agent Méta et économie) n'aura qu'à remplacer son implémentation
-// en gardant cette interface, et l'Encyclopédie affichera la vraie progression.
+// Progression du joueur sur chaque héros (collection), lue sur le profil actif (src/meta/profile.ts).
+// Sans profil (pages de développement), tous les héros sont affichés comme possédés au niveau 1.
+
+import { getProfile } from './profile';
 
 export interface HeroProgress {
   /** Le joueur possède ce héros. */
@@ -24,9 +24,13 @@ export const AWAKENING_COPY_COSTS: readonly number[] = [2, 3, 5, 6, 8, 10, 13, 1
 
 const DEFAULT: HeroProgress = { owned: true, level: 1, awakening: 0, copies: 0 };
 
-/** Progression d'un héros. À brancher sur le profil quand il existera. */
-export function getHeroProgress(_id: string): HeroProgress {
-  return { ...DEFAULT };
+/** Progression d'un héros sur le profil actif (owned = false s'il n'est pas dans la collection). */
+export function getHeroProgress(id: string): HeroProgress {
+  const p = getProfile();
+  if (!p) return { ...DEFAULT };
+  const h = (p.heroes as Record<string, { level: number; awakening: number; cards: number } | undefined>)[id];
+  if (!h) return { owned: false, level: 1, awakening: 0, copies: 0 };
+  return { owned: true, level: h.level, awakening: h.awakening, copies: h.cards };
 }
 
 /**

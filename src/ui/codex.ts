@@ -13,6 +13,8 @@ import { passivesFor } from '../data/awakenings';
 import { HERO_CATEGORIES, HERO_CATEGORY_LIST, categoriesFor, rangeLabel, rangeValue } from '../data/categories';
 import { getHeroProgress, nextStep, MAX_AWAKENING, MAX_HERO_LEVEL, type HeroProgress } from '../meta/collection';
 import { ficheUrl } from '../access/fiches';
+import { heroCardHtml } from './heroCard';
+import { getProfile } from '../meta/profile';
 import type { BossDef, Rarity, Targeting, UnitDef } from '../data/types';
 
 type Group = 'pack' | 'type' | 'rarete' | 'eveil';
@@ -186,14 +188,11 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
   }
 
   function card(u: UnitDef): string {
+    // Carte commune (src/ui/heroCard.ts), avec le nom dessous dans l'Encyclopédie.
+    const prof = getProfile();
     const p = prog(u.id);
-    return `<button class="cx-card r-${u.rarity}${p.owned ? '' : ' locked'}" data-id="${u.id}" style="--plate:${tokenColor(u.id)};--rar:${RARITY_COLORS[u.rarity]}" aria-label="${esc(u.name)}, ${RARITY_LABEL[u.rarity]}">
-      <span class="cx-pack">${esc(packLabel(u.pack))}</span>
-      ${p.awakening > 0 ? `<span class="cx-star">★${p.awakening}</span>` : ''}
-      <span class="cx-art"><img src="${heroImg(u)}" alt="" loading="lazy" decoding="async"><span class="cx-lvl">Niv. ${p.level}</span></span>
-      <span class="cx-name">${esc(u.name)}</span>
-      <span class="cx-rar">${RARITY_LABEL[u.rarity]}</span>
-    </button>`;
+    const state = prof ? prof.heroes[u.id] ?? null : { level: p.level, cards: p.copies, awakening: p.awakening, talents: [null, null, null] };
+    return heroCardHtml({ id: u.id, state, profile: prof, inDeck: !!prof?.decks[prof.activeDeck]?.includes(u.id), showName: true, attrs: `data-id="${u.id}"` });
   }
 
   function renderList(): void {

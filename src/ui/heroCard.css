@@ -1,0 +1,91 @@
+/* Carte de héros commune (voir heroCard.ts). La largeur vient de la grille parente. */
+.hc {
+  --rc: var(--rare); --rc2: #1f5fc2; --rl: #8cc0ff;
+  position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0;
+  width: 100%; min-width: 0; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; color: #fff;
+  font-family: var(--display); -webkit-tap-highlight-color: transparent;
+  transition: transform .12s;
+}
+.hc:active { transform: scale(.94); }
+.hc.r-epique { --rc: var(--epique); --rc2: #6a2fb8; --rl: #d1a6ff; }
+.hc.r-legendaire { --rc: var(--legendaire); --rc2: #c46a12; --rl: #ffe08a; }
+
+/* Fenêtre carrée : fond sombre, cadre épais de la couleur de rareté, contour encre. */
+.hc-win {
+  position: relative; display: block; aspect-ratio: 1; border-radius: 16%;
+  background:
+    radial-gradient(70% 60% at 50% 42%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%),
+    radial-gradient(120% 100% at 50% 30%, #2a2140 0%, #151022 75%);
+  border: 4px solid var(--rc);
+  box-shadow: 0 0 0 2.5px var(--ink), inset 0 0 0 2px var(--ink), inset 0 -6px 12px rgba(0,0,0,.5), 0 4px 0 2px var(--ink);
+  overflow: hidden;
+}
+.hc-win::after { /* reflet du cadre */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.18);
+}
+.hc.r-legendaire .hc-win { box-shadow: 0 0 0 2.5px var(--ink), inset 0 0 0 2px var(--ink), inset 0 -6px 12px rgba(0,0,0,.5), 0 4px 0 2px var(--ink), 0 0 14px 2px rgba(242,169,59,.55); }
+.hc-win img {
+  position: absolute; left: 50%; top: 52%; width: 112%; height: 112%; transform: translate(-50%, -50%);
+  object-fit: contain; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(0,0,0,.45));
+}
+
+/* Ruban « Niv. 7 » */
+.hc-lv {
+  position: relative; z-index: 1; align-self: center; width: 88%; margin-top: -9%; padding: 1px 0 2px;
+  border-radius: 7px; border: 2.5px solid var(--ink); text-align: center; line-height: 1.15;
+  font-size: clamp(12px, 3.6vw, 16px); color: #fff; letter-spacing: .2px;
+  background: linear-gradient(var(--rl) -40%, var(--rc) 45%, var(--rc2) 100%);
+  paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 2px 0 var(--ink);
+}
+
+/* Barre de cartes */
+.hc-bar {
+  position: relative; display: flex; align-items: center; justify-content: center; height: clamp(18px, 5vw, 22px); margin: 4px 2px 0;
+  border-radius: 8px; border: 2.5px solid var(--ink); background: #0f0b1c; overflow: visible;
+  font-size: clamp(11px, 3.2vw, 14px); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink);
+}
+.hc-bar > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: linear-gradient(#5aa0ff, #2f6fd6); }
+.hc-bar > span { position: relative; padding-left: 10px; }
+.hc-bar .hc-arrow, .hc-bar .hc-bstar {
+  position: absolute; left: -7px; top: 50%; width: 20px; height: 20px; transform: translateY(-55%); color: #4aa3ff; z-index: 1;
+}
+.hc-bar .hc-bstar { font-style: normal; font-size: 18px; line-height: 20px; text-align: center; color: #ffd84a; -webkit-text-stroke: 3px var(--ink); }
+.hc-bar.eveil > i { background: linear-gradient(#d39bff, #8a4fe0); }
+.hc-bar.ready > i { background: linear-gradient(#9cf06a, #3aa83a); }
+.hc-bar.ready .hc-arrow { color: #7be35a; animation: hc-bounce .9s ease-in-out infinite; }
+.hc-bar.max > i { background: linear-gradient(#ffe46a, #f29a1c); }
+.hc-bar.off { background: rgba(15,11,28,.6); font-family: var(--body); font-weight: 900; font-size: 10px; -webkit-text-stroke: 0; color: #a9a1c8; }
+.hc-bar.off > span { padding: 0; }
+@keyframes hc-bounce { 50% { transform: translateY(-85%); } }
+
+/* Badges */
+.hc-star {
+  position: absolute; top: -5px; left: -4px; z-index: 2; padding: 0 5px; border-radius: 9px; border: 2.5px solid var(--ink);
+  background: linear-gradient(#ffe46a, #f29a1c); font-size: 12px; line-height: 16px; color: #fff;
+  paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink);
+}
+.hc-check {
+  position: absolute; z-index: 2; left: 5%; bottom: 14%;
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 900 13px var(--body);
+  color: #fff; background: #3aa83a; border: 2.5px solid var(--ink);
+}
+.hc-new {
+  position: absolute; z-index: 2; top: -7px; right: -6px; padding: 1px 6px 2px; border-radius: 9px; border: 2.5px solid var(--ink);
+  background: linear-gradient(#ff7a6a, #e8413b); font-size: 11px; line-height: 14px; transform: rotate(8deg);
+  paint-order: stroke fill; -webkit-text-stroke: 2.5px var(--ink);
+}
+.hc-name {
+  display: block; margin-top: 3px; text-align: center; font-size: 13px; line-height: 1.05; color: #fff;
+  paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink); overflow-wrap: anywhere;
+}
+
+/* Non possédé : silhouette */
+.hc.unowned .hc-win { border-color: #4a4466; background: radial-gradient(120% 100% at 50% 30%, #231c36 0%, #120e1d 75%); }
+.hc.unowned .hc-win img { filter: brightness(0) opacity(.6) drop-shadow(0 0 1.5px rgba(160,150,220,.6)); }
+.hc.unowned .hc-lv { background: linear-gradient(#6d6690, #4a4466); }
+.hc.unowned.r-legendaire .hc-win { box-shadow: 0 0 0 2.5px var(--ink), inset 0 0 0 2px var(--ink), 0 4px 0 2px var(--ink); }
+
+/* Grille standard : 4 cartes par ligne à 390 px. */
+.hc-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 10px; }

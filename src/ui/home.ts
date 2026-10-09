@@ -1,35 +1,88 @@
-// Écran d'accueil minimal (étape 1) : logo, « Jouer » (Solo Infini, deck Marvel de départ), tutoriel à venir.
+// Accueil (§8.1) : logo, deck actif, gros bouton Campagne, Solo Infini (débloqué après le chapitre 1),
+// coffre quotidien, raccourcis Tirages / Collection / Decks / Encyclopédie. Monté dans la coquille.
 import './home.css';
-import { createView } from './view';
-import { tokenSvg } from '../art';
-import { STARTER_DECKS, UNITS } from '../data/units';
+import { STARTER_DECKS } from '../data/units';
+import { claimDailyChest, dailyChestReady, infiniteUnlocked } from '../meta/economy';
+import { activeDeck, getProfile, onProfileChange, updateProfile, type Profile } from '../meta/profile';
+import { freePullsTotal } from '../meta/pulls';
+import { icon, tokenUrl, toast } from './kit';
 
-export function mountHome(root: HTMLElement, o: { onPlay: () => void; onCodex: () => void }): () => void {
-  const header = document.createElement('header');
-  header.className = 'mr-home-head';
-  header.innerHTML = `<h1 class="mr-logo"><span>MARVEL</span> <em>RUSH</em></h1>`;
-  const content = document.createElement('div');
-  content.className = 'mr-home-main';
-  const urls: string[] = [];
-  const deck = STARTER_DECKS.marvel;
-  const tokens = deck.map((id, i) => {
-    const u = URL.createObjectURL(new Blob([tokenSvg(id, 1, 'classique', { rarity: UNITS[id].rarity })], { type: 'image/svg+xml' }));
-    urls.push(u);
-    return `<img src="${u}" alt="${UNITS[id].name}" style="--i:${i}">`;
-  }).join('');
-  content.innerHTML = `
-    <div class="mr-home-deck" aria-label="Ton deck">${tokens}</div>
-    <p class="mr-home-mode">Solo Infini · Toits de New York</p>
-    <button class="mr-btn yellow mr-play" data-a="play">Jouer</button>
-    <button class="mr-btn mr-codex" data-a="codex">📖 Encyclopédie</button>
-    <button class="mr-btn mr-tuto" disabled>Tutoriel <small>bientôt</small></button>`;
-  const footer = document.createElement('footer');
-  footer.className = 'mr-home-foot';
-  footer.textContent = 'Tiens le plus de vagues possible !';
-  const view = createView({ header, content, footer });
-  view.classList.add('mr-home');
-  root.appendChild(view);
-  content.querySelector('[data-a="play"]')!.addEventListener('click', o.onPlay);
-  content.querySelector('[data-a="codex"]')!.addEventListener('click', o.onCodex);
-  return () => { view.remove(); for (const u of urls) URL.revokeObjectURL(u); };
+export interface HomeOptions {
+  go: (hash: string) => void;
+  onInfinite: () => void;
+}
+
+export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
+  const wrap = document.createElement('div');
+  wrap.className = 'hm';
+  wrap.innerHTML = `
+    <div class="hm-sky"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
+    <h1 class="mr-logo hm-logo"><span>MARVEL</span> <em>RUSH</em></h1>
+    <div class="hm-deck" data-tuto="home-deck" aria-label="Ton deck"></div>
+    <button class="mr-btn yellow hm-campaign" data-a="campagne" data-tuto="home-campagne">
+      <span class="t">Campagne</span><small>Chapitres, étoiles et boss</small>
+    </button>
+    <button class="mr-btn hm-infinite" data-a="infini" data-tuto="home-infini">
+      <span class="t">Solo Infini</span><small class="sub"></small>
+    </button>
+    <div class="hm-grid">
+      <button class="hm-tile chest" data-a="coffre" data-tuto="home-coffre">${icon('coffre')}<b>Coffre</b><small class="chest-sub"></small></button>
+      <button class="hm-tile" data-a="tirages" data-tuto="home-tirages">${icon('tirages')}<b>Tirages</b><span class="hm-badge" hidden></span></button>
+      <button class="hm-tile" data-a="collection" data-tuto="home-collection">${icon('collection')}<b>Collection</b></button>
+      <button class="hm-tile" data-a="decks" data-tuto="home-decks">${icon('cartes')}<b>Decks</b></button>
+    </div>`;
+  host.appendChild(wrap);
+
+  const deckEl = wrap.querySelector<HTMLElement>('.hm-deck')!;
+  const infBtn = wrap.querySelector<HTMLButtonElement>('[data-a="infini"]')!;
+  const infSub = infBtn.querySelector<HTMLElement>('.sub')!;
+  const chest = wrap.querySelector<HTMLButtonElement>('[data-a="coffre"]')!;
+  const chestSub = chest.querySelector<HTMLElement>('.chest-sub')!;
+  const badge = wrap.querySelector<HTMLElement>('.hm-badge')!;
+  let deckKey = '';
+
+  function render(p: Profile | null): void {
+    if (!p) return;
+    const deck = activeDeck(p, STARTER_DECKS.marvel);
+    const key = deck.join(',');
+    if (key !== deckKey) {
+      deckKey = key;
+      deckEl.innerHTML = deck.map((id, i) => `<img src="${tokenUrl(id)}" alt="" style="--i:${i}">`).join('');
+    }
+    const unlocked = infiniteUnlocked(p);
+    infBtn.classList.toggle('locked', !unlocked);
+    infSub.innerHTML = unlocked
+      ? (p.infiniteBest > 0 ? `${icon('record')} Record : ${p.infiniteBest} vagues` : 'Tiens le plus de vagues possible')
+      : `${icon('lock')} Termine le chapitre 1 de la campagne`;
+    const ready = dailyChestReady(p);
+    chest.classList.toggle('ready', ready);
+    chestSub.textContent = ready ? 'Prêt !' : 'Demain';
+    const free = freePullsTotal(p);
+    badge.hidden = free === 0;
+    badge.textContent = String(free);
+  }
+  render(getProfile());
+  const off = onProfileChange(render);
+
+  wrap.addEventListener('click', async (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset['a'];
+    const p = getProfile();
+    if (!a || !p) return;
+    if (a === 'campagne') o.go('#campagne');
+    else if (a === 'tirages') o.go('#tirages');
+    else if (a === 'collection') o.go('#collection');
+    else if (a === 'decks') o.go('#decks');
+    else if (a === 'infini') {
+      if (infiniteUnlocked(p)) o.onInfinite();
+      else { infBtn.classList.remove('nope'); void infBtn.offsetWidth; infBtn.classList.add('nope'); toast('Termine le chapitre 1 de la campagne pour débloquer le Solo Infini.', 'warn'); }
+    } else if (a === 'coffre') {
+      if (!dailyChestReady(p)) { toast('Le coffre quotidien revient demain.', 'warn'); return; }
+      await updateProfile((q) => { claimDailyChest(q); });
+      chest.classList.add('open');
+      window.setTimeout(() => chest.classList.remove('open'), 900);
+      toast('Coffre quotidien : +150 éclats et +5 ✦ !');
+    }
+  });
+
+  return () => { off(); wrap.remove(); };
 }

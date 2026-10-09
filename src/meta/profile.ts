@@ -38,7 +38,8 @@ export interface Profile {
   xp: number;                         // XP de compte
   // Collection
   heroes: Partial<Record<UnitId, HeroState>>;
-  pity: Partial<Record<Pack, number>>; // tirages depuis le dernier Légendaire, par pack
+  /** Tirages depuis le dernier Légendaire, par pack (clé = Pack ou 'complet', voir src/meta/pulls.ts). */
+  pity: Partial<Record<string, number>>;
   decks: UnitId[][];                  // 1 à 3 decks de 5 unités différentes
   activeDeck: number;
   // Progression
@@ -52,6 +53,12 @@ export interface Profile {
   starter?: 'marvel' | 'disney';
   /** Partie Solo en cours (sauvegarde à chaque vague, §5.1), sérialisée par le moteur. */
   savedGame?: { kind: 'campagne' | 'infini'; levelId?: string; state: unknown; savedAt: number };
+  /** Tirages gratuits en attente (récompenses, tirage offert à la création), ouverts dans l'écran Tirages. */
+  pendingPulls?: { pack: Pack | 'complet' | 'choix'; count: number }[];
+  /** Étape du tutoriel guidé en cours (§5.0), sauvegardée étape par étape. Absent = pas commencé. */
+  tutorialStep?: number;
+  /** Total de tirages effectués (statistique). */
+  pullsDone?: number;
 }
 
 /** Récompenses à créditer (fin de partie, coffres, paliers). Tous les champs sont optionnels. */
@@ -63,7 +70,7 @@ export interface Reward {
   cards?: { unit: UnitId; count: number }[];
   /** Personnage offert : ajouté à la collection, ou converti en cartes s'il est déjà possédé. */
   heroes?: UnitId[];
-  freePulls?: { pack: Pack | 'choix'; count: number }[];
+  freePulls?: { pack: Pack | 'complet' | 'choix'; count: number }[];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -108,10 +115,9 @@ export async function switchProfile(id: string): Promise<Profile | null> {
   return loadActiveProfile();
 }
 
-export async function createProfile(name: string, avatar: UnitId): Promise<Profile> {
-  const ids = (await get<string[]>(KEY_LIST)) ?? [];
-  if (ids.length >= MAX_PROFILES) throw new Error('Deux profils au maximum.');
-  const p: Profile = {
+/** Profil neuf, non sauvegardé (1 000 éclats offerts, §6.1). Utile aussi aux tests. */
+export function blankProfile(name: string, avatar: UnitId): Profile {
+  return {
     version: PROFILE_VERSION,
     id: Math.random().toString(36).slice(2, 10),
     name, avatar, createdAt: Date.now(),
@@ -120,6 +126,12 @@ export async function createProfile(name: string, avatar: UnitId): Promise<Profi
     campaign: {}, campaignChests: {}, infiniteBest: 0, infiniteTiers: {},
     tutorialDone: false,
   };
+}
+
+export async function createProfile(name: string, avatar: UnitId): Promise<Profile> {
+  const ids = (await get<string[]>(KEY_LIST)) ?? [];
+  if (ids.length >= MAX_PROFILES) throw new Error('Deux profils au maximum.');
+  const p = blankProfile(name, avatar);
   await set(keyOf(p.id), p);
   await set(KEY_LIST, [...ids, p.id]);
   await set(KEY_ACTIVE, p.id);
@@ -165,8 +177,8 @@ export function applyReward(p: Profile, r: Reward): void {
   for (const u of r.heroes ?? []) addHero(p, u, 20);
   // freePulls : traités par l'écran des tirages (agent Méta) ; on les met de côté.
   if (r.freePulls?.length) {
-    const q = ((p as Profile & { pendingPulls?: Reward['freePulls'] }).pendingPulls ??= []);
-    q.push(...r.freePulls);
+    const q = (p.pendingPulls ??= []);
+    q.push(...r.freePulls.map((f) => ({ ...f })));
   }
 }
 

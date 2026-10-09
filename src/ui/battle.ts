@@ -12,6 +12,10 @@ import {
 } from '../engine';
 import { getMap } from '../maps';
 import { BattleScene, type Fit } from '../render/scene';
+import { createBattleTracker, type BattleOutcome } from '../campaign/tracker';
+
+/** Résultat de fin de combat (campagne) : victoire, vague, vies restantes, deck et statistiques. */
+export type BattleResult = BattleOutcome;
 
 const DT = 1 / TICKS_PER_SECOND;
 
@@ -23,6 +27,13 @@ export interface BattleOptions {
   speed?: number;
   onHome: () => void;
   onReplay: () => void;
+  // ---- Ajouts Campagne (optionnels, sans effet si absents) ----
+  /** Configuration moteur fusionnée dans la configuration de base (targetWaves, script, players…). */
+  config?: Partial<GameConfig>;
+  /** Titre de la partie (ex. « Niveau 1-3 »), affiché dans la fenêtre de pause. */
+  title?: string;
+  /** Fin de partie, avec le résultat et les statistiques. Renvoie true pour remplacer la fenêtre de fin par défaut. */
+  onEnd?: (result: BattleResult) => boolean | void;
 }
 
 const MANA_SVG = `<svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 C26 14 36 22 36 31 A16 16 0 0 1 4 31 C4 22 14 14 20 2Z" fill="#5fc4ff" stroke="#1d1733" stroke-width="4" stroke-linejoin="round"/><path d="M13 30 a8 8 0 0 0 6 9" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/></svg>`;
@@ -69,15 +80,18 @@ export function isGameRunning(): boolean { return gameRunning; }
 
 export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const me: PlayerId = 'p1';
-  const map = getMap(o.mapId ?? 'toits-new-york');
+  const map = getMap(o.config?.mapId ?? o.mapId ?? 'toits-new-york');
   const config: GameConfig = {
     mode: 'solo',
     seed: o.seed ?? (Math.random() * 2 ** 31) >>> 0,
     mapId: map.id,
     players: [{ id: me, deck: o.deck.slice(), levels: {}, talents: {} }],
     prepTime: 3, // compte à rebours de début de partie : on peut déjà placer des unités
+    ...o.config, // Campagne : configuration du niveau
   };
+  config.mapId = map.id;
   const engine: Engine = createEngine(config);
+  const tracker = createBattleTracker(me); // Campagne : statistiques pour les contraintes d'étoiles
 
   // ---------------------------------------------------------------- squelette DOM
   const wrap = el('div', 'mr-battle');
@@ -134,6 +148,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     window.setTimeout(() => f.remove(), 1200);
   }
   const summon = el('button', 'mr-summon', `<span class="lbl mr-outline">Invoquer</span><span class="cost mr-outline">${MANA_SVG}<span>10</span></span>`);
+  summon.dataset['tuto'] = 'summon'; // Méta : repère stable pour le tutoriel guidé
   const summonCost = summon.querySelector('.cost > span') as HTMLElement;
   const extra = el('div', 'mr-extra', '<span class="mr-board-count">0/15</span>');
   const boardCount = extra.firstElementChild as HTMLElement;
@@ -158,7 +173,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   // Fenêtres plein écran (en px CSS)
   const announce = el('div', 'mr-announce', '<div class="box"><div class="tag mr-outline-s">BOSS !</div><img alt=""><div class="name mr-outline-s"></div><div class="sub"></div></div>');
-  const pauseModal = el('div', 'mr-modal', `<div class="mr-panel"><h2 class="mr-outline-s">Pause</h2><p>La partie est en attente.</p><div class="row"><button class="mr-btn green" data-a="resume">Reprendre</button><button class="mr-btn" data-a="home">Abandonner</button></div></div>`);
+  const pauseModal = el('div', 'mr-modal', `<div class="mr-panel"><h2 class="mr-outline-s">Pause</h2><p>${o.title ? `${o.title}<br>` : ''}La partie est en attente.</p><div class="row"><button class="mr-btn green" data-a="resume">Reprendre</button><button class="mr-btn" data-a="home">Abandonner</button></div></div>`);
   const endModal = el('div', 'mr-modal');
   wrap.append(announce, pauseModal, endModal);
   // Compte à rebours de début de partie (3, 2, 1, GO !) : les unités se placent déjà.
@@ -267,7 +282,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
     if (st.wave !== cache.wave) {
       cache.wave = st.wave;
-      waveN.textContent = `Vague ${st.wave}`;
+      waveN.textContent = engine.config.targetWaves ? `Vague ${st.wave}/${engine.config.targetWaves}` : `Vague ${st.wave}`;
     }
     const isBoss = st.phase === 'boss' || (st.phase === 'pause' && engine.state.enemies.some((e) => e.bossId || e.giant));
     const secs = isBoss ? -1 : Math.ceil(st.waveTimeLeft);
@@ -406,12 +421,20 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
         case 'lifeLost':
           navigator.vibrate?.(60);
           break;
-        case 'gameOver':
-          window.setTimeout(() => showEnd(ev.outcome, ev.wave), 900);
+        case 'gameOver': {
+          // Campagne : le résultat part à `onEnd`, qui peut remplacer la fenêtre de fin.
+          const st = engine.state;
+          const result: BattleResult = {
+            ...tracker.stats(st), won: ev.outcome === 'victoire', wave: ev.wave, livesLeft: st.lives,
+            deck: st.players[0]!.deck.slice(), seed: engine.config.seed,
+          };
+          const handled = o.onEnd?.(result) === true;
+          if (!handled) window.setTimeout(() => showEnd(ev.outcome, ev.wave), 900);
           over = true;
           signalGame(false);
           hideInfo();
           break;
+        }
         default:
           break;
       }
@@ -625,8 +648,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       acc -= DT;
       steps++;
       scene.beforeTick();
+      tracker.before(engine.state);
       engine.tick();
       const evs = engine.drainEvents();
+      tracker.after(engine.state, evs);
       scene.afterTick(evs);
       scene.settleDrops();
       onEvents(evs);
