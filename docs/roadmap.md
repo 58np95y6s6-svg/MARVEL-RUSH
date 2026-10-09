@@ -63,7 +63,7 @@ Idée du joueur, à détailler plus tard.
 
 ## Exigence dès la version 1 : un jeu extensible
 
-Pour que les extensions DC, Transformers et Pixar (et d'autres) s'ajoute **sans réécrire le jeu**, tout le contenu reste **piloté par les données** :
+Pour que les extensions DC, Transformers et Pixar (et d'autres) s'ajoutent **sans réécrire le jeu**, tout le contenu reste **piloté par les données** :
 - les packs, les univers, les unités, les boss, les lieutenants, les sbires, les maps, les chapitres de campagne, les paliers d'infini et les équipes sont **des listes dans `src/data/` et `src/maps/`**, jamais codés en dur dans les écrans ou le moteur ;
 - l'interface affiche **autant de packs, de chapitres et d'univers qu'il y en a** dans les données (pas de mise en page figée sur 2 packs ou 6 chapitres) ;
 - les sauvegardes de profil ont un **numéro de version** et une migration, pour que l'arrivée de nouveaux personnages ne casse pas les profils existants.
