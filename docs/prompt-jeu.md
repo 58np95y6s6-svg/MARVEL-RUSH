@@ -43,6 +43,7 @@ Usage strictement personnel : pas de monétisation, pas de vraie monnaie, pas d'
 | `design/planches/1-marvel-a.html` à `4-disney-b.html` | Le **code SVG de chaque personnage** : fonction `draw(ctx)`, 3 poses (repos, préparation, frappe), effets, palette. |
 | `design/planches/5-boss-sbires.html` | Le code SVG des 6 boss et de leurs sbires, dans le traitement « méchant » (visage dans l'ombre, yeux lumineux). |
 | `design/references/style-*.jpg` | Les références de style : chibi, contours épais, ombrage cel-shading, reflets brillants. |
+| `design/references/ecrans/` | **Captures d'écrans de Rush Royale** (combat à deux plateaux, Donjons, Deck et Collection, plateau simple) et leur analyse dans `README.md` : **le modèle visuel de toute l'interface**. |
 | `public/fiches/` | Les **illustrations de fiches** (art de comics réaliste) de 10 personnages, dont Thanos, **chiffrées**. Voir §6.5. |
 
 **Réutilise le code de dessin des planches.** Ne redessine pas les personnages. Extrais les primitives (`shaded`, `limb`, `hand`, `glow`, `burst`, `beam`, `bolt`, `sparks`, `mandala`, `face`, `mirror`…) et les fonctions `draw` de chaque personnage dans un module `src/art/`. Ce module génère, pour chaque unité, une chaîne SVG par pose (0 repos, 1 préparation, 2 frappe), que tu convertis en textures au chargement.
@@ -457,6 +458,8 @@ Les autres personnages Disney (Pocahontas, Rebelle, Ariel, Tiana, Nemo & Dory, R
 ---
 
 ## 8. Écrans
+
+Chaque écran suit les captures et les règles de `design/references/ecrans/README.md` : cadres épais avec relief, gros boutons en dégradé, cartes à cadre de rareté, bandeaux d'information semi-transparents.
 
 1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Survie**, **Jouer à deux**, **Tirages**, **Collection**, **Decks**, **Maps**. En haut : avatar, niveau de compte, éclats, et la pastille de présence de la partenaire.
 2. **Campagne** : carte des 6 chapitres, niveaux avec leurs étoiles, coffres d'étoiles, prochain personnage à débloquer.
