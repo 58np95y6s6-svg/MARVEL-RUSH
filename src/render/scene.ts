@@ -2,6 +2,7 @@
 // Le moteur avance à pas fixe (20 ticks/s) ; la scène dessine à la fréquence de l'écran et interpole
 // la position des ennemis entre deux ticks. Coordonnées : écran logique 1000 × 1600 (src/maps/layout.ts),
 // mis à l'échelle et centré dans les zones sûres de l'écran.
+import { dropAction, formationPartners } from '../engine';
 import { rankShape, tokenColor } from '../art';
 import { Application, BitmapText, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance } from '../engine';
@@ -787,19 +788,23 @@ export class BattleScene {
   }
 
   /** Illumine les unités fusionnables avec celle de `slot` (même unité, même rang), assombrit les autres. */
-  private markTargets(slot: number): void {
+  private markTargets(slot: number, formation = false): void {
     const u = this.me.grid[slot];
     this.clearTargets();
     if (!u) return;
+    // Appui long : les partenaires de formation (Loki alignés) s'illuminent aussi.
+    const partners = formation ? formationPartners(this.me.grid, slot) : [];
     let k = 0;
     for (let i = 0; i < GRID_SIZE; i++) {
       const w = this.units[i];
       const o = this.me.grid[i];
       if (!w || !o || i === slot) continue;
-      const ok = o.unit === u.unit && o.rank === u.rank && u.rank < 7;
-      w.dim = !ok;
+      // Fusion, copie (Loki), promotion (Coco), échange (Vanellope) : même règle que le moteur.
+      const ok = dropAction(u, o) !== null;
+      const lit = ok || partners.includes(i);
+      w.dim = !lit;
       w.target = ok;
-      if (ok) {
+      if (lit) {
         const r = this.targetRings[k++]!;
         r.visible = true;
         r.position.set(w.rx, w.ry);
@@ -887,7 +892,7 @@ export class BattleScene {
     this.holdSlot = slot;
     v.glow.visible = true;
     v.glow.tint = 0xffffff;
-    this.markTargets(slot);
+    this.markTargets(slot, true);
     this.showRange(slot, u.status.transformedInto ?? u.unit);
     return true;
   }

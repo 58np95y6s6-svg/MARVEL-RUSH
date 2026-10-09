@@ -11,14 +11,14 @@ Les chiffres (%, secondes, rebonds) sont des valeurs de départ à équilibrer e
 | Hulk | Dégâts de zone | Légendaire | Coup de poing lent et puissant | **Rage** puis **Hulk Smash** : étourdit tous les ennemis autour |
 | Thor | Dégâts en chaîne | Légendaire | Coup de marteau électrique | **Éclair en chaîne** : rebondit sur 3 à 5 ennemis |
 | Doctor Strange | Soutien / contrôle | Épique | Projectile magique | **Portail** : renvoie un ennemi au début du chemin |
-| Venom | Exécution | Épique | Coup de griffes | **Dévorer** : exécute un ennemi sous 15 % de PV |
+| Venom | Exécution | Épique | Coup de griffes | **Dévorer** : exécute un ennemi sous 15 % de PV ; **Croissance** sans plafond (temps sur le plateau et éliminations), gardée à moitié en fusion |
 | Captain Marvel | Dégâts | Rare | Rafale photonique | **Mode binaire** : dégâts doublés 5 s après une charge |
-| Captain America | Soutien / rebond | Légendaire | Bouclier qui rebondit sur 3 ennemis | **Leader** : +15 % de vitesse d'attaque aux héros adjacents |
-| Loki | Trickster | Épique | Dague magique | **Illusion** : se copie en un autre héros 10 s ; les ennemis touchés s'attaquent entre eux |
+| Captain America | Soutien / rebond | Légendaire | Bouclier qui rebondit sur 3 ennemis | **Leader** (Boost de vitesse) : +15 % de vitesse d'attaque aux héros adjacents |
+| Loki | Trickster | Épique | Dague magique | **Illusion** (Copieur, Formation) : glissé sur un allié de même rang, devient sa copie à −25 % de dégâts ; 3 Loki alignés se renforcent (+30 %) et frappent en zone ; les ennemis touchés peuvent reculer |
 | Soldat de l'hiver | Critique | Épique | Tir de précision | **Bras bionique** : chaque 4e attaque est un critique assommant |
 | Œil de faucon | Polyvalent | Rare | Flèche simple | **Flèches spéciales** : explosive, glace, électrique en alternance |
 | Falcon | Ciblage | Rare | Tir aérien | **Drone Redwing** : marque l'ennemi le plus fort (+25 % de dégâts subis) |
-| Black Widow | Anti-boss | Épique | Tir rapide | **Morsure de la veuve** : paralyse 1 s ; dégâts doublés contre les boss |
+| Black Widow | Sacrifice | Épique | Tir rapide | **Morsure de la veuve** : paralyse 1 s ; **Sacrifice** : fusionnée ou détruite, rapporte 10 à 190 de mana selon son rang |
 | Shang-Chi | Combo | Épique | Enchaînement d'arts martiaux | **Dix Anneaux** : frappent jusqu'à 10 ennemis |
 
 ## Pack Disney
@@ -27,18 +27,24 @@ Les chiffres (%, secondes, rebonds) sont des valeurs de départ à équilibrer e
 |---|---|---|---|---|
 | Vaïana & Pua | Contrôle | Épique | Coup de rame | **Appel de l'océan** : une vague repousse les ennemis |
 | Maui | Dégâts / transformation | Légendaire | Coup d'hameçon | **Métamorphose** : faucon (rapide) ou requin (dégâts massifs) |
-| Pocahontas & Meeko | Soutien | Rare | Tourbillon de feuilles | **Couleurs du vent** : +vitesse aux voisins ; Meeko vole un bonus |
+| Pocahontas & Meeko | Soutien | Rare | Tourbillon de feuilles | **Couleurs du vent** (Boost de vitesse) : +vitesse aux voisins ; Meeko vole un bonus |
 | Mulan & Mushu | Dégâts / brûlure | Légendaire | Coup d'épée | **Souffle de Mushu** : brûlure ; **Avalanche** une fois par vague |
 | Rebelle | Précision | Rare | Flèche longue portée | **Tir parfait** : 100 % de critiques sur la cible la plus éloignée |
 | Ariel & Sébastien | Contrôle | Épique | Bulles | **Chant de sirène** : charme et arrête les ennemis ; Sébastien pince |
 | Rox & Rouky | Duo | Rare | Morsure | **Meilleurs amis** : deux attaques par tour, plus fortes si l'autre a touché |
-| Tiana & Naveen | Économie | Rare | Lumière de luciole | **Restaurant** : mana bonus à chaque vague ; la grenouille attrape un ennemi |
+| Tiana & Naveen | Économie | Rare | Lumière de luciole | **Restaurant** (Mana par élimination) : chaque ennemi touché rapporte +1 à +8 de mana en tombant ; la grenouille attrape un ennemi |
 | Nemo & Dory | Aléatoire | Rare | Tir de bulles | **Mémoire de poisson** : effet aléatoire à chaque tir |
-| Coco (Miguel) | Soutien | Épique | Notes de musique | **Remember Me** : ressuscite un héros détruit |
+| Coco (Miguel) | Soutien | Épique | Notes de musique | **Remember Me** : ressuscite un héros détruit ; **Booster de fusion** : glissée sur un allié de même rang, le fait monter d'un rang |
 | Nick & Judy | Contrôle / malus | Épique | Tir de carotte | **Arrestation** : stoppe un ennemi 2 s ; Nick réduit l'armure |
 | Buzz & Woody | Duo / polyvalent | Légendaire | Laser de Buzz | **Vers l'infini** : laser perçant ; le lasso de Woody attrape un ennemi |
 | Raiponce & Pascal | Contrôle / soin | Épique | Coup de poêle | **Cheveux magiques** : soigne et renforce ; Pascal se camoufle |
-| Vanellope & Ralph | Chaos | Légendaire | Coup de poing de Ralph | **Glitch** : Vanellope se téléporte ; Ralph détruit les boucliers |
+| Vanellope & Ralph | Chaos | Légendaire | Coup de poing de Ralph | **Glitch** (Échangeur) : glissée sur un allié de même rang, Vanellope échange sa place avec lui et booste ses nouveaux voisins ; Ralph détruit les boucliers |
+
+## Archétypes de stratégie
+
+Six capacités génériques (clés de paramètres lues par `src/engine/archetypes.ts`), que chaque extension attribue à ses héros (docs/roadmap.md) : **Sacrifice → mana** (Black Widow), **Copieur** (Loki), **Booster de fusion** (Coco), **Croissance** (Venom), **Mana par élimination** (Tiana), **Boost de vitesse** (Captain America, Pocahontas), **Échangeur** (Vanellope & Ralph), **Formation** (Loki). Les cases compatibles avec Loki, Coco et Vanellope s'illuminent comme des partenaires de fusion.
+
+Économie de partie : bouton **Mana +** (5 niveaux, +20 % de mana chacun), **récompense de boss** (2,5 / 5,5 / 8 × le coût d'invocation), amélioration des héros à **+15 % de dégâts et +6 % de cadence** par niveau, 150 de mana au départ, premières vagues allégées.
 
 ## Boss & sbires
 

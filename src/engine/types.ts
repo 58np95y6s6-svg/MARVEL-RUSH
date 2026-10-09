@@ -65,7 +65,12 @@ export interface UnitInstance {
   unit: UnitId;
   rank: number;               // 1..MAX_RANK
   cooldown: number;           // secondes avant la prochaine attaque
-  status: { stunnedFor?: number; sleepingFor?: number; hypnotizedFor?: number; transformedInto?: UnitId; transformFor?: number };
+  status: {
+    stunnedFor?: number; sleepingFor?: number; hypnotizedFor?: number; transformedInto?: UnitId; transformFor?: number;
+    /** Archétype Copieur : l'unité est la copie d'une autre (multiplicateur de dégâts, ex. 0.75) faite par `copyOf`. */
+    copyMul?: number;
+    copyOf?: UnitId;
+  };
   counters: Record<string, number>; // compteurs propres aux compétences (coups, cumuls…)
 }
 
@@ -77,6 +82,8 @@ export interface PlayerState {
   powerUps: Partial<Record<UnitId, number>>; // amélioration en partie 0..5
   deck: UnitId[];
   giftUsedThisWave: boolean;
+  /** Rendement du mana (« Mana + ») : 0..5, +20 % de mana par élimination et par vague à chaque niveau. */
+  manaLevel?: number;
 }
 
 export interface EnemyInstance {
@@ -121,7 +128,15 @@ export interface EngineState {
 export type Command =
   | { type: 'summon'; player: PlayerId }
   | { type: 'merge'; player: PlayerId; from: number; to: number }
+  /** Archétype Copieur (ex. Loki) : l'unité `from` devient une copie de l'alliée `to` de même rang. */
+  | { type: 'copy'; player: PlayerId; from: number; to: number }
+  /** Archétype Booster de fusion (ex. Coco) : l'unité `from` disparaît, l'alliée `to` (même rang) gagne 1 rang. */
+  | { type: 'promote'; player: PlayerId; from: number; to: number }
+  /** Archétype Échangeur (ex. Vanellope) : l'unité `from` et l'alliée `to` (même rang) échangent leurs cases. */
+  | { type: 'swap'; player: PlayerId; from: number; to: number }
   | { type: 'powerup'; player: PlayerId; unit: UnitId }
+  /** Rendement du mana : +1 niveau (coûts MANA_UPGRADE_COSTS). */
+  | { type: 'manaUpgrade'; player: PlayerId }
   | { type: 'gift'; player: PlayerId; slot: number }
   | { type: 'pause'; paused: boolean };
 
@@ -129,7 +144,16 @@ export type EngineEvent =
   | { type: 'waveStart'; wave: number }
   | { type: 'summon'; player: PlayerId; slot: number; unit: UnitId; rank: number }
   | { type: 'merge'; player: PlayerId; from: number; to: number; unit: UnitId; rank: number }
+  | { type: 'copy'; player: PlayerId; from: number; to: number; unit: UnitId; rank: number }
+  | { type: 'promote'; player: PlayerId; from: number; to: number; unit: UnitId; rank: number }
+  | { type: 'swap'; player: PlayerId; from: number; to: number; unit: UnitId; rank: number }
+  /**
+   * Mana gagné hors élimination ordinaire : archétypes (sacrifice, copie, échange) ou victoire sur un boss.
+   * `slot` = case d'où part le gain (-1 pour un boss : `enemy` = boss vaincu).
+   */
+  | { type: 'mana'; player: PlayerId; slot: number; amount: number; reason: 'sacrifice' | 'copie' | 'echange' | 'boss'; enemy?: number }
   | { type: 'powerup'; player: PlayerId; unit: UnitId; level: number }
+  | { type: 'manaUpgrade'; player: PlayerId; level: number }
   | { type: 'attack'; player: PlayerId; slot: number; unit: UnitId; targets: number[]; fx: string }
   | { type: 'hit'; enemy: number; damage: number; crit: boolean }
   | { type: 'ability'; player: PlayerId; slot: number; unit: UnitId; name: string; targets: number[] }

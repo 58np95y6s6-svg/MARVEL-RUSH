@@ -13,7 +13,7 @@ describe('invocation', () => {
   it('coûte 10 puis +10, pose une unité du deck au rang 1 sur une case vide', () => {
     const e = quiet();
     const p = e.state.players[0]!;
-    expect(p.mana).toBe(100);
+    expect(p.mana).toBe(150); // départ : 150 de mana (début de partie allégé)
     const costs: number[] = [];
     for (let i = 0; i < 4; i++) {
       costs.push(p.summonCost);
@@ -25,7 +25,7 @@ describe('invocation', () => {
       expect(p.grid[ev[0]!.slot]?.unit).toBe(ev[0]!.unit);
     }
     expect(costs).toEqual([10, 20, 30, 40]);
-    expect(p.mana).toBe(0);
+    expect(p.mana).toBe(50);
     expect(p.grid.filter(Boolean)).toHaveLength(4);
   });
 
@@ -162,16 +162,19 @@ describe('dégâts', () => {
 });
 
 describe('mana par élimination', () => {
-  it('10 pour un normal, 30 pour un gros, 100 pour un boss', () => {
+  it('10 pour un normal, 30 pour un gros, 100 pour un boss (plus la récompense de boss, voir archetypes.test.ts)', () => {
     for (const [kind, boss, mana] of [['normal', undefined, 10], ['gros', undefined, 30], ['normal', 'jafar', 100]] as const) {
       const e = quiet();
       debugPlace(e, 0, 0, 'cmarvel', 7);
       debugSpawn(e, { hp: 1, kind, bossId: boss });
       const p = e.state.players[0]!;
       const m = p.mana;
-      const k = ofType(step(e), 'kill');
+      const ev = step(e);
+      const k = ofType(ev, 'kill');
       expect(k[0]).toMatchObject({ player: 'p1', mana });
-      expect(p.mana - m).toBe(mana);
+      const reward = ofType(ev, 'mana').reduce((s, x) => s + x.amount, 0);
+      expect(reward > 0).toBe(!!boss);
+      expect(p.mana - m).toBe(mana + reward);
     }
   });
 });
@@ -194,7 +197,7 @@ describe('pause et script', () => {
     const e = solo(MARVEL, { script: { enemyHpMultiplier: 0.5, startMana: 300, noLifeLoss: true } });
     expect(e.state.players[0]!.mana).toBe(300);
     step(e, 1);
-    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(50);
+    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(50 * 0.7); // vague 1 : PV ×0,7 (début allégé)
     for (const en of simState(e).enemies) en.distance = 29.99;
     const ev = step(e, 5);
     expect(ofType(ev, 'lifeLost')).toHaveLength(0);

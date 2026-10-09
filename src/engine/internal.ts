@@ -10,12 +10,18 @@ import type { BoardGeometry } from './geometry';
 
 export const DT = 0.05; // 1 / TICKS_PER_SECOND
 export const EPS = 1e-9;
-export const START_MANA = 100;
+export const START_MANA = 150;
 export const SUMMON_COST_START = 10;
 export const SUMMON_COST_STEP = 10;
 export const POWERUP_COSTS = [100, 200, 400, 700]; // passer au niveau 2, 3, 4, 5
 export const POWERUP_MAX = 5;
 export const POWERUP_DAMAGE = 0.15;
+/** Amélioration en partie : chaque niveau donne aussi +6 % de vitesse d'attaque au héros. */
+export const POWERUP_ATTACK_SPEED = 0.06;
+/** Rendement du mana (« Mana + ») : 5 niveaux, +20 % de mana par élimination et par vague à chacun. */
+export const MANA_UPGRADE_COSTS = [50, 100, 200, 400, 800];
+export const MANA_UPGRADE_BONUS = 0.2;
+export const MANA_UPGRADE_MAX = 5;
 export const LEVEL_DAMAGE = 0.1;
 export const DEFAULT_PATH_LENGTH = 30;
 export const DEFAULT_COOP_LENGTHS = { a: 18, b: 18, tronc: 14 };
@@ -31,6 +37,8 @@ export interface EnemyExtra {
   bleed?: number; bleedFor?: number; bleedBy?: number;
   poison?: number; poisonFor?: number; poisonBy?: number;
   knockFor?: number;      // recule (illusion de Loki)
+  manaTag?: number;       // archétype « mana par élimination » : mana bonus versé à sa mort…
+  manaTagBy?: number;     // …au joueur de l'unité qui l'a touché
   arrivalStun?: number; arrivalStunUnits?: number;
   // Boss
   powerIn?: number;

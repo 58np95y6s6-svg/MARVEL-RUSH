@@ -5,16 +5,15 @@ import { BOSSES, LIEUTENANTS } from '../data/bosses';
 import type { BossId, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import {
-  GRID_SIZE, MAX_RANK, RANK_ATTACK_SPEED, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, rangeLabel,
+  GRID_SIZE, MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, MAX_RANK, POWERUP_ATTACK_SPEED, POWERUP_COSTS,
+  POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
+  formationLength, growthBonus, rangeLabel,
   type Command, type Engine, type EngineEvent, type GameConfig, type PlayerId,
 } from '../engine';
 import { getMap } from '../maps';
 import { BattleScene, type Fit } from '../render/scene';
 
 const DT = 1 / TICKS_PER_SECOND;
-/** Coûts des améliorations en partie (§4.2) : passer au niveau 2, 3, 4, 5. */
-const POWERUP_COSTS = [100, 200, 400, 700];
-const POWERUP_MAX = 5;
 
 export interface BattleOptions {
   deck: UnitId[];
@@ -113,17 +112,42 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   // Commandes
   const mana = el('div', 'mr-mana', `${MANA_SVG}<b class="mr-outline">100</b>`);
   const manaN = mana.querySelector('b')!;
+  /** Libellé court qui monte au-dessus des commandes (amélioration d'un héros, « Mana + »). */
+  function floatLabel(text: string): void {
+    const f = el('div', 'mr-float-label mr-outline-s');
+    f.textContent = text;
+    stage.appendChild(f);
+    window.setTimeout(() => f.remove(), 1700);
+  }
+  /** Victoire sur un boss : grosse gerbe « +X mana » au-dessus du plateau. */
+  function bossBurst(amount: number): void {
+    const f = el('div', 'mr-boss-mana mr-outline-s', `${MANA_SVG}<span>+${amount}</span>`);
+    stage.appendChild(f);
+    window.setTimeout(() => f.remove(), 2200);
+    floatMana(amount);
+  }
+  /** « +X » qui s'envole du compteur de mana (sacrifice, copie). */
+  function floatMana(amount: number): void {
+    const f = el('span', 'mr-mana-float mr-outline-s', `+${amount}`);
+    mana.appendChild(f);
+    window.setTimeout(() => f.remove(), 1200);
+  }
   const summon = el('button', 'mr-summon', `<span class="lbl mr-outline">Invoquer</span><span class="cost mr-outline">${MANA_SVG}<span>10</span></span>`);
   const summonCost = summon.querySelector('.cost > span') as HTMLElement;
   const extra = el('div', 'mr-extra', '<span class="mr-board-count">0/15</span>');
   const boardCount = extra.firstElementChild as HTMLElement;
+  // Rendement du mana (« Mana + ») : +20 % de mana par élimination et par vague, 5 niveaux.
+  const manaUp = el('button', 'mr-manaup', `<span class="t mr-outline-s">Mana +</span><span class="lv mr-outline-s">+0 %</span><span class="cost mr-outline-s">${MANA_SVG}<span>50</span></span>`);
+  manaUp.setAttribute('aria-label', 'Augmenter le rendement du mana');
+  const manaUpLv = manaUp.querySelector('.lv') as HTMLElement, manaUpCost = manaUp.querySelector('.cost > span') as HTMLElement;
+  extra.prepend(manaUp);
   const cards = el('div', 'mr-cards');
   const deck = engine.state.players[0]!.deck;
   const cardEls = deck.map((id) => {
-    const c = el('button', `mr-card rarity-${UNITS[id].rarity}`, `<img alt="" src="${svgUrl(unitSvg(id, 0))}"><span class="lv mr-outline">Nv.1</span><span class="cost mr-outline">${MANA_SVG}<span>100</span></span>`);
+    const c = el('button', `mr-card rarity-${UNITS[id].rarity}`, `<img alt="" src="${svgUrl(unitSvg(id, 0))}"><span class="lv mr-outline">Nv.1</span><span class="pct mr-outline-s"></span><span class="cost mr-outline">${MANA_SVG}<span>100</span></span>`);
     c.setAttribute('aria-label', `Améliorer ${UNITS[id].name}`);
     cards.appendChild(c);
-    return { id, el: c, lv: c.querySelector('.lv') as HTMLElement, cost: c.querySelector('.cost > span') as HTMLElement, costBox: c.querySelector('.cost') as HTMLElement };
+    return { id, el: c, lv: c.querySelector('.lv') as HTMLElement, pct: c.querySelector('.pct') as HTMLElement, cost: c.querySelector('.cost > span') as HTMLElement, costBox: c.querySelector('.cost') as HTMLElement };
   });
   const info = el('div', 'mr-info');
   const rangeTag = el('div', 'mr-range-tag mr-outline-s');
@@ -160,7 +184,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   };
 
   // ---------------------------------------------------------------- HUD
-  const cache = { mana: -1, cost: -1, wave: -1, time: '', lives: 3, count: -1, summonOff: null as boolean | null, cards: [] as string[], banner: '', bossKey: '', bossPct: -1, rage: '' };
+  const cache = { manaUp: '', mana: -1, cost: -1, wave: -1, time: '', lives: 3, count: -1, summonOff: null as boolean | null, cards: [] as string[], banner: '', bossKey: '', bossPct: -1, rage: '' };
 
   function showToast(msg: string): void {
     toast.textContent = msg;
@@ -202,11 +226,24 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       if (cache.cards[i] === key) return;
       cache.cards[i] = key;
       c.lv.textContent = max ? 'MAX' : `Nv.${lv}`;
+      c.pct.textContent = lv > 1 ? `+${Math.round(POWERUP_DAMAGE * 100 * (lv - 1))} %` : '';
       c.cost.textContent = max ? 'MAX' : String(cost);
       (c.costBox.firstElementChild as HTMLElement).style.display = max ? 'none' : '';
       c.el.classList.toggle('off', off2 && !max);
       c.el.classList.toggle('max', max);
     });
+
+    const ml = p.manaLevel ?? 0;
+    const mmax = ml >= MANA_UPGRADE_MAX;
+    const mkey = `${ml}|${mmax || p.mana < MANA_UPGRADE_COSTS[ml]! ? 1 : 0}`;
+    if (mkey !== cache.manaUp) {
+      cache.manaUp = mkey;
+      manaUpLv.textContent = `+${Math.round(MANA_UPGRADE_BONUS * 100 * ml)} %`;
+      manaUpCost.textContent = mmax ? 'MAX' : String(MANA_UPGRADE_COSTS[ml]);
+      (manaUp.querySelector('.cost svg') as SVGElement).style.display = mmax ? 'none' : '';
+      manaUp.classList.toggle('off', mkey.endsWith('1') && !mmax);
+      manaUp.classList.toggle('max', mmax);
+    }
 
     if (st.wave !== cache.wave) {
       cache.wave = st.wave;
@@ -314,8 +351,18 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
         case 'powerup': {
           const c = cardEls.find((x) => x.id === ev.unit);
           if (c) { c.el.classList.remove('flash'); void c.el.offsetWidth; c.el.classList.add('flash'); }
+          if (ev.player === me) {
+            const n = ev.level - 1;
+            floatLabel(`${UNITS[ev.unit].name} niv. ${ev.level} : +${Math.round(POWERUP_DAMAGE * 100 * n)} % de dégâts, +${Math.round(POWERUP_ATTACK_SPEED * 100 * n)} % de cadence`);
+          }
           break;
         }
+        case 'manaUpgrade':
+          if (ev.player === me) {
+            manaUp.classList.remove('flash'); void manaUp.offsetWidth; manaUp.classList.add('flash');
+            floatLabel(`Mana + niv. ${ev.level} : +${Math.round(MANA_UPGRADE_BONUS * 100 * ev.level)} % de mana`);
+          }
+          break;
         case 'waveStart':
           if (bossWaveKind(engine.config, ev.wave) === null) popWave(ev.wave);
           break;
@@ -327,6 +374,11 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
           break;
         case 'bossPower':
           showToast(`${ev.name} !`);
+          break;
+        case 'mana':
+          if (ev.player !== me) break;
+          if (ev.reason === 'boss') bossBurst(ev.amount);
+          else floatMana(ev.amount);
           break;
         case 'lifeLost':
           navigator.vibrate?.(60);
@@ -379,6 +431,15 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     hideInfo();
     apply({ type: 'summon', player: me });
   });
+  manaUp.addEventListener('click', () => {
+    if (over) return;
+    hideInfo();
+    const p = engine.state.players[0]!;
+    const ml = p.manaLevel ?? 0;
+    if (ml >= MANA_UPGRADE_MAX) { showToast('Rendement du mana au maximum.'); shakeEl(manaUp); return; }
+    if (p.mana < MANA_UPGRADE_COSTS[ml]!) { showToast('Pas assez de mana.'); shakeEl(manaUp); return; }
+    apply({ type: 'manaUpgrade', player: me });
+  });
   cardEls.forEach((c) => c.el.addEventListener('click', () => {
     if (over) return;
     hideInfo();
@@ -396,9 +457,20 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const id = u.status.transformedInto ?? u.unit;
     const d = UNITS[id];
     const lv = engine.state.players[0]!.powerUps[u.unit] ?? 1;
+    const copyMul = u.status.copyMul ?? 1;
+    const growth = growthBonus(d.ability.params, u.counters['growth'] ?? 0);
+    const formation = d.ability.params.formationDamagePerAlly && u.unit === id
+      ? d.ability.params.formationDamagePerAlly * (Math.min(formationLength(engine.state.players[0]!.grid, slot), d.ability.params.formationMax ?? 3) - 1) : 0;
+    const formationTag = formation > 0 ? `<span class="grow">Formation +${Math.round(formation * 100)} %</span>` : '';
+    const nextUp = lv < POWERUP_MAX
+      ? `<p class="next">Prochaine amélioration (Nv.${lv + 1}, ${POWERUP_COSTS[lv - 1]} mana) : +${Math.round(POWERUP_DAMAGE * 100)} % de dégâts et +${Math.round(POWERUP_ATTACK_SPEED * 100)} % de cadence pour tous les ${d.name}.</p>`
+      : '<p class="next">Amélioration maximale.</p>';
+    const copyNote = u.status.copyOf
+      ? `<p class="arch">Copie par ${UNITS[u.status.copyOf].name} : ${copyMul < 1 ? `−${Math.round((1 - copyMul) * 100)} % de dégâts` : 'dégâts complets'}.</p>` : '';
+    const growthTag = growth > 0.0049 ? `<span class="grow">Croissance +${Math.round(growth * 100)} %</span>` : '';
     info.innerHTML = `<h3>${d.name}<small>Rang ${u.rank}/${MAX_RANK}</small></h3>
-      <p><span class="abl">${d.ability.name}</span> : ${d.ability.description}</p>
-      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + 0.15 * (lv - 1)))}</span><span>Cadence ${(d.attackInterval / (1 + RANK_ATTACK_SPEED * (u.rank - 1))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>`;
+      <p><span class="abl">${d.ability.name}</span> : ${d.ability.description}</p>${copyNote}
+      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + POWERUP_DAMAGE * (lv - 1)) * copyMul * (1 + growth) * (1 + formation))}</span>${growthTag}${formationTag}<span>Cadence ${(d.attackInterval / ((1 + RANK_ATTACK_SPEED * (u.rank - 1)) * (1 + POWERUP_ATTACK_SPEED * (lv - 1)))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>${nextUp}`;
     const c = scene.cellCenter(slot);
     const x = Math.max(20, Math.min(1000 - 20 - 560, c.x - 280));
     info.style.left = `${x}px`;
@@ -482,15 +554,25 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       return;
     }
     const to = scene.slotAt(pt.x, pt.y);
-    if (to >= 0 && to !== p.slot && scene.isTarget(to)) {
-      apply({ type: 'merge', player: me, from: p.slot, to });
+    const grid = engine.state.players[0]!.grid;
+    const a = grid[p.slot], b = to >= 0 && to !== p.slot ? grid[to] : null;
+    // Fusion, ou archétypes Copieur (Loki) et Booster de fusion (Coco) : même règle que le moteur.
+    const action = dropAction(a, b);
+    if (action) {
+      apply({ type: action, player: me, from: p.slot, to });
       scene.endDrag(to, true);
     } else {
       scene.endDrag(-1, false);
-      const grid = engine.state.players[0]!.grid;
-      const a = grid[p.slot], b = to >= 0 && to !== p.slot ? grid[to] : null;
-      if (a && b) showToast(a.rank >= MAX_RANK ? 'Rang maximal atteint.' : 'Fusionne deux unités identiques de même rang.');
+      if (a && b) showToast(dropHint(a.unit, a.rank, b.unit, b.rank));
     }
+  }
+  function dropHint(a: UnitId, ra: number, b: UnitId, rb: number): string {
+    const prm = UNITS[a].ability.params;
+    if (a !== b && (prm.copyDamageMul || prm.promoteAlly)) {
+      if (ra !== rb) return 'Glisse-la sur une alliée de même rang.';
+      if (prm.promoteAlly && rb >= MAX_RANK) return 'Rang maximal atteint.';
+    }
+    return ra >= MAX_RANK && a === b ? 'Rang maximal atteint.' : 'Fusionne deux unités identiques de même rang.';
   }
   function onCancel(e: PointerEvent): void {
     if (!scene || !press || e.pointerId !== press.id) return;

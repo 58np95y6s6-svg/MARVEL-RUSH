@@ -54,8 +54,8 @@ describe('Coop : deux branches qui se rejoignent', () => {
     debugSpawn(e, { lane: 'a', distance: 3, hp: 10 });
     const k = ofType(step(e, 1), 'kill')[0]!;
     expect(k.player).toBe('p2');
-    expect(e.state.players[1]!.mana).toBe(110);
-    expect(e.state.players[0]!.mana).toBe(100);
+    expect(e.state.players[1]!.mana).toBe(160);
+    expect(e.state.players[0]!.mana).toBe(150);
   });
 
   it('Offrir : une unité vers une case vide du partenaire, une fois par vague', () => {

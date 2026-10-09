@@ -1,6 +1,6 @@
 // Attaques et compétences des 28 unités (§4.5). Une fonction par tick et par joueur :
-// timers, purification de Raiponce, transformations (Loki, Maui), compétences à recharge,
-// attaques de base.
+// timers, purification de Raiponce, croissance (archétype, voir archetypes.ts), métamorphose de Maui,
+// compétences à recharge, attaques de base.
 
 import type { UnitId } from '../data/types';
 import { UNITS } from '../data/units';
@@ -14,12 +14,12 @@ import {
   progress, segmentOf, selectTarget, sendToStart, teamFor, topBy, unitHit, unitParams, within,
 } from './combat';
 import { enemyGridPos, inReach, unitRange } from './geometry';
+import { formationSplash, growOverTime } from './archetypes';
 
 export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
   const prm = unitParams(ctx, player, effectiveId(u));
   u.counters = {};
   if (prm.abilityCooldown) u.counters.cd = prm.abilityCooldown;
-  if (u.unit === 'loki') u.counters.lokiCd = unitParams(ctx, player, 'loki').abilityCooldown ?? 15;
 }
 
 function dec(v: number | undefined, by = DT): number | undefined {
@@ -50,7 +50,7 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
   }
   const rate = cooldownRate(ctx, player, effectiveId(u));
   if (c.cd !== undefined && c.cd > 0) c.cd = Math.max(0, c.cd - DT * rate);
-  if (c.lokiCd !== undefined && c.lokiCd > 0) c.lokiCd = Math.max(0, c.lokiCd - DT * cooldownRate(ctx, player, 'loki'));
+  growOverTime(ctx, player, u, DT);
 }
 
 /** Raiponce retire les effets de boss des unités adjacentes (et diagonales avec le talent). */
@@ -78,7 +78,6 @@ export function updateUnits(ctx: Ctx, player: number): void {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
     tickTimers(ctx, player, u);
-    if (u.unit === 'loki') lokiTransform(ctx, player, slot, u);
     if (effectiveId(u) === 'maui') mauiForm(ctx, player, slot, u);
     const disabled = isDisabled(u);
     let enemies = aliveAll(ctx);
@@ -108,21 +107,6 @@ export function updateUnits(ctx: Ctx, player: number): void {
 }
 
 // ───────────── Transformations ─────────────
-
-function lokiTransform(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
-  if (u.status.transformedInto || (u.counters.lokiCd ?? 0) > EPS || isDisabled(u)) return;
-  const p = ctx.st.players[player]!;
-  const options = p.deck.filter((d) => d !== 'loki');
-  const into = pick(ctx, options);
-  const prm = unitParams(ctx, player, 'loki');
-  u.counters.lokiCd = prm.abilityCooldown ?? 15;
-  if (!into) return;
-  u.status.transformedInto = into;
-  u.status.transformFor = prm.transformDuration ?? 10;
-  const ip = unitParams(ctx, player, into);
-  if (ip.abilityCooldown) u.counters.cd = ip.abilityCooldown;
-  emit(ctx, { type: 'ability', player: p.id, slot, unit: 'loki', name: 'Illusion', targets: [] });
-}
 
 function mauiForm(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
   if ((u.counters.cd ?? 0) > EPS) return;
@@ -240,25 +224,6 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
       abilityEvent(ctx, player, slot, id, 'Lasso de Woody', [target]);
       return true;
     }
-    case 'vanralph': {
-      const grid = ctx.st.players[player]!.grid;
-      const empties: number[] = [];
-      for (let i = 0; i < GRID_SIZE; i++) if (!grid[i]) empties.push(i);
-      const to = pick(ctx, empties);
-      if (to === undefined) return true; // pas de case libre : la recharge repart
-      grid[to] = u;
-      grid[slot] = null;
-      for (const j of neighbors(to, !!prm.auraDiagonal)) {
-        const n = grid[j];
-        if (!n) continue;
-        n.counters.boost = prm.boost ?? 0.2;
-        n.counters.boostFor = prm.boostDuration ?? 5;
-        n.counters.boostDamage = prm.boostDamage ?? 0;
-      }
-      // Pour Glitch, `slot` est la nouvelle case et `targets` contient l'ancienne case.
-      abilityEvent(ctx, player, to, id, 'Glitch', [slot]);
-      return to;
-    }
     default:
       return true;
   }
@@ -372,8 +337,8 @@ function attackOf(
       return { targets: chain, fx: 'thor:chaine' };
     }
     case 'venom': {
-      const bonus = Math.min(prm.killStackMax ?? 0.4, (c.kills ?? 0) * (prm.killStack ?? 0.02));
-      hit(target, dmg * (1 + bonus));
+      // La croissance (archétype) est déjà dans `dmg` (baseDamage).
+      hit(target, dmg);
       const thr = target.bossId ? prm.bossExecuteThreshold ?? 0 : prm.executeThreshold ?? 0.15;
       if (isAlive(target) && target.hp / target.maxHp < thr) {
         killEnemy(ctx, target, player, u);
@@ -405,6 +370,9 @@ function attackOf(
     }
     case 'loki': {
       hit(target, dmg);
+      // Formation (archétype) : 3 Loki alignés, la dague devient une attaque de zone.
+      const zone = formationSplash(ctx, player, slot, u);
+      if (zone > 0) splash(target, dmg * zone, 1.5);
       if (isAlive(target) && displaceable(target) && rand(ctx) < (prm.knockbackChance ?? 0.1)) {
         target.x.knockFor = (prm.knockbackDuration ?? 2) * ctrl;
         abilityEvent(ctx, player, slot, id, 'Illusion', [target]);
@@ -442,7 +410,7 @@ function attackOf(
     }
     case 'widow': {
       const hits = (c.hits = (c.hits ?? 0) + 1);
-      hit(target, target.bossId ? dmg * (prm.bossMul ?? 2) : dmg);
+      hit(target, dmg);
       if (hits % Math.max(1, Math.round(prm.paralyzeEvery ?? 5)) === 0 && isAlive(target)) {
         if (applyStun(target, (prm.paralyzeDuration ?? 1) * ctrl)) {
           abilityEvent(ctx, player, slot, id, 'Morsure de la veuve', [target]);
@@ -574,24 +542,16 @@ const BASE_FX: Partial<Record<UnitId, string>> = {
   tiana: 'luciole', coco: 'notes', rapunzel: 'poele',
 };
 
-/** Unités dont la compétence se déclenche au début de chaque vague. */
+/** Début de vague : remise à zéro des compétences « une fois par vague ». Renvoie le mana gagné. */
 export function onWaveStart(ctx: Ctx, player: number): number {
   const p = ctx.st.players[player]!;
-  let mana = 0;
   for (let i = 0; i < GRID_SIZE; i++) {
     const u = p.grid[i];
     if (!u) continue;
     u.counters.avalanche = 0;
     u.counters.restores = 0;
-    if (effectiveId(u) === 'tiana') {
-      const prm = unitParams(ctx, player, 'tiana');
-      let m = (prm.waveMana ?? 10) + (prm.manaPerRank ?? 5) * (u.rank - 1);
-      if (ctx.st.pendingBoss && prm.bossWaveManaFactor) m *= prm.bossWaveManaFactor;
-      mana += m;
-      emit(ctx, { type: 'ability', player: p.id, slot: i, unit: 'tiana', name: 'Restaurant', targets: [] });
-    }
   }
-  return mana;
+  return 0;
 }
 
 export { UNITS };

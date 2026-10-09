@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { bossWaveKind, createEngine } from '../../src/engine';
 import { debugPlace } from '../../src/engine/debug';
 import { ROTATING_BOSSES } from '../../src/data/bosses';
+import { earlyHpMul, waveHp } from '../../src/data/enemies';
 import type { BossId } from '../../src/data/types';
 import type { Engine, EngineEvent, GameConfig } from '../../src/engine/types';
 import { MARVEL, ofType, setup, simState, solo, step } from './helpers';
@@ -26,16 +27,18 @@ function reachWave(e: Engine, w: number): EngineEvent[] {
 }
 
 describe('vagues', () => {
-  it('durent 30 s et les PV suivent 100 × 1,18^(vague-1)', () => {
+  it('durent 30 s et les PV suivent 100 × 1,18^(vague-1), allégés au début (×0,7 en vague 1 → ×1 en vague 12)', () => {
     const e = solo();
     expect(e.state.wave).toBe(1);
     step(e, 1);
-    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(100);
+    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(70);
+    expect(earlyHpMul(12)).toBe(1);
+    expect(waveHp(20)).toBeCloseTo(100 * Math.pow(1.18, 19));
     const ev = stepKilling(e, 20 * 30);
     expect(ofType(ev, 'waveStart').map((w) => w.wave)).toEqual([2]);
     step(e, 1);
     const normal = e.state.enemies.find((x) => x.kind === 'normal');
-    expect(normal!.maxHp).toBeCloseTo(118);
+    expect(normal!.maxHp).toBeCloseTo(118 * earlyHpMul(2));
   });
 
   it('les ennemis restants ne disparaissent pas à la fin de la vague', () => {
@@ -64,7 +67,7 @@ describe('vagues', () => {
     const st = simState(e);
     const boss = st.enemies.find((x) => x.uid === mini[0]!.enemy)!;
     expect(boss.giant).toBe(true);
-    expect(boss.maxHp).toBeCloseTo(100 * Math.pow(1.18, 4) * 12);
+    expect(boss.maxHp).toBeCloseTo(waveHp(5) * 12);
     expect(boss.minionOf).toBe(st.nextBigBoss);
     expect(e.state.phase).toBe('boss');
     for (const x of st.enemies) if (x !== boss) x.hp = 0;
@@ -129,7 +132,7 @@ describe('vagues', () => {
     const b = ofType(ev, 'bossSpawn')[0]!;
     expect(b.boss).toBe('thanos');
     const boss = simState(e).enemies.find((x) => x.uid === b.enemy)!;
-    expect(boss.maxHp).toBeCloseTo(100 * Math.pow(1.18, 2) * 25 * 2);
+    expect(boss.maxHp).toBeCloseTo(waveHp(3) * 25 * 2);
     // Niveau gagné quand le boss est tué.
     const end = stepKilling(e, 3);
     expect(ofType(end, 'gameOver')[0]).toMatchObject({ outcome: 'victoire', wave: 3 });
@@ -142,7 +145,7 @@ describe('vagues', () => {
     expect(m.boss).toBe('bouffon');
     const boss = simState(e).enemies.find((x) => x.uid === m.enemy)!;
     expect(boss).toMatchObject({ giant: true, kind: 'sbire', minionOf: 'bouffon' });
-    expect(boss.maxHp).toBeCloseTo(118 * 8);
+    expect(boss.maxHp).toBeCloseTo(waveHp(2) * 8);
     boss.speed = 0;
     for (const x of simState(e).enemies) if (x !== boss) x.hp = 0;
     const during = step(e, 20 * 20);
@@ -184,14 +187,16 @@ describe('vagues', () => {
     expect(ofType(ev2, 'milestone').map((m) => m.wave)).toEqual([10, 20]);
   });
 
-  it('Tiana donne du mana au début de chaque vague', () => {
-    const e = solo(['tiana', 'merida', 'nemo', 'pocahontas', 'foxhound']);
-    debugPlace(e, 0, 0, 'tiana', 3);
-    const p = e.state.players[0]!;
-    const before = p.mana;
-    stepKilling(e, 20 * 30);
-    const killMana = 0;
-    expect(p.mana - before - killMana).toBeGreaterThanOrEqual(20);
+  it('Tiana ne donne plus de mana en début de vague (mana par élimination, voir archetypes.test.ts)', () => {
+    const gain = (withTiana: boolean) => {
+      const e = solo(['tiana', 'merida', 'nemo', 'pocahontas', 'foxhound']);
+      if (withTiana) debugPlace(e, 0, 0, 'tiana', 3);
+      const p = e.state.players[0]!;
+      const before = p.mana;
+      stepKilling(e, 20 * 30); // les ennemis disparaissent sans élimination créditée
+      return p.mana - before;
+    };
+    expect(gain(true)).toBe(gain(false));
   });
 
   it('rotation reproductible avec la même graine', () => {

@@ -11,14 +11,18 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
-    id: '2026-10-10d5',
-    title: 'Encyclopédie et mode portrait',
+    id: '2026-10-10e',
+    title: 'Nouvelles stratégies et équilibrage',
     date: '10 octobre 2026',
     items: [
-      'Nouvelle Encyclopédie depuis l’accueil : tous les héros, classés par extension, type, rareté ou éveil, avec recherche et tri.',
-      'Touche un héros pour voir sa fiche complète : compétence, portée, dégâts, talents, passifs d’éveil et équipes.',
-      'Nouvel onglet Méchants : les pouvoirs de chaque boss, leurs sbires, leurs lieutenants et les Pierres de Thanos.',
-      'Le jeu reste en mode portrait : téléphone couché, un écran invite à le redresser.',
+      'Black Widow se sacrifie (mana selon son rang quand elle fusionne ou tombe) ; Tiana rapporte du mana sur chaque ennemi qu’elle a touché.',
+      'Glisse Loki sur un allié de même rang : il devient sa copie (−25 % de dégâts). Trois Loki alignés se renforcent et frappent en zone.',
+      'Glisse Coco sur un allié de même rang : il gagne un rang. Glisse Vanellope : elle échange sa place et booste ses nouveaux voisins.',
+      'Venom grandit sans limite (de plus en plus lentement) et garde la moitié de sa force en fusion.',
+      'Nouveau bouton « Mana + » : jusqu’à +100 % de mana par élimination et par vague.',
+      'Améliorer un héros donne maintenant +15 % de dégâts et +6 % de cadence par niveau, affichés sur sa carte.',
+      'Battre un lieutenant ou un boss rapporte une grosse réserve de mana.',
+      'Début de partie plus facile : 150 de mana au départ et premières vagues moins résistantes.',
     ],
   },
   {

@@ -6,6 +6,9 @@
 // - les noms reprennent ceux visés par les talents (src/data/talents.ts) : un talent `xAdd`
 //   ajoute à `x`, un talent `xMul` multiplie `x`, une clé sans suffixe est une valeur directe ;
 // - fractions : 0.1 = 10 %, durées en secondes, distances en cases du chemin.
+// - archétypes de stratégie génériques (src/engine/archetypes.ts, docs/roadmap.md) : `sacrificeMana`,
+//   `copyDamageMul`, `promoteAlly`, `growthPerSecond`/`growthPerKill`/`growthKeepOnMerge`,
+//   `manaPerKill`, `auraAttackSpeed`, `swapAlly`, `formationDamagePerAlly`… ; une extension n'a qu'à poser ces clés sur ses héros.
 
 import type { UnitDef, UnitId } from './types';
 
@@ -61,8 +64,8 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'premier', damage: 128, attackInterval: 1.0, range: 1.6,
     ability: {
       name: 'Dévorer',
-      description: 'Exécute un ennemi sous 15 % de PV (sauf boss). +2 % de dégâts par élimination (max +40 %).',
-      params: { executeThreshold: 0.15, killStack: 0.02, killStackMax: 0.4 },
+      description: 'Exécute un ennemi sous 15 % de PV (sauf boss). Croissance sans plafond, qui ralentit avec le temps : ses dégâts grandissent tant qu’il reste sur le plateau et à chaque élimination (≈ +20 % après 2 min, +100 % vers la vague 30, +200 % vers la vague 60). Fusionné, il transmet la moitié de son bonus à la nouvelle unité.',
+      params: { executeThreshold: 0.15, growthPerSecond: 0.005, growthPerKill: 0.02, growthScale: 0.28, growthExponent: 0.75, growthKeepOnMerge: 0.5 },
     },
   },
   {
@@ -79,7 +82,7 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'premier', damage: 41, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Leader',
-      description: 'Le bouclier rebondit sur 3 ennemis. Aura : +15 % de vitesse d’attaque aux unités adjacentes.',
+      description: 'Le bouclier rebondit sur 3 ennemis. Boost de vitesse : +15 % de vitesse d’attaque aux unités adjacentes.',
       params: { bounces: 3, auraAttackSpeed: 0.15 },
     },
   },
@@ -88,8 +91,8 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'aleatoire', damage: 31, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Illusion',
-      description: 'Toutes les 15 s, se transforme 10 s en une autre unité du deck (même rang). 10 % de chance de faire reculer l’ennemi touché pendant 2 s.',
-      params: { abilityCooldown: 15, transformDuration: 10, knockbackChance: 0.1, knockbackDuration: 2 },
+      description: 'Copieur : glisse Loki sur une alliée de même rang (autre héros) ; il devient sa copie, avec sa compétence, à −25 % de dégâts. Formation : +15 % de dégâts par autre Loki aligné à côté de lui (rangée ou colonne, +30 % au plus) ; à 3 alignés, ses dagues touchent aussi les ennemis autour de la cible (40 %). 10 % de chance de faire reculer l’ennemi touché pendant 2 s.',
+      params: { copyDamageMul: 0.75, formationDamagePerAlly: 0.15, formationMax: 3, formationSplashAt: 3, formationSplash: 0.4, knockbackChance: 0.1, knockbackDuration: 2 },
     },
   },
   {
@@ -124,8 +127,8 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'premier', damage: 24, attackInterval: 0.5, range: 3.4,
     ability: {
       name: 'Morsure de la veuve',
-      description: 'Un coup sur 5 paralyse 1 s. Dégâts ×2 contre les boss.',
-      params: { paralyzeEvery: 5, paralyzeDuration: 1, bossMul: 2 },
+      description: 'Un coup sur 5 paralyse 1 s. Sacrifice : fusionnée ou détruite, elle rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190).',
+      params: { paralyzeEvery: 5, paralyzeDuration: 1, sacrificeMana: 1 },
     },
   },
   {
@@ -162,7 +165,7 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'aleatoire', damage: 17, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Couleurs du vent',
-      description: '+10 % de vitesse d’attaque aux unités adjacentes (+5 % par rang). Meeko : 5 % de chance de +5 de mana par élimination.',
+      description: 'Boost de vitesse : +10 % de vitesse d’attaque aux unités adjacentes (+5 % par rang). Meeko : 5 % de chance de +5 de mana par élimination.',
       params: { auraAttackSpeed: 0.1, auraPerRank: 0.05, meekoChance: 0.05, meekoMana: 5 },
     },
   },
@@ -207,8 +210,8 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'aleatoire', damage: 11, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Restaurant',
-      description: '+10 de mana au début de chaque vague (+5 par rang). Toutes les 12 s, la langue tire l’ennemi de tête 1 case en arrière.',
-      params: { waveMana: 10, manaPerRank: 5, abilityCooldown: 12, pull: 1 },
+      description: 'Chaque ennemi touché par Tiana rapporte du mana en plus quand il est éliminé : +1 au rang 1, jusqu’à +8 au rang 7. Toutes les 12 s, la langue tire l’ennemi de tête 1 case en arrière.',
+      params: { manaPerKill: 1, abilityCooldown: 12, pull: 1 },
     },
   },
   {
@@ -225,8 +228,8 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'aleatoire', damage: 17, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Remember Me',
-      description: 'Une fois par vague, restaure une unité détruite ou rétrogradée par un boss. +5 % de dégâts aux unités adjacentes.',
-      params: { restoreUses: 1, auraDamage: 0.05 },
+      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (autre héros) ; Coco disparaît et l’alliée gagne 1 rang. Une fois par vague, restaure une unité détruite ou rétrogradée par un boss. +5 % de dégâts aux unités adjacentes.',
+      params: { restoreUses: 1, auraDamage: 0.05, promoteAlly: 1 },
     },
   },
   {
@@ -261,8 +264,8 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'premier', damage: 165, attackInterval: 1.4, range: 1.6,
     ability: {
       name: 'Glitch',
-      description: 'Ralph détruit les boucliers et fait +100 % contre les blindés. Toutes les 12 s, Vanellope se téléporte sur une autre case et donne +20 % de cadence à ses voisines pendant 5 s.',
-      params: { armoredMul: 2, abilityCooldown: 12, boost: 0.2, boostDuration: 5 },
+      description: 'Ralph détruit les boucliers et fait +100 % contre les blindés. Échangeur : glisse-les sur une alliée de même rang (autre héros), elles échangent leurs cases, sans limite ; Vanellope donne alors +20 % de cadence à ses nouvelles voisines pendant 5 s.',
+      params: { armoredMul: 2, swapAlly: 1, boost: 0.2, boostDuration: 5 },
     },
   },
 ];

@@ -7,10 +7,11 @@ import type { Targeting, UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { GRID_COLS, GRID_ROWS, type LaneId } from './types';
 import {
-  DT, EPS, LEVEL_DAMAGE, NO_TEAM, POWERUP_DAMAGE, emit, pick, rand,
+  DT, EPS, LEVEL_DAMAGE, MANA_UPGRADE_BONUS, NO_TEAM, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, emit, pick, rand,
   type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
 } from './internal';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitParams } from './talents';
+import { bossReward, formationBonus, growOnKill, growthBonus, tagForMana } from './archetypes';
 
 // ───────────── Ennemis du chemin ─────────────
 // Solo : une branche 'a' jusqu'au château. Coop : deux branches 'a' et 'b' qui se rejoignent
@@ -150,7 +151,7 @@ export interface HitOpts {
   armorPierce?: number;
   /** Dégâts sur la durée : ignorent boucliers et armure. */
   dot?: boolean;
-  /** Unité à l'origine du coup (Venom compte ses éliminations). */
+  /** Unité à l'origine du coup (archétype Croissance : elle compte ses éliminations). */
   unit?: SimUnit;
 }
 
@@ -191,9 +192,23 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
     const prm = unitParams(ctx, player, 'pocahontas');
     if (rand(ctx) < (prm.meekoChance ?? 0)) mana += prm.meekoMana ?? 0;
   }
-  if (unit && effectiveId(unit) === 'venom') unit.counters.kills = (unit.counters.kills ?? 0) + 1;
+  if (unit) growOnKill(ctx, player, unit);
+  // Mana par élimination (Tiana) : versé au joueur de l'unité qui a touché l'ennemi.
+  const tag = e.x.manaTag ?? 0;
+  if (tag > 0) {
+    const by = e.x.manaTagBy ?? player;
+    if (by === player || !ctx.st.players[by]) mana += tag;
+    else ctx.st.players[by]!.mana += tag;
+  }
+  mana = Math.round(mana * manaYield(p));
   p.mana += mana;
   emit(ctx, { type: 'kill', enemy: e.uid, player: p.id, mana });
+  bossReward(ctx, e);
+}
+
+/** Multiplicateur du rendement du mana (« Mana + ») d'un joueur. */
+export function manaYield(p: { manaLevel?: number }): number {
+  return 1 + MANA_UPGRADE_BONUS * (p.manaLevel ?? 0);
 }
 
 // ───────────── Unités ─────────────
@@ -287,7 +302,8 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   if ((u.counters.hasteFor ?? 0) > EPS) bonus += u.counters.haste ?? 0;
   if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
   let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id))
-    * (1 + RANK_ATTACK_SPEED * (u.rank - 1));
+    * (1 + RANK_ATTACK_SPEED * (u.rank - 1))
+    * (1 + POWERUP_ATTACK_SPEED * Math.max(0, (ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
   if (id === 'maui' && !u.counters.form) mul *= prm.hawkSpeedMul ?? 1;
   if (id === 'cmarvel' && (u.counters.binaryFor ?? 0) > EPS) mul *= prm.binaryAttackSpeedMul ?? 1;
   return mul;
@@ -309,7 +325,10 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
   dmg *= prm.damageMul ?? 1;
   dmg *= 1 + AWAKENING_DAMAGE * awakeningOf(ctx, player, id);
-  if (u.status.transformedInto) dmg *= 1 + (prm.transformDamageBonus ?? 0);
+  // Archétypes : croissance sans plafond (Venom, ou héritée d'une fusion) et malus de la copie (Loki).
+  dmg *= 1 + growthBonus(prm, u.counters.growth ?? 0);
+  dmg *= u.status.copyMul ?? 1;
+  dmg *= 1 + formationBonus(ctx, player, slot, u);
   return dmg;
 }
 
@@ -337,6 +356,7 @@ export function unitHit(
   let dmg = amount;
   let crit = !!opts.crit;
   if (e.bossId) dmg *= prm.bossDamageMul ?? 1;
+  tagForMana(ctx, player, u, e);
   const team = teamFor(ctx, player, id);
   if (!crit && team.critChance > 0 && rand(ctx) < team.critChance) {
     crit = true;

@@ -92,7 +92,7 @@ describe('compétences des 28 unités', () => {
     expect(boss.distance).toBe(25);
   });
 
-  it('Venom : exécute sous 15 % de PV, +2 % par élimination', () => {
+  it('Venom : exécute sous 15 % de PV, croissance par élimination', () => {
     const e = arena('venom');
     const t = debugSpawn(e, { hp: D('venom') * 1.1 });
     const ev = step(e, 1);
@@ -100,7 +100,8 @@ describe('compétences des 28 unités', () => {
     expect(ofType(ev, 'kill')[0]!.enemy).toBe(t.uid);
     debugSpawn(e, { hp: BIG });
     const next = ofType(step(e, 20), 'hit')[0]!;
-    expect(next.damage).toBeCloseTo(D('venom') * 1.02);
+    // Points : 0,02 (élimination) + 0,005 par seconde (≈ 1,05 s) ; bonus = 0,28 × points^0,75.
+    expect(next.damage).toBeCloseTo(D('venom') * (1 + 0.28 * Math.pow(0.02 + 0.005 * 1.05, 0.75)), 0);
   });
 
   it('Captain Marvel : mode binaire après 10 attaques, dégâts ×2 pendant 5 s', () => {
@@ -128,18 +129,14 @@ describe('compétences des 28 unités', () => {
     expect(r).toBeLessThan(1.2);
   });
 
-  it('Loki : se transforme 10 s toutes les 15 s, peut faire reculer l’ennemi', () => {
+  it('Loki : ne se transforme plus seul (copieur, voir archetypes.test.ts), peut faire reculer l’ennemi', () => {
     const e = arena('loki');
     const t = debugSpawn(e, { hp: BIG, distance: 10 });
     const loki = e.state.players[0]!.grid[7]!;
-    const ev = step(e, 20 * 15 + 1);
-    expect(ofType(ev, 'ability').some((a) => a.name === 'Illusion' && a.targets.length === 0)).toBe(true);
-    expect(loki.status.transformedInto).toBeDefined();
-    expect(deckWith('loki')).toContain(loki.status.transformedInto);
-    step(e, 20 * 10);
+    const ev = step(e, 20 * 60);
+    expect(loki.unit).toBe('loki');
     expect(loki.status.transformedInto).toBeUndefined();
-    const more = step(e, 20 * 60);
-    expect([...ev, ...more].some((a) => a.type === 'ability' && a.name === 'Illusion' && a.targets.includes(t.uid))).toBe(true);
+    expect(ofType(ev, 'ability').some((a) => a.name === 'Illusion' && a.targets.includes(t.uid))).toBe(true);
   });
 
   it('Soldat de l’hiver : une attaque sur 4 critique ×3 et étourdit 0,5 s', () => {
@@ -172,11 +169,11 @@ describe('compétences des 28 unités', () => {
     expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('falcon') * 1.25);
   });
 
-  it('Black Widow : ×2 contre les boss, un coup sur 5 paralyse 1 s', () => {
+  it('Black Widow : plus de bonus contre les boss, un coup sur 5 paralyse 1 s', () => {
     const e = arena('widow');
     const boss = debugSpawn(e, { hp: BIG, bossId: 'ursula', distance: 20 });
     boss.x.powerIn = 1e9;
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('widow') * 2);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('widow'));
     const x = arena('widow');
     const t = debugSpawn(x, { hp: BIG });
     const ev = step(x, 20 * 2 + 1);
@@ -333,7 +330,7 @@ describe('compétences des 28 unités', () => {
     expect((ev[idx + 1] as { damage: number }).damage).toBeCloseTo(D('cmarvel') * 1.15);
   });
 
-  it('Vanellope & Ralph : brise les boucliers, ×2 contre les blindés, téléportation et cadence aux voisines', () => {
+  it('Vanellope & Ralph : brise les boucliers, ×2 contre les blindés, échange (archétype) et cadence aux voisines', () => {
     const e = arena('vanralph');
     const s = debugSpawn(e, { hp: BIG, shieldHits: 5, distance: 10 });
     expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('vanralph'));
@@ -341,8 +338,12 @@ describe('compétences des 28 unités', () => {
     const x = arena('vanralph');
     debugSpawn(x, { hp: BIG, armor: 0.3 });
     expect(ofType(step(x, 1), 'hit')[0]!.damage).toBeCloseTo(D('vanralph') * 2 * 0.7);
-    for (let i = 0; i < 15; i++) if (i !== 7 && i !== 0) debugPlace(x, 0, i, 'cmarvel');
-    const ev = step(x, 240);
+    for (let i = 0; i < 15; i++) if (i !== 7) debugPlace(x, 0, i, 'cmarvel');
+    expect(ofType(step(x, 240), 'ability').some((a) => a.name === 'Glitch')).toBe(false); // plus de téléportation seule
+    x.apply({ type: 'swap', player: 'p1', from: 7, to: 0 });
+    const ev = step(x, 1);
+    expect(ofType(ev, 'swap')[0]).toMatchObject({ from: 7, to: 0, unit: 'vanralph', rank: 1 });
+    expect(x.state.players[0]!.grid[7]!.unit).toBe('cmarvel');
     const glitch = ofType(ev, 'ability').find((a) => a.name === 'Glitch')!;
     expect(glitch.slot).toBe(0);
     expect(glitch.targets).toEqual([7]);

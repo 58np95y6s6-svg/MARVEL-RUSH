@@ -9,6 +9,7 @@ import {
 } from './internal';
 import { effectiveId, unitParams } from './combat';
 import { initUnitCounters } from './abilities';
+import { sacrifice } from './archetypes';
 
 /** Joueur visé par le pouvoir d'un boss : au hasard en Coop (les boss arrivent par le tronc). */
 function targetPlayer(ctx: Ctx): number {
@@ -123,6 +124,7 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
       for (const s of slots) {
         const u = p.grid[s]!;
         lost.push({ slot: s, uid: u.uid, unit: u.unit, rank: u.rank, destroyed: true });
+        sacrifice(ctx, player, s, u);
         p.grid[s] = null;
       }
       powerEvent(ctx, id, player, slots, def.power.name);
@@ -155,6 +157,8 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
             u.unit = into;
             delete u.status.transformedInto;
             delete u.status.transformFor;
+            delete u.status.copyMul;
+            delete u.status.copyOf;
             initUnitCounters(ctx, player, u);
           }
           break;

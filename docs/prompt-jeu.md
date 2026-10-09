@@ -136,10 +136,12 @@ Règles de travail :
 - **3 vies** par joueur. Un ennemi normal qui atteint la fin du chemin retire 1 vie. Un boss qui l'atteint retire toutes les vies.
 
 ### 4.2 Mana, invocation, fusion, amélioration
-- La partie commence avec **100 de mana**. Chaque ennemi tué rapporte du mana : 10 pour un ennemi normal, 30 pour un gros, 100 pour un boss.
+- La partie commence avec **150 de mana** (début de partie allégé, octobre 2026). Chaque ennemi tué rapporte du mana : 10 pour un ennemi normal, 30 pour un gros, 100 pour un boss.
+- **Récompense de boss** : vaincre un lieutenant rapporte en plus **2,5 ×** le coût d'invocation actuel du joueur, un gros boss **5,5 ×**, Thanos **8 ×** (× rendement du mana ; en Coop, chaque joueur reçoit la récompense entière). Une grande gerbe « +X » s'affiche.
+- **Mana +** (rendement du mana) : bouton du bas, 5 niveaux à **50 / 100 / 200 / 400 / 800** de mana ; chaque niveau donne **+20 %** de mana par élimination et par vague (+100 % au maximum). Chaque joueur a le sien en Coop.
 - **Invoquer** pose une unité **aléatoire de ton deck**, au **rang 1**, sur une **case vide aléatoire**. Le coût commence à **10** et augmente de **10** à chaque invocation.
 - **Fusionner** : faire glisser une unité sur une unité **identique de même rang** donne une unité **aléatoire du deck** au **rang +1**, sur la case de destination. Le rang maximal est **7**, affiché par des pastilles (points) sur l'unité.
-- **Améliorer en partie** : chaque unité du deck a un bouton d'amélioration (niveaux 1 à 5, coûts 100 / 200 / 400 / 700). Chaque niveau donne **+15 % de dégâts** à toutes les unités de ce type sur le plateau.
+- **Améliorer en partie** : chaque unité du deck a un bouton d'amélioration (niveaux 1 à 5, coûts 100 / 200 / 400 / 700). Chaque niveau donne **+15 % de dégâts et +6 % de vitesse d'attaque** à toutes les unités de ce type sur le plateau (niveau 5 : +60 % et +24 %). La carte affiche le niveau et « +X % » ; la fiche du héros annonce l'effet du niveau suivant ; un libellé « Hulk niv. 3 : +30 % de dégâts, +12 % de cadence » s'affiche à l'achat.
 - **Effet du rang** : chaque rang au-dessus de 1 donne **+51 % de dégâts** et **+12 % de vitesse d'attaque** (rang 7 : dégâts ×4,06 et cadence ×1,72, soit un DPS ≈ 7 fois celui du rang 1) : plus le niveau de fusion est élevé, plus le héros tire vite. Certaines compétences progressent aussi avec le rang (voir le tableau).
 
 ### 4.3 Vagues
@@ -149,7 +151,7 @@ Règles de travail :
   - **un gros boss toutes les 10 vagues** (vagues 10, 20, 30…) ;
   - **Thanos** à la vague 50 en mode infini, puis toutes les 50 vagues, et au dernier niveau de la campagne.
 - Pendant un boss, les apparitions s'arrêtent ; la vague suivante commence quand le boss est vaincu.
-- PV des ennemis : `100 × 1,18^(vague-1)`. PV d'un petit boss : `12 × PV d'un ennemi normal`. PV d'un gros boss : `25 ×`.
+- PV des ennemis : `100 × 1,18^(vague-1)`, allégés au début : **×0,7 en vague 1**, remontant linéairement jusqu'à ×1 en vague 12 (`WAVE_RULES.earlyHpStart` / `earlyHpUntil`, lieutenant de la vague 5 et premier gros boss compris). PV d'un petit boss : `12 × PV d'un ennemi normal`. PV d'un gros boss : `25 ×`.
 - Types d'ennemis :
   - **normal** ;
   - **rapide** : vitesse ×2, PV ×0,5 ;
@@ -205,31 +207,46 @@ Ciblage :
 | hulk | Hulk | Marvel | Légendaire | premier | 60 | 1,6 | Éclaboussure de 40 % autour de la cible ; Rage +5 % de dégâts par coup (max +50 %) ; tous les 8 coups, Smash étourdit tous les ennemis proches 1 s |
 | thor | Thor | Marvel | Légendaire | aléatoire | 25 | 1,0 | Éclair en chaîne sur 3 ennemis, +1 rebond tous les 2 rangs (max 5), −20 % de dégâts par rebond |
 | strange | Doctor Strange | Marvel | Épique | premier | 15 | 1,0 | Portail toutes les 12 s : renvoie l'ennemi de tête au début du chemin (sauf boss) |
-| venom | Venom | Marvel | Épique | premier | 35 | 1,0 | Exécute un ennemi sous 15 % de PV (sauf boss) ; +2 % de dégâts par élimination (max +40 %) |
+| venom | Venom | Marvel | Épique | premier | 35 | 1,0 | Exécute un ennemi sous 15 % de PV (sauf boss) ; **Croissance** sans plafond mais à rendements décroissants : points +0,5/s sur le plateau et +0,02 par élimination, bonus = 0,28 × points^0,75 (≈ +20 % après 2 min, +100 % vers la vague 30, +200 % vers la vague 60) ; en fusion, l'unité obtenue garde 50 % du bonus |
 | cmarvel | Captain Marvel | Marvel | Rare | fort | 25 | 0,9 | Après 10 attaques, mode binaire : dégâts ×2 pendant 5 s |
-| cap | Captain America | Marvel | Légendaire | premier | 20 | 1,0 | Bouclier qui rebondit sur 3 ennemis ; aura de +15 % de vitesse d'attaque aux unités adjacentes |
-| loki | Loki | Marvel | Épique | aléatoire | 18 | 0,8 | Toutes les 15 s, se transforme en une autre unité du deck pendant 10 s (même rang) ; 10 % de chance de faire reculer l'ennemi touché pendant 2 s |
+| cap | Captain America | Marvel | Légendaire | premier | 20 | 1,0 | Bouclier qui rebondit sur 3 ennemis ; **Boost de vitesse** : +15 % de vitesse d'attaque aux unités adjacentes |
+| loki | Loki | Marvel | Épique | aléatoire | 18 | 0,8 | **Copieur** : glissé sur une alliée de même rang (autre héros), devient sa copie (compétence complète, −25 % de dégâts), sans limite (Loki disparaît : il est devenu la copie) ; **Formation** : +15 % de dégâts par autre Loki aligné et contigu (rangée ou colonne, compté jusqu'à 3, soit +30 %), et à 3 alignés ses dagues éclaboussent à 40 % autour de la cible ; 10 % de chance de faire reculer l'ennemi touché pendant 2 s |
 | bucky | Soldat de l'hiver | Marvel | Épique | fort | 30 | 1,2 | Une attaque sur 4 est un critique ×3 qui étourdit 0,5 s |
 | hawkeye | Œil de faucon | Marvel | Rare | premier | 18 | 0,7 | Alterne les flèches : explosive (éclaboussure 50 %), glace (ralentit de 25 % pendant 2 s), électrique (chaîne sur 2 ennemis) |
 | falcon | Falcon | Marvel | Rare | fort | 15 | 0,6 | Redwing marque l'ennemi le plus fort toutes les 6 s : +25 % de dégâts subis pendant 4 s |
-| widow | Black Widow | Marvel | Épique | premier | 14 | 0,5 | Un coup sur 5 paralyse 1 s ; dégâts ×2 contre les boss |
+| widow | Black Widow | Marvel | Épique | premier | 14 | 0,5 | Un coup sur 5 paralyse 1 s ; **Sacrifice** : fusionnée ou détruite, rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190) |
 | shangchi | Shang-Chi | Marvel | Épique | aléatoire | 12 | 0,4 | Tous les 10 coups, 10 anneaux frappent 10 ennemis aléatoires à 100 % |
 | moana | Vaïana & Pua | Disney | Épique | premier | 15 | 1,0 | Vague toutes les 10 s : repousse de 1,5 case les ennemis de tête (sauf boss) |
 | maui | Maui | Disney | Légendaire | premier | 40 | 1,2 | Alterne toutes les 8 s : faucon (cadence ×2, dégâts ×0,5) ou requin (dégâts ×2,5 avec éclaboussure) |
-| pocahontas | Pocahontas & Meeko | Disney | Rare | aléatoire | 10 | 0,8 | +10 % de vitesse d'attaque aux unités adjacentes (+5 % par rang) ; Meeko : 5 % de chance de +5 de mana par élimination |
+| pocahontas | Pocahontas & Meeko | Disney | Rare | aléatoire | 10 | 0,8 | **Boost de vitesse** : +10 % de vitesse d'attaque aux unités adjacentes (+5 % par rang) ; Meeko : 5 % de chance de +5 de mana par élimination |
 | mulan | Mulan & Mushu | Disney | Légendaire | premier | 30 | 1,0 | Brûlure : 20 % des dégâts par seconde pendant 3 s ; une fois par vague, Avalanche : 300 % de dégâts à tous les ennemis |
 | merida | Rebelle | Disney | Rare | premier | 22 | 0,9 | 100 % de critiques ×2 sur l'ennemi le plus avancé |
 | ariel | Ariel & Sébastien | Disney | Épique | premier | 10 | 0,9 | Chant toutes les 8 s : arrête 3 ennemis pendant 1,5 s ; Sébastien : saignement de 5 % par seconde |
 | foxhound | Rox & Rouky | Disney | Rare | premier | 14 | 0,6 | Double attaque ; le second coup fait +50 % si le premier a touché la même cible |
-| tiana | Tiana & Naveen | Disney | Rare | aléatoire | 8 | 1,0 | +10 de mana au début de chaque vague (+5 par rang) ; toutes les 12 s, la langue tire un ennemi 1 case en arrière |
+| tiana | Tiana & Naveen | Disney | Rare | aléatoire | 8 | 1,0 | **Mana par élimination** : chaque ennemi qu'elle a touché rapporte +1 à +8 de mana (selon son rang) quand il tombe ; toutes les 12 s, la langue tire un ennemi 1 case en arrière |
 | nemo | Nemo & Dory | Disney | Rare | aléatoire | 14 | 0,7 | Effet aléatoire à chaque tir : ralentissement, dégâts ×2, poison, ou +20 % de cadence à une unité alliée au hasard |
-| coco | Coco (Miguel) | Disney | Épique | aléatoire | 10 | 1,0 | Remember Me : une fois par vague, restaure une unité détruite ou rétrogradée par un boss ; +5 % de dégâts aux unités adjacentes |
+| coco | Coco (Miguel) | Disney | Épique | aléatoire | 10 | 1,0 | **Booster de fusion** : glissée sur une alliée de même rang (autre héros, rang 6 au plus), disparaît et l'alliée gagne 1 rang en gardant son identité ; Remember Me : une fois par vague, restaure une unité détruite ou rétrogradée par un boss ; +5 % de dégâts aux unités adjacentes |
 | nickjudy | Nick & Judy | Disney | Épique | premier | 16 | 0,8 | Judy arrête l'ennemi le plus fort (sauf boss) pendant 2 s toutes les 6 s ; les coups de Nick réduisent l'armure de 20 % |
 | buzzwoody | Buzz & Woody | Disney | Légendaire | premier | 22 | 0,8 | Le laser transperce toute la ligne ; toutes les 10 s, le lasso ramène l'ennemi de tête 2 cases en arrière |
 | rapunzel | Raiponce & Pascal | Disney | Épique | aléatoire | 12 | 1,0 | Retire les effets de boss (sommeil, hypnose, étourdissement) des unités adjacentes et leur donne +15 % de dégâts ; Pascal la rend insensible aux pouvoirs des boss |
-| vanralph | Vanellope & Ralph | Disney | Légendaire | premier | 45 | 1,4 | Ralph détruit les boucliers et fait +100 % contre les blindés ; toutes les 12 s, Vanellope se téléporte sur une autre case et donne +20 % de cadence à ses voisines pendant 5 s |
+| vanralph | Vanellope & Ralph | Disney | Légendaire | premier | 45 | 1,4 | Ralph détruit les boucliers et fait +100 % contre les blindés ; **Échangeur** : glissés sur une alliée de même rang (autre héros), ils échangent leurs cases, sans limite, et Vanellope donne +20 % de cadence à ses nouvelles voisines pendant 5 s |
 
 Mets ces données dans `src/data/units.ts`, typées. Les valeurs sont un premier jet : expose-les dans un seul fichier pour les équilibrer facilement.
+
+**Archétypes de stratégie** (docs/roadmap.md) : six mécaniques génériques, pilotées par des clés de `ability.params` lues par `src/engine/archetypes.ts`, pour que chaque extension n'ait qu'à les attribuer à ses héros :
+
+| Archétype | Clés | Version 1 |
+|---|---|---|
+| Sacrifice → mana | `sacrificeMana` (×barème 10/25/45/70/100/140/190 ; une fois par fusion, ou à la destruction par un boss) | Black Widow |
+| Copieur | `copyDamageMul` (0,75) ; commande `copy` | Loki |
+| Booster de fusion | `promoteAlly` ; commande `promote` | Coco |
+| Croissance | `growthPerSecond`, `growthPerKill`, `growthKeepOnMerge` (la nouvelle unité garde 50 % de la plus forte croissance des deux unités fusionnées, quelle que soit son identité ; seule une unité qui a la clé continue de grandir) | Venom |
+| Mana par élimination | `manaPerKill` (×barème 1/2/3/4/5/6/8 selon le rang de l'unité qui a touché l'ennemi, versé à sa mort quel que soit le tueur) | Tiana |
+| Boost de vitesse | `auraAttackSpeed` | Captain America, Pocahontas |
+| Échangeur | `swapAlly` (+ `boost`, `boostDuration` : bonus aux nouvelles voisines) ; commande `swap` | Vanellope & Ralph |
+| Formation | `formationDamagePerAlly` (0,15), `formationMax` (3), `formationSplashAt` (3), `formationSplash` (0,4) | Loki |
+
+Le glisser d'une unité sur une alliée suit `dropAction` (moteur) : même héros et même rang = fusion ; copieur, booster ou échangeur sur un autre héros de même rang = copie, promotion ou échange. Les cases compatibles s'illuminent pendant le glisser et l'appui long (qui montre aussi les partenaires de formation).
 
 ### 4.6 Bonus d'équipe
 Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux. Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).

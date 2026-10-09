@@ -98,6 +98,13 @@
 .mr-mana b { font-size: 70px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; }
 .mr-mana.gain b { animation: mr-gain .25s; }
 @keyframes mr-gain { 50% { transform: scale(1.15); color: #bfe8ff; } }
+/* Mana hors élimination (archétype Sacrifice, copie) : « +X » qui s'envole du compteur. */
+.mr-mana { overflow: visible; }
+.mr-mana-float {
+  position: absolute; left: 96px; top: -10px; font-size: 54px; color: #bfe8ff; pointer-events: none; white-space: nowrap;
+  animation: mr-mana-float 1.2s ease-out forwards;
+}
+@keyframes mr-mana-float { 0% { opacity: 0; transform: translateY(20px) scale(.6); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-90px) scale(1); } }
 
 .mr-summon {
   position: absolute; left: 320px; top: 1176px; width: 360px; height: 168px; padding: 0;
@@ -112,8 +119,40 @@
 .mr-summon .cost svg { width: 34px; height: 40px; }
 .mr-summon.off { background: linear-gradient(#b9b4c8, #8c86a0); box-shadow: 0 12px 0 #1d1733, inset 0 6px 0 rgba(255,255,255,.35); }
 .mr-summon.off .cost { color: #ffd0d0; }
-.mr-extra { position: absolute; right: 40px; top: 1208px; width: 270px; height: 100px; display: flex; align-items: center; justify-content: flex-end; }
-.mr-board-count { font-family: var(--body); font-weight: 900; font-size: 32px; background: rgba(20,14,40,.5); border-radius: 30px; padding: 10px 22px; }
+.mr-extra {
+  position: absolute; right: 30px; top: 1170px; width: 280px; height: 180px; display: flex; flex-direction: column;
+  align-items: flex-end; justify-content: center; gap: 10px;
+}
+/* « Mana + » : rendement du mana (+20 % par niveau, 5 niveaux). */
+.mr-manaup {
+  position: relative; width: 250px; height: 112px; padding: 0 0 0 12px; border-radius: 30px; border: 6px solid var(--ink); color: #fff; cursor: pointer;
+  background: linear-gradient(#7fd2ff, #2f7fd6); box-shadow: 0 9px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.45);
+  display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; align-items: center; justify-content: center; column-gap: 10px;
+}
+.mr-manaup .t { grid-column: 1 / 3; font-size: 40px; line-height: 1; }
+.mr-manaup .lv { font-family: var(--body); font-weight: 900; font-size: 26px; color: #d8f2ff; }
+.mr-manaup .cost { display: flex; align-items: center; gap: 2px; font-size: 32px; }
+.mr-manaup .cost svg { width: 24px; height: 30px; }
+.mr-manaup:active:not(.off) { transform: translateY(7px); box-shadow: 0 2px 0 #1d1733; }
+.mr-manaup.off { filter: saturate(.3) brightness(.8); }
+.mr-manaup.max .cost { color: #ffe27a; }
+.mr-manaup.flash { animation: mr-cardflash .5s; }
+.mr-card .pct {
+  position: absolute; right: 6px; top: 8px; font-family: var(--body); font-weight: 900; font-size: 24px; color: #8dff9a;
+}
+/* Libellé d'amélioration et récompense de boss. */
+.mr-float-label {
+  position: absolute; left: 50%; top: 1110px; transform: translateX(-50%); max-width: 940px; text-align: center;
+  font-size: 36px; color: #8dff9a; pointer-events: none; animation: mr-float-label 1.7s ease-out forwards; z-index: 6;
+}
+@keyframes mr-float-label { 0% { opacity: 0; transform: translate(-50%, 20px); } 12% { opacity: 1; transform: translate(-50%, 0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px); } }
+.mr-boss-mana {
+  position: absolute; left: 0; right: 0; top: 520px; display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 110px; color: #bfe8ff; pointer-events: none; z-index: 6; animation: mr-boss-mana 2.2s ease-out forwards;
+}
+.mr-boss-mana svg { width: 90px; height: 108px; }
+@keyframes mr-boss-mana { 0% { opacity: 0; transform: scale(.3); } 12% { opacity: 1; transform: scale(1.2); } 22% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-80px); } }
+.mr-board-count { font-family: var(--body); font-weight: 900; font-size: 28px; background: rgba(20,14,40,.5); border-radius: 30px; padding: 6px 20px; }
 
 .mr-cards { position: absolute; left: 30px; right: 30px; top: 1372px; height: 200px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .mr-card {
@@ -154,6 +193,9 @@
 .mr-info .meta span { background: #ece6f8; border-radius: 14px; padding: 4px 12px; font-size: 24px; font-weight: 800; }
 @keyframes mr-pop { from { transform: scale(.8); opacity: 0; } }
 .mr-info .meta span.rng { background: #fff0b8; }
+.mr-info .meta span.grow { background: #ffd6dc; }
+.mr-info p.arch { color: #7a3fc8; font-size: 26px; }
+.mr-info p.next { color: #2f8a3c; font-size: 24px; }
 
 /* ---------- zone de touche (appui long) ---------- */
 .mr-range-tag {
