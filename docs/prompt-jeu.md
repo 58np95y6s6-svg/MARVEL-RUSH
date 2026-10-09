@@ -11,7 +11,7 @@ Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Ma
 - les personnages **Marvel** et **Disney** du dépôt, dans le style graphique de ses planches ;
 - un système de **tirages** avec deux packs, **Marvel** et **Disney** ;
 - un **mode Solo central** : une campagne qui fait progresser le compte et débloque des personnages et des talents (§5.1) ;
-- deux modes à deux, **Coop** et **Duel**, pour jouer ensemble quand on le décide ;
+- une **Coop à deux** (vos deux chemins se rejoignent en un seul), en **niveaux à gagner** ou en **mode infini** avec des récompenses par palier, pour jouer ensemble quand on le décide. **Pas de mode Duel** : on ne joue jamais l'un contre l'autre ;
 - **deux profils sauvegardés en ligne** (toi et ta partenaire) : chacun progresse de son côté, et les deux se retrouvent dans une partie commune (§5.4) ;
 - des **maps par univers** et des **arènes de boss** (§7 bis) ;
 - une **PWA** installable, accessible par un **lien secret** (usage privé entre deux personnes) ;
@@ -67,7 +67,7 @@ Les agents travaillent **en parallèle** quand leurs tâches sont indépendantes
 | **Maps et environnements** | Concevoir et dessiner les maps par univers et les arènes de boss (§7 bis) : chemins, décors, animations d'ambiance, transitions | `src/maps/`, `src/art/maps/` | 12 maps, 7 variantes et 6 arènes jouables, avec une page de prévisualisation `/#dev/maps` |
 | **Moteur de jeu** | Simulation pure à pas fixe : plateau, invocation, fusion, mana, ciblage, compétences, vagues, boss, rng | `src/engine/` | Tests Vitest verts sur chaque règle et chaque compétence ; même graine = même partie |
 | **Rendu et animations** | Scène PixiJS, interpolation, animations d'attaque, particules, chiffres de dégâts, tremblements d'écran | `src/render/` | 60 i/s avec 15 unités et 60 ennemis par plateau sur un téléphone moyen |
-| **Réseau multijoueur** | PeerJS, salon, lien d'invitation, hôte qui fait autorité, instantanés, reconnexion | `src/net/` | Coop et Duel jouables entre deux téléphones en 4G et en Wi-Fi ; test de déconnexion et reconnexion |
+| **Réseau multijoueur** | PeerJS, salon, lien d'invitation, hôte qui fait autorité, instantanés, reconnexion | `src/net/` | Coop (niveaux et infini) jouable entre deux téléphones en 4G et en Wi-Fi ; test de déconnexion et reconnexion |
 | **Méta et économie** | Collection, packs Marvel et Disney, taux, garantie, doublons, niveaux, skins, monnaie | `src/meta/` | Test de 100 000 tirages conforme aux taux |
 | **Campagne et progression** | Les 6 chapitres et 60 niveaux, objectifs et étoiles, récompenses, talents (2 options × 3 paliers × 28 unités), niveau de compte, Survie et records | `src/campaign/`, `src/data/talents.ts` | Campagne jouable de bout en bout ; un nouveau profil débloque un personnage en moins de 20 min de jeu |
 | **Backend, profils et sauvegarde** | Supabase : profils, code de récupération, liaison du duo, présence, invitations, sauvegarde local d'abord avec synchronisation, parties en cours, règles RLS | `src/cloud/`, `supabase/` | Deux profils sur deux téléphones gardent chacun leur progression ; une partie Coop arrêtée reprend plus tard ; mode avion puis resynchronisation sans perte |
@@ -134,18 +134,26 @@ Règles de travail :
 - **Effet du rang** : dégâts × rang. Certaines compétences progressent aussi avec le rang (voir le tableau).
 
 ### 4.3 Vagues
-- Une vague dure **30 s** pendant lesquelles des ennemis apparaissent, suivie d'un **boss** à partir de la vague 3, puis toutes les 3 vagues.
-- PV des ennemis : `100 × 1,18^(vague-1)`. PV des boss : `25 × PV d'un ennemi normal`.
+- Une vague dure **30 s**, pendant lesquelles des ennemis apparaissent.
+- **Rythme des boss** (choix du joueur, à respecter partout) :
+  - **un petit boss toutes les 5 vagues** (vagues 5, 15, 25…) ;
+  - **un gros boss toutes les 10 vagues** (vagues 10, 20, 30…) ;
+  - **Thanos** à la vague 50 en mode infini, puis toutes les 50 vagues, et au dernier niveau de la campagne.
+- Pendant un boss, les apparitions s'arrêtent ; la vague suivante commence quand le boss est vaincu.
+- PV des ennemis : `100 × 1,18^(vague-1)`. PV d'un petit boss : `12 × PV d'un ennemi normal`. PV d'un gros boss : `25 ×`.
 - Types d'ennemis :
   - **normal** ;
   - **rapide** : vitesse ×2, PV ×0,5 ;
   - **gros** : vitesse ×0,6, PV ×3 ;
   - **blindé** : armure 30 % ;
   - **bouclier** : absorbe les 5 premiers coups.
-- Les **sbires** du prochain boss arrivent dans la vague qui le précède, avec leurs particularités (voir `game-design.md`).
+- Les **sbires** du prochain gros boss se mêlent aux ennemis des 2 vagues qui le précèdent, avec leurs particularités (voir `game-design.md`).
 
 ### 4.4 Boss
-Six boss en rotation aléatoire. Chacun applique son **pouvoir toutes les 6 s** tant qu'il est en vie :
+
+**Petits boss (toutes les 5 vagues)** : c'est le **lieutenant** du prochain gros boss, un de ses sbires en version géante (taille ×2), avec une version affaiblie du pouvoir de son maître toutes les 10 s. Par exemple, avant Jafar, un cobra géant qui hypnotise 1 unité pendant 2 s. Ils annoncent le gros boss qui suit : « Le maître arrive dans 5 vagues ».
+
+**Gros boss (toutes les 10 vagues)** : six boss en rotation aléatoire, sans répétition avant que les six soient passés. Chacun applique son **pouvoir toutes les 6 s** tant qu'il est en vie :
 
 | Boss | Pouvoir |
 |---|---|
@@ -157,7 +165,7 @@ Six boss en rotation aléatoire. Chacun applique son **pouvoir toutes les 6 s** 
 | Bouffon Vert | Bombes citrouilles : étourdit 3 unités pendant 2 s |
 
 **Thanos, boss final** (hors rotation) :
-- Il arrive au **dernier niveau de la campagne** (chapitre 6, niveau 10) et toutes les **15 vagues** en Survie et en Coop.
+- Il arrive au **dernier niveau de la campagne** (chapitre 6, niveau 10) et à la **vague 50** des modes infinis (puis toutes les 50 vagues).
 - PV ×2 par rapport aux autres boss.
 - **Gant de l'infini** : toutes les 8 s, il utilise le pouvoir d'une Pierre au hasard, annoncé par la couleur de la Pierre :
   - Puissance (violet) : étourdit 3 unités pendant 2 s ;
@@ -281,18 +289,39 @@ Le Solo est le **mode principal** : c'est là que chaque joueur avance à son ry
 - Une partie Solo est **sauvegardée automatiquement à chaque vague**.
 - Si on ferme l'app, on reprend exactement là où on en était, sur n'importe quel appareil connecté au même profil.
 
-### 5.2 Coop à 2 (comme la coop de Rush Royale)
-- **Deux plateaux** : le tien en bas, celui de ton partenaire en haut, de part et d'autre d'un **chemin commun**. Les unités des deux joueurs attaquent les mêmes ennemis.
-- **Vies partagées** (3). Le mana est individuel, et celui des éliminations va au joueur qui a donné le coup final.
-- Les pouvoirs de boss visent un plateau au hasard.
-- Score commun : la vague atteinte.
-- **Échange d'unité** : un bouton « Offrir » envoie une unité de ton plateau sur une case vide du plateau de ton partenaire, une fois par vague.
+### 5.2 Coop à deux : les chemins se rejoignent
 
-### 5.3 Duel à 2 (comme le PvP de Rush Royale)
-- Chaque joueur a **son propre chemin**, avec des vagues identiques (même graine).
-- Chaque joueur a 3 vies. Les boss arrivent aux mêmes vagues pour les deux.
-- Tu vois en haut le plateau de l'adversaire, en miniature et en lecture seule.
-- Le premier à 0 vie perd. Si les deux tiennent jusqu'à la vague 15, c'est la mort subite : les PV des ennemis doublent à chaque vague.
+Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. **Pas de Duel.**
+
+**Le plateau Coop**
+- **Deux plateaux** : le tien en bas, celui de ta partenaire en haut.
+- **Deux chemins qui se rejoignent.** Les ennemis entrent par deux portails, un de chaque côté, et chaque flot longe d'abord le plateau d'un joueur. Les deux chemins **se rejoignent ensuite au centre** en un seul chemin commun qui mène à la porte du château.
+- **Toutes les unités des deux joueurs** peuvent toucher n'importe quel ennemi, sur les deux branches et sur le tronc commun. Il faut donc s'entraider.
+- **Vies partagées** (3). Le mana est individuel, et celui des éliminations va au joueur qui a donné le coup final.
+- Les petits et les gros boss arrivent **par le tronc commun**. Leurs pouvoirs visent un plateau au hasard.
+- **Offrir une unité** : un bouton envoie une unité de ton plateau sur une case vide du plateau de ta partenaire, une fois par vague.
+
+**Coop — Niveaux à gagner**
+- Une **campagne à deux** de 6 chapitres × 10 niveaux, sur les mêmes maps que le Solo, avec des vagues plus nombreuses et plus fortes.
+- Chaque niveau se gagne en tenant un nombre de vagues fixé, avec 1 à 3 étoiles **communes** au duo.
+- Les récompenses vont **à chacun**, sur son propre profil.
+- La progression Coop est **propre au duo** (enregistrée sur les deux profils liés). Un chapitre Coop s'ouvre quand les deux joueurs ont fini le chapitre Solo correspondant.
+
+**Coop — Infini**
+- On tient le plus de vagues possible, avec un petit boss toutes les 5 vagues, un gros toutes les 10 et Thanos à la 50.
+- **Récompenses par palier atteint**, données à chacun à la fin de la partie :
+
+| Palier | Récompense (pour chacun) |
+|---|---|
+| Vague 10 | coffre bronze : 150 éclats, 10 cartes |
+| Vague 20 | coffre argent : 300 éclats, 1 parchemin de talent, 20 cartes |
+| Vague 30 | coffre or : 500 éclats, 2 parchemins, 1 carte Épique garantie |
+| Vague 40 | coffre héroïque : 800 éclats, 3 parchemins, 1 skin au hasard |
+| Vague 50 (Thanos vaincu) | coffre légendaire : 1 500 éclats, 1 Légendaire garanti, cadre de profil « Vainqueur de Thanos » |
+| Ensuite, tous les 10 | +300 éclats et 1 parchemin |
+
+- **Record du duo** affiché sur l'écran Coop, et historique des meilleures parties.
+- Une partie infinie se **met en pause et se reprend** plus tard, à deux (§5.4).
 
 ### 5.4 Deux profils : jouer chacun de son côté ou ensemble
 
@@ -301,19 +330,19 @@ Le Solo est le **mode principal** : c'est là que chaque joueur avance à son ry
 - **Lier les deux profils** : dans « Mon duo », un joueur génère un code ou un lien de liaison et l'autre l'accepte. Les profils deviennent **partenaires**.
 - **Jouer ensemble quand on le décide** :
   - **Présence** : on voit si sa partenaire est en ligne et ce qu'elle fait (« en campagne, chapitre 3 », « dans les tirages »…).
-  - Le bouton **« Inviter à jouer »** choisit le mode (Coop ou Duel) et la map, puis envoie l'invitation, qui s'affiche chez l'autre. Si elle est hors ligne, l'invitation attend et une notification PWA est envoyée si elle l'a autorisée.
+  - Le bouton **« Inviter à jouer »** choisit le mode (Coop Niveaux ou Coop Infini) et le niveau ou la map, puis envoie l'invitation, qui s'affiche chez l'autre. Si elle est hors ligne, l'invitation attend et une notification PWA est envoyée si elle l'a autorisée.
   - Le **lien d'invitation** du §5.5 reste disponible en secours.
 - **Une partie commune profite aux deux** : chaque joueur gagne son XP, ses éclats et ses récompenses sur son propre profil. Les cartes ne s'échangent pas, mais on peut offrir une unité *pendant* la partie (Coop).
-- **Parties communes sauvegardées** : l'hôte enregistre l'état complet de la partie Coop à chaque vague dans `saved_games`. Les deux joueurs peuvent **arrêter et reprendre plus tard** depuis « Parties en cours ». Le Duel ne se met pas en pause : en cas d'abandon, la partie est perdue.
-- **Historique à deux** : les dernières parties communes (mode, map, vague atteinte, vainqueur) et le score du duo (victoires de chacun en Duel, meilleure vague en Coop).
+- **Parties communes sauvegardées** : l'hôte enregistre l'état complet de la partie Coop à chaque vague dans `saved_games`. Les deux joueurs peuvent **arrêter et reprendre plus tard** depuis « Parties en cours ».
+- **Historique à deux** : les dernières parties communes (mode, map, vague atteinte, vainqueur) et le score du duo (étoiles Coop, record en Coop Infini).
 
 ### 5.5 Architecture du multijoueur
 - **L'hôte fait autorité** : le joueur qui crée la partie fait tourner le moteur complet (les deux plateaux et le chemin).
 - L'invité envoie seulement des **commandes** (`summon`, `merge {from,to}`, `powerup {unitId}`, `gift {slot}`, `emote`).
 - L'hôte diffuse un **instantané compact** de l'état 10 fois par seconde, plus les **événements** (coups, éliminations, pouvoirs) pour que les effets visuels se déclenchent chez l'invité. L'invité interpole entre deux instantanés.
-- Messages typés et versionnés (`{v:1, t:'snapshot', …}`). Gère la reconnexion : si l'invité revient dans les 30 s, il reprend la partie ; sinon l'hôte gagne (en duel) ou continue seul (en coop).
+- Messages typés et versionnés (`{v:1, t:'snapshot', …}`). Gère la reconnexion : si l'invité revient dans les 30 s, il reprend la partie ; sinon l'hôte continue seul, et la partie est sauvegardée pour être reprise à deux plus tard.
 - **Salon** :
-  1. Le joueur A choisit Coop ou Duel, puis « Créer une partie ».
+  1. Le joueur A choisit Coop Niveaux (et le niveau) ou Coop Infini, puis « Créer une partie ».
   2. L'app génère un identifiant de salon et le lien `https://<site>/#k=<CLE>&room=<ID>` (la clé secrète est conservée).
   3. Le bouton « Inviter » ouvre le partage natif (Web Share API), ou copie le lien.
   4. Le joueur B ouvre le lien et arrive dans le salon.
@@ -329,8 +358,8 @@ Le Solo est le **mode principal** : c'est là que chaque joueur avance à son ry
 - **Éclats** :
   - campagne : +30 par étoile la première fois, +10 en rejouant ;
   - Survie : +10 par vague ;
-  - Duel : +100 par victoire, +40 par défaite ;
-  - Coop : +10 par vague, pour chacun ;
+  - Coop Niveaux : +30 par étoile la première fois, pour chacun ;
+  - Coop Infini : +10 par vague et les coffres de palier (§5.2), pour chacun ;
   - coffre quotidien : +150.
 - **Parchemins de talent** : gagnés en campagne (coffres d'étoiles et boss de chapitre).
 - Au premier lancement : **1 000 éclats** offerts et un deck de départ de 5 unités, au choix :
@@ -407,12 +436,12 @@ Chaque partie se joue sur une **map** liée à l'univers d'un personnage. Quand 
   - **2 ou 3 animations d'ambiance** ;
   - une **palette** ;
   - une **ambiance sonore**.
-- En **Coop**, la map est symétrique, avec le chemin commun au centre. En **Duel**, chaque joueur a sa moitié de map.
+- En **Coop**, la map est symétrique : deux portails, un de chaque côté, deux branches qui longent chacune un plateau, puis le tronc commun au centre qui mène au château.
 - **Choix de la map** :
   - en Solo, l'univers majoritaire du deck décide, ou le joueur choisit parmi les maps débloquées ;
   - en multi, l'hôte choisit.
   - Une nouvelle map se débloque toutes les 5 vagues atteintes.
-- **Modificateur léger par map** (option activable dans les réglages, désactivée par défaut en Duel), par exemple « Océan : ralentissements +10 % ».
+- **Modificateur léger par map** (option activable dans les réglages), par exemple « Océan : ralentissements +10 % ».
 
 ### Maps Marvel
 
@@ -528,7 +557,7 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 3. **Profils, sauvegarde, tutoriel et campagne Solo** (backend, campagne et progression, tutoriel, interface, QA) : profils, code de récupération, sauvegarde en ligne local d'abord, reprise des parties Solo, **tutoriel guidé**, les 6 chapitres, étoiles, talents, niveau de compte, Survie.
 4. **Méta-jeu** (méta et économie, interface, direction artistique) : collection, packs Marvel et Disney, animation d'ouverture, decks, niveaux, skins.
 5. **Jouer à deux : Coop** (réseau, backend, interface, QA) : liaison du duo, présence, invitations, salon, lien de secours, synchronisation, reconnexion, map symétrique, sauvegarde et reprise des parties communes.
-6. **Duel à 2** (réseau, game design, QA), historique et score du duo.
+6. **Coop Niveaux et Coop Infini** (réseau, campagne, game design, QA) : campagne à deux, paliers et coffres de l'infini, record et historique du duo.
 7. **PWA, lien secret et mise en ligne** (PWA et déploiement, QA) : installation, hors ligne pour le Solo, `noindex`, page neutre sans la clé, dépôt public, déploiement GitHub Pages automatique.
 8. **Finitions** (audio, rendu, QA) : sons et ambiances par map, vibrations, performances (60 i/s visés avec 15 unités et 60 ennemis par plateau sur un téléphone moyen), README de déploiement.
 
@@ -543,7 +572,7 @@ Livre dans cet ordre. Chaque étape doit être jouable et testée, avec un commi
 - [ ] Les 12 maps, leurs 7 variantes et les 6 arènes de boss sont jouables, et la transition vers l'arène se déclenche à l'arrivée de chaque boss.
 - [ ] Le journal `docs/journal.md` montre quel agent a livré chaque partie, et chaque livraison a été relue par l'agent QA.
 - [ ] Les deux packs respectent les taux affichés et la garantie (testé sur 100 000 tirages simulés).
-- [ ] Deux téléphones sur des réseaux différents (4G et Wi-Fi) jouent ensemble en Coop puis en Duel grâce au lien d'invitation, avec un décalage perçu inférieur à 150 ms.
+- [ ] Deux téléphones sur des réseaux différents (4G et Wi-Fi) jouent ensemble en Coop Niveaux puis en Coop Infini grâce à l'invitation, avec un décalage perçu inférieur à 150 ms.
 - [ ] Si l'invité ferme l'onglet et revient dans les 30 s, la partie reprend.
 - [ ] Toute l'interface est en français, lisible sur un écran de 375 px de large.
 - [ ] Aucun écran ne fait défiler la page : seules les zones de contenu prévues défilent en interne ; pas de rebond, de zoom ni de sélection de texte ; l'écran de combat tient sans défilement du 375 × 667 au 430 × 932.

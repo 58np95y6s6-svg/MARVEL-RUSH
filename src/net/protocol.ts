@@ -4,11 +4,11 @@
 import type { Command, EngineEvent, GameConfig, PlayerId } from '../engine/types';
 import type { UnitId } from '../data/types';
 
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 export type NetMessage =
   | { v: number; t: 'hello'; profileId: string; pseudo: string; avatar: UnitId }
-  | { v: number; t: 'lobby'; mode: 'coop' | 'duel'; mapId: string; players: { id: PlayerId; pseudo: string; ready: boolean }[] }
+  | { v: number; t: 'lobby'; mode: 'coop-niveaux' | 'coop-infini'; levelId?: string; mapId: string; players: { id: PlayerId; pseudo: string; ready: boolean }[] }
   | { v: number; t: 'deck'; deck: UnitId[]; levels: Partial<Record<UnitId, number>>; talents: Partial<Record<UnitId, ('a' | 'b')[]>> }
   | { v: number; t: 'ready'; ready: boolean }
   | { v: number; t: 'start'; config: GameConfig; you: PlayerId; resumeFrom?: string }

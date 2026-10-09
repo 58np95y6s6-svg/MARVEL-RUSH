@@ -10,10 +10,15 @@ export const GRID_ROWS = 3;
 export const GRID_SIZE = GRID_COLS * GRID_ROWS; // 15 cases, index = row * GRID_COLS + col
 export const MAX_RANK = 7;
 
-export type GameMode = 'solo' | 'coop' | 'duel' | 'tutoriel';
+/** Pas de Duel (choix du joueur) : Solo, Coop à deux (niveaux ou infini) et tutoriel. */
+export type GameMode = 'solo' | 'coop' | 'tutoriel';
 export type PlayerId = 'p1' | 'p2';
-/** Un chemin d'ennemis. Solo et coop : un seul ('a'). Duel : un par joueur ('a' pour p1, 'b' pour p2). */
-export type LaneId = 'a' | 'b';
+/**
+ * Branche du chemin où se trouve un ennemi.
+ * Solo : 'a' seulement. Coop : 'a' longe le plateau de p1, 'b' celui de p2, puis les deux
+ * branches se rejoignent dans le tronc commun 'tronc' qui mène au château.
+ */
+export type LaneId = 'a' | 'b' | 'tronc';
 
 export interface PlayerSetup {
   id: PlayerId;
@@ -27,8 +32,10 @@ export interface GameConfig {
   seed: number;
   mapId: string;
   players: PlayerSetup[];                 // 1 joueur (solo, tutoriel) ou 2
-  /** Campagne : nombre de vagues à tenir pour gagner. Absent = survie infinie / duel. */
+  /** Niveaux (Solo ou Coop) : nombre de vagues à tenir pour gagner. Absent = mode infini. */
   targetWaves?: number;
+  /** Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3). */
+  bossRhythm?: { small: number; big: number; thanos: number };
   /** Modificateurs de map actifs (§7 bis), lus par le moteur. */
   mapModifiers?: Record<string, number>;
   /** Tutoriel et niveaux scénarisés : invocations imposées, ennemis affaiblis, etc. */
@@ -81,8 +88,7 @@ export interface EnemyInstance {
 
 export interface LaneState {
   id: LaneId;
-  length: number;             // longueur du chemin, en cases (fournie par la map)
-  lives: number;
+  length: number;             // longueur de la branche, en cases (fournie par la map)
 }
 
 export type GamePhase = 'vague' | 'boss' | 'pause' | 'fin';
@@ -95,6 +101,7 @@ export interface EngineState {
   phase: GamePhase;
   players: PlayerState[];
   lanes: LaneState[];
+  lives: number;              // vies (partagées en Coop)
   enemies: EnemyInstance[];
   bossRageIn?: number;        // secondes avant la rage du boss en cours
   result?: { outcome: 'victoire' | 'defaite'; winner?: PlayerId; wave: number };
@@ -120,7 +127,9 @@ export type EngineEvent =
   | { type: 'bossSpawn'; enemy: number; boss: BossId; lane: LaneId }
   | { type: 'bossPower'; boss: BossId; player: PlayerId; slots: number[]; name: string }
   | { type: 'bossRage'; boss: BossId }
-  | { type: 'lifeLost'; lane: LaneId; lives: number }
+  | { type: 'lifeLost'; lives: number }
+  | { type: 'miniBossSpawn'; enemy: number; boss: BossId }
+  | { type: 'milestone'; wave: number }
   | { type: 'gift'; from: PlayerId; to: PlayerId; slot: number; unit: UnitId; rank: number }
   | { type: 'rejected'; command: Command['type']; reason: string }
   | { type: 'gameOver'; outcome: 'victoire' | 'defaite'; winner?: PlayerId; wave: number };

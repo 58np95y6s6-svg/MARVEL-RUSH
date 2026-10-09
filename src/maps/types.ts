@@ -13,11 +13,12 @@ export interface MapDef {
   heroes: string[];
   /** Tracé du chemin, en coordonnées logiques (écran 1000 × 1600, portrait). Solo : un tracé. */
   path: Point[];
-  /** Tracé en Coop (chemin commun central) et en Duel (un par joueur). */
-  pathCoop?: Point[];
-  pathDuel?: { a: Point[]; b: Point[] };
+  /** Tracé en Coop : deux branches (une le long de chaque plateau) qui se rejoignent dans le tronc commun. */
+  pathCoop?: { a: Point[]; b: Point[]; tronc: Point[] };
   /** Longueur du chemin en cases, identique à ±10 % entre maps. */
   pathLength: number;
+  /** Coop : longueurs des branches et du tronc commun, en cases. */
+  pathLengthCoop?: { a: number; b: number; tronc: number };
   pathMaterial: string;
   palette: Record<string, string>;
   /** Couches de décor, du fond vers l'avant : fonctions qui renvoient une chaîne SVG. */
