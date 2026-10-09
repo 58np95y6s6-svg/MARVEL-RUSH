@@ -414,61 +414,73 @@ const roster=[
 {
   id:'judy',name:'Judy & Nick',role:'Contrôle / malus',rarity:'Épique',rar:'var(--epi)',tint:'#dde6ff',tint2:'#97b0e8',stats:[3,4,3],
   atk:'Tir de carotte.',skill:'Arrestation : stoppe un ennemi 2 s ; Nick réduit l’armure.',
-  sh:{L:[68,150],R:[132,150],N:[38,180]},
-  poses:[{L:10,R:-12,N:18},{L:16,R:-160,N:28,body:[0,-5,0,1,1]},{L:24,R:-100,N:-128,body:[5,-3,5,1,1]}],
+  sh:{L:[68,150],R:[132,150],J:[4,182]},
+  poses:[{L:12,R:-12,J:10},{L:-34,R:-150,J:168,body:[-2,-5,-3,1,1]},{L:20,R:-96,J:140,body:[4,-3,4,1,1]}],
   draw(x){
     const FU='#b7b7c9',FUD='#8b8ba4',PK='#f4a6bb',NV='#2b4a93',NVD='#1c3168',G='#f6c64a',GD='#cf962a',NF='#e2753a',NFD='#b3532a',NC='#f7e4c8',NS='#7fb069',NSD='#55803f';
-    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+36,NV,15)+`<rect x="${sx-9}" y="${sy+27}" width="18" height="7" rx="3" fill="#30303f" stroke="${O}" stroke-width="3"/>`+hand(sx,sy+40,FU);
     const badge=(cx,cy,s=1)=>`<g transform="translate(${cx} ${cy}) scale(${s})"><path d="M0 -14 L12 -9 Q12 6 0 14 Q-12 6 -12 -9Z" fill="${G}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><polygon points="${star(0,0,7,3,5,-Math.PI/2)}" fill="#fff3c4" stroke="${GD}" stroke-width="1.5"/></g>`;
-    const armR=(sx,sy)=>armIn(sx,sy)+x.when([1],`<g transform="rotate(160 ${sx} ${sy+56})">${glow(sx,sy+56,24,'#fff3a0')}${badge(sx,sy+56,1.25)}</g>`);
-    const armL=(sx,sy)=>armIn(sx,sy)+`<g transform="rotate(-70 ${sx+4} ${sy+42})"><path d="M${sx-8} ${sy+38} Q${sx-10} ${sy+42} ${sx-8} ${sy+46} L${sx+16} ${sy+43} Q${sx+18} ${sy+42} ${sx+16} ${sy+41}Z" fill="#ff8a2a" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M${sx-8} ${sy+40} l-7 -4 M${sx-8} ${sy+44} l-7 4" stroke="#4caf50" stroke-width="3" stroke-linecap="round"/></g>`+hand(sx,sy+40,FU);
+    // --- Nick (personnage principal) ---
+    const armIn=(sx,sy)=>limb(sx,sy,sx,sy+36,NS,15)+`<rect x="${sx-9}" y="${sy+27}" width="18" height="7" rx="3" fill="${NSD}" stroke="${O}" stroke-width="3"/>`+hand(sx,sy+40,NF);
+    const armR=(sx,sy)=>armIn(sx,sy)+x.when([2],`<path d="M${sx} ${sy+46} V${sy+60}" stroke="${O}" stroke-width="12" stroke-linecap="round"/><path d="M${sx} ${sy+46} V${sy+60}" stroke="${NF}" stroke-width="6.5" stroke-linecap="round"/><path d="M${sx+9} ${sy+38} L${sx+14} ${sy+34}" stroke="${O}" stroke-width="10" stroke-linecap="round"/><path d="M${sx+9} ${sy+38} L${sx+14} ${sy+34}" stroke="${NF}" stroke-width="5" stroke-linecap="round"/>`)+hand(sx,sy+40,NF);
     let b='';
-    // oreilles
-    b+=x.byPose(p=>{const a=[-12,-3,-20][p];const ear=`<g transform="rotate(${a} 82 54)">${shaded(e=>`<ellipse cx="82" cy="24" rx="13" ry="29" ${e}/>`,FU,FUD,-3,-3)}<ellipse cx="82" cy="28" rx="6" ry="19" fill="${PK}"/>${clip(e=>`<ellipse cx="82" cy="24" rx="13" ry="29" ${e}/>`,`<ellipse cx="82" cy="-4" rx="16" ry="10" fill="#4a4a5c"/>`)}<ellipse cx="82" cy="24" rx="13" ry="29" fill="none" stroke="${O}" stroke-width="5"/></g>`;return ear+mirror(ear)});
-    b+=torso(NV,NVD);
-    b+=`<path d="M86 138 L100 156 L114 138Z" fill="#a9c8f2" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M100 156 V188" stroke="${NVD}" stroke-width="3"/>`;
-    b+=`<path d="M60 186 Q100 194 140 186 L141 198 Q100 206 59 198Z" fill="#30303f" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><rect x="93" y="188" width="14" height="11" rx="2" fill="${G}" stroke="${O}" stroke-width="2.5"/>`;
-    b+=`<g fill="none" stroke="${O}" stroke-width="5"><circle cx="122" cy="203" r="5.5"/><circle cx="133" cy="203" r="5.5"/></g><g fill="none" stroke="#c9ced8" stroke-width="2.5"><circle cx="122" cy="203" r="5.5"/><circle cx="133" cy="203" r="5.5"/></g>`;
-    b+=`<g transform="rotate(-12 118 160)"><path d="M114 144 Q112 148 114 152 L122 152 Q124 148 122 144Z" fill="#ff8a2a" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M116 144 l-3 -7 M118 144 v-8 M120 144 l3 -7" stroke="${O}" stroke-width="4.5" stroke-linecap="round"/><path d="M116 144 l-3 -7 M118 144 v-8 M120 144 l3 -7" stroke="#4caf50" stroke-width="2.2" stroke-linecap="round"/></g><rect x="108" y="150" width="22" height="14" rx="3" fill="${NVD}" stroke="${O}" stroke-width="3"/>`+badge(80,164,.85)+word(119,182,'ZPD',11,'#fff');
-    b+=head(FU,FUD);
-    b+=`<ellipse cx="100" cy="116" rx="24" ry="15" fill="#efedf5"/>`;
+    const ear=`<polygon points="52,62 44,2 92,36" fill="${NF}" stroke="${O}" stroke-width="5" stroke-linejoin="round"/><polygon points="58,50 52,18 80,38" fill="#5a3324"/>`;
+    b+=ear+mirror(ear);
+    b+=torso(NS,NSD);
+    b+=`<g fill="${NSD}" opacity=".8"><ellipse cx="72" cy="170" rx="5" ry="2.5" transform="rotate(-30 72 170)"/><ellipse cx="128" cy="166" rx="5" ry="2.5" transform="rotate(30 128 166)"/><ellipse cx="76" cy="192" rx="5" ry="2.5" transform="rotate(20 76 192)"/><ellipse cx="126" cy="190" rx="5" ry="2.5" transform="rotate(-20 126 190)"/></g>`;
+    b+=`<path d="M82 137 L100 150 L118 137 L116 146 L100 156 L84 146Z" fill="#c9e6b4" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+    b+=`<path d="M100 150 L91 158 L97 196 L100 202 L103 196 L109 158Z" fill="#5865b8" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M94 170 L106 166 M95 182 L106 178" stroke="#a9b3ff" stroke-width="2.5"/>`;
+    b+=head(NF,NFD);
+    b+=`<path d="M50 104 Q100 82 150 104 Q142 146 100 148 Q58 146 50 104Z" fill="${NC}"/>`;
+    b+=`<ellipse cx="100" cy="112" rx="11" ry="7.5" fill="${O}"/><ellipse cx="96" cy="109" rx="3.5" ry="2" fill="#fff" opacity=".7"/>`;
     b+=x.byPose(p=>{
-      let s=face(p,{eye:'#7a4fc6',noMouth:true});
-      s+=`<path d="M95 106 H105 L100 112Z" fill="#f27a9a" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
-      if(p==0) s+=`<path d="M100 112 V116 M92 116 Q96 121 100 116 Q104 121 108 116" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="97" y="118" width="6" height="5" rx="1" fill="#fff" stroke="${O}" stroke-width="1.8"/>`;
-      else if(p==1) s+=`<path d="M100 112 V115 M92 118 Q100 120 109 114" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-      else s+=`<path d="M90 115 Q100 113 110 115 Q108 130 100 131 Q92 130 90 115Z" fill="#7a1f2b" stroke="${O}" stroke-width="3.2" stroke-linejoin="round"/><rect x="96" y="115" width="8" height="6" rx="1" fill="#fff" stroke="${O}" stroke-width="1.8"/><path d="M95 126 Q100 123 105 126" stroke="#e85a6e" stroke-width="2.5" fill="none"/>`;
-      s+=`<g stroke="${O}" stroke-width="1.6" stroke-linecap="round" opacity=".55"><path d="M78 116 L64 113 M78 120 L65 122 M122 116 L136 113 M122 120 L135 122"/></g>`;
+      let s='';
+      const eo=(ex)=>`<ellipse cx="${ex}" cy="94" rx="8" ry="9.5" fill="#4cae4c"/><ellipse cx="${ex+(p==1?-3:1)}" cy="95" rx="3.6" ry="6" fill="${O}"/><circle cx="${ex+2.5}" cy="91" r="2.6" fill="#fff"/><path d="M${ex-11} 87 Q${ex} 82 ${ex+11} 87 L${ex+11} 93 Q${ex} 87 ${ex-11} 93Z" fill="${NFD}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      if(p==2) s+=`<path d="M70 95 Q80 88 90 95" stroke="${O}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`+eo(120);
+      else s+=eo(80)+eo(120);
+      s+=p==1?`<path d="M68 80 L90 82 M110 78 Q120 68 132 74" stroke="${O}" stroke-width="5" fill="none" stroke-linecap="round"/>`
+             :`<path d="M68 79 L90 84 M110 84 L132 78" stroke="${O}" stroke-width="5" stroke-linecap="round"/>`;
+      s+=p==2?`<path d="M80 124 Q100 140 122 120 Q114 138 100 139 Q86 138 80 124Z" fill="#fff" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M86 129 Q100 134 116 127" stroke="${O}" stroke-width="1.6" fill="none"/>`
+             :p==1?`<path d="M84 128 Q100 132 120 122" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+             :`<path d="M82 126 Q100 134 120 124 Q122 120 124 119" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
       return s;
     });
     b+=x.arm('L',armIn)+x.arm('R',armR);
-    // préparation : l'insigne brille
-    b+=x.when([1],sparks(150,98,30,G,8));
-    // frappe : stylo-carotte qui rebondit
-    const [hx,hy]=tip(this,'R',2,40);
-    const carrot=(cx,cy)=>`<g transform="translate(${cx} ${cy}) rotate(-18)"><path d="M-13 -6 Q-17 0 -13 6 L15 1.5 Q17 0 15 -1.5Z" fill="#ff8a2a" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M-6 -3 l3 2 M2 -2 l3 2 M-4 3 l3 -1" stroke="#c75a12" stroke-width="1.6" stroke-linecap="round"/><path d="M-13 -2 l-9 -7 M-13 0 l-11 0 M-13 2 l-9 7" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M-13 -2 l-9 -7 M-13 0 l-11 0 M-13 2 l-9 7" stroke="#4caf50" stroke-width="2.6" stroke-linecap="round"/><rect x="-11" y="-2" width="6" height="4" rx="1" fill="#e8413b" stroke="${O}" stroke-width="1.2"/></g>`;
-    const ex=206,ey=100,bx=192,by=186;
-    b+=x.when([2],`<path d="M${f(hx)} ${f(hy)} Q${f((hx+bx)/2)} ${f(hy-30)} ${bx} ${by} Q${(bx+ex)/2+2} ${ey-44} ${ex} ${ey}" stroke="#fff" stroke-width="4" stroke-dasharray="1 9" stroke-linecap="round" fill="none"/>`
-      +`<g class="pop"><path d="M${bx-12} ${by+6} l-6 4 M${bx+12} ${by+6} l6 4 M${bx} ${by+8} v6" stroke="${O}" stroke-width="3" stroke-linecap="round"/></g>`
-      +`<g class="hop" style="--fx:${f(hx-ex)}px;--fy:${f(hy-ey)}px;--bx:${bx-ex}px;--by:${by-ey}px">${carrot(ex,ey)}</g>`
-      +`<g class="pop">${sparks(ex+6,ey,22,'#ffb15c',8)}${word(ex,ey-24,'2 s',15,'#fff')}</g>`);
-    // Nick
+    // --- Judy (partenaire, plus petite) ---
     b+=x.byPose(p=>{
-      let s=shadedW(a=>`<path d="M0 206 C-1 184 8 174 22 174 C36 174 45 184 44 206Z" ${a}/>`,NS,NSD,-4,-3,4.5);
-      s+=`<path d="M22 176 L17 182 L20 200 L22 204 L24 200 L27 182Z" fill="#5865b8" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M19 188 L25 186 M19 195 L25 193" stroke="#a9b3ff" stroke-width="1.6"/><path d="M14 175 L22 182 L30 175" fill="none" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
-      s+=limb(6,182,4,200,NS,8)+hand(4,202,NF,6.5);
-      s+=`<polygon points="1,128 -2,98 18,121" fill="${NF}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><polygon points="43,128 46,98 26,121" fill="${NF}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><polygon points="3,124 1,106 12,120" fill="#5a3324"/><polygon points="41,124 43,106 32,120" fill="#5a3324"/>`;
-      s+=shadedW(a=>`<circle cx="22" cy="146" r="27" ${a}/>`,NF,NFD,-5,-4,4.5);
-      s+=`<path d="M3 150 Q22 140 41 150 Q37 172 22 173 Q7 172 3 150Z" fill="${NC}"/><ellipse cx="22" cy="153" rx="5.5" ry="3.8" fill="${O}"/><circle cx="20.5" cy="152" r="1.3" fill="#fff"/>`;
-      const eo=(ex)=>`<ellipse cx="${ex}" cy="141" rx="4.5" ry="5.5" fill="#4cae4c"/><ellipse cx="${ex+(p==1?1.6:.6)}" cy="141.5" rx="2" ry="3.2" fill="${O}"/><circle cx="${ex+1.5}" cy="139" r="1.4" fill="#fff"/><path d="M${ex-6} 137.5 Q${ex} 135 ${ex+6} 137.5 L${ex+6} 140 Q${ex} 137 ${ex-6} 140Z" fill="${NFD}" stroke="${O}" stroke-width="1.6"/>`;
-      if(p==2) s+=`<path d="M6 141 Q12 137 18 141" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`+eo(32);
-      else s+=eo(12)+eo(32);
-      s+=p==1?`<path d="M5 131 L17 134 M27 131 L38 128" stroke="${O}" stroke-width="2.8" stroke-linecap="round"/>`:`<path d="M5 133 L17 135 M27 135 L38 132" stroke="${O}" stroke-width="2.8" stroke-linecap="round"/>`;
-      s+=p==2?`<path d="M11 160 Q22 170 35 157 Q30 166 22 167 Q14 166 11 160Z" fill="#fff" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`:`<path d="M12 161 Q22 165 34 157" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+      const a=[-8,-2,-14][p];
+      const earS=cx=>e=>`<ellipse cx="${cx}" cy="104" rx="6.5" ry="17" ${e}/>`;
+      const ear=cx=>`<g transform="rotate(${cx<22?a:-a} ${cx} 120)">${shadedW(earS(cx),FU,FUD,-2,-2,3.5)}<ellipse cx="${cx}" cy="106" rx="3" ry="11" fill="${PK}"/>${clip(earS(cx),`<ellipse cx="${cx}" cy="88" rx="8" ry="5" fill="#4a4a5c"/>`)}${earS(cx)(`fill="none" stroke="${O}" stroke-width="3.5"`)}</g>`;
+      let s=ear(13)+ear(31);
+      s+=shadedW(e=>`<path d="M0 206 C-1 184 8 174 22 174 C36 174 45 184 44 206Z" ${e}/>`,NV,NVD,-4,-3,4.5);
+      s+=`<path d="M16 175 L22 183 L28 175Z" fill="#a9c8f2" stroke="${O}" stroke-width="2" stroke-linejoin="round"/><path d="M1 198 Q22 203 43 198" stroke="#30303f" stroke-width="5"/>`+badge(32,188,.42);
+      s+=`<g fill="none" stroke="${O}" stroke-width="3.5"><circle cx="8" cy="204" r="3.6"/><circle cx="15" cy="204" r="3.6"/></g><g fill="none" stroke="#c9ced8" stroke-width="1.6"><circle cx="8" cy="204" r="3.6"/><circle cx="15" cy="204" r="3.6"/></g>`;
+      s+=limb(40,182,42,198,NV,8)+hand(42,200,FU,6.5);
+      s+=shadedW(e=>`<circle cx="22" cy="146" r="26" ${e}/>`,FU,FUD,-5,-4,4.5);
+      s+=`<ellipse cx="22" cy="161" rx="12" ry="8" fill="#efedf5"/>`;
+      [13,31].forEach(ex=>{s+=`<ellipse cx="${ex}" cy="148" rx="4.4" ry="${p==2?4.6:5.4}" fill="#7a4fc6"/><ellipse cx="${ex}" cy="146" rx="3.6" ry="2.2" fill="${O}" opacity=".45"/><circle cx="${ex+1.4}" cy="146" r="1.6" fill="#fff"/>`});
+      s+=p?`<path d="M6 139 L17 142 M27 142 L38 139" stroke="${O}" stroke-width="2.8" stroke-linecap="round"/>`:`<path d="M8 140 Q13 137 18 140 M26 140 Q31 137 36 140" stroke="${O}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+      s+=`<path d="M19.5 155 H24.5 L22 158.5Z" fill="#f27a9a" stroke="${O}" stroke-width="1.8" stroke-linejoin="round"/>`;
+      s+=p==2?`<path d="M16 161 Q22 160 28 161 Q27 169 22 169 Q17 169 16 161Z" fill="#7a1f2b" stroke="${O}" stroke-width="2.2" stroke-linejoin="round"/><rect x="20" y="161" width="4" height="3" fill="#fff"/>`
+             :p==1?`<path d="M17 163 Q22 164 28 160" stroke="${O}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+             :`<path d="M17 161 Q19.5 164 22 161 Q24.5 164 27 161" stroke="${O}" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="20.5" y="162" width="3" height="2.6" fill="#fff" stroke="${O}" stroke-width="1"/>`;
+      s+=`<ellipse cx="8" cy="156" rx="4" ry="2.4" fill="#ff7c7c" opacity=".4"/><ellipse cx="36" cy="156" rx="4" ry="2.4" fill="#ff7c7c" opacity=".4"/>`;
       return s;
     });
-    b+=x.arm('N',(sx,sy)=>limb(sx,sy,sx,sy+17,NS,8)+hand(sx,sy+20,NF,6.5)+x.when([2],`<path d="M${sx} ${sy+24} V${sy+31}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${sx} ${sy+24} V${sy+31}" stroke="${NF}" stroke-width="3.5" stroke-linecap="round"/>`));
-    b+=x.when([2],`<g class="pop">${twinkle(36,124,8,'#fff')}${word(20,92,'-ARMURE',14,'#ff6f6f')}<g transform="translate(-26 74)"><path d="M0 -9 L9 -6 Q9 5 0 10 Q-9 5 -9 -6Z" fill="#c9ced8" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M1 -8 L-2 0 L2 2 L-1 9" stroke="${O}" stroke-width="2" fill="none"/></g></g>`);
+    b+=x.arm('J',(sx,sy)=>limb(sx,sy,sx,sy+17,NV,8)+hand(sx,sy+21,FU,6.5)
+      +x.when([1],`<g transform="rotate(-168 ${sx} ${sy+36})">${glow(sx,sy+36,18,'#fff3a0')}${badge(sx,sy+36,.9)}</g>`));
+    // préparation : l'insigne de Judy brille, Nick jette un œil
+    const [bx0,by0]=tip(this,'J',1,36);
+    b+=x.when([1],sparks(bx0,by0,22,G,8));
+    // frappe : Judy lance le stylo-carotte (rebond), Nick fait un clin d'œil + pistolet du doigt
+    const [hx,hy]=tip(this,'J',2,22);
+    const carrot=(cx,cy)=>`<g transform="translate(${cx} ${cy}) scale(-1 1) rotate(-18)"><path d="M-13 -6 Q-17 0 -13 6 L15 1.5 Q17 0 15 -1.5Z" fill="#ff8a2a" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M-6 -3 l3 2 M2 -2 l3 2 M-4 3 l3 -1" stroke="#c75a12" stroke-width="1.6" stroke-linecap="round"/><path d="M-13 -2 l-9 -7 M-13 0 l-11 0 M-13 2 l-9 7" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M-13 -2 l-9 -7 M-13 0 l-11 0 M-13 2 l-9 7" stroke="#4caf50" stroke-width="2.6" stroke-linecap="round"/><rect x="-11" y="-2" width="6" height="4" rx="1" fill="#e8413b" stroke="${O}" stroke-width="1.2"/></g>`;
+    const ex=-12,ey=94,bx=-26,by=194;
+    b+=x.when([2],`<path d="M${f(hx)} ${f(hy)} Q${f((hx+bx)/2)} ${f(hy-20)} ${bx} ${by} Q${(bx+ex)/2-8} ${ey-30} ${ex} ${ey}" stroke="#fff" stroke-width="4" stroke-dasharray="1 9" stroke-linecap="round" fill="none"/>`
+      +`<g class="pop"><path d="M${bx-10} ${by+6} l-5 4 M${bx+10} ${by+6} l5 4 M${bx} ${by+8} v6" stroke="${O}" stroke-width="3" stroke-linecap="round"/></g>`
+      +`<g class="hop" style="--fx:${f(hx-ex)}px;--fy:${f(hy-ey)}px;--bx:${bx-ex}px;--by:${by-ey}px">${carrot(ex,ey)}</g>`
+      +`<g class="pop">${sparks(ex-4,ey,20,'#ffb15c',8)}${word(ex,ey-24,'2 s',15,'#fff')}</g>`);
+    const [fx0,fy0]=tip(this,'R',2,60);
+    b+=x.when([2],`<g class="pop">${sparks(fx0+4,fy0,14,'#fff',6)}${twinkle(64,80,8,'#fff')}${word(194,124,'-ARMURE',15,'#ff6f6f')}<g transform="translate(196 98)"><path d="M0 -10 L10 -7 Q10 6 0 11 Q-10 6 -10 -7Z" fill="#c9ced8" stroke="${O}" stroke-width="2.8" stroke-linejoin="round"/><path d="M1 -9 L-2 0 L2 2 L-1 10" stroke="${O}" stroke-width="2.2" fill="none"/></g></g>`);
     return shadow(76)+x.body(b);
   }
 },
