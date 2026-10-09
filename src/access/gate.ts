@@ -82,6 +82,49 @@ export function renderUnlock(root: HTMLElement, onUnlocked: () => void): void {
   });
 }
 
+/** Dans le navigateur, sans accès : explique comment installer l'app sur l'écran d'accueil. */
+export function renderInstall(root: HTMLElement, onUnlocked: () => void): void {
+  document.title = 'Installer l\'app';
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const android = /Android/.test(ua);
+  const step = (n: number, html: string) =>
+    `<li style="display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:center;text-align:left"><span style="width:34px;height:34px;border-radius:50%;background:#f6c64a;color:#1d1733;display:grid;place-items:center;font-weight:800">${n}</span><span>${html}</span></li>`;
+  const share = '<svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:-3px" fill="none" stroke="#7fb8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg>';
+  const iosSteps = [
+    `Ouvre cette page dans <b>Safari</b>.`,
+    `Touche le bouton <b>Partager</b> ${share} en bas de l'écran.`,
+    `Choisis <b>« Sur l'écran d'accueil »</b>, puis <b>Ajouter</b>.`,
+    `Lance l'app depuis sa nouvelle icône et entre ton <b>code d'accès</b>.`,
+  ];
+  const androidSteps = [
+    `Ouvre cette page dans <b>Chrome</b>.`,
+    `Touche le menu <b>⋮</b> en haut à droite.`,
+    `Choisis <b>« Installer l'application »</b> (ou « Ajouter à l'écran d'accueil »).`,
+    `Lance l'app depuis sa nouvelle icône et entre ton <b>code d'accès</b>.`,
+  ];
+  const steps = android ? androidSteps : iosSteps;
+  root.innerHTML = `<main style="position:fixed;inset:0;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle at 50% 20%,#3a2f6b,#1d1733 70%);color:#fff;font:16px system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))">
+    <div style="width:min(380px,100%);display:grid;gap:18px;text-align:center">
+      <img src="${import.meta.env.BASE_URL}icon.svg" alt="" width="84" height="84" style="justify-self:center;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+      <h1 style="margin:0;font-size:24px">Installe l'app pour jouer</h1>
+      <p style="margin:0;opacity:.8;font-size:15px">Le jeu se lance depuis l'écran d'accueil de ton téléphone, comme une vraie application.</p>
+      <ol style="list-style:none;margin:0;padding:16px;display:grid;gap:14px;background:rgba(255,255,255,.07);border-radius:18px">${steps.map((t, i) => step(i + 1, t)).join('')}</ol>
+      ${!ios && !android ? '<p style="margin:0;opacity:.7;font-size:14px">Sur ordinateur, ouvre plutôt cette page sur ton téléphone.</p>' : ''}
+      <button id="acces-install" hidden style="font:inherit;font-weight:800;padding:14px;border:0;border-radius:14px;background:#f6c64a;color:#1d1733">Installer maintenant</button>
+      <button id="acces-code" style="font:inherit;background:none;border:0;color:#9fc3ff;text-decoration:underline;padding:6px">J'ai déjà un code</button>
+    </div></main>`;
+  // Android (Chrome) : bouton d'installation direct quand le navigateur le propose.
+  const installBtn = root.querySelector<HTMLButtonElement>('#acces-install')!;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    const prompt = e as Event & { prompt: () => Promise<void> };
+    installBtn.hidden = false;
+    installBtn.onclick = () => void prompt.prompt();
+  }, { once: true });
+  root.querySelector<HTMLButtonElement>('#acces-code')!.onclick = () => renderUnlock(root, onUnlocked);
+}
+
 /** Page neutre affichée sans la clé : aucune mention du jeu. */
 export function renderNotFound(root: HTMLElement): void {
   document.title = 'Page introuvable';
