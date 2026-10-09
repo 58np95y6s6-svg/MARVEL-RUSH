@@ -269,7 +269,7 @@ Comme dans Rush Royale, le joueur ne lit rien : il **apprend en jouant**, avec u
 7. Victoire : l'écran de fin explique les **éclats** et l'**XP**.
 
 **Partie 2 — Le méta-jeu, guidé dans les menus**
-8. « Ouvre ton **premier pack** » : un tirage gratuit garanti Épique, avec l'animation complète.
+8. « Ouvre ton **premier pack** » : un **lot de 10 invocations offert** (au moins 1 Épique garanti), dans le pack de l'univers choisi, avec l'animation complète et le bouton « Passer ».
 9. « Mets ta nouvelle unité dans ton **deck** » : glisser-déposer guidé, explication du bonus d'équipe s'il y en a un.
 10. « Lance le **niveau 1** de la campagne » : premier vrai niveau, avec juste des rappels discrets (« Pense à fusionner ! » si le plateau est plein).
 
