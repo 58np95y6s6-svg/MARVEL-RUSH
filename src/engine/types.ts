@@ -2,7 +2,7 @@
 // (rendu, réseau, tutoriel, campagne). Le moteur ne touche jamais au DOM.
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-import type { BossId, EnemyKind, UnitId } from '../data/types';
+import type { BossId, BossPool, EnemyKind, UnitId } from '../data/types';
 
 export const TICKS_PER_SECOND = 20;
 export const GRID_COLS = 5;
@@ -36,8 +36,17 @@ export interface GameConfig {
   players: PlayerSetup[];                 // 1 joueur (solo, tutoriel) ou 2
   /** Niveaux (Solo ou Coop) : nombre de vagues à tenir pour gagner. Absent = mode infini. */
   targetWaves?: number;
-  /** Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3). */
-  bossRhythm?: { small: number; big: number; thanos: number };
+  /**
+   * Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3)
+   * et, avec l'extension DC, Darkseid à la 100 (modes infinis ; `darkseid` absent = 100, 0 = jamais).
+   */
+  bossRhythm?: { small: number; big: number; thanos: number; darkseid?: number };
+  /**
+   * Rotation des gros boss en mode infini (extension DC) : 'tous' (par défaut, 11 boss ; Thanos aux
+   * vagues 50, 150… et Darkseid aux vagues 100, 200…), 'marvel-disney' (6 boss, Thanos à chaque palier
+   * final, pas de Darkseid) ou 'dc' (5 boss, Darkseid à chaque palier final, pas de Thanos).
+   */
+  bossPool?: BossPool;
   /** Modificateurs de map actifs (§7 bis), lus par le moteur. */
   mapModifiers?: Record<string, number>;
   /** Tutoriel et niveaux scénarisés : invocations imposées, ennemis affaiblis, etc. */
@@ -140,7 +149,8 @@ export type EngineEvent =
   | { type: 'bossRage'; boss: BossId }
   | { type: 'lifeLost'; lives: number }
   | { type: 'miniBossSpawn'; enemy: number; boss: BossId }
-  | { type: 'milestone'; wave: number }
+  /** Palier franchi (tous les 10, plus les paliers de src/data/milestones.ts comme la 75) ; `chest` : coffre du palier s'il y en a un. */
+  | { type: 'milestone'; wave: number; chest?: string }
   | { type: 'gift'; from: PlayerId; to: PlayerId; slot: number; unit: UnitId; rank: number }
   | { type: 'rejected'; command: Command['type']; reason: string }
   | { type: 'gameOver'; outcome: 'victoire' | 'defaite'; winner?: PlayerId; wave: number };

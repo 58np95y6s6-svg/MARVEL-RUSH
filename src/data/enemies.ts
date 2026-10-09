@@ -32,6 +32,7 @@ export const WAVE_RULES = {
   smallBossEvery: 5,     // petit boss (lieutenant) : vagues 5, 15, 25…
   bigBossEvery: 10,      // gros boss : vagues 10, 20, 30…
   thanosEvery: 50,       // modes infinis : Thanos à la 50, puis toutes les 50
+  darkseidEvery: 100,    // extension DC, modes infinis : Darkseid à la 100, puis toutes les 100 (prioritaire sur Thanos)
   minionWavesBefore: 2,  // les sbires du prochain gros boss arrivent dans les 2 vagues d'avant
   milestoneEvery: 10,    // événement « milestone » tous les 10 vagues franchies
   /** Intervalle entre deux apparitions : max(min, start − step × (vague − 1)). */

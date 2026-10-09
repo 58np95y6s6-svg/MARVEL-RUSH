@@ -1,4 +1,4 @@
-// Bonus d'équipe (§4.6 du prompt, design/game-design.md).
+// Bonus d'équipe (§4.6 du prompt, design/game-design.md, extension DC et équipes inter-univers).
 // Une équipe est active si le deck contient au moins `params.minCount` de ses unités
 // (toutes ses unités si `minCount` est absent). Les bonus s'appliquent aux unités de l'équipe,
 // sauf `manaPerWave`, qui va au joueur. Avengers (5) remplace Avengers (3).
@@ -13,6 +13,7 @@
 //   chainIllusionChance chance que l'éclair de Thor applique l'illusion de Loki (recul 2 s)
 //   manaPerWave, manaPerExtra  mana au début de chaque vague (+ par membre au-delà du minimum)
 //   doubleAttackChance chance d'attaquer deux fois
+//   bossDamage        +x de dégâts contre les boss (gros et petits)
 
 import type { TeamBonusDef } from './types';
 
@@ -56,6 +57,38 @@ export const TEAM_LIST: TeamBonusDef[] = [
   {
     id: 'animaux', name: 'Animaux', units: ['foxhound', 'nickjudy', 'nemo'],
     description: '+15 % de vitesse d’attaque.', params: { attackSpeed: 0.15 },
+  },
+
+  // ───────────── Extension DC Comics ─────────────
+  {
+    id: 'justiceleague', name: 'Justice League',
+    units: ['superman', 'batman', 'wonderwoman', 'flash', 'aquaman', 'greenlantern', 'cyborg', 'martian'],
+    description: '+15 % de dégâts et +10 % de vitesse d’attaque pour la Ligue (4 membres ou plus).', params: { minCount: 4, damage: 0.15, attackSpeed: 0.1 },
+  },
+  {
+    id: 'trinite', name: 'Trinité', units: ['batman', 'superman', 'wonderwoman'],
+    description: '+30 % de dégâts contre les boss pour Batman, Superman et Wonder Woman.', params: { bossDamage: 0.3 },
+  },
+  {
+    id: 'batfamille', name: 'Bat-famille', units: ['batman', 'robin', 'batgirl'],
+    description: '+20 % de chance de critique ×2 pour la Bat-famille (2 membres ou plus).', params: { minCount: 2, critChance: 0.2, critMul: 2 },
+  },
+  {
+    id: 'cosmiques', name: 'Lanternes et cosmiques', units: ['greenlantern', 'martian', 'superman', 'supergirl', 'shazam'],
+    description: 'Compétences rechargées 20 % plus vite et contrôles +20 % de durée (3 membres ou plus).', params: { minCount: 3, cooldownReduction: 0.2, controlDuration: 0.2 },
+  },
+  {
+    id: 'sirenes', name: 'Sirènes de Gotham', units: ['harley', 'catwoman'],
+    description: '+15 de mana au début de chaque vague.', params: { manaPerWave: 15 },
+  },
+  // Équipes inter-univers
+  {
+    id: 'riches', name: 'Les Riches', units: ['ironman', 'batman'],
+    description: 'Tony Stark et Bruce Wayne financent la bataille : +20 de mana par vague et +10 % de dégâts.', params: { manaPerWave: 20, damage: 0.1 },
+  },
+  {
+    id: 'archers', name: 'Les Archers', units: ['hawkeye', 'greenarrow', 'merida'],
+    description: '+15 % de vitesse d’attaque et +15 % de chance de critique ×2 pour les archers (2 ou plus).', params: { minCount: 2, attackSpeed: 0.15, critChance: 0.15, critMul: 2 },
   },
 ];
 

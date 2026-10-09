@@ -1,4 +1,4 @@
-// Attaques et compétences des 28 unités (§4.5). Une fonction par tick et par joueur :
+// Attaques et compétences des 43 unités (§4.5, extension DC). Une fonction par tick et par joueur :
 // timers, purification de Raiponce, transformations (Loki, Maui), compétences à recharge,
 // attaques de base.
 
@@ -44,7 +44,7 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
     }
   }
   const c = u.counters;
-  for (const k of ['binaryFor', 'hasteFor', 'boostFor', 'restoredFor', 'immuneFor'] as const) {
+  for (const k of ['binaryFor', 'hasteFor', 'boostFor', 'restoredFor', 'immuneFor', 'powerFor', 'weakenFor'] as const) {
     if ((c[k] ?? 0) > 0) c[k] = Math.max(0, (c[k] ?? 0) - DT);
   }
   const rate = cooldownRate(ctx, player, effectiveId(u));
@@ -252,6 +252,192 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       // Pour Glitch, `slot` est la nouvelle case et `targets` contient l'ancienne case.
       abilityEvent(ctx, player, to, id, 'Glitch', [slot]);
       return to;
+    }
+    default:
+      return dcTimedAbility(ctx, player, slot, u, enemies);
+  }
+}
+
+/** Expose un ennemi : +x de dégâts subis (garde la marque la plus forte et la plus longue). */
+function expose(e: SimEnemy, value: number, duration: number): void {
+  const active = (e.effects.markedFor ?? 0) > EPS;
+  e.effects.marked = Math.max(active ? e.effects.marked ?? 0 : 0, value);
+  e.effects.markedFor = Math.max(active ? e.effects.markedFor ?? 0 : 0, duration);
+}
+
+/** Événement d'attaque pour l'effet visuel d'une compétence (comme l'Uni-Beam). */
+function fxEvent(ctx: Ctx, player: number, slot: number, unit: UnitId, targets: SimEnemy[], fx: string): void {
+  emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit, targets: targets.map((e) => e.uid), fx });
+}
+
+const isBossLike = (e: SimEnemy) => !!e.bossId || !!e.x.mini;
+
+/** Compétences à recharge des héros DC (même contrat que timedAbility). */
+function dcTimedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): boolean | number {
+  const id = effectiveId(u);
+  const prm = unitParams(ctx, player, id);
+  const ctrl = controlMul(ctx, player, id);
+  const n = (v: number | undefined, d: number) => Math.max(1, Math.round(v ?? d));
+  switch (id) {
+    case 'batman': {
+      const lead = bestBy(enemies, (e) => progress(ctx, e));
+      if (!lead) return false;
+      const zone = prm.smokeGlobal ? enemies.slice() : [lead, ...within(ctx, enemies, lead, prm.smokeRadius ?? 2)];
+      const dur = prm.smokeDuration ?? 3;
+      for (const e of zone) {
+        applySlow(ctx, e, prm.smokeSlow ?? 0.4, dur * ctrl);
+        expose(e, prm.smokeMark ?? 0.2, dur);
+        if (prm.smokeStun) applyStun(e, prm.smokeStun * ctrl);
+      }
+      fxEvent(ctx, player, slot, id, zone, 'batman:fumigene');
+      abilityEvent(ctx, player, slot, id, 'Bombe fumigène', zone);
+      return true;
+    }
+    case 'superman': {
+      const targets = topBy(enemies, (e) => progress(ctx, e), n(prm.breathTargets, 4));
+      if (targets.length === 0) return false;
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.breathDamage ?? 0);
+      for (const e of targets) {
+        if (isBossLike(e)) {
+          applySlow(ctx, e, prm.breathBossSlow ?? 0.3, (prm.breathBossSlowDuration ?? 3) * ctrl);
+        } else {
+          applyStun(e, (prm.freezeDuration ?? 1.5) * ctrl);
+          if (dmg > 0) unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+        }
+      }
+      fxEvent(ctx, player, slot, id, targets, 'superman:souffle');
+      abilityEvent(ctx, player, slot, id, 'Souffle glacial', targets);
+      return true;
+    }
+    case 'wonderwoman': {
+      const targets = topBy(enemies, (e) => progress(ctx, e), n(prm.lassoTargets, 1));
+      if (targets.length === 0) return false;
+      for (const e of targets) {
+        if (isBossLike(e)) expose(e, prm.lassoBossMark ?? 0.3, prm.lassoMarkDuration ?? 4);
+        else applyStun(e, (prm.lassoStop ?? 1.5) * ctrl);
+      }
+      fxEvent(ctx, player, slot, id, targets, 'wonderwoman:lasso');
+      abilityEvent(ctx, player, slot, id, 'Lasso de vérité', targets);
+      return true;
+    }
+    case 'greenlantern': {
+      if (enemies.length === 0) return false;
+      const kinds = prm.constructAll ? [0, 1, 2] : [(u.counters.construct ?? 0) % 3];
+      if (!prm.constructAll) u.counters.construct = (kinds[0]! + 1) % 3;
+      const dmg = baseDamage(ctx, player, slot, u);
+      for (const k of kinds) {
+        const live = enemies.filter(isAlive);
+        if (live.length === 0) break;
+        if (k === 0) {
+          const seg = segmentOf(ctx, bestBy(live, (e) => progress(ctx, e))!);
+          const line = live.filter((e) => segmentOf(ctx, e) === seg);
+          for (const e of line) applyStun(e, (prm.wallDuration ?? 1.5) * ctrl);
+          fxEvent(ctx, player, slot, id, line, 'greenlantern:mur');
+          abilityEvent(ctx, player, slot, id, 'Construction : mur', line);
+        } else if (k === 1) {
+          const strong = bestBy(live, (e) => e.hp)!;
+          unitHit(ctx, player, u, strong, dmg * (prm.hammerDamage ?? 3), { noOnHit: true });
+          if (isAlive(strong)) applyStun(strong, (prm.hammerStun ?? 1) * ctrl);
+          fxEvent(ctx, player, slot, id, [strong], 'greenlantern:marteau');
+          abilityEvent(ctx, player, slot, id, 'Construction : marteau', [strong]);
+        } else {
+          const shot: SimEnemy[] = [];
+          for (let i = 0; i < n(prm.gatlingShots, 8); i++) {
+            const t = pick(ctx, enemies.filter(isAlive));
+            if (!t) break;
+            unitHit(ctx, player, u, t, dmg * (prm.gatlingDamage ?? 0.6), { noOnHit: true });
+            shot.push(t);
+          }
+          fxEvent(ctx, player, slot, id, shot, 'greenlantern:mitrailleuse');
+          abilityEvent(ctx, player, slot, id, 'Construction : mitrailleuse', shot);
+        }
+      }
+      return true;
+    }
+    case 'flash': {
+      if (enemies.length === 0) return false;
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.lapDamage ?? 3);
+      let touched: SimEnemy[] = [];
+      for (let l = 0; l < n(prm.lapCount, 1); l++) {
+        const live = enemies.filter(isAlive);
+        for (const e of live) unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+        if (l === 0) touched = live;
+      }
+      fxEvent(ctx, player, slot, id, touched, 'flash:tour');
+      abilityEvent(ctx, player, slot, id, 'Tour du chemin', touched);
+      return true;
+    }
+    case 'aquaman': {
+      const targets = topBy(enemies.filter((e) => !isBossLike(e)), (e) => progress(ctx, e), n(prm.krakenTargets, 2));
+      if (targets.length === 0) return false;
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.krakenDamage ?? 1.5);
+      for (const e of targets) {
+        unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+        if (isAlive(e)) applyStun(e, (prm.krakenStop ?? 2) * ctrl);
+      }
+      fxEvent(ctx, player, slot, id, targets, 'aquaman:kraken');
+      abilityEvent(ctx, player, slot, id, 'Kraken', targets);
+      return true;
+    }
+    case 'cyborg': {
+      if (enemies.length === 0) return false;
+      const grid = ctx.st.players[player]!.grid;
+      for (const a of grid) {
+        if (!a) continue;
+        const active = (a.counters.hasteFor ?? 0) > EPS;
+        a.counters.haste = Math.max(active ? a.counters.haste ?? 0 : 0, prm.haste ?? 0.2);
+        a.counters.hasteFor = Math.max(active ? a.counters.hasteFor ?? 0 : 0, prm.hasteDuration ?? 4);
+        if (prm.surgeCooldown && a !== u && (a.counters.cd ?? 0) > 0) a.counters.cd = a.counters.cd! * (1 - prm.surgeCooldown);
+      }
+      abilityEvent(ctx, player, slot, id, 'Surcharge système', []);
+      return true;
+    }
+    case 'shazam': {
+      if (enemies.length === 0) return false;
+      const bolts = pickMany(ctx, enemies, n(prm.boltTargets, 3));
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.boltDamage ?? 2);
+      for (const e of bolts) unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+      u.counters.powerFor = prm.powerDuration ?? 6;
+      fxEvent(ctx, player, slot, id, bolts, 'shazam:foudre');
+      abilityEvent(ctx, player, slot, id, 'SHAZAM !', bolts);
+      return true;
+    }
+    case 'martian': {
+      const pool = enemies.filter((e) => !isBossLike(e) && (prm.telepathyFlying || !e.x.flying));
+      const targets = topBy(pool, (e) => progress(ctx, e), n(prm.telepathyTargets, 2));
+      if (targets.length === 0) return false;
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.telepathyDamage ?? 0);
+      for (const e of targets) {
+        if (dmg > 0) unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+        if (isAlive(e)) e.x.knockFor = Math.max(e.x.knockFor ?? 0, (prm.confuseDuration ?? 2) * ctrl);
+      }
+      abilityEvent(ctx, player, slot, id, 'Télépathie', targets);
+      return true;
+    }
+    case 'batgirl': {
+      const targets = topBy(enemies, (e) => e.hp, n(prm.hackTargets, 1));
+      if (targets.length === 0) return false;
+      for (const e of targets) {
+        if (prm.hackShield) e.shieldHits = 0;
+        e.effects.armorBreak = Math.max(e.effects.armorBreak ?? 0, prm.hackArmor ?? 0.3);
+        if (prm.hackMark) expose(e, prm.hackMark, 4);
+      }
+      abilityEvent(ctx, player, slot, id, 'Piratage d’Oracle', targets);
+      return true;
+    }
+    case 'greenarrow': {
+      const targets = topBy(enemies, (e) => progress(ctx, e), n(prm.volleyArrows, 5));
+      if (targets.length === 0) return false;
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.volleyDamage ?? 0.8);
+      for (const e of targets) {
+        unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+        if (prm.volleySplash) {
+          for (const x of within(ctx, enemies, e, 1.5)) if (isAlive(x)) unitHit(ctx, player, u, x, dmg * prm.volleySplash, { noOnHit: true });
+        }
+      }
+      fxEvent(ctx, player, slot, id, targets, 'greenarrow:salve');
+      abilityEvent(ctx, player, slot, id, 'Salve de flèches', targets);
+      return true;
     }
     default:
       return true;
@@ -539,8 +725,134 @@ function attackOf(
       if (prm.splash) splash(target, d * prm.splash, 1.5);
       return { targets: [target], fx: hadShield ? 'vanralph:brise-bouclier' : 'vanralph:poing' };
     }
+    // ───────────── Extension DC ─────────────
+    case 'batman': {
+      if ((c.attacks ?? 0) % Math.max(1, Math.round(prm.batarangEvery ?? 3)) === 0) {
+        const n = Math.max(1, Math.round(prm.batarangTargets ?? 3));
+        const list = [target, ...nearest(ctx, enemies.filter(isAlive), target, n - 1, new Set([target.uid]))];
+        for (const e of list) hit(e, dmg * (prm.batarangDamage ?? 0.8));
+        abilityEvent(ctx, player, slot, id, 'Batarangs', list);
+        return { targets: list, fx: 'batman:batarangs' };
+      }
+      hit(target, dmg);
+      return { targets: [target], fx: 'batman:batarang' };
+    }
+    case 'wonderwoman': {
+      hit(target, dmg);
+      const around = splash(target, dmg * (prm.splash ?? 0.3), prm.splashRadius ?? 1);
+      return { targets: [target, ...around], fx: 'wonderwoman:epee' };
+    }
+    case 'flash': {
+      const list: SimEnemy[] = [];
+      let t: SimEnemy | undefined = target;
+      for (let i = 0; i < Math.max(1, Math.round(prm.hitsPerAttack ?? 3)); i++) {
+        if (!t || !isAlive(t)) t = selectTarget(ctx, enemies.filter(isAlive), 'premier');
+        if (!t) break;
+        hit(t, dmg);
+        if (!list.includes(t)) list.push(t);
+      }
+      return { targets: list, fx: 'flash:eclair' };
+    }
+    case 'aquaman': {
+      const p0 = progress(ctx, target);
+      hit(target, dmg);
+      const behind = enemies
+        .filter((e) => e !== target && isAlive(e) && progress(ctx, e) <= p0)
+        .sort((a, b) => progress(ctx, b) - progress(ctx, a) || a.uid - b.uid)
+        .slice(0, Math.max(1, Math.round(prm.pierceTargets ?? 1)));
+      for (const e of behind) hit(e, dmg * (prm.pierce ?? 0.5), { noOnHit: true });
+      return { targets: [target, ...behind], fx: 'aquaman:trident' };
+    }
+    case 'cyborg': {
+      hit(target, dmg);
+      if (isAlive(target) && prm.armorBreak) target.effects.armorBreak = Math.max(target.effects.armorBreak ?? 0, prm.armorBreak);
+      return { targets: [target], fx: 'cyborg:canon-sonique' };
+    }
+    case 'supergirl': {
+      const max = Math.max(1, Math.round(prm.maxCharges ?? 10));
+      const d = dmg * (1 + Math.min(max, c.solar ?? 0) * (prm.chargeDamage ?? 0.05));
+      hit(target, d);
+      if ((c.solar ?? 0) >= max) {
+        const seg = segmentOf(ctx, target);
+        const zone = enemies.filter((e) => isAlive(e) && (prm.flareGlobal || segmentOf(ctx, e) === seg));
+        for (const e of zone) {
+          hit(e, d * (prm.flareDamage ?? 4), { noOnHit: true });
+          if (prm.flareStun && isAlive(e)) applyStun(e, prm.flareStun * ctrl);
+        }
+        c.solar = 0;
+        abilityEvent(ctx, player, slot, id, 'Éruption solaire', zone);
+        return { targets: [target, ...zone.filter((e) => e !== target)], fx: 'supergirl:eruption' };
+      }
+      return { targets: [target], fx: 'supergirl:poing' };
+    }
+    case 'shazam': {
+      if ((c.powerFor ?? 0) <= EPS) {
+        hit(target, dmg);
+        return { targets: [target], fx: 'shazam:coup' };
+      }
+      const d = dmg * (prm.powerMul ?? 2);
+      hit(target, d);
+      const chain = nearest(ctx, enemies.filter(isAlive), target, Math.max(0, Math.round(prm.powerChain ?? 2)), new Set([target.uid]));
+      for (const e of chain) hit(e, d * (prm.powerChainDamage ?? 0.6), { noOnHit: true });
+      return { targets: [target, ...chain], fx: 'shazam:foudre' };
+    }
+    case 'robin': {
+      const grid = ctx.st.players[player]!.grid;
+      const mentor = !!prm.mentorAlways || neighbors(slot, true).some((j) => {
+        const nb = grid[j];
+        return !!nb && (effectiveId(nb) === 'batman' || effectiveId(nb) === 'batgirl');
+      });
+      const d = mentor ? dmg * (1 + (prm.mentorBonus ?? 0.2)) : dmg;
+      if ((c.attacks ?? 0) % Math.max(1, Math.round(prm.sweepEvery ?? 3)) === 0) {
+        const n = Math.max(1, Math.round(prm.sweepTargets ?? 2));
+        const list = [target, ...nearest(ctx, enemies.filter(isAlive), target, n - 1, new Set([target.uid]))];
+        for (const e of list) hit(e, d);
+        return { targets: list, fx: 'robin:balayage' };
+      }
+      hit(target, d);
+      return { targets: [target], fx: 'robin:baton' };
+    }
+    case 'catwoman': {
+      hit(target, dmg);
+      if (rand(ctx) < (prm.stealChance ?? 0.08)) {
+        ctx.st.players[player]!.mana += (prm.stealMana ?? 3) + (prm.stealPerRank ?? 1) * (u.rank - 1);
+        abilityEvent(ctx, player, slot, id, 'Cambriolage', [target]);
+      }
+      if ((c.attacks ?? 0) % Math.max(1, Math.round(prm.whipEvery ?? 5)) === 0 && isAlive(target)) {
+        applySlow(ctx, target, prm.whipSlow ?? 0.3, (prm.whipDuration ?? 2) * ctrl);
+      }
+      return { targets: [target], fx: 'catwoman:fouet' };
+    }
+    case 'harley': {
+      const names = ['maillet', 'confettis', 'tarte', 'oups'];
+      const effects: number[] = [];
+      for (let i = 0; i < Math.max(1, Math.round(prm.effectsPerHit ?? 1)); i++) {
+        const k = randInt(ctx, 4);
+        effects.push(k === 3 && prm.noOops ? 0 : k);
+      }
+      let d = dmg;
+      if (effects.includes(0)) d *= prm.malletMul ?? 2.5;
+      if (effects.includes(3)) d *= prm.oopsMul ?? 0.5;
+      hit(target, d);
+      const targets = [target];
+      for (const k of new Set(effects)) {
+        if (k === 0 && isAlive(target)) pushBack(ctx, target, prm.malletKnockback ?? 1);
+        if (k === 1) targets.push(...splash(target, d * (prm.confettiSplash ?? 0.6), prm.splashRadius ?? 1.5));
+        if (k === 2 && isAlive(target)) applyStun(target, (prm.pieStun ?? 1) * ctrl);
+      }
+      return { targets, fx: `harley:${names[effects[0]!]}` };
+    }
+    case 'greenarrow': {
+      hit(target, dmg);
+      if ((c.attacks ?? 0) % Math.max(1, Math.round(prm.netEvery ?? 4)) === 0 && isAlive(target)) {
+        applyStun(target, (prm.netDuration ?? 1) * ctrl);
+        return { targets: [target], fx: 'greenarrow:filet' };
+      }
+      return { targets: [target], fx: 'greenarrow:fleche' };
+    }
     default: {
-      // ironman, strange, falcon, moana, pocahontas, tiana, coco, rapunzel : coup simple.
+      // ironman, strange, falcon, moana, pocahontas, tiana, coco, rapunzel, superman (brûlure
+      // générique), greenlantern, martian, batgirl : coup simple.
       hit(target, dmg);
       return { targets: [target], fx: `${id}:${BASE_FX[id] ?? 'tir'}` };
     }
@@ -550,6 +862,7 @@ function attackOf(
 const BASE_FX: Partial<Record<UnitId, string>> = {
   ironman: 'repulseur', strange: 'magie', falcon: 'tir-aerien', moana: 'rame', pocahontas: 'feuilles',
   tiana: 'luciole', coco: 'notes', rapunzel: 'poele',
+  superman: 'vision-thermique', greenlantern: 'anneau', martian: 'rayon', batgirl: 'coup',
 };
 
 /** Unités dont la compétence se déclenche au début de chaque vague. */

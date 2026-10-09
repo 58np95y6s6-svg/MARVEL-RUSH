@@ -1,13 +1,13 @@
-// Boss et sbires (§4.4 du prompt, design/game-design.md). Valeurs lues par le moteur.
+// Boss et sbires (§4.4 du prompt, design/game-design.md, extension DC). Valeurs lues par le moteur.
 //
 // power.params : paramètres du pouvoir (nombre d'unités visées, durées en s…).
 // minion.params : multiplicateurs du sbire par rapport à un ennemi normal de la vague
 //   speedMul, hpMul, armor (0..1), shieldHits, packSize (sbires par apparition),
 //   flying (1 = insensible aux ralentissements et aux déplacements forcés),
 //   arrivalStun / arrivalStunUnits (étourdissement des unités quand il atteint la fin du chemin).
-// Boss : `hpMul` (× 25 PV d'un ennemi normal), `speed` (cases par seconde).
+// Boss : `hpMul` (× 25 PV d'un ennemi normal), `bossArmor` (armure du boss, 0..1), `speed` (cases par seconde).
 
-import type { BossDef, BossId } from './types';
+import type { BossDef, BossId, BossPool } from './types';
 
 export const BOSS_LIST: BossDef[] = [
   {
@@ -89,12 +89,99 @@ export const BOSS_LIST: BossDef[] = [
     minion: { name: 'Outriders', description: 'Très rapides, ils arrivent en meute.', params: { speedMul: 2.5, hpMul: 0.5, packSize: 4 } },
     arenaMapId: 'arene-thanos',
   },
+
+  // ───────────── Extension DC Comics ─────────────
+  {
+    id: 'joker', name: 'Le Joker',
+    power: {
+      name: 'Rire du Joker', interval: 6,
+      description: 'Échange les rangs de 2 unités de rangs différents : la plus forte devient la plus faible.',
+      params: { units: 2 },
+    },
+    minion: { name: 'Hommes de main clowns', description: 'En bande de 3, protégés par des ballons qui absorbent 2 coups.', params: { speedMul: 1.1, hpMul: 0.7, shieldHits: 2, packSize: 3 } },
+    arenaMapId: 'arene-joker',
+  },
+  {
+    id: 'luthor', name: 'Lex Luthor',
+    power: {
+      name: 'Rayon de kryptonite', interval: 6,
+      description: 'L’unité de plus haut rang perd 50 % de ses dégâts pendant 6 s. Armure de guerre : Luthor ignore 30 % des dégâts.',
+      params: { units: 1, weaken: 0.5, duration: 6, highest: 1, bossArmor: 0.3 },
+    },
+    minion: { name: 'Robots LexCorp', description: 'Lents et blindés (armure 40 %).', params: { speedMul: 0.8, hpMul: 1.4, armor: 0.4, packSize: 1 } },
+    arenaMapId: 'arene-luthor',
+  },
+  {
+    id: 'bane', name: 'Bane',
+    power: {
+      name: 'Brise-échine', interval: 6,
+      description: 'L’unité de plus haut rang perd 2 rangs. Une fois, à 50 % de PV, Venin : Bane se soigne de 15 % et accélère de 30 %.',
+      params: { rankLoss: 2, minRank: 2, venomThreshold: 0.5, venomHeal: 0.15, venomSpeedMul: 1.3 },
+    },
+    minion: { name: 'Mercenaires', description: 'Résistants et protégés (armure 20 %), en duo.', params: { speedMul: 1, hpMul: 1.5, armor: 0.2, packSize: 2 } },
+    arenaMapId: 'arene-bane',
+  },
+  {
+    id: 'sinestro', name: 'Sinestro',
+    power: {
+      name: 'Cage de la peur', interval: 6,
+      description: 'Une construction jaune emprisonne une colonne entière d’unités pendant 3 s.',
+      params: { duration: 3 },
+    },
+    minion: { name: 'Corps Sinestro', description: 'Ils volent en duo, protégés par un bouclier jaune (1 coup).', params: { speedMul: 1.3, hpMul: 0.8, flying: 1, shieldHits: 1, packSize: 2 } },
+    arenaMapId: 'arene-sinestro',
+  },
+  {
+    id: 'blackadam', name: 'Black Adam',
+    power: {
+      name: 'Foudre de Kahndaq', interval: 6,
+      description: 'La foudre frappe une unité (étourdie 3 s) et rebondit sur ses voisines (étourdies 1,5 s).',
+      params: { duration: 3, chainDuration: 1.5 },
+    },
+    minion: { name: 'Soldats de Kahndaq', description: 'Rapides, en duo, avec un bouclier (1 coup).', params: { speedMul: 1.2, hpMul: 1.1, shieldHits: 1, packSize: 2 } },
+    arenaMapId: 'arene-blackadam',
+  },
+  {
+    id: 'darkseid', name: 'Darkseid',
+    power: {
+      name: 'Puissance d’Apokolips', interval: 8,
+      description: 'Toutes les 8 s, en alternance : Rayons Oméga (2 unités perdent 1 rang et sont étourdies 2 s) ou Boom Tube (4 Parademons surgissent près de lui). À 30 % de PV, une fois, Équation d’Anti-Vie : 3 unités perdent 1 rang et tout le plateau est hypnotisé 2 s.',
+      params: {
+        hpMul: 2,
+        omegaUnits: 2, omegaRankLoss: 1, omegaStun: 2,  // Rayons Oméga
+        boomTubeCount: 4,                               // Boom Tube : Parademons appelés
+        antiLifeThreshold: 0.3, antiLifeUnits: 3, antiLifeRankLoss: 1, antiLifeDuration: 2, antiLifeDelay: 1,
+      },
+    },
+    minion: { name: 'Parademons', description: 'Ils volent très vite, en meute de 3.', params: { speedMul: 1.8, hpMul: 0.6, flying: 1, packSize: 3 } },
+    arenaMapId: 'arene-darkseid',
+  },
 ];
 
 export const BOSSES: Record<BossId, BossDef> = Object.fromEntries(BOSS_LIST.map((b) => [b.id, b])) as Record<BossId, BossDef>;
 
-/** Les 6 boss en rotation (Thanos est hors rotation). */
-export const ROTATING_BOSSES: BossId[] = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'];
+/**
+ * Gros boss en rotation, par option de rotation des modes infinis (§4.4 et extension DC).
+ * Thanos et Darkseid, boss finaux, sont hors rotation.
+ */
+export const BOSS_POOLS: Record<BossPool, BossId[]> = {
+  'marvel-disney': ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'],
+  dc: ['joker', 'luthor', 'bane', 'sinestro', 'blackadam'],
+  tous: ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon', 'joker', 'luthor', 'bane', 'sinestro', 'blackadam'],
+};
+
+/** Rotation par défaut (« Tous les univers ») : les 11 gros boss. */
+export const ROTATING_BOSSES: BossId[] = BOSS_POOLS.tous;
+
+/** Boss finaux, hors rotation : Thanos (Marvel) et Darkseid (DC). */
+export const FINAL_BOSSES: BossId[] = ['thanos', 'darkseid'];
+
+/** Libellés des options de rotation (écran Infini). */
+export const BOSS_POOL_LABELS: Record<BossPool, string> = {
+  tous: 'Tous les univers',
+  'marvel-disney': 'Marvel et Disney',
+  dc: 'DC seul',
+};
 
 /**
  * Petits boss (§4.4) : le lieutenant du prochain gros boss, un de ses sbires en version géante
@@ -118,6 +205,19 @@ export const LIEUTENANTS: Record<BossId, LieutenantDef> = {
     power: {
       name: 'Gant de l’infini', description: 'Le pouvoir affaibli d’une Pierre au hasard.', interval: 10,
       params: { powerUnits: 1, powerDuration: 1, spaceUnits: 2, realityUnits: 1, soulManaSteal: 0.1, timeHeal: 0.02, mindUnits: 1, mindDuration: 2 },
+    },
+  },
+  // ───────────── Extension DC Comics ─────────────
+  joker: { name: 'Clown géant', power: { name: 'Rire du Joker', description: 'Échange les rangs de 2 unités qui ont au plus 2 rangs d’écart.', interval: 10, params: { units: 2, maxRankGap: 2 } } },
+  luthor: { name: 'Robot LexCorp géant', power: { name: 'Rayon de kryptonite', description: 'Une unité au hasard perd 30 % de ses dégâts pendant 4 s.', interval: 10, params: { units: 1, weaken: 0.3, duration: 4 } } },
+  bane: { name: 'Mercenaire géant', power: { name: 'Brise-échine', description: 'L’unité de plus haut rang perd 1 rang, si elle est au moins au rang 4.', interval: 10, params: { rankLoss: 1, minRank: 4 } } },
+  sinestro: { name: 'Soldat Sinestro géant', power: { name: 'Cage de la peur', description: 'Emprisonne 2 unités d’une même colonne pendant 2 s.', interval: 10, params: { units: 2, duration: 2 } } },
+  blackadam: { name: 'Soldat de Kahndaq géant', power: { name: 'Foudre de Kahndaq', description: 'La foudre étourdit 1 unité pendant 2 s, sans rebond.', interval: 10, params: { duration: 2, chainDuration: 0 } } },
+  darkseid: {
+    name: 'Parademon géant',
+    power: {
+      name: 'Puissance d’Apokolips', description: 'En alternance : Rayon Oméga (1 unité étourdie 2 s) ou Boom Tube (2 Parademons).', interval: 10,
+      params: { omegaUnits: 1, omegaRankLoss: 0, omegaStun: 2, boomTubeCount: 2 },
     },
   },
 };
@@ -155,3 +255,10 @@ export const THANOS_STONES: StoneDef[] = [
 
 /** Nom de l'événement bossPower du Claquement de doigts (émis deux fois : annonce sans case, puis effet). */
 export const SNAP_NAME = 'Claquement de doigts';
+
+/** Noms des événements bossPower de Darkseid. L'Équation d'Anti-Vie est émise deux fois, comme le Claquement. */
+export const OMEGA_NAME = 'Rayons Oméga';
+export const BOOM_TUBE_NAME = 'Boom Tube';
+export const ANTI_LIFE_NAME = 'Équation d’Anti-Vie';
+/** Nom de l'événement bossPower du Venin de Bane (sans case). */
+export const VENOM_NAME = 'Venin';

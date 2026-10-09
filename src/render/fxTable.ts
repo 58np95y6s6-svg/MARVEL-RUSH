@@ -9,6 +9,10 @@ export const UNIT_FX_COLOR: Record<UnitId, number> = {
   widow: 0x6fc3ff, shangchi: 0xffcf3f, moana: 0x5fd6e8, maui: 0x4fd1b5, pocahontas: 0x9be36a, mulan: 0xff8a3d,
   merida: 0x8be06a, ariel: 0x9ae8ff, foxhound: 0xe0a46a, tiana: 0xd8ff7a, nemo: 0xff9a3c, coco: 0xffd16a,
   nickjudy: 0xff9b3b, buzzwoody: 0x7dff6a, rapunzel: 0xffe28a, vanralph: 0xff5a7a,
+  // Extension DC
+  batman: 0x9aa3b8, superman: 0xff4a3a, wonderwoman: 0xffd24a, greenlantern: 0x4cff7a, flash: 0xffe03a,
+  aquaman: 0x3fd8c0, cyborg: 0xff3a3a, supergirl: 0x5aa0ff, shazam: 0xfff27a, martian: 0x6fe07a,
+  robin: 0xffb43a, batgirl: 0xb08cff, catwoman: 0xc8c8d8, harley: 0xff6ab4, greenarrow: 0x8be06a,
 };
 
 export interface FxSpec {
@@ -58,6 +62,39 @@ const T: Record<string, FxSpec> = {
   'falcon:tir-aerien': { style: 'arrow' },
   'coco:notes': { style: 'note' },
   'tiana:luciole': { style: 'orb', size: 0.8 },
+  // Extension DC
+  'batman:batarang': { style: 'arrow', size: 1.1 },
+  'batman:batarangs': { style: 'arrow', all: true, size: 1.1 },
+  'batman:fumigene': { style: 'orb', size: 1.6, ring: 160, color: 0x8a8fa0 },
+  'superman:vision-thermique': { style: 'beam', beam: 18, color: 0xff3a2a },
+  'superman:souffle': { style: 'orb', all: true, color: 0xbfefff, ring: 80 },
+  'wonderwoman:epee': { style: 'orb', size: 1.3, ring: 70 },
+  'wonderwoman:lasso': { style: 'chain', chain: true, color: 0xffd24a },
+  'greenlantern:anneau': { style: 'beam', beam: 12 },
+  'greenlantern:mur': { style: 'orb', all: true, ring: 90, color: 0x4cff7a, shake: 2 },
+  'greenlantern:marteau': { style: 'orb', size: 1.8, ring: 130, color: 0x4cff7a, shake: 5 },
+  'greenlantern:mitrailleuse': { style: 'arrow', all: true, color: 0x4cff7a },
+  'flash:eclair': { style: 'chain', chain: true, color: 0xffe03a },
+  'flash:tour': { style: 'chain', all: true, chain: true, color: 0xffe03a, shake: 2 },
+  'aquaman:trident': { style: 'beam', beam: 10 },
+  'aquaman:kraken': { style: 'orb', all: true, size: 1.5, ring: 90, color: 0x2f9fb0 },
+  'cyborg:canon-sonique': { style: 'beam', beam: 14 },
+  'supergirl:poing': { style: 'orb', size: 1.2 },
+  'supergirl:eruption': { style: 'orb', all: true, ring: 120, color: 0xffd34a, shake: 5 },
+  'shazam:coup': { style: 'orb', size: 1.1 },
+  'shazam:foudre': { style: 'chain', chain: true, all: true, color: 0xfff27a, shake: 3 },
+  'martian:rayon': { style: 'beam', beam: 12 },
+  'robin:baton': { style: 'orb', size: 1 },
+  'robin:balayage': { style: 'orb', all: true, size: 1 },
+  'batgirl:coup': { style: 'orb', size: 1 },
+  'catwoman:fouet': { style: 'arrow', size: 0.9 },
+  'harley:maillet': { style: 'orb', size: 1.6, shake: 3, color: 0xff6ab4 },
+  'harley:confettis': { style: 'orb', size: 1.2, ring: 110, color: 0xffe27a },
+  'harley:tarte': { style: 'orb', size: 1.1, color: 0xfff6e8 },
+  'harley:oups': { style: 'orb', size: 0.7 },
+  'greenarrow:fleche': { style: 'arrow' },
+  'greenarrow:filet': { style: 'arrow', size: 1.2, color: 0xd8e0c8 },
+  'greenarrow:salve': { style: 'arrow', all: true },
 };
 
 export function fxSpec(fx: string, unit: UnitId): FxSpec & { color: number } {

@@ -1,7 +1,8 @@
 // Moteur de simulation pur à pas fixe (20 ticks/s), déterministe (graine mulberry32).
 // Aucune dépendance au DOM, à l'heure ou à Math.random.
 
-import { BOSSES, BOSS_STATS, LIEUTENANTS, ROTATING_BOSSES } from '../data/bosses';
+import { BOSSES, BOSS_POOLS, BOSS_STATS, LIEUTENANTS } from '../data/bosses';
+import { EXTRA_MILESTONE_WAVES, milestoneAt } from '../data/milestones';
 import { ENEMIES, WAVE_RULES, spawnWeights } from '../data/enemies';
 import { activeTeams } from '../data/teams';
 import type { BossId, EnemyKind, UnitId } from '../data/types';
@@ -40,6 +41,7 @@ function buildInfo(cfg: GameConfig): PlayerInfo[] {
         a.cooldownReduction += prm.cooldownReduction ?? 0;
         a.controlDuration += prm.controlDuration ?? 0;
         a.doubleAttackChance += prm.doubleAttackChance ?? 0;
+        a.bossDamage += prm.bossDamage ?? 0;
       }
       markSlow = Math.max(markSlow, prm.markSlow ?? 0);
       if (prm.chainIllusionChance) {
@@ -80,10 +82,16 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
 
 // ───────────── État initial ─────────────
 
+/** Gros boss de la rotation selon l'option choisie (extension DC : 'tous' par défaut). */
+function rotationPool(cfg: GameConfig): BossId[] {
+  return BOSS_POOLS[cfg.bossPool ?? 'tous'] ?? BOSS_POOLS.tous;
+}
+
 function shuffledBosses(ctx: Ctx): BossId[] {
   const excluded = ctx.cfg.script?.excludeBosses ?? [];
-  let arr = ROTATING_BOSSES.filter((b) => !excluded.includes(b));
-  if (arr.length === 0) arr = ROTATING_BOSSES.slice();
+  const pool = rotationPool(ctx.cfg);
+  let arr = pool.filter((b) => !excluded.includes(b));
+  if (arr.length === 0) arr = pool.slice();
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.min(i, Math.floor(spawnRand(ctx) * (i + 1)));
     [arr[i], arr[j]] = [arr[j]!, arr[i]!];
@@ -123,11 +131,28 @@ function initState(cfg: GameConfig): SimState {
 
 // ───────────── Vagues et rythme des boss (§4.3) ─────────────
 
-function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number } {
-  return cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number; darkseid: number } {
+  const r = cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+  return { ...r, darkseid: r.darkseid ?? WAVE_RULES.darkseidEvery };
 }
 
 const infinite = (cfg: GameConfig) => !cfg.targetWaves && cfg.mode !== 'tutoriel';
+
+/**
+ * Boss final d'une vague en mode infini, selon l'option de rotation : Darkseid (vagues 100, 200…)
+ * est prioritaire sur Thanos (vagues 50, 150…) ; 'marvel-disney' n'a que Thanos, 'dc' que Darkseid.
+ */
+export function finalBossAt(cfg: GameConfig, wave: number): BossId | null {
+  if (!infinite(cfg)) return null;
+  const r = rhythm(cfg);
+  const thanosWave = r.thanos > 0 && wave % r.thanos === 0;
+  const darkseidWave = r.darkseid > 0 && wave % r.darkseid === 0;
+  const pool = cfg.bossPool ?? 'tous';
+  if (pool === 'marvel-disney') return thanosWave ? 'thanos' : null;
+  if (pool === 'dc') return thanosWave || darkseidWave ? 'darkseid' : null;
+  if (darkseidWave) return 'darkseid';
+  return thanosWave ? 'thanos' : null;
+}
 
 export type BossWaveKind = 'petit' | 'gros' | null;
 
@@ -141,7 +166,7 @@ export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
     return 'gros';
   }
   if (r.big > 0 && wave % r.big === 0) return 'gros';
-  if (infinite(cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'gros';
+  if (finalBossAt(cfg, wave)) return 'gros';
   if (r.small > 0 && wave % r.small === 0) return 'petit';
   return null;
 }
@@ -161,7 +186,6 @@ function shuffleBag(ctx: Ctx): void {
 /** Gros boss d'une vague ; `consume` avance la rotation (sans répétition avant que les 6 soient passés). */
 function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
   const s = ctx.cfg.script;
-  const r = rhythm(ctx.cfg);
   if (s?.bossId && (s.bossAtWave === undefined || s.bossAtWave === wave || s.miniBoss)) return s.bossId;
   const order = s?.bossOrder;
   if (order && ctx.st.scriptedBossIdx < order.length) {
@@ -169,7 +193,8 @@ function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
     if (consume) ctx.st.scriptedBossIdx++;
     return id;
   }
-  if (infinite(ctx.cfg) && r.thanos > 0 && wave % r.thanos === 0 && !s?.excludeBosses?.includes('thanos')) return 'thanos';
+  const final = finalBossAt(ctx.cfg, wave);
+  if (final && !s?.excludeBosses?.includes(final)) return final;
   shuffleBag(ctx);
   const id = ctx.st.bossOrder[ctx.st.bossIdx]!;
   if (consume) ctx.st.bossIdx++;
@@ -215,7 +240,10 @@ function startWave(ctx: Ctx, wave: number): void {
 
 function waveFinished(ctx: Ctx): void {
   const st = ctx.st;
-  if (st.wave > 0 && st.wave % WAVE_RULES.milestoneEvery === 0) emit(ctx, { type: 'milestone', wave: st.wave });
+  if (st.wave > 0 && (st.wave % WAVE_RULES.milestoneEvery === 0 || EXTRA_MILESTONE_WAVES.includes(st.wave))) {
+    const chest = milestoneAt(st.wave)?.chest;
+    emit(ctx, chest ? { type: 'milestone', wave: st.wave, chest } : { type: 'milestone', wave: st.wave });
+  }
   if (ctx.cfg.targetWaves && st.wave >= ctx.cfg.targetWaves) {
     st.awaitingVictory = true;
     return;
@@ -325,7 +353,7 @@ function spawnBigBoss(ctx: Ctx, boss: BossId): void {
   const hp = normalHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1);
   const lane = bossLane(ctx);
   const e = addEnemy(ctx, {
-    kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: 0, shieldHits: 0,
+    kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: def.power.params.bossArmor ?? 0, shieldHits: 0,
     bossId: boss, x: { powerIn: def.power.interval, rageIn: BOSS_STATS.rageAfter },
   });
   emit(ctx, { type: 'bossSpawn', enemy: e.uid, boss, lane });

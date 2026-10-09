@@ -16,9 +16,9 @@ function arena(u: UnitId, rank = 1, deck = deckWith(u)): Engine {
 }
 const BIG = 1e9;
 
-describe('compétences des 28 unités', () => {
-  it('les 28 unités ont des données complètes', () => {
-    expect(UNIT_LIST).toHaveLength(28);
+describe('compétences des 28 unités Marvel et Disney', () => {
+  it('les 43 unités (28 + 15 DC) ont des données complètes', () => {
+    expect(UNIT_LIST).toHaveLength(43);
     for (const u of UNIT_LIST) {
       expect(u.damage).toBeGreaterThan(0);
       expect(u.attackInterval).toBeGreaterThan(0);

@@ -54,6 +54,43 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 | Raiponce & Pascal | Épique | Anti-contrôle de boss | 12 | 1,03 – 1,08 | Valeur contre Jafar, Maléfique, Bouffon Vert, Thanos. |
 | Vanellope & Ralph | Légendaire | Anti-blindés/boucliers + soutien mobile | 32 | 1,08 – 1,14 | Téléportation aléatoire : écart-type élevé accepté. |
 
+### 2 bis. Extension DC : bandes de puissance
+
+Mêmes bandes que ci-dessus (Rare 0,95 – 1,05, Épique 1,03 – 1,12, Légendaire 1,08 – 1,18). IP mesuré le 9 octobre 2026 avec `scripts/simulate.ts` (80 parties, niveau 1, témoin `depart-marvel` = 10,24 vagues, Falcon remplacé par l'unité testée), **avec la portée globale** (le moteur de la branche DC n'applique pas encore les portées du §4.1). La colonne « Dégâts » donne la valeur actuelle, **compensation de portée comprise** (courte +20 %, courte-moyenne +15 %, moyenne +10 %) : à remesurer après la fusion de `main` qui applique les portées.
+
+| Unité | Rareté | Rôle | Portée | Dégâts / cadence | IP mesuré | Bande | Vigilance |
+|---|---|---|---|---|---|---|---|
+| Batman | Légendaire | Gadgets / malus (fumée, exposition) | moyenne 2,4 | 29 / 0,9 s | 1,09 | 1,08 – 1,14 | La fumée expose aussi les boss : mesurer le gain des alliés. |
+| Superman | Légendaire | Dégâts + gel de masse | globale | 48 / 1,2 s | 1,06 (après +20 % de dégâts ; 1,03 avant) | 1,08 – 1,14 | Le gel de 4 ennemis toutes les 12 s sauve des vies ; à surveiller avec Lanternes et cosmiques. |
+| Wonder Woman | Légendaire | Zone + anti-boss (exposition) | moyenne 2,4 | 44 / 1,1 s | 1,09 (après +18 % ; 1,05 avant) | 1,08 – 1,14 | — |
+| Green Lantern | Légendaire | Constructions (mur, marteau, mitrailleuse) | longue 3,4 | 24 / 0,8 s | 1,05 (après +20 % et recharge 8 s ; 1,02 avant) | 1,08 – 1,14 | Encore un peu bas : prochain réglage `abilityCooldown` 7. |
+| Flash | Épique | Multi-coups (anti-boucliers) | courte 1,6 | 6 × 3 / 0,5 s | 1,05 | 1,03 – 1,10 | Très fort contre les clowns à ballons et le Corps Sinestro. |
+| Aquaman | Épique | Perçant + contrôle | courte-moyenne 2,0 | 32 / 1,1 s | 1,07 | 1,03 – 1,10 | — |
+| Cyborg | Épique | Soutien (vitesse de tout le plateau) | globale | 21 / 0,8 s | 1,04 (après +17 % et +25 % de surcharge ; 1,01 avant) | 1,03 – 1,08 | Sa valeur grandit avec les dégâts du deck. |
+| Supergirl | Épique | Montée en puissance (charges) | longue 3,4 | 28 / 1,0 s | 1,00 (après réglage ; 0,98 avant) | 1,03 – 1,10 | Encore basse : elle cible « fort » et élimine peu ; prochain réglage `maxCharges` 6. |
+| Shazam | Épique | Transformation | moyenne 2,4 | 20 / 1,0 s | 1,08 | 1,03 – 1,10 | — |
+| Martian Manhunter | Épique | Anti-boss (intangible) + contrôle | longue 3,4 | 24 / 1,0 s | 1,00 (après réglage ; 0,99 avant) | 1,03 – 1,08 | Sa valeur est surtout contre les boss qui rétrogradent ou détruisent : rapporter l'IP par boss. |
+| Robin | Rare | Acrobate (balayage, Disciple) | courte 1,6 | 18 / 0,7 s | 1,00 | 0,95 – 1,05 | Avec Batman ou Batgirl à côté : +20 %. |
+| Batgirl | Rare | Anti-armure / anti-bouclier | courte 1,6 | 20 / 0,75 s | 0,98 | 0,95 – 1,02 | Valeur contre robots LexCorp et mercenaires. |
+| Catwoman | Rare | Économie + ralentissement | courte 1,6 | 17 / 0,6 s | 1,01 | 0,95 – 1,02 | Mesurer le mana volé (≈ +10 % visé). |
+| Harley Quinn | Rare | Chaos | courte 1,6 | 17 / 0,8 s | 1,00 | 0,95 – 1,02 | Écart-type élevé accepté. |
+| Green Arrow | Rare | Salves | globale | 16 / 0,8 s | 1,07 (salve à 80 % puis à 70 %) | 0,97 – 1,05 | Un peu haute : prochain réglage `abilityCooldown` 9. Avec Les Archers : vérifier ≤ +10 %. |
+
+**Équipes DC** (cible inchangée : +5 à +10 %) : Justice League (4 sur 8, +15 % / +10 % de vitesse), Trinité (+30 % contre les boss), Bat-famille (2 sur 3, +20 % de critiques), Lanternes et cosmiques (3 sur 5, recharges −20 %, contrôles +20 %), Sirènes de Gotham (+15 de mana par vague) ; inter-univers : Les Riches (Iron Man + Batman, +20 de mana par vague et +10 %), Les Archers (2 sur 3 parmi Œil de faucon, Green Arrow, Rebelle : +15 % de vitesse et +15 % de critiques).
+
+**Résultats du simulateur** (Solo Infini, niveau 1, joueur automatique de `scripts/simulate.ts`, 9 octobre 2026) :
+
+| Deck | Vague moyenne | Commentaire |
+|---|---|---|
+| `depart-marvel` (200 parties) | 10,34 | Témoin |
+| `depart-disney` (100 parties) | 10,23 | — |
+| `dc-rares` : Robin, Batgirl, Catwoman, Harley, Green Arrow (200 parties) | **10,54** | +2 % sur le témoin : dans les ±5 % des decks de départ |
+| `bat-famille` : Batman, Robin, Batgirl, Catwoman, Harley | 12,06 | Bat-famille + Sirènes |
+| `cosmiques` : Green Lantern, Martian, Superman, Supergirl, Shazam | 11,73 | Le plus faible des decks DC à Légendaires : contrôle et anti-boss, peu de zone |
+| `meta-dc` : Superman, Batman, Wonder Woman, Green Lantern, Flash | **14,83** | Justice League + Trinité |
+| `meta-marvel` : Iron Man, Thor, Hulk, Captain America, Black Widow | 16,39 | Écart avec `meta-dc` : 9,5 % (< 20 %) |
+| Mixte : Batman, Œil de faucon, Green Arrow, Iron Man, Robin | **14,02** | Les Riches + Les Archers |
+
 **Talents** : chaque option d'un palier doit donner un IP **dans ±3 %** de l'autre option du même palier (sinon le choix n'en est pas un). Gain cible par palier par rapport à l'unité sans talent : palier 1 ≈ +3 %, palier 2 ≈ +4 %, palier 3 ≈ +6 %.
 
 **Équipes** : un bonus d'équipe actif doit valoir **+5 à +10 %** de vague moyenne par rapport au même deck sans bonus (mesuré en neutralisant le bonus). Avengers (5) reste ≤ +12 %.
@@ -136,6 +173,11 @@ Contraintes :
 | `anti-boss` | Black Widow, Rebelle, Soldat de l'hiver, Raiponce, Coco | Monocible : doit tomber sur les vagues denses |
 | `chaos` | Vanellope & Ralph, Loki, Nemo & Dory, Thor, Captain America | Aléatoire : écart-type maximal toléré |
 | `mixte-legendaires` | Iron Man, Mulan, Maui, Buzz & Woody, Vanellope & Ralph | 5 Légendaires sans équipe : ne doit pas battre `meta-marvel` de plus de 5 % |
+| `dc-rares` | Robin, Batgirl, Catwoman, Harley Quinn, Green Arrow | Témoin « deck de départ » DC (`DC_REFERENCE_DECKS`, `src/data/units.ts`) |
+| `meta-dc` | Superman, Batman, Wonder Woman, Green Lantern, Flash | « Méta » DC : Justice League + Trinité |
+| `bat-famille` | Batman, Robin, Batgirl, Catwoman, Harley Quinn | Bat-famille + Sirènes de Gotham |
+| `cosmiques` | Green Lantern, Martian Manhunter, Superman, Supergirl, Shazam | Lanternes et cosmiques |
+| `riches-archers` | Batman, Iron Man, Œil de faucon, Green Arrow, Robin | Équipes inter-univers |
 
 Ces decks sont à mettre dans un fichier de données du simulateur (par exemple `scripts/decks-reference.json`, à créer par l'agent Moteur).
 
@@ -151,6 +193,12 @@ Coffres du prompt §5.2, donnés **à chacun** à la fin de la partie, selon le 
 | Vague 40 | héroïque : 800 éclats, 3 parchemins, 1 skin au hasard |
 | Vague 50 (Thanos vaincu) | légendaire : 1 500 éclats, 1 Légendaire garanti, cadre « Vainqueur de Thanos » |
 | Ensuite, tous les 10 | +300 éclats et 1 parchemin |
+| **Vague 75** (extension DC) | **cosmique** : 2 000 éclats, 4 parchemins, 30 cartes, 1 Légendaire garanti |
+| **Vague 100** (Darkseid vaincu, extension DC) | **cosmique suprême** : 3 000 éclats, 5 parchemins, 40 cartes, 1 Légendaire garanti, cadre « Vainqueur de Darkseid » |
+
+Les paliers sont des données (`src/data/milestones.ts`, `INFINITE_MILESTONES`) ; le moteur émet `milestone` tous les 10 et à la 75 (avec `chest`).
+
+**Extension DC — boss des modes infinis** : les 5 gros boss DC rejoignent la rotation (11 boss sans répétition). **Thanos** reste à la vague 50 (puis 150, 250…), **Darkseid** arrive à la vague **100** (puis toutes les 100) et a la priorité. Option de rotation (`GameConfig.bossPool`) : « Tous les univers » (`tous`, par défaut), « Marvel et Disney » (`marvel-disney` : 6 boss, Thanos à chaque palier final, pas de Darkseid) ou « DC seul » (`dc` : 5 boss, Darkseid à chaque palier final, 50 comprise). Cible : Darkseid (PV ×2 à la vague 100, soit ≈ 37 fois les PV de Thanos à la 50) n'est battu que par des decks méta niveau 10 avec éveils ★4 et plus : **< 10 %** en Solo, **15 – 30 %** en Coop.
 
 À cela s'ajoutent +10 éclats par vague pour chacun (§6.1). Les coffres se cumulent (atteindre la vague 30 donne bronze + argent + or).
 
@@ -204,7 +252,7 @@ Revenu obtenu avec les règles du prompt : ≈ **1 150 éclats / jour** en semai
 2. **Copies d'éveil** (§6.6) : 2, 3, 5, 6, 8, 10, 13, 18, 25, 40 (**130 copies**, au lieu de 450), toujours identiques pour toutes les raretés.
 3. **Coût en cristaux** : 50, 300, 600, 1 000, 2 000, 2 500, 3 000, 4 000, 5 000, 6 500 (**24 950 ✦**, au lieu de 18 900). Le ★1 devient presque gratuit, le ★5 coûte 3 950 ✦ en cumulé.
 4. **Gains de cristaux** (divisés par 4 à 8) :
-   - Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10 ;
+   - Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10 ; **extension DC** : 80 ✦ au palier 75 (coffre cosmique) et 150 ✦ au palier 100 (coffre cosmique suprême), en plus des +10 des vagues 60, 70, 80 et 90 ; Darkseid vaincu : 75 ✦ (comme Thanos : 50 ✦) ;
    - premier gros boss du jour : 5 ✦ ; Thanos vaincu : 50 ✦ ;
    - campagne (3 étoiles sur un niveau de boss) : 25 ✦, inchangé ; coffre quotidien : 5 ✦, inchangé ;
    - doublons d'une unité à ★10 : 5 ✦, inchangé.
@@ -218,6 +266,11 @@ Résultats avec ces valeurs (même joueur) :
 | ★10 sur un Légendaire | > 240 jours | **jour 262** (≈ 8,7 mois ; bloqué par les copies : ≈ 0,3 à 0,6 copie par jour) |
 
 Sensibilité (vague atteinte en Infini multipliée par k) : k = 0,8 → ★5 au jour 94, ★10 Légendaire au jour 396 ; k = 0,7 → jours 110 et 530 ; k = 1,15 → jours 65 et 248. Le ★1 reste au jour 8 dans tous les cas.
+
+### Extension DC : effet sur le rythme des éveils
+- Les paliers 75 et 100 ne sont atteints qu'en fin de partie longue : le joueur type du modèle n'atteint la vague 50 qu'au mois 8. Avec 80 + 150 ✦ (+ 75 ✦ pour Darkseid) et l'hypothèse « vague 75 au mois 10, vague 100 au mois 12 », le ★10 Légendaire reste vers le **jour 255** (≈ 8,5 mois, toujours bloqué par les copies), au-dessus de la cible de 8 mois.
+- Le pack DC ajoute 4 Légendaires DC : un Légendaire donné reste à 1,24 % par tirage dans son pack ; le revenu étant partagé entre trois packs, le ★10 d'un Légendaire donné ne s'accélère pas.
+- 3 chapitres de plus = 21 parchemins, 9 niveaux de boss à 3 étoiles (225 ✦) et ≈ 6 000 éclats : un coup de pouce ponctuel, absorbé en 2 à 3 semaines.
 
 ### Points de vigilance
 - **Inflation d'éclats** : avec les coffres de palier du §5.2, un joueur qui atteint la vague 50 chaque jour gagne ≈ 5 500 éclats par jour (≈ 60 tirages). Si la collection se remplit trop vite, réduire de moitié les éclats des coffres héroïque et légendaire, ou ne donner les coffres de palier qu'**une fois par jour et par mode** (hypothèse du modèle ; à écrire dans les règles).

@@ -190,7 +190,14 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
     const prm = unitParams(ctx, player, 'pocahontas');
     if (rand(ctx) < (prm.meekoChance ?? 0)) mana += prm.meekoMana ?? 0;
   }
-  if (unit && effectiveId(unit) === 'venom') unit.counters.kills = (unit.counters.kills ?? 0) + 1;
+  if (unit) {
+    const uid = effectiveId(unit);
+    if (uid === 'venom') unit.counters.kills = (unit.counters.kills ?? 0) + 1;
+    // Supergirl : une charge solaire par élimination.
+    if (uid === 'supergirl') unit.counters.solar = (unit.counters.solar ?? 0) + 1;
+    // Passif d'éveil générique : mana bonus par élimination (Catwoman ★10).
+    mana += unitParams(ctx, player, uid).bonusKillMana ?? 0;
+  }
   p.mana += mana;
   emit(ctx, { type: 'kill', enemy: e.uid, player: p.id, mana });
 }
@@ -298,6 +305,8 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
   if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
+  // Rayon de kryptonite (Lex Luthor) : dégâts réduits pendant la durée.
+  if ((u.counters.weakenFor ?? 0) > EPS) dmg *= 1 - Math.min(1, u.counters.weaken ?? 0);
   dmg *= prm.damageMul ?? 1;
   dmg *= 1 + AWAKENING_DAMAGE * awakeningOf(ctx, player, id);
   if (u.status.transformedInto) dmg *= 1 + (prm.transformDamageBonus ?? 0);
@@ -329,6 +338,7 @@ export function unitHit(
   let crit = !!opts.crit;
   if (e.bossId) dmg *= prm.bossDamageMul ?? 1;
   const team = teamFor(ctx, player, id);
+  if ((e.bossId || e.x.mini) && team.bossDamage) dmg *= 1 + team.bossDamage;
   if (!crit && team.critChance > 0 && rand(ctx) < team.critChance) {
     crit = true;
     dmg *= team.critMul;

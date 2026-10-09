@@ -19,6 +19,12 @@ export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' |
   // Extension DC Comics (Darkseid : boss final de l'extension)
   | 'joker' | 'luthor' | 'bane' | 'sinestro' | 'blackadam' | 'darkseid';
 
+/**
+ * Rotation des gros boss en mode infini (option du joueur) : tous les univers (par défaut),
+ * Marvel et Disney seulement (Thanos à chaque palier final), ou DC seul (Darkseid à chaque palier final).
+ */
+export type BossPool = 'tous' | 'marvel-disney' | 'dc';
+
 export type EnemyKind = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier' | 'sbire';
 
 export interface UnitDef {
@@ -30,6 +36,12 @@ export interface UnitDef {
   targeting: Targeting;
   damage: number;          // dégâts de base au rang 1, niveau 1
   attackInterval: number;  // secondes entre deux attaques
+  /**
+   * Portée d'attaque (§4.1 « Portées d'attaque ») : distance en cases entre le centre de la case de
+   * l'unité et l'ennemi, ou 'globale' (tout le chemin). Absent = globale. Plus la portée est courte,
+   * plus les dégâts sont élevés (longue ≈ 3,4, moyenne ≈ 2,4, courte ≈ 1,6).
+   */
+  range?: number | 'globale';
   ability: {
     name: string;          // ex. « Uni-Beam »
     description: string;   // texte affiché

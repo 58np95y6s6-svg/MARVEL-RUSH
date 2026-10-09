@@ -1,4 +1,4 @@
-# Campagne Solo — 6 chapitres × 10 niveaux
+# Campagne Solo — 9 chapitres × 10 niveaux (6 + 3 de l'extension DC)
 
 > Rédigé par l'agent **Game design et stratégie** (§5.1 du prompt). Lu par l'agent **Campagne et progression** (`src/campaign/`) et l'agent **Interface**.
 > Les chiffres sont un premier jet, à valider avec le simulateur (`docs/equilibrage.md`).
@@ -30,7 +30,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 
 ### Déblocage
 - Les niveaux d'un chapitre s'ouvrent l'un après l'autre (victoire au niveau précédent).
-- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180).
+- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180). **Extension DC** : ch. 7 = 165 (après Thanos), ch. 8 = 195, ch. 9 = 225 (sur 270).
 - Le **Solo Infini** s'ouvre à la fin du chapitre 1.
 - Le chapitre N de la **campagne Coop** s'ouvre quand les deux joueurs ont fini le chapitre N en Solo (`docs/campagne-coop.md`).
 
@@ -40,7 +40,8 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 - Un niveau de **moins de 5 vagues** n'a pas de boss ; de **5 à 9 vagues**, il croise le lieutenant de la vague 5 ; **à partir de 10 vagues**, il affronte au moins un gros boss.
 - **Gros boss avant le niveau 10** : tirés dans la rotation **sans le boss du chapitre**, pour que celui-ci apparaisse pour la première fois au niveau 10. Le lieutenant d'une vague annonce toujours le gros boss suivant de la partie, même si le niveau finit avant.
 - **Niveau 5** : le **lieutenant du boss du chapitre** est imposé (vague 5 ou 15) ; le niveau est **gagné quand il meurt**.
-- **Niveau 10** : le **boss du chapitre** est imposé à la dernière vague (10 ou 20), dans son arène ; le niveau est **gagné quand il meurt**. Au chapitre 6, c'est **Thanos** (vague 20).
+- **Niveau 10** : le **boss du chapitre** est imposé à la dernière vague (10 ou 20), dans son arène ; le niveau est **gagné quand il meurt**. Au chapitre 6, c'est **Thanos** (vague 20) ; au chapitre 9, **Darkseid** (vague 20).
+- **Chapitres DC (7 à 9)** : les gros boss « rot. » sont tirés dans la rotation complète (11 boss, `bossPool: 'tous'`) sans le boss du chapitre ni le boss intermédiaire du niveau 8.
 - Besoins de contrat (demande au chef de projet, `src/engine/types.ts`) : `script.bossOrder?: BossId[]` (ordre imposé des gros boss de la partie), `script.excludeBosses?: BossId[]` (boss retirés de la rotation) et `script.endOnBossKill?: boolean` (victoire à la mort du boss de la dernière vague). Le lieutenant se déduit du gros boss suivant.
 - Modificateurs de map : **désactivés** en campagne, pour que la difficulté reste lisible.
 
@@ -52,7 +53,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
   - 30 ★ : 400 éclats + 1 tirage gratuit du pack au choix + **2 parchemins**.
 - **Niveau 5** (lieutenant), première victoire : **1 parchemin** + 10 cartes d'une unité du deck.
 - **Niveau 10** (boss), première victoire : **2 parchemins** + 300 éclats + le **personnage garanti** du chapitre. S'il est déjà possédé : 20 cartes de ce personnage.
-- **Total des parchemins** par chapitre : 1 + 1 + 2 (coffres) + 1 (niv. 5) + 2 (niv. 10) = **7**, soit **42** pour la campagne. Un palier coûte 1 / 2 / 3 parchemins (`TALENT_TIER_SCROLLS`, `src/data/talents.ts`) : la campagne complète ouvre les 3 paliers d'environ **7 unités**, ce qui pousse à choisir. Des parchemins viennent aussi des paliers du Solo Infini et de la Coop Infini (argent : 1, or : 2, héroïque : 3, puis 1 tous les 10).
+- **Total des parchemins** par chapitre : 1 + 1 + 2 (coffres) + 1 (niv. 5) + 2 (niv. 10) = **7**, soit **42** pour la campagne (**63** avec les 3 chapitres DC). Un palier coûte 1 / 2 / 3 parchemins (`TALENT_TIER_SCROLLS`, `src/data/talents.ts`) : la campagne complète ouvre les 3 paliers d'environ **7 unités**, ce qui pousse à choisir. Des parchemins viennent aussi des paliers du Solo Infini et de la Coop Infini (argent : 1, or : 2, héroïque : 3, puis 1 tous les 10).
 - **Cristaux d'éveil** (§6.6) : 3 étoiles sur un niveau de boss (niveaux 5 et 10), la première fois : **25 ✦**.
 - **XP de compte** : 20 par victoire + 10 par étoile nouvelle ; ×2 sur les niveaux 10.
 
@@ -65,12 +66,16 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 | 4 | 10 → 20 | 1,05 → 1,25 | vague 20 | 4 à 6 | 2 Légendaires, palier 1 |
 | 5 | 12 → 20 | 1,25 → 1,5 | vague 20 | 6 à 7 | Équipe complète, palier 2 |
 | 6 | 14 → 20 | 1,5 → 1,8 | vague 20 (Thanos) | 7 à 9 | Deck « méta », palier 3 |
+| 7 (DC) | 15 → 20 | 1,8 → 2,1 | vague 20 (Joker) | 8 à 9 | Deck méta + 1-2 héros DC, palier 3, premiers éveils |
+| 8 (DC) | 16 → 20 | 2,1 → 2,4 | vague 20 (Lex Luthor) | 9 à 10 | Équipe DC ou inter-univers, ★2 (passif 1) |
+| 9 (DC) | 17 → 20 | 2,4 → 2,8 | vague 20 (Darkseid) | 10 | Deck complet, ★2 à ★4 sur 2-3 unités |
 
 Cible pour le simulateur : avec le deck de départ (niveau 1, sans talent), **taux de victoire ≥ 90 %** sur les niveaux 1 à 9 du chapitre 1 et **≥ 70 %** sur le niveau 10 ; chaque niveau 10 du chapitre N doit être gagné à ≥ 60 % avec le « deck attendu » du chapitre N et à ≤ 30 % avec celui du chapitre N−1 (voir `docs/equilibrage.md`).
 
 ### Identifiants de map
 Les identifiants ci-dessous sont proposés à l'agent Maps (à aligner sur `src/maps/` quand il les aura fixés) :
 `toits-new-york`, `atelier-stark`, `base-avengers`, `asgard-bifrost`, `sanctum`, `temple-dix-anneaux`, `motunui`, `palais-imperial`, `zootopie`, `chambre-andy`, `sugar-rush`, `royaume-des-morts`, et les variantes `foret-pocahontas`, `highlands`, `atlantica`, `bayou`, `recif-nemo`, `tour-raiponce`, `foret-rox-rouky`. Les arènes sont celles de `src/data/bosses.ts` (`arene-bouffon`, etc.).
+Extension DC (identifiants de `src/maps/`) : `gotham-nuit`, `batcave`, `metropolis`, `themyscira`, `atlantis`, `oa`, et les arènes `arene-joker`, `arene-luthor`, `arene-bane`, `arene-sinestro`, `arene-blackadam`, `arene-darkseid` (Apokolips).
 
 ---
 
@@ -175,6 +180,62 @@ Boss intermédiaire : **Maléfique** (niveau 8, `arene-malefique`), lieutenant *
 | 10 | royaume-des-morts → Titan | 20 | 1,8 | L (5), B rot. (10), **L Outrider alpha** (15), **Thanos** (20) | Thanos tué sans perdre de vie | 2 parchemins, personnage garanti, cadre de profil, 100 ✦ (Thanos vaincu) |
 
 Note : au niveau 10 du chapitre 6, Thanos remplace le gros boss de la vague 20 (exception de campagne au rythme « Thanos à la 50 », voulue par le prompt) ; les Outriders se mêlent aux vagues 18 et 19.
+
+---
+
+## 3 bis. Extension DC Comics — chapitres 7 à 9
+
+Les trois chapitres s'ouvrent après le chapitre 6 (Thanos vaincu) et les seuils d'étoiles du §2. Même rythme : lieutenant au niveau 5, boss intermédiaire au niveau 8, gros boss au niveau 10 ; **Darkseid** au niveau 10 du chapitre 9. Les lieutenants sont décrits dans `design/game-design.md` (§ Extension DC).
+
+### Chapitre 7 — Gotham
+Boss intermédiaire : **Bane** (niveau 8, `arene-bane`), lieutenant **Mercenaire géant**. Boss : **le Joker** (`arene-joker`), lieutenant **Clown géant**. Personnage garanti : **Batman** (s'il est déjà possédé : 20 cartes de Batman).
+
+| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
+|---|---|---|---|---|---|---|
+| 1 | gotham-nuit | 15 | 1,8 | L (5), B rot. (10), L (15) | Avec au moins 2 héros DC | — |
+| 2 | gotham-nuit | 16 | 1,85 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
+| 3 | batcave | 17 | 1,85 | L (5), B rot. (10), L (15) | Aucun bouclier ne passe (clowns à ballons) | — |
+| 4 | batcave | 18 | 1,9 | L (5), B rot. (10), L (15) | Une unité de rang 6 | — |
+| 5 | gotham-nuit | 15 | 1,9 | L (5), B rot. (10), **L Clown géant** (15) | Clown tué en moins de 20 s | 1 parchemin |
+| 6 | batcave | 18 | 1,95 | L (5), B rot. (10), L (15) | Moins de 26 invocations | — |
+| 7 | gotham-nuit | 19 | 2,0 | L (5), B rot. (10), L (15) | Bonus d'équipe Bat-famille actif | — |
+| 8 | batcave → arène | 20 | 2,0 | L (5), B rot. (10), L Mercenaire (15), **B Bane** (20) | Bane tué avant son Venin (au-dessus de 50 % de PV pendant moins de 15 s) | 1 parchemin |
+| 9 | gotham-nuit | 20 | 2,05 | L (5), B rot. (10), L (15), B rot. (20) | Aucune unité ne perd de rang | — |
+| 10 | gotham-nuit → arène | 20 | 2,1 | L (5), B rot. (10), **L Clown géant** (15), **B Joker** (20) | Joker tué en moins de 30 s | 2 parchemins, personnage garanti |
+
+### Chapitre 8 — Metropolis et Themyscira
+Boss intermédiaire : **Black Adam** (niveau 8, `arene-blackadam`), lieutenant **Soldat de Kahndaq géant**. Boss : **Lex Luthor** (`arene-luthor`), lieutenant **Robot LexCorp géant**. Personnage garanti : **Superman**.
+
+| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
+|---|---|---|---|---|---|---|
+| 1 | metropolis | 16 | 2,1 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
+| 2 | metropolis | 17 | 2,15 | L (5), B rot. (10), L (15) | Aucun blindé ne passe (robots LexCorp) | — |
+| 3 | themyscira | 18 | 2,15 | L (5), B rot. (10), L (15) | Avec Wonder Woman ou un bonus Trinité | — |
+| 4 | atlantis | 18 | 2,2 | L (5), B rot. (10), L (15) | Une unité de rang 6 | — |
+| 5 | metropolis | 15 | 2,2 | L (5), B rot. (10), **L Robot LexCorp géant** (15) | Robot tué en moins de 20 s | 1 parchemin |
+| 6 | themyscira | 19 | 2,25 | L (5), B rot. (10), L (15) | Moins de 27 invocations | — |
+| 7 | atlantis | 19 | 2,3 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
+| 8 | themyscira → arène | 20 | 2,3 | L (5), B rot. (10), L Soldat de Kahndaq (15), **B Black Adam** (20) | Black Adam tué en moins de 30 s | 1 parchemin |
+| 9 | metropolis | 20 | 2,35 | L (5), B rot. (10), L (15), B rot. (20) | Bonus Justice League actif | — |
+| 10 | metropolis → arène | 20 | 2,4 | L (5), B rot. (10), **L Robot LexCorp géant** (15), **B Lex Luthor** (20) | Luthor tué en moins de 35 s (armure 30 %) | 2 parchemins, personnage garanti |
+
+### Chapitre 9 — Apokolips
+Boss intermédiaire : **Sinestro** (niveau 8, `arene-sinestro`), lieutenant **Soldat Sinestro géant**. Boss final : **Darkseid** (`arene-darkseid`, Apokolips), lieutenant **Parademon géant**. Personnage garanti : **Green Lantern**, plus le cadre de profil « Vainqueur de Darkseid ».
+
+| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
+|---|---|---|---|---|---|---|
+| 1 | oa | 17 | 2,4 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
+| 2 | oa | 18 | 2,45 | L (5), B rot. (10), L (15) | Une unité de rang 7 | — |
+| 3 | gotham-nuit | 18 | 2,5 | L (5), B rot. (10), L (15) | Aucun volant ne passe (Corps Sinestro, Parademons) | — |
+| 4 | metropolis | 19 | 2,5 | L (5), B rot. (10), L (15) | Deux bonus d'équipe actifs | — |
+| 5 | oa | 15 | 2,55 | L (5), B rot. (10), **L Soldat Sinestro géant** (15) | Soldat tué en moins de 20 s | 1 parchemin |
+| 6 | themyscira | 19 | 2,6 | L (5), B rot. (10), L (15) | Moins de 28 invocations | — |
+| 7 | atlantis | 20 | 2,65 | L (5), B rot. (10), L (15), B rot. (20) | Sans perdre de vie | — |
+| 8 | oa → arène | 20 | 2,65 | L (5), B rot. (10), L Soldat Sinestro (15), **B Sinestro** (20) | Aucune unité emprisonnée plus de 3 s | 1 parchemin |
+| 9 | batcave | 20 | 2,7 | L (5), B rot. (10), L (15), B rot. (20) | Avec au moins 1 héros de chaque pack | — |
+| 10 | oa → Apokolips | 20 | 2,8 | L (5), B rot. (10), **L Parademon géant** (15), **Darkseid** (20) | Darkseid tué sans perdre de vie | 2 parchemins, personnage garanti, cadre de profil, 100 ✦ (Darkseid vaincu) |
+
+Configuration moteur des niveaux 10 DC : `script: { bossId, bossAtWave: 20, endOnBossKill: true, excludeBosses: [boss du niveau 8, boss du chapitre] }` ; au chapitre 9, `bossId: 'darkseid'` (PV ×2, Rayons Oméga et Boom Tube en alternance, Équation d'Anti-Vie à 30 %) ; les Parademons se mêlent aux vagues 18 et 19.
 
 ---
 

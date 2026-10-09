@@ -42,6 +42,11 @@ export interface EnemyExtra {
   lieutenant?: number;    // petit boss : sbire géant du prochain gros boss
   mini?: number;          // petit boss (sbire géant) : compte comme un boss pour les vies, la rage et la fin de vague
   master?: BossId;        // petit boss : boss dont il utilise une version affaiblie du pouvoir
+  // Extension DC
+  venom?: number;         // Bane : Venin déjà utilisé
+  antiLife?: number;      // Darkseid : Équation d'Anti-Vie déjà annoncée
+  antiLifeIn?: number;    // Darkseid : délai avant l'effet de l'Équation
+  powerUses?: number;     // Darkseid (et son lieutenant) : alternance Rayons Oméga / Boom Tube
 }
 
 export interface SimEnemy extends EnemyInstance {
@@ -102,6 +107,8 @@ export interface TeamAgg {
   cooldownReduction: number;
   controlDuration: number;
   doubleAttackChance: number;
+  /** +x de dégâts contre les boss et les lieutenants (Trinité). */
+  bossDamage: number;
 }
 
 export interface PlayerInfo {
@@ -131,7 +138,7 @@ export interface Ctx {
 }
 
 export const NO_TEAM: TeamAgg = {
-  damage: 0, attackSpeed: 0, critChance: 0, critMul: 2, cooldownReduction: 0, controlDuration: 0, doubleAttackChance: 0,
+  damage: 0, attackSpeed: 0, critChance: 0, critMul: 2, cooldownReduction: 0, controlDuration: 0, doubleAttackChance: 0, bossDamage: 0,
 };
 
 // ───────────── Aléatoire ─────────────

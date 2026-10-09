@@ -9,7 +9,7 @@
 Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Marvel Rush**, un clone jouable du jeu mobile **Rush Royale** (tower defense avec fusion d'unités), avec :
 
 - les personnages **Marvel** et **Disney** du dépôt, dans le style graphique de ses planches ;
-- un système de **tirages** avec deux packs, **Marvel** et **Disney** ;
+- un système de **tirages** avec deux packs, **Marvel** et **Disney** (l'extension **DC Comics** ajoute un 3e pack, **DC**) ;
 - un **mode Solo central** : une campagne qui fait progresser le compte et débloque des personnages et des talents (§5.1) ;
 - une **Coop à deux** (vos deux chemins se rejoignent en un seul), en **niveaux à gagner** ou en **mode infini** avec des récompenses par palier, pour jouer ensemble quand on le décide. **Pas de mode Duel** : on ne joue jamais l'un contre l'autre ;
 - **deux profils sauvegardés en ligne** (toi et ta partenaire) : chacun progresse de son côté, et les deux se retrouvent dans une partie commune (§5.4) ;
@@ -180,6 +180,8 @@ Règles de travail :
 - **Sbires** : les Outriders, très rapides, en meute.
 - **Arène** : Titan, planète en ruines au ciel orange, avec les six Pierres qui brillent en fond.
 
+**Extension DC** : les gros boss **Joker, Lex Luthor, Bane, Sinestro et Black Adam** rejoignent la rotation (11 boss), et **Darkseid**, boss final de l'extension, arrive au dernier niveau de la campagne DC (chapitre 9) et à la **vague 100** des modes infinis (Thanos garde la vague 50). Détails : `design/game-design.md` (§ Extension DC).
+
 Si le boss n'est pas tué en **45 s**, il passe en **rage** : vitesse ×2.
 
 ### 4.5 Données des unités
@@ -225,7 +227,7 @@ Ciblage :
 Mets ces données dans `src/data/units.ts`, typées. Les valeurs sont un premier jet : expose-les dans un seul fichier pour les équilibrer facilement.
 
 ### 4.6 Bonus d'équipe
-Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux. Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).
+Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux ; extension DC : Justice League, Trinité, Bat-famille, Lanternes et cosmiques, Sirènes de Gotham, et les équipes inter-univers Les Riches et Les Archers. Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).
 
 ---
 
@@ -267,7 +269,7 @@ Comme dans Rush Royale, le joueur ne lit rien : il **apprend en jouant**, avec u
 Le Solo est le **mode principal** : c'est là que chaque joueur avance à son rythme, de son côté, et débloque l'essentiel du contenu. Il marche **hors ligne** et se synchronise ensuite.
 
 **Campagne**
-- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts.
+- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts. L'extension DC ajoute les chapitres 7 (Gotham), 8 (Metropolis et Themyscira) et 9 (Apokolips), ouverts après Thanos (`docs/campagne.md`).
 - Chaque chapitre compte **10 niveaux** sur les maps de sa zone. Le niveau 5 est un **mini-boss** (un sbire géant), le niveau 10 un **boss** dans son arène.
 - **Objectif de chaque niveau** : tenir un nombre de vagues fixé, plus une **contrainte bonus** pour la 3e étoile (« sans perdre de vie », « avec au moins 2 unités Disney », « boss tué en moins de 30 s »…).
 - **1 à 3 étoiles** par niveau. Les étoiles ouvrent les chapitres suivants et les coffres d'étoiles.
@@ -322,6 +324,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 | Vague 40 | coffre héroïque : 800 éclats, 3 parchemins, 1 skin au hasard |
 | Vague 50 (Thanos vaincu) | coffre légendaire : 1 500 éclats, 1 Légendaire garanti, cadre de profil « Vainqueur de Thanos » |
 | Ensuite, tous les 10 | +300 éclats et 1 parchemin |
+| Vagues 75 et 100 (extension DC, Darkseid à la 100) | coffres « Cosmique » (voir `docs/equilibrage.md` §5) |
 
 - **Record du duo** affiché sur l'écran Coop, et historique des meilleures parties.
 - Une partie infinie se **met en pause et se reprend** plus tard, à deux (§5.4).
@@ -370,7 +373,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
   - **Disney** : Pocahontas, Rebelle, Tiana, Nemo & Dory, Rox & Rouky.
 
 ### 6.2 Packs
-- Deux packs, **Pack Marvel** et **Pack Disney**, qui ne contiennent que les unités de leur univers.
+- Deux packs, **Pack Marvel** et **Pack Disney**, qui ne contiennent que les unités de leur univers. L'extension DC ajoute le **Pack DC** (15 héros), aux mêmes prix, taux et garantie.
 - Prix : **100** éclats le tirage, **900** les 10 tirages, avec au moins 1 Épique garanti dans un lot de 10.
 - Taux : **Rare 72 %**, **Épique 24 %**, **Légendaire 4 %**.
 - **Garantie** : un Légendaire au plus tard au 40e tirage, compteur séparé par pack et affiché.

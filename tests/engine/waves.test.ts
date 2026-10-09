@@ -102,8 +102,8 @@ describe('vagues', () => {
     expect([...spawnsByWave.keys()].sort((a, b) => a - b)).toEqual([8, 9, 18, 19, 28, 29]);
   });
 
-  it('les 6 gros boss passent avant toute répétition', () => {
-    const e = createEngine({ mode: 'solo', seed: 3, mapId: 'x', players: [setup()], bossRhythm: { small: 0, big: 1, thanos: 0 } });
+  it('les 6 gros boss passent avant toute répétition (rotation « Marvel et Disney »)', () => {
+    const e = createEngine({ mode: 'solo', seed: 3, mapId: 'x', players: [setup()], bossRhythm: { small: 0, big: 1, thanos: 0 }, bossPool: 'marvel-disney' });
     const ev = reachWave(e, 13);
     const ids = ofType(ev, 'bossSpawn').map((b) => b.boss);
     expect(ids.length).toBeGreaterThanOrEqual(12);

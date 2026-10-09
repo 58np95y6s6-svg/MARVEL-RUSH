@@ -18,9 +18,9 @@ function withBoss(boss: BossId, units: [number, UnitId, number][], deck: UnitId[
 const grid = (e: Engine) => e.state.players[0]!.grid;
 
 describe('boss', () => {
-  it('7 boss définis, intervalle 6 s (Thanos 8 s)', () => {
-    expect(BOSS_LIST).toHaveLength(7);
-    for (const b of BOSS_LIST) expect(b.power.interval).toBe(b.id === 'thanos' ? 8 : 6);
+  it('13 boss définis (7 + 6 DC), intervalle 6 s (Thanos et Darkseid 8 s)', () => {
+    expect(BOSS_LIST).toHaveLength(13);
+    for (const b of BOSS_LIST) expect(b.power.interval).toBe(b.id === 'thanos' || b.id === 'darkseid' ? 8 : 6);
   });
 
   it('Jafar : Hypnose, 1 à 2 unités cessent d’attaquer 4 s', () => {
