@@ -1,0 +1,306 @@
+// Primitives de combat : ciblage, dégâts, effets sur les ennemis, éliminations, statistiques
+// des unités (rang, niveau, améliorations, équipes, auras, talents).
+
+import { BOSS_STATS } from '../data/bosses';
+import { ENEMIES } from '../data/enemies';
+import type { Targeting, UnitDef, UnitId } from '../data/types';
+import { UNITS } from '../data/units';
+import { GRID_COLS, GRID_ROWS, type LaneId } from './types';
+import {
+  DT, EPS, LEVEL_DAMAGE, NO_TEAM, POWERUP_DAMAGE, emit, pick, rand,
+  type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
+} from './internal';
+import { resolveUnitParams } from './talents';
+
+// ───────────── Ennemis du chemin ─────────────
+
+export function aliveOn(ctx: Ctx, lane: LaneId): SimEnemy[] {
+  const out: SimEnemy[] = [];
+  for (const e of ctx.st.enemies) if (e.lane === lane && e.hp > 0 && !e.x.gone) out.push(e);
+  return out;
+}
+
+export function isAlive(e: SimEnemy): boolean {
+  return e.hp > 0 && !e.x.gone;
+}
+
+function better(a: SimEnemy, b: SimEnemy, key: (e: SimEnemy) => number): boolean {
+  const ka = key(a), kb = key(b);
+  return ka > kb || (ka === kb && a.uid < b.uid);
+}
+
+export function bestBy(list: readonly SimEnemy[], key: (e: SimEnemy) => number): SimEnemy | undefined {
+  let best: SimEnemy | undefined;
+  for (const e of list) if (!best || better(e, best, key)) best = e;
+  return best;
+}
+
+/** Les n meilleurs selon la clé (ordre décroissant, égalités par uid). */
+export function topBy(list: readonly SimEnemy[], key: (e: SimEnemy) => number, n: number): SimEnemy[] {
+  return list.slice().sort((a, b) => key(b) - key(a) || a.uid - b.uid).slice(0, n);
+}
+
+export function selectTarget(ctx: Ctx, list: readonly SimEnemy[], targeting: Targeting): SimEnemy | undefined {
+  if (list.length === 0) return undefined;
+  if (targeting === 'premier') return bestBy(list, (e) => e.distance);
+  if (targeting === 'fort') return bestBy(list, (e) => e.hp);
+  return pick(ctx, list);
+}
+
+/** Les ennemis les plus proches de `from` sur le chemin (hors exclus). */
+export function nearest(list: readonly SimEnemy[], from: SimEnemy, n: number, exclude: ReadonlySet<number>): SimEnemy[] {
+  return list
+    .filter((e) => !exclude.has(e.uid))
+    .sort((a, b) => Math.abs(a.distance - from.distance) - Math.abs(b.distance - from.distance) || a.uid - b.uid)
+    .slice(0, n);
+}
+
+export function within(list: readonly SimEnemy[], from: SimEnemy, radius: number): SimEnemy[] {
+  return list.filter((e) => e !== from && Math.abs(e.distance - from.distance) <= radius);
+}
+
+/** Le chemin est découpé en 3 lignes (montée, traversée, descente), comme le U de Rush Royale. */
+export function segmentOf(ctx: Ctx, distance: number): number {
+  return Math.min(2, Math.floor(distance / (ctx.pathLength / 3)));
+}
+
+// ───────────── Effets ─────────────
+
+export function applyStun(e: SimEnemy, duration: number): boolean {
+  if (e.bossId || duration <= 0) return false;
+  e.effects.stunFor = Math.max(e.effects.stunFor ?? 0, duration);
+  return true;
+}
+
+export function applySlow(ctx: Ctx, e: SimEnemy, value: number, duration: number): void {
+  if (e.x.flying || value <= 0) return;
+  const v = Math.min(0.9, value * (1 + (ctx.mods.slowPower ?? 0)));
+  const active = (e.effects.slowFor ?? 0) > EPS;
+  e.effects.slow = active ? Math.max(e.effects.slow ?? 0, v) : v;
+  e.effects.slowFor = Math.max(active ? e.effects.slowFor ?? 0 : 0, duration);
+}
+
+/** Déplace un ennemi vers le début du chemin (sauf boss et volants). */
+export function pushBack(e: SimEnemy, cells: number): boolean {
+  if (e.bossId || e.x.flying) return false;
+  e.distance = Math.max(0, e.distance - cells);
+  return true;
+}
+
+export function applyBurn(e: SimEnemy, dps: number, duration: number, player: number): void {
+  if (dps <= 0) return;
+  const active = (e.effects.burnFor ?? 0) > EPS;
+  e.effects.burn = active ? Math.max(e.effects.burn ?? 0, dps) : dps;
+  e.effects.burnFor = Math.max(active ? e.effects.burnFor ?? 0 : 0, duration);
+  e.x.burnBy = player;
+}
+
+// ───────────── Dégâts et éliminations ─────────────
+
+export interface HitOpts {
+  crit?: boolean;
+  shieldBreak?: boolean;
+  armorPierce?: number;
+  /** Dégâts sur la durée : ignorent boucliers et armure. */
+  dot?: boolean;
+  /** Unité à l'origine du coup (Venom compte ses éliminations). */
+  unit?: SimUnit;
+}
+
+/** Inflige des dégâts ; renvoie les dégâts réellement infligés. */
+export function dealDamage(ctx: Ctx, e: SimEnemy, amount: number, player: number, opts: HitOpts = {}): number {
+  if (!isAlive(e) || amount <= 0) return 0;
+  let dmg = amount;
+  if (!opts.dot) {
+    if (e.shieldHits > 0) {
+      if (opts.shieldBreak) {
+        e.shieldHits = 0;
+      } else {
+        e.shieldHits -= 1;
+        emit(ctx, { type: 'hit', enemy: e.uid, damage: 0, crit: false });
+        return 0;
+      }
+    }
+    const armor = Math.max(0, e.armor - (e.effects.armorBreak ?? 0)) * (1 - Math.min(1, opts.armorPierce ?? 0));
+    dmg *= 1 - armor;
+    if ((e.effects.markedFor ?? 0) > EPS) dmg *= 1 + (e.effects.marked ?? 0);
+  }
+  e.hp -= dmg;
+  emit(ctx, { type: 'hit', enemy: e.uid, damage: dmg, crit: !!opts.crit });
+  if (e.hp <= EPS) killEnemy(ctx, e, player, opts.unit);
+  return dmg;
+}
+
+export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit): void {
+  if (e.x.gone) return;
+  e.hp = 0;
+  e.x.gone = 1;
+  const p = ctx.st.players[player];
+  if (!p) return;
+  let mana = e.bossId ? BOSS_STATS.mana : ENEMIES[e.kind].mana;
+  // Meeko (Pocahontas) : chance de mana bonus par élimination.
+  const poca = p.grid.find((u) => u && effectiveId(u) === 'pocahontas');
+  if (poca) {
+    const prm = unitParams(ctx, player, 'pocahontas');
+    if (rand(ctx) < (prm.meekoChance ?? 0)) mana += prm.meekoMana ?? 0;
+  }
+  if (unit && effectiveId(unit) === 'venom') unit.counters.kills = (unit.counters.kills ?? 0) + 1;
+  p.mana += mana;
+  emit(ctx, { type: 'kill', enemy: e.uid, player: p.id, mana });
+}
+
+// ───────────── Unités ─────────────
+
+export function effectiveId(u: SimUnit): UnitId {
+  return u.status.transformedInto ?? u.unit;
+}
+
+export function effectiveDef(u: SimUnit): UnitDef {
+  return UNITS[effectiveId(u)];
+}
+
+export function unitParams(ctx: Ctx, player: number, unit: UnitId): Record<string, number> {
+  const info = ctx.info[player]!;
+  let p = info.params[unit];
+  if (!p) {
+    p = resolveUnitParams(unit, UNITS[unit].ability.params, info.levels[unit] ?? 1, info.talents[unit]);
+    info.params[unit] = p;
+  }
+  return p;
+}
+
+export function teamFor(ctx: Ctx, player: number, unit: UnitId): TeamAgg {
+  return ctx.info[player]!.team[unit] ?? NO_TEAM;
+}
+
+export function isDisabled(u: SimUnit): boolean {
+  const s = u.status;
+  return (s.stunnedFor ?? 0) > EPS || (s.sleepingFor ?? 0) > EPS || (s.hypnotizedFor ?? 0) > EPS;
+}
+
+export function slotXY(slot: number): [number, number] {
+  return [slot % GRID_COLS, Math.floor(slot / GRID_COLS)];
+}
+
+export function neighbors(slot: number, diagonal: boolean): number[] {
+  const [c, r] = slotXY(slot);
+  const out: number[] = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      if (!diagonal && dr !== 0 && dc !== 0) continue;
+      const nc = c + dc, nr = r + dr;
+      if (nc < 0 || nc >= GRID_COLS || nr < 0 || nr >= GRID_ROWS) continue;
+      out.push(nr * GRID_COLS + nc);
+    }
+  }
+  return out;
+}
+
+export interface Auras { damage: number; attackSpeed: number }
+
+/** Bonus reçus des unités voisines (Captain America, Pocahontas, Coco, Raiponce, talents). */
+export function aurasAt(ctx: Ctx, player: number, slot: number): Auras {
+  const grid = ctx.st.players[player]!.grid;
+  const out: Auras = { damage: 0, attackSpeed: 0 };
+  for (const j of neighbors(slot, true)) {
+    const n = grid[j];
+    if (!n) continue;
+    const id = effectiveId(n);
+    const prm = unitParams(ctx, player, id);
+    const [c1, r1] = slotXY(slot), [c2, r2] = slotXY(j);
+    const diag = c1 !== c2 && r1 !== r2;
+    if (diag && !prm.auraDiagonal) continue;
+    let speed = prm.auraAttackSpeed ?? 0;
+    if (id === 'pocahontas') speed += (prm.auraPerRank ?? 0) * (n.rank - 1);
+    out.attackSpeed += speed;
+    out.damage += prm.auraDamage ?? 0;
+  }
+  return out;
+}
+
+/** Multiplicateur de vitesse d'attaque d'une unité. */
+export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit): number {
+  const id = effectiveId(u);
+  const prm = unitParams(ctx, player, id);
+  const team = teamFor(ctx, player, id);
+  let bonus = aurasAt(ctx, player, slot).attackSpeed + team.attackSpeed;
+  if ((u.counters.hasteFor ?? 0) > EPS) bonus += u.counters.haste ?? 0;
+  if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
+  let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1);
+  if (id === 'maui' && !u.counters.form) mul *= prm.hawkSpeedMul ?? 1;
+  if (id === 'cmarvel' && (u.counters.binaryFor ?? 0) > EPS) mul *= prm.binaryAttackSpeedMul ?? 1;
+  return mul;
+}
+
+/** Dégâts d'un coup de base (avant armure, marque, crit, bonus contre les boss). */
+export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): number {
+  const def = effectiveDef(u);
+  const id = def.id;
+  const prm = unitParams(ctx, player, id);
+  const p = ctx.st.players[player]!;
+  const info = ctx.info[player]!;
+  const level = info.levels[id] ?? 1;
+  const pu = p.powerUps[id] ?? 1;
+  let dmg = def.damage * u.rank * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  dmg *= 1 + teamFor(ctx, player, id).damage;
+  dmg *= 1 + aurasAt(ctx, player, slot).damage;
+  if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
+  if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
+  dmg *= prm.damageMul ?? 1;
+  if (u.status.transformedInto) dmg *= 1 + (prm.transformDamageBonus ?? 0);
+  return dmg;
+}
+
+/** Durée d'un contrôle posé par une unité (équipe Océan, modificateur de map). */
+export function controlMul(ctx: Ctx, player: number, unit: UnitId): number {
+  return (1 + teamFor(ctx, player, unit).controlDuration) * (1 + (ctx.mods.controlDuration ?? 0));
+}
+
+/** Recharge des compétences : vitesse de décompte (équipe Arcanes, modificateur de map). */
+export function cooldownRate(ctx: Ctx, player: number, unit: UnitId): number {
+  const red = teamFor(ctx, player, unit).cooldownReduction + (ctx.mods.cooldownReduction ?? 0);
+  return 1 / Math.max(0.1, 1 - red);
+}
+
+/**
+ * Coup d'une unité sur un ennemi : bonus contre les boss, critiques d'équipe, puis effets
+ * génériques des paramètres (brûlure, étourdissement, ralentissement des talents).
+ */
+export function unitHit(
+  ctx: Ctx, player: number, u: SimUnit, e: SimEnemy, amount: number,
+  opts: { crit?: boolean; shieldBreak?: boolean; noOnHit?: boolean } = {},
+): number {
+  const id = effectiveId(u);
+  const prm = unitParams(ctx, player, id);
+  let dmg = amount;
+  let crit = !!opts.crit;
+  if (e.bossId) dmg *= prm.bossDamageMul ?? 1;
+  const team = teamFor(ctx, player, id);
+  if (!crit && team.critChance > 0 && rand(ctx) < team.critChance) {
+    crit = true;
+    dmg *= team.critMul;
+  }
+  const dealt = dealDamage(ctx, e, dmg, player, {
+    crit, shieldBreak: opts.shieldBreak, armorPierce: prm.armorPierce ?? 0, unit: u,
+  });
+  if (opts.noOnHit || !isAlive(e)) return dealt;
+  if (prm.burnPerSecond && dealt > 0) {
+    applyBurn(e, dealt * prm.burnPerSecond * (1 + (ctx.mods.burnDamage ?? 0)), prm.burnDuration ?? 3, player);
+  }
+  if (prm.stunDuration) {
+    const every = prm.stunEveryAttacks ?? 0;
+    if (!every || ((u.counters.attacks ?? 0) % every === 0)) {
+      if (rand(ctx) < (prm.stunChance ?? 1)) applyStun(e, prm.stunDuration * controlMul(ctx, player, id));
+    }
+  }
+  if (id !== 'nemo' && prm.slow && !UNITS[id].ability.params.slow) {
+    applySlow(ctx, e, prm.slow, (prm.slowDuration ?? 1) * controlMul(ctx, player, id));
+  }
+  return dealt;
+}
+
+export function tickDown(obj: Record<string, number | undefined>, key: string): void {
+  const v = obj[key];
+  if (v !== undefined && v > 0) obj[key] = Math.max(0, v - DT);
+}
