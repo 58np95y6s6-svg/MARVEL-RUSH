@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10b',
+    title: 'Niveaux de fusion façon Rush Royale',
+    date: '10 octobre 2026',
+    items: [
+      'La forme du jeton donne le niveau de fusion : le nombre d’angles = le niveau.',
+      'Rond, amande, triangle, losange, pentagone, hexagone, heptagone (niveau 7).',
+      'À chaque fusion, la forme gagne ses angles un à un.',
+    ],
+  },
+  {
     id: '2026-10-10a',
     title: 'Premier combat jouable',
     date: '10 octobre 2026',

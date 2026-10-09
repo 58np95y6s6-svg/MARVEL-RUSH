@@ -2,6 +2,7 @@
 // Le moteur avance à pas fixe (20 ticks/s) ; la scène dessine à la fréquence de l'écran et interpole
 // la position des ennemis entre deux ticks. Coordonnées : écran logique 1000 × 1600 (src/maps/layout.ts),
 // mis à l'échelle et centré dans les zones sûres de l'écran.
+import { rankShape } from '../art';
 import { Application, BitmapText, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance } from '../engine';
 import { GRID_SIZE } from '../engine';
@@ -411,7 +412,8 @@ export class BattleScene {
     sprite.position.set(0, -SIZES.token * 0.42);
     pips.position.set(-100 * k, -SIZES.token * 0.42 - 100 * k);
     pips.scale.set(k);
-    body.addChild(sprite, pips);
+    // La plaque de rang (forme = niveau de fusion) passe derrière le portrait.
+    body.addChild(pips, sprite);
     root.addChild(glow, body, status);
     this.unitLayer.addChild(root);
     return {
@@ -420,19 +422,27 @@ export class BattleScene {
     };
   }
 
+  /**
+   * Plaque de rang façon Rush Royale : le nombre d'angles = le niveau de fusion
+   * (1 rond, 2 amande, 3 triangle… 7 heptagone). Après une fusion, la forme gagne ses angles un à un.
+   */
   private drawPips(v: UnitView, n: number): void {
     const g = v.pips;
     g.clear();
     if (n <= 0) return;
-    // Pastilles plus grosses que sur la planche : lisibles à 375 px de large.
-    const gap = 25, w = v.rank * gap + 12, x0 = 100 - w / 2, cy = 178;
     const rc = rarityColor(v.unit);
-    g.roundRect(x0, cy - 16, w, 32, 16).fill(INK).stroke({ color: rc, width: 3.5 });
-    for (let i = 0; i < n; i++) {
-      const cx = x0 + 6 + gap / 2 + i * gap;
-      g.circle(cx, cy, 9).fill(0xfff4c2).stroke({ color: rc, width: 3 });
-      g.circle(cx - 2.6, cy - 2.6, 2.8).fill(0xffffff);
-    }
+    const sh = rankShape(n);
+    const stroke = { color: INK, width: 7, join: 'round' as const };
+    if (sh.kind === 'circle') g.circle(sh.cx, sh.cy, sh.r);
+    else if (sh.kind === 'lens') {
+      g.moveTo(sh.cx - sh.r, sh.cy)
+        .quadraticCurveTo(sh.cx, sh.cy - sh.bulge, sh.cx + sh.r, sh.cy)
+        .quadraticCurveTo(sh.cx, sh.cy + sh.bulge, sh.cx - sh.r, sh.cy)
+        .closePath();
+    } else g.poly(sh.points.flat(), true);
+    g.fill(rc).stroke(stroke);
+    // Reflet en haut de la plaque.
+    g.ellipse(sh.kind === 'polygon' ? 100 : 100, 30, 34, 9).fill({ color: 0xffffff, alpha: 0.28 });
     v.pipsShown = n;
   }
 
