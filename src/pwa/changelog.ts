@@ -11,6 +11,30 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10d',
+    title: 'Attaques revisitées',
+    date: '10 octobre 2026',
+    items: [
+      'Chaque héros a maintenant son attaque bien à lui : répulseur d’Iron Man, toile de Spider-Man, rocher de Hulk, éclairs ramifiés de Thor, bouclier de Cap qui ricoche, poêle de Raiponce (BONK !)…',
+      'Les compétences ont leur grand effet : Uni-Beam, Hulk Smash et ses fissures, portail de Strange, Dix Anneaux en orbite, vague de Vaïana, chant d’Ariel, menottes de Judy, lasso de Woody, glitch de Vanellope.',
+      'L’état des ennemis se voit d’un coup d’œil : étoiles (étourdi), flocon (ralenti), petites flammes (brûlure), cible rouge (marqué), bouclier fêlé (armure brisée).',
+      'Les coups critiques rebondissent, et les pouvoirs des boss partent du boss jusqu’aux cases touchées.',
+      'Effets dessinés dans le style des planches, pensés pour rester lisibles et fluides avec 15 héros qui tirent en même temps.',
+    ],
+  },
+  {
+    id: '2026-10-10c',
+    title: 'Portées d’attaque',
+    date: '10 octobre 2026',
+    items: [
+      'Chaque héros a sa zone de touche : toute la map pour les tireurs (Iron Man, Œil de faucon, Rebelle…), longue, moyenne ou courte pour le corps à corps (Hulk, Venom, Mulan…).',
+      'Garde le doigt appuyé sur un héros pour voir sa zone et la partie du chemin qu’il couvre ; ses jumeaux fusionnables s’illuminent.',
+      'La place compte : un héros de courte portée doit être collé au chemin, mais il frappe beaucoup plus fort.',
+      'Pendant une fusion, la zone de la case visée s’affiche ; la portée apparaît aussi dans la fiche du héros.',
+      'Plus le niveau de fusion est élevé, plus le héros tire vite.',
+    ],
+  },
+  {
     id: '2026-10-10b2',
     title: 'Nouveaux jetons',
     date: '10 octobre 2026',

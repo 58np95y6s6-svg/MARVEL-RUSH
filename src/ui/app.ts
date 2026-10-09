@@ -4,6 +4,7 @@
 //   #dev/fast    combat accéléré (×8 ; #dev/fast/16 pour ×16)
 //   #dev/art     prévisualisation des personnages
 //   #dev/maps    prévisualisation des maps
+//   #dev/fx      revue des effets d'attaque et de compétence
 import './base.css';
 import './battle.css';
 import { STARTER_DECKS } from '../data/units';
@@ -35,6 +36,12 @@ async function route(): Promise<void> {
     unlockScroll(true);
     const stop = mountMapPreview(root);
     cleanup = () => { stop(); unlockScroll(false); };
+    return;
+  }
+  if (h.startsWith('dev/fx')) {
+    const { mountFxPreview } = await import('../render/fx/devPage');
+    const stop = mountFxPreview(root);
+    cleanup = stop;
     return;
   }
   if (h === 'combat' || h.startsWith('dev/fast')) {

@@ -6,6 +6,7 @@ import type {
   Command, EngineEvent, EngineState, EnemyInstance, GameConfig, LaneId, PlayerState, UnitInstance,
 } from './types';
 import { mulberry32 } from './rng';
+import type { BoardGeometry } from './geometry';
 
 export const DT = 0.05; // 1 / TICKS_PER_SECOND
 export const EPS = 1e-9;
@@ -123,9 +124,13 @@ export interface Ctx {
   st: SimState;
   ev: EngineEvent[];
   laneLen: Record<LaneId, number>;
+  /** Géométrie des portées (§4.1), dérivée du mode et de la forme du chemin de la map. */
+  geo: BoardGeometry;
   coop: boolean;
   mods: Record<string, number>;
   info: PlayerInfo[];
+  /** Tests des compétences : les portées sont ignorées (toutes les unités touchent tout le chemin). */
+  debugNoRange?: boolean;
   /** Tests : impose la Pierre du Gant de l'infini. */
   debugStone?: string;
 }

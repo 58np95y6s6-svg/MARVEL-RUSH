@@ -1,13 +1,17 @@
 // Simulateur d'équilibrage headless (agent Game design).
 // Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--max <vague>] [--seed <n>] [--level <n>]
 // Joue N parties en Solo Infini (ou Coop Infini à deux bots avec --coop) avec un bot simple :
-// invoque dès que possible, fusionne goulûment (rangs bas d'abord), améliore quand le plateau est
-// plein. Affiche la vague moyenne atteinte et sa distribution.
+// invoque dès que possible, fusionne goulûment (rangs bas d'abord ; à rang égal, la paire dont une
+// unité couvre le moins de chemin, fusionnée vers la case la mieux placée : §4.1 « Portées
+// d'attaque »), améliore quand le plateau est plein. Affiche la vague moyenne atteinte et sa distribution.
 
 import { createEngine } from '../src/engine/index';
 import type { GameConfig, PlayerId, PlayerState } from '../src/engine/types';
 import type { UnitId } from '../src/data/types';
 import { UNITS } from '../src/data/units';
+import { boardGeometry, coveredSpans, unitRange } from '../src/engine/geometry';
+import type { LaneId } from '../src/engine/types';
+import { getMap } from '../src/maps/index';
 
 const argv = process.argv.slice(2).filter((a) => a !== '--');
 const flag = (name: string): string | undefined => {
@@ -27,18 +31,40 @@ const deck = (argv.length ? argv : ['spiderman', 'hawkeye', 'falcon', 'cmarvel',
 for (const id of deck) if (!UNITS[id]) throw new Error(`Unité inconnue : ${id}`);
 
 const POWERUP_COSTS = [100, 200, 400, 700];
+const MAP_ID = 'toits-new-york';
+const geo = boardGeometry(coop ? 'coop' : 'solo', getMap(MAP_ID).shape);
+const coverCache = new Map<string, number>();
+/** Part du chemin du joueur couverte par une unité posée sur `slot` (0..1 par branche). */
+function coverage(player: number, slot: number, unit: UnitId): number {
+  const range = unitRange(unit);
+  if (!Number.isFinite(range)) return 2;
+  const key = `${player}:${slot}:${range}`;
+  let v = coverCache.get(key);
+  if (v === undefined) {
+    const lanes: LaneId[] = coop ? [player === 0 ? 'a' : 'b', 'tronc'] : ['a'];
+    v = 0;
+    for (const l of lanes) for (const [a, b] of coveredSpans(geo, player, l, slot, range, 120)) v += b - a;
+    coverCache.set(key, v);
+  }
+  return v;
+}
 
 /** Une décision du bot par tick et par joueur. */
-function decide(p: PlayerState): Parameters<ReturnType<typeof createEngine>['apply']>[0] | null {
+function decide(p: PlayerState, pi: number): Parameters<ReturnType<typeof createEngine>['apply']>[0] | null {
   const empty = p.grid.some((g) => !g);
   if (empty && p.mana >= p.summonCost) return { type: 'summon', player: p.id };
-  let best: [number, number, number] | null = null;
+  let best: [number, number, number, number] | null = null; // from, to, rang, couverture la plus faible
   for (let i = 0; i < p.grid.length; i++) {
     const a = p.grid[i];
     if (!a || a.rank >= 7) continue;
     for (let j = i + 1; j < p.grid.length; j++) {
       const b = p.grid[j];
-      if (b && b.unit === a.unit && b.rank === a.rank && (!best || a.rank < best[2])) best = [i, j, a.rank];
+      if (!b || b.unit !== a.unit || b.rank !== a.rank) continue;
+      const ci = coverage(pi, i, a.unit), cj = coverage(pi, j, b.unit);
+      const low = Math.min(ci, cj);
+      if (!best || a.rank < best[2] || (a.rank === best[2] && low < best[3] - 1e-9)) {
+        best = ci <= cj ? [i, j, a.rank, low] : [j, i, a.rank, low];
+      }
     }
   }
   if (best && !empty) return { type: 'merge', player: p.id, from: best[0], to: best[1] };
@@ -61,10 +87,10 @@ function play(seed: number): number {
   const levels = Object.fromEntries(deck.map((u) => [u, level]));
   const players: GameConfig['players'] = [{ id: 'p1', deck, levels, talents: {} }];
   if (coop) players.push({ id: 'p2', deck, levels, talents: {} });
-  const engine = createEngine({ mode: coop ? 'coop' : 'solo', seed, mapId: 'toits-new-york', players });
+  const engine = createEngine({ mode: coop ? 'coop' : 'solo', seed, mapId: MAP_ID, players });
   while (!engine.state.result && engine.state.wave <= maxWave) {
-    for (const p of engine.state.players) {
-      const c = decide(p);
+    for (const [pi, p] of engine.state.players.entries()) {
+      const c = decide(p, pi);
       if (c) engine.apply(c);
     }
     engine.tick();

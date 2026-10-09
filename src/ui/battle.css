@@ -153,6 +153,15 @@
 .mr-info .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .mr-info .meta span { background: #ece6f8; border-radius: 14px; padding: 4px 12px; font-size: 24px; font-weight: 800; }
 @keyframes mr-pop { from { transform: scale(.8); opacity: 0; } }
+.mr-info .meta span.rng { background: #fff0b8; }
+
+/* ---------- zone de touche (appui long) ---------- */
+.mr-range-tag {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); white-space: nowrap;
+  padding: 10px 28px; border-radius: 40px; background: rgba(29, 23, 51, .82); border: 5px solid #ffe680;
+  font-size: 40px; color: #ffe680; display: none; pointer-events: none; z-index: 4;
+}
+.mr-range-tag.on { display: block; animation: mr-pop .15s ease-out; }
 
 /* ---------- annonce de boss ---------- */
 .mr-announce {

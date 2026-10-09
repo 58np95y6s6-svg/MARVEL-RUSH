@@ -10,9 +10,10 @@ import {
 } from './internal';
 import {
   aliveAll, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate,
-  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, nearest, neighbors, pushBack,
+  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors, pushBack,
   progress, segmentOf, selectTarget, sendToStart, teamFor, topBy, unitHit, unitParams, within,
 } from './combat';
+import { enemyGridPos, inReach, unitRange } from './geometry';
 
 export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
   const prm = unitParams(ctx, player, effectiveId(u));
@@ -83,7 +84,7 @@ export function updateUnits(ctx: Ctx, player: number): void {
     let enemies = aliveAll(ctx);
     let cur = slot;
     if (!disabled && (u.counters.cd ?? 1) <= EPS) {
-      const res = timedAbility(ctx, player, slot, u, enemies);
+      const res = timedAbility(ctx, player, slot, u, enemies, inRange(ctx, player, slot, u, enemies));
       if (res !== false) {
         u.counters.cd = unitParams(ctx, player, effectiveId(u)).abilityCooldown ?? 0;
         if (typeof res === 'number') cur = res;
@@ -92,11 +93,15 @@ export function updateUnits(ctx: Ctx, player: number): void {
     }
     u.cooldown = Math.max(0, u.cooldown - DT * attackSpeedOf(ctx, player, cur, u));
     if (disabled || u.cooldown > EPS || enemies.length === 0) continue;
-    performAttack(ctx, player, cur, u, enemies);
+    const pool = inRange(ctx, player, cur, u, enemies);
+    // Aucun ennemi dans la zone : l'attaque reste prête (pas de coup dans le vide).
+    if (pool.length === 0) continue;
+    performAttack(ctx, player, cur, u, enemies, pool);
     const team = teamFor(ctx, player, effectiveId(u));
     if (team.doubleAttackChance > 0 && rand(ctx) < team.doubleAttackChance) {
       const again = aliveAll(ctx);
-      if (again.length > 0) performAttack(ctx, player, cur, u, again);
+      const againPool = inRange(ctx, player, cur, u, again);
+      if (againPool.length > 0) performAttack(ctx, player, cur, u, again, againPool);
     }
     u.cooldown += effectiveDef(u).attackInterval;
   }
@@ -148,7 +153,7 @@ const displaceable = (e: SimEnemy) => !e.bossId && !e.x.mini && !e.x.flying;
  * Déclenche la compétence à recharge. Renvoie false si elle n'a pas pu partir (on réessaie au
  * tick suivant), true sinon, ou la nouvelle case si l'unité s'est déplacée (Vanellope).
  */
-function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): boolean | number {
+function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: SimEnemy[], enemies: SimEnemy[]): boolean | number {
   const id = effectiveId(u);
   const prm = unitParams(ctx, player, id);
   const ctrl = controlMul(ctx, player, id);
@@ -157,7 +162,8 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       const lead = bestBy(enemies, (e) => progress(ctx, e));
       if (!lead) return false;
       const seg = segmentOf(ctx, lead);
-      const line = prm.beamAllLines ? enemies : enemies.filter((e) => segmentOf(ctx, e) === seg);
+      // Le laser part vers l'ennemi de tête de la zone, puis traverse toute sa ligne du chemin.
+      const line = prm.beamAllLines ? all : all.filter((e) => segmentOf(ctx, e) === seg);
       const dmg = baseDamage(ctx, player, slot, u) * (prm.beamDamage ?? 2) * (1 + (ctx.mods.beamDamage ?? 0));
       emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: line.map((e) => e.uid), fx: 'ironman:unibeam' });
       for (const e of line) {
@@ -260,14 +266,30 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
 
 // ───────────── Attaques de base ─────────────
 
-function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): void {
+/**
+ * Ennemis dans la zone de touche de l'unité posée sur `slot` (§4.1, « Portées d'attaque »).
+ * La cible principale d'une attaque ou d'une compétence est toujours choisie dans cette liste ;
+ * les effets secondaires (éclaboussures, rebonds, chaînes, attaques « tous les ennemis ») suivent
+ * ensuite leurs propres règles, sur tout le chemin.
+ */
+export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): SimEnemy[] {
+  const range = unitRange(effectiveDef(u));
+  if (!Number.isFinite(range) || ctx.debugNoRange) return enemies;
+  const out: SimEnemy[] = [];
+  for (const e of enemies) {
+    if (inReach(slot, range, enemyGridPos(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane)))) out.push(e);
+  }
+  return out;
+}
+
+function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[], pool: SimEnemy[]): void {
   const def = effectiveDef(u);
   const id = def.id;
-  const target = selectTarget(ctx, enemies, def.targeting);
+  const target = selectTarget(ctx, pool, def.targeting);
   if (!target) return;
   const at = ctx.ev.length;
   u.counters.attacks = (u.counters.attacks ?? 0) + 1;
-  const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies);
+  const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool);
   ctx.ev.splice(at, 0, {
     type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id,
     targets: targets.map((e) => e.uid), fx,
@@ -275,7 +297,7 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
 }
 
 function attackOf(
-  ctx: Ctx, player: number, slot: number, u: SimUnit, id: UnitId, target: SimEnemy, enemies: SimEnemy[],
+  ctx: Ctx, player: number, slot: number, u: SimUnit, id: UnitId, target: SimEnemy, enemies: SimEnemy[], pool: SimEnemy[],
 ): { targets: SimEnemy[]; fx: string } {
   const prm = unitParams(ctx, player, id);
   const ctrl = controlMul(ctx, player, id);
@@ -490,7 +512,7 @@ function attackOf(
         hit(target, dmg * (1 + (prm.secondHitBonus ?? 0.5)));
         return { targets: [target], fx: 'foxhound:double' };
       }
-      const next = selectTarget(ctx, enemies.filter(isAlive), 'premier');
+      const next = selectTarget(ctx, pool.filter(isAlive), 'premier');
       if (next) hit(next, dmg);
       return { targets: next ? [target, next] : [target], fx: 'foxhound:double' };
     }

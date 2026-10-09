@@ -6,6 +6,8 @@ export interface MapLengths {
   id: string;
   pathLength: number;
   pathLengthCoop?: { a: number; b: number; tronc: number };
+  /** Forme du chemin (src/maps/layout.ts) : sert à la géométrie des portées. Absente = 'u'. */
+  shape?: string;
 }
 
 const registry = new Map<string, MapLengths>();

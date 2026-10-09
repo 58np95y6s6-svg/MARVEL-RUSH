@@ -5,7 +5,7 @@ import { BOSSES, LIEUTENANTS } from '../data/bosses';
 import type { BossId, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import {
-  GRID_SIZE, MAX_RANK, TICKS_PER_SECOND, bossWaveKind, createEngine,
+  GRID_SIZE, MAX_RANK, RANK_ATTACK_SPEED, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, rangeLabel,
   type Command, type Engine, type EngineEvent, type GameConfig, type PlayerId,
 } from '../engine';
 import { getMap } from '../maps';
@@ -126,9 +126,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     return { id, el: c, lv: c.querySelector('.lv') as HTMLElement, cost: c.querySelector('.cost > span') as HTMLElement, costBox: c.querySelector('.cost') as HTMLElement };
   });
   const info = el('div', 'mr-info');
+  const rangeTag = el('div', 'mr-range-tag mr-outline-s');
   const dock = el('div', 'mr-dock');
   dock.append(banner, toast, mana, summon, extra, cards);
-  stage.append(top, bossBar, wavePop, dock, info);
+  stage.append(top, bossBar, wavePop, dock, info, rangeTag);
 
   // Fenêtres plein écran (en px CSS)
   const announce = el('div', 'mr-announce', '<div class="box"><div class="tag mr-outline-s">BOSS !</div><img alt=""><div class="name mr-outline-s"></div><div class="sub"></div></div>');
@@ -397,7 +398,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const lv = engine.state.players[0]!.powerUps[u.unit] ?? 1;
     info.innerHTML = `<h3>${d.name}<small>Rang ${u.rank}/${MAX_RANK}</small></h3>
       <p><span class="abl">${d.ability.name}</span> : ${d.ability.description}</p>
-      <div class="meta"><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * u.rank * (1 + 0.15 * (lv - 1)))}</span><span>Cadence ${d.attackInterval.toString().replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>`;
+      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + 0.15 * (lv - 1)))}</span><span>Cadence ${(d.attackInterval / (1 + RANK_ATTACK_SPEED * (u.rank - 1))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>`;
     const c = scene.cellCenter(slot);
     const x = Math.max(20, Math.min(1000 - 20 - 560, c.x - 280));
     info.style.left = `${x}px`;
@@ -414,22 +415,54 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     infoUnit = null;
   }
 
+  // Zone de touche : appui long (≥ 300 ms sans bouger) sur une unité, tant que le doigt reste posé.
+  const HOLD_MS = 300;
+  let holdTimer = 0;
+  function showRangeTag(slot: number): void {
+    const u = engine.state.players[0]!.grid[slot];
+    if (!u) return;
+    rangeTag.textContent = `Portée : ${rangeLabel(u.status.transformedInto ?? u.unit)}`;
+    // Sous l'aire de jeu, au-dessus des améliorations.
+    rangeTag.style.top = `${scene ? scene.layout.controls.upgrades[0]!.y - 70 : 1120}px`;
+    rangeTag.classList.add('on');
+  }
+  function endHold(): void {
+    clearTimeout(holdTimer);
+    holdTimer = 0;
+    rangeTag.classList.remove('on');
+    scene?.hideHold();
+  }
+
   // Glisser-fusionner (toucher et souris)
   const pt = { x: 0, y: 0 };
-  let press: { id: number; slot: number; x: number; y: number; dragging: boolean } | null = null;
+  let press: { id: number; slot: number; x: number; y: number; dragging: boolean; held: boolean; unit: UnitId } | null = null;
   function onDown(e: PointerEvent): void {
     if (!scene || over || userPaused || press) return;
     scene.toLogical(e.clientX, e.clientY, pt);
     const slot = scene.slotAt(pt.x, pt.y);
-    if (slot < 0 || !engine.state.players[0]!.grid[slot]) { hideInfo(); return; }
-    press = { id: e.pointerId, slot, x: pt.x, y: pt.y, dragging: false };
+    const u = slot >= 0 ? engine.state.players[0]!.grid[slot] : null;
+    if (!u) { hideInfo(); return; }
+    press = { id: e.pointerId, slot, x: pt.x, y: pt.y, dragging: false, held: false, unit: u.unit };
     try { host.setPointerCapture(e.pointerId); } catch { /* ignoré */ }
     e.preventDefault();
+    const p = press;
+    clearTimeout(holdTimer);
+    holdTimer = window.setTimeout(() => {
+      holdTimer = 0;
+      if (!scene || press !== p || p.dragging || over) return;
+      if (engine.state.players[0]!.grid[p.slot]?.unit !== p.unit) return;
+      hideInfo();
+      p.held = scene.showHold(p.slot);
+      if (p.held) { showRangeTag(p.slot); navigator.vibrate?.(15); }
+    }, HOLD_MS);
   }
   function onMove(e: PointerEvent): void {
     if (!scene || !press || e.pointerId !== press.id) return;
     scene.toLogical(e.clientX, e.clientY, pt);
     if (!press.dragging && Math.hypot(pt.x - press.x, pt.y - press.y) > 22) {
+      // Le doigt bouge : glisser-fusionner (même après un appui long).
+      endHold();
+      press.held = false;
       if (!engine.state.players[0]!.grid[press.slot]) { press = null; return; }
       press.dragging = scene.startDrag(press.slot);
       hideInfo();
@@ -441,6 +474,9 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const p = press;
     press = null;
     scene.toLogical(e.clientX, e.clientY, pt);
+    if (p.held) { endHold(); return; }
+    clearTimeout(holdTimer);
+    holdTimer = 0;
     if (!p.dragging) {
       if (infoSlot === p.slot) hideInfo(); else showInfo(p.slot);
       return;
@@ -459,6 +495,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   function onCancel(e: PointerEvent): void {
     if (!scene || !press || e.pointerId !== press.id) return;
     if (press.dragging) scene.endDrag(-1, false);
+    endHold();
     press = null;
   }
   host.addEventListener('pointerdown', onDown);
@@ -494,6 +531,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       const u = engine.state.players[0]!.grid[infoSlot];
       if (!u || u.unit !== infoUnit) hideInfo();
     }
+    if (press?.held && (over || engine.state.players[0]!.grid[press.slot]?.unit !== press.unit)) { endHold(); press.held = false; }
     updateHud();
     scene.render(dt, acc / DT, engine.state.phase === 'pause' || over);
   }
@@ -528,6 +566,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       signalGame(false);
       cancelAnimationFrame(raf);
       clearTimeout(toastTimer);
+      clearTimeout(holdTimer);
       document.removeEventListener('visibilitychange', onVis);
       scene?.destroy();
       wrap.remove();

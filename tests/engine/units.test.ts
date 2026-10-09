@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { debugPlace, debugSpawn, simState } from '../../src/engine/debug';
+import { debugNoRange, debugPlace, debugSpawn, simState } from '../../src/engine/debug';
 import type { UnitId } from '../../src/data/types';
-import { UNIT_LIST } from '../../src/data/units';
+import { UNITS, UNIT_LIST } from '../../src/data/units';
 import type { Engine } from '../../src/engine/types';
 import { ofType, quiet, step } from './helpers';
 
@@ -11,10 +11,13 @@ function deckWith(u: UnitId): UnitId[] {
 }
 function arena(u: UnitId, rank = 1, deck = deckWith(u)): Engine {
   const e = quiet(deck);
+  debugNoRange(e); // compétences testées hors portée (voir tests/engine/range.test.ts)
   debugPlace(e, 0, 7, u, rank);
   return e;
 }
 const BIG = 1e9;
+/** Dégâts de base (rang 1, niveau 1) : les valeurs suivent l'équilibrage des portées. */
+const D = (u: UnitId): number => UNITS[u].damage;
 
 describe('compétences des 28 unités', () => {
   it('les 28 unités ont des données complètes', () => {
@@ -35,7 +38,7 @@ describe('compétences des 28 unités', () => {
     expect(beam.targets.sort()).toEqual(line.map((x) => x.uid).sort());
     expect(beam.targets).not.toContain(far.uid);
     expect(ofType(ev, 'attack').some((a) => a.fx === 'ironman:unibeam')).toBe(true);
-    expect(ofType(ev, 'hit').some((h) => h.enemy === line[0]!.uid && Math.abs(h.damage - 60) < 1e-6)).toBe(true);
+    expect(ofType(ev, 'hit').some((h) => h.enemy === line[0]!.uid && Math.abs(h.damage - D('ironman') * 2) < 1e-6)).toBe(true);
   });
 
   it('Spider-Man : ralentit de 10 % par coup, immobilise 1 s à 3 cumuls', () => {
@@ -56,13 +59,13 @@ describe('compétences des 28 unités', () => {
     const n = debugSpawn(e, { hp: BIG, distance: 14 });
     const ev = step(e, 1);
     const hits = ofType(ev, 'hit');
-    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(60);
-    expect(hits.find((h) => h.enemy === n.uid)!.damage).toBeCloseTo(24);
+    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(D('hulk'));
+    expect(hits.find((h) => h.enemy === n.uid)!.damage).toBeCloseTo(D('hulk') * 0.4);
     const later = step(e, 20 * 13);
     expect(ofType(later, 'ability').some((a) => a.name === 'Hulk Smash')).toBe(true);
     const dmg = ofType(later, 'hit').filter((h) => h.enemy === t.uid).map((h) => h.damage);
-    expect(dmg[0]).toBeCloseTo(63); // +5 % de Rage au 2e coup
-    expect(dmg[1]).toBeCloseTo(66);
+    expect(dmg[0]).toBeCloseTo(D('hulk') * 1.05); // +5 % de Rage au 2e coup
+    expect(dmg[1]).toBeCloseTo(D('hulk') * 1.1);
   });
 
   it('Thor : chaîne sur 3 ennemis (−20 % par rebond), 5 au rang 5', () => {
@@ -70,9 +73,9 @@ describe('compétences des 28 unités', () => {
     for (let i = 0; i < 6; i++) debugSpawn(e, { hp: BIG, distance: i });
     const dmg = ofType(step(e, 1), 'hit').map((h) => h.damage);
     expect(dmg).toHaveLength(3);
-    expect(dmg[0]).toBeCloseTo(25);
-    expect(dmg[1]).toBeCloseTo(20);
-    expect(dmg[2]).toBeCloseTo(15);
+    expect(dmg[0]).toBeCloseTo(D('thor'));
+    expect(dmg[1]).toBeCloseTo(D('thor') * 0.8);
+    expect(dmg[2]).toBeCloseTo(D('thor') * 0.6);
     const e5 = arena('thor', 5);
     for (let i = 0; i < 6; i++) debugSpawn(e5, { hp: BIG, distance: i });
     expect(ofType(step(e5, 1), 'hit')).toHaveLength(5);
@@ -91,13 +94,13 @@ describe('compétences des 28 unités', () => {
 
   it('Venom : exécute sous 15 % de PV, +2 % par élimination', () => {
     const e = arena('venom');
-    const t = debugSpawn(e, { hp: 40 });
+    const t = debugSpawn(e, { hp: D('venom') * 1.1 });
     const ev = step(e, 1);
     expect(ofType(ev, 'ability')[0]!.name).toBe('Dévorer');
     expect(ofType(ev, 'kill')[0]!.enemy).toBe(t.uid);
     debugSpawn(e, { hp: BIG });
     const next = ofType(step(e, 20), 'hit')[0]!;
-    expect(next.damage).toBeCloseTo(35 * 1.02);
+    expect(next.damage).toBeCloseTo(D('venom') * 1.02);
   });
 
   it('Captain Marvel : mode binaire après 10 attaques, dégâts ×2 pendant 5 s', () => {
@@ -106,7 +109,7 @@ describe('compétences des 28 unités', () => {
     const ev = step(e, 20 * 9);
     expect(ofType(ev, 'ability').some((a) => a.name === 'Mode binaire')).toBe(true);
     const hits = ofType(step(e, 20), 'hit');
-    expect(hits[0]!.damage).toBeCloseTo(50);
+    expect(hits[0]!.damage).toBeCloseTo(D('cmarvel') * 2);
   });
 
   it('Captain America : rebondit sur 3 ennemis, +15 % de vitesse aux voisines', () => {
@@ -144,7 +147,7 @@ describe('compétences des 28 unités', () => {
     const t = debugSpawn(e, { hp: BIG });
     const hits = ofType(step(e, 20 * 4), 'hit');
     expect(hits[3]).toMatchObject({ crit: true });
-    expect(hits[3]!.damage).toBeCloseTo(90);
+    expect(hits[3]!.damage).toBeCloseTo(D('bucky') * 3);
     expect(t.effects.stunFor).toBeGreaterThan(0);
   });
 
@@ -166,14 +169,14 @@ describe('compétences des 28 unités', () => {
     expect(ofType(ev, 'ability').find((a) => a.name === 'Drone Redwing')!.targets).toEqual([strong.uid]);
     expect(strong.effects.marked).toBeCloseTo(0.25);
     e.state.players[0]!.grid[7]!.cooldown = 0;
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(15 * 1.25);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('falcon') * 1.25);
   });
 
   it('Black Widow : ×2 contre les boss, un coup sur 5 paralyse 1 s', () => {
     const e = arena('widow');
     const boss = debugSpawn(e, { hp: BIG, bossId: 'ursula', distance: 20 });
     boss.x.powerIn = 1e9;
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(28);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('widow') * 2);
     const x = arena('widow');
     const t = debugSpawn(x, { hp: BIG });
     const ev = step(x, 20 * 2 + 1);
@@ -208,7 +211,7 @@ describe('compétences des 28 unités', () => {
     expect(ofType(ev, 'ability').some((a) => a.name.includes('requin'))).toBe(true);
     const shark = ofType(ev, 'attack').find((a) => a.fx === 'maui:requin')!;
     expect(shark.targets).toHaveLength(2);
-    expect(ofType(ev, 'hit').some((h) => h.enemy === t.uid && Math.abs(h.damage - 100) < 1e-6)).toBe(true);
+    expect(ofType(ev, 'hit').some((h) => h.enemy === t.uid && Math.abs(h.damage - D('maui') * 2.5) < 1e-6)).toBe(true);
   });
 
   it('Pocahontas : +vitesse aux voisines, Meeko donne parfois +5 de mana', () => {
@@ -235,7 +238,7 @@ describe('compétences des 28 unités', () => {
     const e = arena('mulan');
     const t = debugSpawn(e, { hp: BIG, distance: 20 });
     step(e, 1);
-    expect(t.effects.burn).toBeCloseTo(6);
+    expect(t.effects.burn).toBeCloseTo(D('mulan') * 0.2);
     const x = arena('mulan');
     for (let i = 0; i < 8; i++) debugSpawn(x, { hp: BIG, distance: i });
     const ev = step(x, 20 * 5);
@@ -250,7 +253,7 @@ describe('compétences des 28 unités', () => {
     debugSpawn(e, { hp: BIG, distance: 3 });
     const h = ofType(step(e, 1), 'hit')[0]!;
     expect(h).toMatchObject({ enemy: lead.uid, crit: true });
-    expect(h.damage).toBeCloseTo(44);
+    expect(h.damage).toBeCloseTo(D('merida') * 2);
   });
 
   it('Ariel : le Chant arrête 3 ennemis 1,5 s, Sébastien fait saigner', () => {
@@ -267,8 +270,8 @@ describe('compétences des 28 unités', () => {
     const e = arena('foxhound');
     debugSpawn(e, { hp: BIG });
     const d = ofType(step(e, 1), 'hit').map((h) => h.damage);
-    expect(d[0]).toBeCloseTo(14);
-    expect(d[1]).toBeCloseTo(21);
+    expect(d[0]).toBeCloseTo(D('foxhound'));
+    expect(d[1]).toBeCloseTo(D('foxhound') * 1.5);
   });
 
   it('Tiana : la langue tire l’ennemi de tête 1 case en arrière toutes les 12 s', () => {
@@ -294,16 +297,16 @@ describe('compétences des 28 unités', () => {
     debugSpawn(x, { hp: BIG });
     const ev = step(x, 1);
     const idx = ev.findIndex((a) => a.type === 'attack' && a.unit === 'cmarvel');
-    expect((ev[idx + 1] as { damage: number }).damage).toBeCloseTo(25 * 1.05);
+    expect((ev[idx + 1] as { damage: number }).damage).toBeCloseTo(D('cmarvel') * 1.05);
   });
 
   it('Nick & Judy : Nick réduit l’armure de 20 %, Judy arrête le plus fort 2 s', () => {
     const e = arena('nickjudy');
     const t = debugSpawn(e, { hp: BIG, armor: 0.3 });
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(16 * 0.7);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('nickjudy') * 0.7);
     expect(t.effects.armorBreak).toBeCloseTo(0.2);
     e.state.players[0]!.grid[7]!.cooldown = 0;
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(16 * 0.9);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('nickjudy') * 0.9);
     const ev = step(e, 20 * 6);
     expect(ofType(ev, 'ability').find((a) => a.name === 'Arrestation')!.targets).toEqual([t.uid]);
     expect(t.effects.stunFor).toBeGreaterThan(1);
@@ -327,17 +330,17 @@ describe('compétences des 28 unités', () => {
     const ev = step(e, 1);
     expect(c.status.sleepingFor).toBeUndefined();
     const idx = ev.findIndex((a) => a.type === 'attack' && a.unit === 'cmarvel');
-    expect((ev[idx + 1] as { damage: number }).damage).toBeCloseTo(25 * 1.15);
+    expect((ev[idx + 1] as { damage: number }).damage).toBeCloseTo(D('cmarvel') * 1.15);
   });
 
   it('Vanellope & Ralph : brise les boucliers, ×2 contre les blindés, téléportation et cadence aux voisines', () => {
     const e = arena('vanralph');
     const s = debugSpawn(e, { hp: BIG, shieldHits: 5, distance: 10 });
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(45);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('vanralph'));
     expect(s.shieldHits).toBe(0);
     const x = arena('vanralph');
     debugSpawn(x, { hp: BIG, armor: 0.3 });
-    expect(ofType(step(x, 1), 'hit')[0]!.damage).toBeCloseTo(45 * 2 * 0.7);
+    expect(ofType(step(x, 1), 'hit')[0]!.damage).toBeCloseTo(D('vanralph') * 2 * 0.7);
     for (let i = 0; i < 15; i++) if (i !== 7 && i !== 0) debugPlace(x, 0, i, 'cmarvel');
     const ev = step(x, 240);
     const glitch = ofType(ev, 'ability').find((a) => a.name === 'Glitch')!;

@@ -14,7 +14,8 @@ import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitPar
 
 // ───────────── Ennemis du chemin ─────────────
 // Solo : une branche 'a' jusqu'au château. Coop : deux branches 'a' et 'b' qui se rejoignent
-// dans le tronc commun 'tronc'. Toutes les unités touchent tous les ennemis, sur toutes les branches.
+// dans le tronc commun 'tronc'. Chaque unité ne vise que les ennemis de sa zone de touche (portée,
+// voir geometry.ts et inRange dans abilities.ts), sur toutes les branches.
 
 export function aliveAll(ctx: Ctx): SimEnemy[] {
   const out: SimEnemy[] = [];
@@ -270,6 +271,13 @@ export function aurasAt(ctx: Ctx, player: number, slot: number): Auras {
   return out;
 }
 
+/**
+ * Niveau de fusion (rang) : chaque rang au-dessus de 1 accélère les attaques de 12 % (rang 7 = ×1,72)
+ * et ajoute 51 % des dégâts de base (rang 7 = ×4,06). Le DPS du rang 7 reste ≈ 7 fois celui du rang 1.
+ */
+export const RANK_ATTACK_SPEED = 0.12;
+export const RANK_DAMAGE = 0.51;
+
 /** Multiplicateur de vitesse d'attaque d'une unité. */
 export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit): number {
   const id = effectiveId(u);
@@ -278,7 +286,8 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   let bonus = aurasAt(ctx, player, slot).attackSpeed + team.attackSpeed;
   if ((u.counters.hasteFor ?? 0) > EPS) bonus += u.counters.haste ?? 0;
   if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
-  let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id));
+  let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id))
+    * (1 + RANK_ATTACK_SPEED * (u.rank - 1));
   if (id === 'maui' && !u.counters.form) mul *= prm.hawkSpeedMul ?? 1;
   if (id === 'cmarvel' && (u.counters.binaryFor ?? 0) > EPS) mul *= prm.binaryAttackSpeedMul ?? 1;
   return mul;
@@ -293,7 +302,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   const info = ctx.info[player]!;
   const level = info.levels[id] ?? 1;
   const pu = p.powerUps[id] ?? 1;
-  let dmg = def.damage * u.rank * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  let dmg = def.damage * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
   dmg *= 1 + teamFor(ctx, player, id).damage;
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);

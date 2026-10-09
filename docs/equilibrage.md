@@ -60,6 +60,33 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 
 **Niveau de collection** (+10 % de dégâts par niveau) : un deck niveau 10 doit tenir environ **+60 %** de vagues par rapport au même deck niveau 1.
 
+## 2 bis. Portées d'attaque (§4.1, octobre 2026)
+
+Chaque unité a une portée (`UnitDef.range`, en cases, depuis le centre de sa case jusqu'à l'ennemi en coordonnées de grille ; `src/engine/geometry.ts`). Une unité ne choisit sa **cible principale** que parmi les ennemis de sa zone ; les effets secondaires gardent leurs propres règles sur tout le chemin (éclaboussures de Hulk, rebonds de Thor et de Captain America, flèche électrique, Avalanche de Mulan, anneaux de Shang-Chi, laser d'Iron Man qui traverse toute la ligne de l'ennemi visé). Les compétences à recharge qui visent (Portail, Drone Redwing, Appel de l'océan, Chant de sirène, Lasso, Langue de Naveen, Arrestation) ne visent aussi que dans la zone. Boss compris.
+
+Couverture moyenne du chemin Solo (part du chemin dans la zone, moyenne des 15 cases, chemin en U / en marches) : courte ≈ 10-12 % (6 cases sur 15 ne touchent rien : centre et bas de la grille), moyenne ≈ 27-30 %, longue ≈ 55-58 %. D'où la compensation, appliquée aux dégâts de base d'avant les portées : **globale ×1,22**, **longue ×1,22 × 1,4**, **moyenne ×1,22 × 1,7**, **courte ×1,22 × 3** (le ×1,22 commun compense aussi le passage du rang à « +51 % de dégâts et +12 % de cadence par rang », qui affaiblit les rangs 2 à 6). Rebelle, Tiana et Nemo & Dory ont reçu un petit bonus en plus pour garder le deck Disney de départ dans la cible.
+
+| Portée | Valeur | Unités (dégâts de base) |
+|---|---|---|
+| Globale (toute la map) | `'globale'` | Iron Man 37, Doctor Strange 18, Captain Marvel 30, Œil de faucon 22, Falcon 18, Rebelle 32, Tiana & Naveen 11 |
+| Longue | 3,4 | Thor 43, Loki 31, Soldat de l'hiver 51, Black Widow 24, Vaïana & Pua 26, Pocahontas & Meeko 17, Ariel & Sébastien 17, Nemo & Dory 26, Coco 17, Buzz & Woody 38 |
+| Moyenne | 2,4 | Spider-Man 21, Captain America 41, Nick & Judy 33, Raiponce & Pascal 25 |
+| Courte (corps à corps) | 1,6 | Hulk 220, Venom 128, Shang-Chi 44, Maui 146, Mulan & Mushu 110, Rox & Rouky 51, Vanellope & Ralph 165 |
+
+Le joueur automatique du simulateur tient compte des portées : à rang égal, il fusionne en priorité la paire dont une unité couvre le moins de chemin, vers la case la mieux placée.
+
+Mesures (`scripts/simulate.ts`, Solo Infini, niveau 1, toits de New York) :
+
+| Deck | Avant (300 parties) | Après portées + rang (300 parties) |
+|---|---|---|
+| Départ Marvel | 10,60 | **10,46** |
+| Départ Disney | 10,58 | **10,26** |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 16,33 (100) | 15,85 |
+| Méta Disney (Vaïana, Maui, Ariel, Nemo, Mulan) | 11,87 (100) | 9,66 |
+| Départ Marvel en Coop (50 parties) | 9,46 | 9,38 |
+
+À surveiller : les decks riches en corps à corps (méta Disney, `mixte-legendaires`, `arcanes`, `controle`) perdent 10 à 20 % avec le joueur automatique, qui place mal ; un joueur qui fusionne vers les cases du bord doit compenser. Si les journaux réels confirment l'écart, relever d'abord la portée courte (1,8) plutôt que les dégâts (déjà ×3,7).
+
 ## 3. Le simulateur (`scripts/simulate.ts`)
 
 Le simulateur est écrit par l'agent Moteur en parallèle ; il n'existe pas encore au moment de ce document. Usage attendu :

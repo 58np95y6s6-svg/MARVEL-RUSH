@@ -19,6 +19,7 @@ import { dealDamage, isAlive, retreat } from './combat';
 import { initUnitCounters, onWaveStart, updateUnits } from './abilities';
 import { pumpkinExplosion, updateBosses } from './bossPowers';
 import { mapLengths } from './maps';
+import { boardGeometry } from './geometry';
 
 const SAVE_VERSION = 1;
 
@@ -72,6 +73,7 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
   return {
     cfg, st, ev: [],
     laneLen: laneLengths(cfg),
+    geo: boardGeometry(cfg.mode, mapLengths(cfg.mapId)?.shape),
     coop: cfg.mode === 'coop',
     mods: cfg.mapModifiers ?? {},
     info: buildInfo(cfg),

@@ -249,7 +249,7 @@ export function installDamageFont(): void {
       fill: 0xffffff,
       stroke: { color: 0x1d1733, width: 12, join: 'round' },
     },
-    chars: [['0', '9'], ',', ' ', 'k', 'M', '!', '+', '-', 'B', 'l', 'o', 'q', 'u', 'é', 'Z', 'z'],
+    chars: [['0', '9'], ',', ' ', 'k', 'M', '!', '+', '-', 'B', 'l', 'o', 'q', 'u', 'é', 'Z', 'z', 'K', 'N', 'O', 'P', 'W', 'x'],
     resolution: 2,
     padding: 6,
   });
@@ -264,14 +264,15 @@ export function formatDamage(n: number): string {
   return `${(v / 1e9).toFixed(1).replace('.', ',')} B`;
 }
 
-interface Num { t: BitmapText; life: number; max: number; vy: number; base: number; pop: number }
+interface Num { t: BitmapText; life: number; max: number; vy: number; base: number; pop: number; crit: boolean; spin: number }
 
 export class Numbers {
   private readonly pool: Num[] = [];
   private readonly live: Num[] = [];
   constructor(private readonly layer: Container, private readonly max = 48) {}
 
-  show(text: string, x: number, y: number, o: { color?: number; size?: number; life?: number } = {}): void {
+  /** `crit` : rebond marqué (0,3 → 1,5 → 0,9 → 1) et petit balancement, pour les coups critiques. */
+  show(text: string, x: number, y: number, o: { color?: number; size?: number; life?: number; crit?: boolean } = {}): void {
     if (this.live.length >= this.max) {
       // On recycle le plus ancien : les chiffres récents restent lisibles.
       const old = this.live.shift()!;
@@ -283,7 +284,7 @@ export class Numbers {
       const t = new BitmapText({ text: '', style: { fontFamily: DMG_FONT, fontSize: 40 } });
       t.anchor.set(0.5, 1);
       this.layer.addChild(t);
-      n = { t, life: 0, max: 0.8, vy: -90, base: 1, pop: 0 };
+      n = { t, life: 0, max: 0.8, vy: -90, base: 1, pop: 0, crit: false, spin: 0 };
     }
     n.t.text = text;
     n.t.tint = o.color ?? 0xffe14a;
@@ -294,7 +295,10 @@ export class Numbers {
     n.t.visible = true;
     n.life = 0;
     n.max = o.life ?? 0.8;
-    n.vy = -110;
+    n.vy = o.crit ? -70 : -110;
+    n.crit = !!o.crit;
+    n.spin = o.crit ? (Math.random() < 0.5 ? -1 : 1) * 0.16 : 0;
+    n.t.rotation = 0;
     this.live.push(n);
   }
 
@@ -312,9 +316,13 @@ export class Numbers {
       }
       n.t.y += n.vy * dt;
       n.vy *= Math.max(0, 1 - 2.5 * dt);
-      // Pop d'apparition : 0,4 → 1,15 → 1.
-      const pop = k < 0.12 ? 0.4 + (k / 0.12) * 0.75 : k < 0.25 ? 1.15 - ((k - 0.12) / 0.13) * 0.15 : 1;
+      // Pop d'apparition : 0,4 → 1,15 → 1 ; critique : 0,3 → 1,5 → 0,9 → 1,05 → 1, avec balancement.
+      const s = n.life;
+      const pop = n.crit
+        ? s < 0.07 ? 0.3 + (s / 0.07) * 1.2 : s < 0.15 ? 1.5 - ((s - 0.07) / 0.08) * 0.6 : s < 0.23 ? 0.9 + ((s - 0.15) / 0.08) * 0.15 : s < 0.3 ? 1.05 - ((s - 0.23) / 0.07) * 0.05 : 1
+        : k < 0.12 ? 0.4 + (k / 0.12) * 0.75 : k < 0.25 ? 1.15 - ((k - 0.12) / 0.13) * 0.15 : 1;
       n.t.scale.set(n.base * pop);
+      if (n.crit) n.t.rotation = n.spin * Math.cos(s * 22) * Math.max(0, 1 - s * 2.5);
       n.t.alpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
     }
   }

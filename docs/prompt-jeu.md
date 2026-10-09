@@ -140,7 +140,7 @@ Règles de travail :
 - **Invoquer** pose une unité **aléatoire de ton deck**, au **rang 1**, sur une **case vide aléatoire**. Le coût commence à **10** et augmente de **10** à chaque invocation.
 - **Fusionner** : faire glisser une unité sur une unité **identique de même rang** donne une unité **aléatoire du deck** au **rang +1**, sur la case de destination. Le rang maximal est **7**, affiché par des pastilles (points) sur l'unité.
 - **Améliorer en partie** : chaque unité du deck a un bouton d'amélioration (niveaux 1 à 5, coûts 100 / 200 / 400 / 700). Chaque niveau donne **+15 % de dégâts** à toutes les unités de ce type sur le plateau.
-- **Effet du rang** : dégâts × rang. Certaines compétences progressent aussi avec le rang (voir le tableau).
+- **Effet du rang** : chaque rang au-dessus de 1 donne **+51 % de dégâts** et **+12 % de vitesse d'attaque** (rang 7 : dégâts ×4,06 et cadence ×1,72, soit un DPS ≈ 7 fois celui du rang 1) : plus le niveau de fusion est élevé, plus le héros tire vite. Certaines compétences progressent aussi avec le rang (voir le tableau).
 
 ### 4.3 Vagues
 - Une vague dure **30 s**, pendant lesquelles des ennemis apparaissent.

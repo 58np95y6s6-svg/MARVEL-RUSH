@@ -13,7 +13,7 @@ export const UNIT_LIST: UnitDef[] = [
   // ───────────── Pack Marvel ─────────────
   {
     id: 'ironman', name: 'Iron Man', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts',
-    targeting: 'premier', damage: 30, attackInterval: 0.8,
+    targeting: 'premier', damage: 37, attackInterval: 0.8, range: 'globale',
     ability: {
       name: 'Uni-Beam',
       description: 'Toutes les 10 s, un laser inflige 200 % des dégâts à tous les ennemis d’une ligne du chemin.',
@@ -22,7 +22,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'spiderman', name: 'Spider-Man', pack: 'marvel', rarity: 'epique', role: 'Contrôle',
-    targeting: 'premier', damage: 10, attackInterval: 0.5,
+    targeting: 'premier', damage: 21, attackInterval: 0.5, range: 2.4,
     ability: {
       name: 'Toile collante',
       description: 'Chaque coup ralentit de 10 %, cumulable 3 fois ; à 3 cumuls, l’ennemi est immobilisé 1 s.',
@@ -31,7 +31,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'hulk', name: 'Hulk', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 60, attackInterval: 1.6,
+    targeting: 'premier', damage: 220, attackInterval: 1.6, range: 1.6,
     ability: {
       name: 'Hulk Smash',
       description: 'Éclaboussure de 40 % autour de la cible. Rage : +5 % de dégâts par coup (max +50 %). Tous les 8 coups, Smash étourdit les ennemis proches 1 s.',
@@ -40,7 +40,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'thor', name: 'Thor', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts en chaîne',
-    targeting: 'aleatoire', damage: 25, attackInterval: 1.0,
+    targeting: 'aleatoire', damage: 43, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Éclair en chaîne',
       description: 'L’éclair touche 3 ennemis, +1 rebond tous les 2 rangs (max 5), −20 % de dégâts par rebond.',
@@ -49,7 +49,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'strange', name: 'Doctor Strange', pack: 'marvel', rarity: 'epique', role: 'Soutien / contrôle',
-    targeting: 'premier', damage: 15, attackInterval: 1.0,
+    targeting: 'premier', damage: 18, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Portail',
       description: 'Toutes les 12 s, renvoie l’ennemi de tête au début du chemin (sauf boss).',
@@ -58,7 +58,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'venom', name: 'Venom', pack: 'marvel', rarity: 'epique', role: 'Exécution',
-    targeting: 'premier', damage: 35, attackInterval: 1.0,
+    targeting: 'premier', damage: 128, attackInterval: 1.0, range: 1.6,
     ability: {
       name: 'Dévorer',
       description: 'Exécute un ennemi sous 15 % de PV (sauf boss). +2 % de dégâts par élimination (max +40 %).',
@@ -67,7 +67,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'cmarvel', name: 'Captain Marvel', pack: 'marvel', rarity: 'rare', role: 'Dégâts',
-    targeting: 'fort', damage: 25, attackInterval: 0.9,
+    targeting: 'fort', damage: 30, attackInterval: 0.9, range: 'globale',
     ability: {
       name: 'Mode binaire',
       description: 'Après 10 attaques, passe en mode binaire : dégâts ×2 pendant 5 s.',
@@ -76,7 +76,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'cap', name: 'Captain America', pack: 'marvel', rarity: 'legendaire', role: 'Soutien / rebond',
-    targeting: 'premier', damage: 20, attackInterval: 1.0,
+    targeting: 'premier', damage: 41, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Leader',
       description: 'Le bouclier rebondit sur 3 ennemis. Aura : +15 % de vitesse d’attaque aux unités adjacentes.',
@@ -85,7 +85,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'loki', name: 'Loki', pack: 'marvel', rarity: 'epique', role: 'Trickster',
-    targeting: 'aleatoire', damage: 18, attackInterval: 0.8,
+    targeting: 'aleatoire', damage: 31, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Illusion',
       description: 'Toutes les 15 s, se transforme 10 s en une autre unité du deck (même rang). 10 % de chance de faire reculer l’ennemi touché pendant 2 s.',
@@ -94,7 +94,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'bucky', name: 'Soldat de l’hiver', pack: 'marvel', rarity: 'epique', role: 'Critique',
-    targeting: 'fort', damage: 30, attackInterval: 1.2,
+    targeting: 'fort', damage: 51, attackInterval: 1.2, range: 3.4,
     ability: {
       name: 'Bras bionique',
       description: 'Une attaque sur 4 est un critique ×3 qui étourdit 0,5 s.',
@@ -103,7 +103,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'hawkeye', name: 'Œil de faucon', pack: 'marvel', rarity: 'rare', role: 'Polyvalent',
-    targeting: 'premier', damage: 18, attackInterval: 0.7,
+    targeting: 'premier', damage: 22, attackInterval: 0.7, range: 'globale',
     ability: {
       name: 'Flèches spéciales',
       description: 'Alterne les flèches : explosive (éclaboussure 50 %), glace (ralentit de 25 % pendant 2 s), électrique (chaîne sur 2 ennemis).',
@@ -112,7 +112,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'falcon', name: 'Falcon', pack: 'marvel', rarity: 'rare', role: 'Ciblage',
-    targeting: 'fort', damage: 15, attackInterval: 0.6,
+    targeting: 'fort', damage: 18, attackInterval: 0.6, range: 'globale',
     ability: {
       name: 'Drone Redwing',
       description: 'Toutes les 6 s, Redwing marque l’ennemi le plus fort : +25 % de dégâts subis pendant 4 s.',
@@ -121,7 +121,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'widow', name: 'Black Widow', pack: 'marvel', rarity: 'epique', role: 'Anti-boss',
-    targeting: 'premier', damage: 14, attackInterval: 0.5,
+    targeting: 'premier', damage: 24, attackInterval: 0.5, range: 3.4,
     ability: {
       name: 'Morsure de la veuve',
       description: 'Un coup sur 5 paralyse 1 s. Dégâts ×2 contre les boss.',
@@ -130,7 +130,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Combo',
-    targeting: 'aleatoire', damage: 12, attackInterval: 0.4,
+    targeting: 'aleatoire', damage: 44, attackInterval: 0.4, range: 1.6,
     ability: {
       name: 'Dix Anneaux',
       description: 'Tous les 10 coups, 10 anneaux frappent 10 ennemis aléatoires à 100 %.',
@@ -141,7 +141,7 @@ export const UNIT_LIST: UnitDef[] = [
   // ───────────── Pack Disney ─────────────
   {
     id: 'moana', name: 'Vaïana & Pua', pack: 'disney', rarity: 'epique', role: 'Contrôle',
-    targeting: 'premier', damage: 15, attackInterval: 1.0,
+    targeting: 'premier', damage: 26, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Appel de l’océan',
       description: 'Toutes les 10 s, une vague repousse de 1,5 case les ennemis de tête (sauf boss).',
@@ -150,7 +150,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'maui', name: 'Maui', pack: 'disney', rarity: 'legendaire', role: 'Dégâts / transformation',
-    targeting: 'premier', damage: 40, attackInterval: 1.2,
+    targeting: 'premier', damage: 146, attackInterval: 1.2, range: 1.6,
     ability: {
       name: 'Métamorphose',
       description: 'Alterne toutes les 8 s : faucon (cadence ×2, dégâts ×0,5) ou requin (dégâts ×2,5 avec éclaboussure).',
@@ -159,7 +159,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'pocahontas', name: 'Pocahontas & Meeko', pack: 'disney', rarity: 'rare', role: 'Soutien',
-    targeting: 'aleatoire', damage: 10, attackInterval: 0.8,
+    targeting: 'aleatoire', damage: 17, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Couleurs du vent',
       description: '+10 % de vitesse d’attaque aux unités adjacentes (+5 % par rang). Meeko : 5 % de chance de +5 de mana par élimination.',
@@ -168,7 +168,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts / brûlure',
-    targeting: 'premier', damage: 30, attackInterval: 1.0,
+    targeting: 'premier', damage: 110, attackInterval: 1.0, range: 1.6,
     ability: {
       name: 'Souffle de Mushu',
       description: 'Brûlure : 20 % des dégâts par seconde pendant 3 s. Une fois par vague, Avalanche : 300 % des dégâts à tous les ennemis.',
@@ -177,7 +177,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'merida', name: 'Rebelle', pack: 'disney', rarity: 'rare', role: 'Précision',
-    targeting: 'premier', damage: 22, attackInterval: 0.9,
+    targeting: 'premier', damage: 32, attackInterval: 0.9, range: 'globale',
     ability: {
       name: 'Tir parfait',
       description: '100 % de critiques ×2 sur l’ennemi le plus avancé.',
@@ -186,7 +186,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'ariel', name: 'Ariel & Sébastien', pack: 'disney', rarity: 'epique', role: 'Contrôle',
-    targeting: 'premier', damage: 10, attackInterval: 0.9,
+    targeting: 'premier', damage: 17, attackInterval: 0.9, range: 3.4,
     ability: {
       name: 'Chant de sirène',
       description: 'Toutes les 8 s, le chant arrête 3 ennemis pendant 1,5 s. Sébastien : saignement de 5 % des PV par seconde (réduit sur les boss).',
@@ -195,7 +195,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'foxhound', name: 'Rox & Rouky', pack: 'disney', rarity: 'rare', role: 'Duo',
-    targeting: 'premier', damage: 14, attackInterval: 0.6,
+    targeting: 'premier', damage: 51, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Meilleurs amis',
       description: 'Double attaque ; le second coup fait +50 % si le premier a touché la même cible.',
@@ -204,7 +204,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'tiana', name: 'Tiana & Naveen', pack: 'disney', rarity: 'rare', role: 'Économie',
-    targeting: 'aleatoire', damage: 8, attackInterval: 1.0,
+    targeting: 'aleatoire', damage: 11, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Restaurant',
       description: '+10 de mana au début de chaque vague (+5 par rang). Toutes les 12 s, la langue tire l’ennemi de tête 1 case en arrière.',
@@ -213,7 +213,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'nemo', name: 'Nemo & Dory', pack: 'disney', rarity: 'rare', role: 'Aléatoire',
-    targeting: 'aleatoire', damage: 14, attackInterval: 0.7,
+    targeting: 'aleatoire', damage: 26, attackInterval: 0.7, range: 3.4,
     ability: {
       name: 'Mémoire de poisson',
       description: 'Effet aléatoire à chaque tir : ralentissement, dégâts ×2, poison, ou +20 % de cadence à une unité alliée au hasard.',
@@ -222,7 +222,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'coco', name: 'Coco (Miguel)', pack: 'disney', rarity: 'epique', role: 'Soutien',
-    targeting: 'aleatoire', damage: 10, attackInterval: 1.0,
+    targeting: 'aleatoire', damage: 17, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Remember Me',
       description: 'Une fois par vague, restaure une unité détruite ou rétrogradée par un boss. +5 % de dégâts aux unités adjacentes.',
@@ -231,7 +231,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'nickjudy', name: 'Nick & Judy', pack: 'disney', rarity: 'epique', role: 'Contrôle / malus',
-    targeting: 'premier', damage: 16, attackInterval: 0.8,
+    targeting: 'premier', damage: 33, attackInterval: 0.8, range: 2.4,
     ability: {
       name: 'Arrestation',
       description: 'Toutes les 6 s, Judy arrête l’ennemi le plus fort (sauf boss) pendant 2 s. Les coups de Nick réduisent l’armure de 20 %.',
@@ -240,7 +240,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'buzzwoody', name: 'Buzz & Woody', pack: 'disney', rarity: 'legendaire', role: 'Duo / polyvalent',
-    targeting: 'premier', damage: 22, attackInterval: 0.8,
+    targeting: 'premier', damage: 38, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Vers l’infini',
       description: 'Le laser transperce toute la ligne. Toutes les 10 s, le lasso ramène l’ennemi de tête 2 cases en arrière.',
@@ -249,7 +249,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'rapunzel', name: 'Raiponce & Pascal', pack: 'disney', rarity: 'epique', role: 'Contrôle / soin',
-    targeting: 'aleatoire', damage: 12, attackInterval: 1.0,
+    targeting: 'aleatoire', damage: 25, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Cheveux magiques',
       description: 'Retire les effets de boss (sommeil, hypnose, étourdissement) des unités adjacentes et leur donne +15 % de dégâts. Pascal la rend insensible aux pouvoirs des boss.',
@@ -258,7 +258,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'vanralph', name: 'Vanellope & Ralph', pack: 'disney', rarity: 'legendaire', role: 'Chaos',
-    targeting: 'premier', damage: 45, attackInterval: 1.4,
+    targeting: 'premier', damage: 165, attackInterval: 1.4, range: 1.6,
     ability: {
       name: 'Glitch',
       description: 'Ralph détruit les boucliers et fait +100 % contre les blindés. Toutes les 12 s, Vanellope se téléporte sur une autre case et donne +20 % de cadence à ses voisines pendant 5 s.',
