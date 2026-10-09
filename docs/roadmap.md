@@ -46,7 +46,7 @@ Demande du joueur : chaque extension doit proposer des capacités de stratégie 
 | Mana par élimination | Mana à chaque élimination, croissant avec le niveau | Tiana & Naveen | Catwoman |
 | Boost de vitesse | Aura de cadence aux voisins | Captain America, Pocahontas | Cyborg |
 | Échangeur | Glissé sur un allié de même niveau, échange sa place avec lui, sans limite | Vanellope & Ralph | Flash |
-| Formation | Exemplaires alignés (ligne ou colonne) : +15 % de dégâts par allié aligné (max 3), attaques de zone à 3 | Loki | à attribuer |
+| Formation | Exemplaires alignés (ligne ou colonne) : +15 % de dégâts par allié aligné (max 3), attaques de zone à 3 | Loki | Green Lantern (Lanternes alignées) |
 
 Transformers et Pixar devront couvrir les huit archétypes (au moins un héros chacun), en plus de leur mécanique propre.
 

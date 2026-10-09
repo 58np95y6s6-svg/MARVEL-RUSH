@@ -2,7 +2,9 @@
 // Darkseid à la vague 100, paliers prolongés, équipes, déterminisme.
 import { describe, expect, it } from 'vitest';
 import { createEngine, finalBossAt } from '../../src/engine';
-import { debugPlace, debugSpawn, simState } from '../../src/engine/debug';
+import { debugNoRange, debugPlace, debugSpawn, simState } from '../../src/engine/debug';
+import { ENEMIES, waveHp } from '../../src/data/enemies';
+import { KILL_MANA, SACRIFICE_MANA, dropAction, formationLength, growthBonus } from '../../src/engine/archetypes';
 import {
   ANTI_LIFE_NAME, BOOM_TUBE_NAME, BOSSES, BOSS_POOLS, LIEUTENANTS, OMEGA_NAME, ROTATING_BOSSES, VENOM_NAME,
 } from '../../src/data/bosses';
@@ -14,6 +16,7 @@ import { activeTeams } from '../../src/data/teams';
 import { UNITS, UNIT_LIST } from '../../src/data/units';
 import type { BossId, UnitId } from '../../src/data/types';
 import type { Engine, EngineEvent, GameConfig } from '../../src/engine/types';
+import { RANK_DAMAGE } from '../../src/engine/combat';
 import { ofType, quiet, setup, step } from './helpers';
 
 const DC_HEROES: UnitId[] = [
@@ -29,9 +32,12 @@ function deckWith(u: UnitId): UnitId[] {
 }
 function arena(u: UnitId, rank = 1, extra: Parameters<typeof quiet>[2] = {}): Engine {
   const e = quiet(deckWith(u), {}, extra);
+  debugNoRange(e); // compétences testées hors portée (voir tests/engine/range.test.ts)
   debugPlace(e, 0, 7, u, rank);
   return e;
 }
+/** Dégâts de base (rang 1, niveau 1) : les valeurs suivent l'équilibrage des portées. */
+const D = (u: UnitId): number => UNITS[u].damage;
 const BIG = 1e9;
 const grid = (e: Engine) => e.state.players[0]!.grid;
 const abilityNames = (ev: EngineEvent[]) => ofType(ev, 'ability').map((a) => a.name);
@@ -98,7 +104,7 @@ describe('extension DC : compétences des 15 héros', () => {
     const atk = ofType(ev, 'attack').filter((a) => a.unit === 'batman');
     expect(atk.slice(0, 3).map((a) => a.fx)).toEqual(['batman:batarang', 'batman:batarang', 'batman:batarangs']);
     expect(atk[2]!.targets).toHaveLength(3);
-    expect(ofType(ev, 'hit').some((h) => Math.abs(h.damage - 29 * 0.8) < 1e-6)).toBe(true);
+    expect(ofType(ev, 'hit').some((h) => Math.abs(h.damage - D('batman') * 0.8) < 1e-6)).toBe(true);
     const later = step(e, 20 * 8 + 1);
     const smoke = ofType(later, 'ability').find((a) => a.name === 'Bombe fumigène')!;
     expect(smoke.targets).toContain(lead.uid);
@@ -116,8 +122,8 @@ describe('extension DC : compétences des 15 héros', () => {
     const fifth = debugSpawn(e, { hp: BIG, distance: 3 });
     const first = step(e, 1);
     expect(ofType(first, 'attack')[0]!.fx).toBe('superman:vision-thermique');
-    expect(ofType(first, 'hit')[0]!.damage).toBeCloseTo(48);
-    expect(boss.effects.burn).toBeCloseTo(48 * 0.15);
+    expect(ofType(first, 'hit')[0]!.damage).toBeCloseTo(D('superman'));
+    expect(boss.effects.burn).toBeCloseTo(D('superman') * 0.15);
     const ev = step(e, 20 * 12);
     expect(ofType(ev, 'ability').find((a) => a.name === 'Souffle glacial')!.targets).toHaveLength(4);
     for (const x of lead) expect(x.effects.stunFor).toBeGreaterThan(1);
@@ -130,8 +136,8 @@ describe('extension DC : compétences des 15 héros', () => {
     const t = debugSpawn(e, { hp: BIG, distance: 10 });
     const n = debugSpawn(e, { hp: BIG, distance: 9.5 });
     const hits = ofType(step(e, 1), 'hit');
-    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(44);
-    expect(hits.find((h) => h.enemy === n.uid)!.damage).toBeCloseTo(44 * 0.35);
+    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(D('wonderwoman'));
+    expect(hits.find((h) => h.enemy === n.uid)!.damage).toBeCloseTo(D('wonderwoman') * 0.35);
     const ev = step(e, 20 * 10);
     expect(ofType(ev, 'ability').find((a) => a.name === 'Lasso de vérité')!.targets).toEqual([t.uid]);
     expect(t.effects.stunFor).toBeGreaterThan(1);
@@ -149,7 +155,7 @@ describe('extension DC : compétences des 15 héros', () => {
     const ev = step(e, 20 * 24 + 1);
     const names = abilityNames(ev).filter((x) => x.startsWith('Construction'));
     expect(names).toEqual(['Construction : mur', 'Construction : marteau', 'Construction : mitrailleuse']);
-    expect(ofType(ev, 'hit').some((h) => h.enemy === strong.uid && Math.abs(h.damage - 72) < 1e-6)).toBe(true);
+    expect(ofType(ev, 'hit').some((h) => h.enemy === strong.uid && Math.abs(h.damage - D('greenlantern') * 3) < 1e-6)).toBe(true);
     const gatling = ofType(ev, 'attack').find((a) => a.fx === 'greenlantern:mitrailleuse')!;
     expect(gatling.targets).toHaveLength(8);
   });
@@ -164,7 +170,7 @@ describe('extension DC : compétences des 15 héros', () => {
     const ev = step(e, 20 * 12);
     const lap = ofType(ev, 'ability').find((a) => a.name === 'Tour du chemin')!;
     expect(lap.targets.sort()).toEqual([s.uid, ...others.map((o) => o.uid)].sort());
-    expect(ofType(ev, 'hit').some((h) => h.enemy === others[0]!.uid && Math.abs(h.damage - 18) < 1e-6)).toBe(true);
+    expect(ofType(ev, 'hit').some((h) => h.enemy === others[0]!.uid && Math.abs(h.damage - D('flash') * 3) < 1e-6)).toBe(true);
   });
 
   it('Aquaman : le trident transperce à 50 %, le kraken saisit 2 ennemis (150 %, arrêt 2 s)', () => {
@@ -173,45 +179,58 @@ describe('extension DC : compétences des 15 héros', () => {
     const behind = debugSpawn(e, { hp: BIG, distance: 18 });
     const third = debugSpawn(e, { hp: BIG, distance: 4 });
     const hits = ofType(step(e, 1), 'hit');
-    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(32);
-    expect(hits.find((h) => h.enemy === behind.uid)!.damage).toBeCloseTo(16);
+    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(D('aquaman'));
+    expect(hits.find((h) => h.enemy === behind.uid)!.damage).toBeCloseTo(D('aquaman') * 0.5);
     expect(hits.some((h) => h.enemy === third.uid)).toBe(false);
     const ev = step(e, 20 * 10);
     expect(ofType(ev, 'ability').find((a) => a.name === 'Kraken')!.targets).toEqual([t.uid, behind.uid]);
     expect(behind.effects.stunFor).toBeGreaterThan(1.5);
   });
 
-  it('Cyborg : surcharge système (+25 % de vitesse à tout le plateau pendant 4 s), canon qui réduit l’armure', () => {
+  it('Cyborg : réseau (+15 % de vitesse aux voisines), surcharge système (+20 % à tout le plateau pendant 4 s), canon qui réduit l’armure', () => {
     const e = arena('cyborg');
     const ally = debugPlace(e, 0, 0, 'cmarvel');
     const t = debugSpawn(e, { hp: BIG, armor: 0.3 });
     const first = step(e, 1);
     const idx = first.findIndex((a) => a.type === 'attack' && a.unit === 'cyborg');
-    expect((first[idx + 1] as { damage: number }).damage).toBeCloseTo(21 * 0.7);
+    expect((first[idx + 1] as { damage: number }).damage).toBeCloseTo(D('cyborg') * 0.7);
     expect(t.effects.armorBreak).toBeCloseTo(0.1);
     const ev = step(e, 20 * 12);
     expect(abilityNames(ev)).toContain('Surcharge système');
-    expect(ally.counters.haste).toBeCloseTo(0.25);
+    expect(ally.counters.haste).toBeCloseTo(0.2);
     expect(ally.counters.hasteFor).toBeGreaterThan(3.5);
+    // Boost de vitesse (archétype) : une voisine tire 15 % plus vite (10 s, avant la première surcharge).
+    const shots = (slot: number) => {
+      const x = arena('cyborg');
+      debugPlace(x, 0, slot, 'falcon');
+      debugSpawn(x, { hp: BIG });
+      return ofType(step(x, 20 * 10), 'attack').filter((a) => a.unit === 'falcon').length;
+    };
+    const r = shots(8) / shots(0);
+    expect(r).toBeGreaterThan(1.1);
+    expect(r).toBeLessThan(1.2);
   });
 
-  it('Supergirl : une charge par élimination, Éruption solaire à 8 charges', () => {
+  it('Supergirl : croissance (temps et éliminations), une charge par élimination, Éruption solaire à 8 charges', () => {
     const e = arena('supergirl');
     const sg = grid(e)[7]!;
     debugSpawn(e, { hp: 1, distance: 5 });
     step(e, 1);
     expect(sg.counters.solar).toBe(1);
+    expect(sg.counters.growth).toBeCloseTo(0.03 + 0.004 * 0.05);
     sg.counters.solar = 8;
+    sg.counters.growth = 16; // bonus = 0,28 × 16^0,75 = +224 %
     sg.cooldown = 0;
     const t = debugSpawn(e, { hp: BIG, distance: 25 });
     const same = debugSpawn(e, { hp: BIG / 2, distance: 24 });
     const other = debugSpawn(e, { hp: BIG / 2, distance: 2 });
     const ev = step(e, 1);
-    expect(ofType(ev, 'hit').find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(28 * 1.48);
+    const grown = D('supergirl') * (1 + 0.28 * Math.pow(16 + 0.004 * 0.05, 0.75));
+    expect(ofType(ev, 'hit').find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(grown, 1);
     const flare = ofType(ev, 'ability').find((a) => a.name === 'Éruption solaire')!;
     expect(flare.targets).toContain(same.uid);
     expect(flare.targets).not.toContain(other.uid);
-    expect(ofType(ev, 'hit').some((h) => h.enemy === same.uid && Math.abs(h.damage - 28 * 1.48 * 4) < 1e-6)).toBe(true);
+    expect(ofType(ev, 'hit').some((h) => h.enemy === same.uid && Math.abs(h.damage - grown * 4) < 0.5)).toBe(true);
     expect(sg.counters.solar).toBe(0);
   });
 
@@ -221,15 +240,15 @@ describe('extension DC : compétences des 15 héros', () => {
     const ev = step(e, 20 * 12);
     const bolt = ofType(ev, 'ability').find((a) => a.name === 'SHAZAM !')!;
     expect(bolt.targets).toHaveLength(3);
-    expect(ofType(ev, 'hit').filter((h) => Math.abs(h.damage - 40) < 1e-6).length).toBeGreaterThanOrEqual(3);
+    expect(ofType(ev, 'hit').filter((h) => Math.abs(h.damage - D('shazam') * 2) < 1e-6).length).toBeGreaterThanOrEqual(3);
     const sh = grid(e)[7]!;
     expect(sh.counters.powerFor).toBeGreaterThan(5);
     sh.cooldown = 0;
     const atk = step(e, 1);
     expect(ofType(atk, 'attack')[0]).toMatchObject({ fx: 'shazam:foudre' });
     const dmg = ofType(atk, 'hit').map((h) => h.damage);
-    expect(dmg[0]).toBeCloseTo(40);
-    expect(dmg.slice(1)).toEqual([expect.closeTo(24), expect.closeTo(24)]);
+    expect(dmg[0]).toBeCloseTo(D('shazam') * 2);
+    expect(dmg.slice(1)).toEqual([expect.closeTo(D('shazam') * 1.2), expect.closeTo(D('shazam') * 1.2)]);
   });
 
   it('Martian Manhunter : intangible face aux boss, télépathie qui fait reculer 2 ennemis', () => {
@@ -256,13 +275,13 @@ describe('extension DC : compétences des 15 héros', () => {
     const atk = ofType(ev, 'attack').filter((a) => a.unit === 'robin');
     expect(atk.slice(0, 3).map((a) => a.fx)).toEqual(['robin:baton', 'robin:baton', 'robin:balayage']);
     expect(atk[2]!.targets).toHaveLength(2);
-    expect(ofType(ev, 'hit')[0]!.damage).toBeCloseTo(18);
+    expect(ofType(ev, 'hit')[0]!.damage).toBeCloseTo(D('robin'));
     const m = arena('robin');
     debugPlace(m, 0, 8, 'batman');
     debugSpawn(m, { hp: BIG });
     const first = step(m, 1);
     const idx = first.findIndex((a) => a.type === 'attack' && a.unit === 'robin');
-    expect((first[idx + 1] as { damage: number }).damage).toBeCloseTo(18 * 1.2);
+    expect((first[idx + 1] as { damage: number }).damage).toBeCloseTo(D('robin') * 1.2);
   });
 
   it('Batgirl : le piratage d’Oracle fait tomber le bouclier et l’armure du plus fort', () => {
@@ -276,16 +295,18 @@ describe('extension DC : compétences des 15 héros', () => {
     expect(weak.shieldHits).toBe(50);
   });
 
-  it('Catwoman : vole du mana (3 + 1 par rang), un coup de fouet sur 5 ralentit de 30 %', () => {
+  it('Catwoman : mana par élimination (ennemi touché, +2 au rang 2), un coup de fouet sur 5 ralentit de 30 %', () => {
     const e = arena('catwoman', 2);
     const t = debugSpawn(e, { hp: BIG });
+    step(e, 20 * 4);
+    expect(t.x.manaTag).toBe(2);
+    expect(t.effects.slow).toBeCloseTo(0.3);
     const p = e.state.players[0]!;
     const before = p.mana;
-    const ev = step(e, 20 * 60);
-    const steals = abilityNames(ev).filter((x) => x === 'Cambriolage').length;
-    expect(steals).toBeGreaterThan(2);
-    expect(p.mana - before).toBe(steals * 4);
-    expect(t.effects.slow).toBeCloseTo(0.3);
+    t.hp = 1;
+    const kill = ofType(step(e, 20), 'kill')[0]!;
+    expect(kill.mana).toBe(ENEMIES[t.kind].mana + 2); // +2 du cambriolage au rang 2
+    expect(p.mana - before).toBe(kill.mana);
   });
 
   it('Harley Quinn : maillet, confettis, tarte ou « Oups ! » au hasard', () => {
@@ -296,8 +317,8 @@ describe('extension DC : compétences des 15 héros', () => {
     const fx = new Set(ofType(ev, 'attack').filter((a) => a.unit === 'harley').map((a) => a.fx));
     for (const f of ['harley:maillet', 'harley:confettis', 'harley:tarte', 'harley:oups']) expect(fx).toContain(f);
     const dmg = new Set(ofType(ev, 'hit').map((h) => Math.round(h.damage * 10) / 10));
-    expect(dmg).toContain(42.5);
-    expect(dmg).toContain(8.5);
+    expect(dmg).toContain(Math.round(D('harley') * 2.5 * 10) / 10);
+    expect(dmg).toContain(Math.round(D('harley') * 0.5 * 10) / 10);
   });
 
   it('Green Arrow : flèche-filet une sur 4, salve de 5 flèches à 70 % toutes les 8 s', () => {
@@ -311,9 +332,110 @@ describe('extension DC : compétences des 15 héros', () => {
     const later = step(e, 20 * 5 + 1);
     const volley = ofType(later, 'ability').find((a) => a.name === 'Salve de flèches')!;
     expect(volley.targets).toHaveLength(5);
-    expect(ofType(later, 'hit').filter((h) => Math.abs(h.damage - 16 * 0.7) < 1e-6).length).toBeGreaterThanOrEqual(5);
+    expect(ofType(later, 'hit').filter((h) => Math.abs(h.damage - D('greenarrow') * 0.7) < 1e-6).length).toBeGreaterThanOrEqual(5);
   });
 });
+
+describe('extension DC : archétypes de stratégie (docs/roadmap.md)', () => {
+  it('Harley Quinn — Sacrifice → mana : fusionnée, elle rapporte le barème standard', () => {
+    for (const rank of [1, 3, 5]) {
+      const e = arena('harley', rank);
+      debugPlace(e, 0, 8, 'harley', rank);
+      const before = e.state.players[0]!.mana;
+      e.apply({ type: 'merge', player: 'p1', from: 7, to: 8 });
+      step(e);
+      expect(e.state.players[0]!.mana - before).toBe(SACRIFICE_MANA[rank - 1]);
+    }
+  });
+
+  it('Martian Manhunter — Copieur : prend la forme d’une alliée de même rang à −25 %', () => {
+    const e = arena('martian', 2);
+    const m = grid(e)[7]!;
+    const model = debugPlace(e, 0, 8, 'cmarvel', 2);
+    expect(dropAction(m, model)).toBe('copy');
+    e.apply({ type: 'copy', player: 'p1', from: 7, to: 8 });
+    step(e);
+    expect(m.unit).toBe('cmarvel');
+    expect(m.status).toMatchObject({ copyMul: 0.75, copyOf: 'martian' });
+  });
+
+  it('Robin — Booster de fusion : passe le relais, l’alliée gagne 1 rang (talent : +25 de mana)', () => {
+    const e = arena('robin', 3, { levels: { robin: 9 }, talents: { robin: ['a', 'a', 'a'] } });
+    const ally = debugPlace(e, 0, 8, 'batgirl', 3);
+    expect(dropAction(grid(e)[7], ally)).toBe('promote');
+    const before = e.state.players[0]!.mana;
+    e.apply({ type: 'promote', player: 'p1', from: 7, to: 8 });
+    const ev = step(e);
+    expect(grid(e)[7]).toBeNull();
+    expect(ally).toMatchObject({ unit: 'batgirl', rank: 4 });
+    expect(ofType(ev, 'mana')).toEqual([expect.objectContaining({ amount: 25, reason: 'promotion' })]);
+    expect(e.state.players[0]!.mana - before).toBe(25);
+  });
+
+  it('Supergirl — Croissance : grandit avec le temps, garde la moitié de son bonus en fusion', () => {
+    const e = arena('supergirl');
+    const sg = grid(e)[7]!;
+    step(e, 20 * 10);
+    expect(sg.counters.growth).toBeCloseTo(0.04, 3);
+    sg.counters.growth = 16;
+    debugPlace(e, 0, 8, 'supergirl', 1);
+    e.apply({ type: 'merge', player: 'p1', from: 7, to: 8 });
+    step(e);
+    const merged = grid(e)[8]!;
+    // La nouvelle unité (héros du deck au hasard) garde 50 % du bonus, converti sur sa propre courbe.
+    const bonus = growthBonus(UNITS[merged.unit].ability.params, merged.counters.growth ?? 0);
+    expect(bonus).toBeCloseTo(0.28 * Math.pow(16, 0.75) * 0.5, 2);
+  });
+
+  it('Catwoman — Mana par élimination : le barème KILL_MANA suit son rang', () => {
+    const e = arena('catwoman', 4);
+    const t = debugSpawn(e, { hp: BIG });
+    step(e, 20);
+    expect(t.x.manaTag).toBe(KILL_MANA[3]);
+  });
+
+  it('Cyborg — Boost de vitesse : clé générique auraAttackSpeed', () => {
+    expect(UNITS.cyborg.ability.params.auraAttackSpeed).toBeCloseTo(0.15);
+  });
+
+  it('Flash — Échangeur : échange sa case avec une alliée de même rang, Force véloce aux nouvelles voisines', () => {
+    const e = arena('flash', 2);
+    const f = grid(e)[7]!;
+    const ally = debugPlace(e, 0, 0, 'cmarvel', 2);
+    const nb = debugPlace(e, 0, 1, 'falcon', 1);
+    expect(dropAction(f, ally)).toBe('swap');
+    e.apply({ type: 'swap', player: 'p1', from: 7, to: 0 });
+    step(e);
+    expect(grid(e)[0]!.uid).toBe(f.uid);
+    expect(grid(e)[7]!.uid).toBe(ally.uid);
+    expect(nb.counters.boost).toBeCloseTo(0.2);
+    expect(nb.counters.boostFor).toBeGreaterThan(4.9);
+  });
+
+  it('Green Lantern — Formation : +15 % par Lantern aligné, zone à 40 % à 3 alignés', () => {
+    const glHit = (slots: number[], at: number) => {
+      const e = quiet(deckWith('greenlantern'));
+      debugNoRange(e);
+      for (const s of slots) { const u = debugPlace(e, 0, s, 'greenlantern', 1); u.cooldown = s === at ? 0 : 99; }
+      const t = debugSpawn(e, { hp: BIG, distance: 10 });
+      const n = debugSpawn(e, { hp: BIG, distance: 10.4 });
+      const hits = ofType(step(e), 'hit');
+      return { main: hits.find((h) => h.enemy === t.uid || h.enemy === n.uid)!.damage, count: hits.length };
+    };
+    expect(glHit([0], 0).main).toBeCloseTo(D('greenlantern'));
+    expect(glHit([0, 1], 0).main).toBeCloseTo(D('greenlantern') * 1.15);
+    const three = glHit([5, 6, 7], 6);
+    expect(three.main).toBeCloseTo(D('greenlantern') * 1.3);
+    expect(three.count).toBe(2); // la cible et sa voisine (zone)
+    expect(formationLength(grid(quietWithLine()), 6)).toBe(3);
+  });
+});
+
+function quietWithLine(): Engine {
+  const e = quiet(deckWith('greenlantern'));
+  for (const s of [5, 6, 7]) debugPlace(e, 0, s, 'greenlantern', 1);
+  return e;
+}
 
 describe('extension DC : talents et passifs d’éveil lus par le moteur', () => {
   it('Harley (talent « Pas de Oups ! ») ne fait jamais « Oups ! »', () => {
@@ -364,7 +486,7 @@ describe('extension DC : pouvoirs des boss', () => {
     u.cooldown = 0;
     const after = step(e, 1);
     const idx = after.findIndex((a) => a.type === 'attack' && a.slot === 0);
-    expect((after[idx + 1] as { damage: number }).damage).toBeCloseTo(25 * 5 * 0.5);
+    expect((after[idx + 1] as { damage: number }).damage).toBeCloseTo(D('cmarvel') * (1 + 4 * RANK_DAMAGE) * 0.5);
     const real = createEngine({ mode: 'solo', seed: 2, mapId: 'x', players: [setup()], script: { bossAtWave: 1, bossId: 'luthor' } });
     expect(simState(real).enemies.find((x) => x.bossId)!.armor).toBeCloseTo(0.3);
   });
@@ -501,7 +623,7 @@ describe('extension DC : rotation, Darkseid et paliers des modes infinis', () =>
     const camp = createEngine({ ...inf, seed: 6, targetWaves: 41, bossRhythm: { small: 0, big: 10, thanos: 20, darkseid: 40 } });
     expect(ofType(reachWave(camp, 41), 'bossSpawn').map((b) => b.boss)).not.toContain('darkseid');
     const d = createEngine({ ...inf, script: { bossAtWave: 1, bossId: 'darkseid' } });
-    expect(simState(d).enemies.find((x) => x.bossId)!.maxHp).toBeCloseTo(100 * 25 * 2);
+    expect(simState(d).enemies.find((x) => x.bossId)!.maxHp).toBeCloseTo(waveHp(1) * 25 * 2);
   });
 
   it('rythme par défaut : Thanos à 50, Darkseid à 100, paliers jusqu’à 100 (dont le coffre cosmique à 75)', () => {
@@ -522,10 +644,11 @@ describe('extension DC : rotation, Darkseid et paliers des modes infinis', () =>
 describe('extension DC : équipes', () => {
   it('Trinité : +30 % de dégâts contre les boss', () => {
     const e = quiet(['batman', 'superman', 'wonderwoman', 'cmarvel', 'falcon']);
+    debugNoRange(e);
     debugPlace(e, 0, 7, 'batman');
     const boss = debugSpawn(e, { hp: BIG, bossId: 'cruella', distance: 20 });
     boss.x.powerIn = 1e9;
-    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(29 * 1.3);
+    expect(ofType(step(e, 1), 'hit')[0]!.damage).toBeCloseTo(D('batman') * 1.3);
   });
 
   it('Les Riches : +20 de mana par vague', () => {

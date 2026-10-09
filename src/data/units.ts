@@ -273,7 +273,7 @@ export const UNIT_LIST: UnitDef[] = [
   // Répartition des raretés comme les autres packs : 4 Légendaires, 6 Épiques, 5 Rares.
   {
     id: 'batman', name: 'Batman', pack: 'dc', rarity: 'legendaire', role: 'Gadgets / malus',
-    targeting: 'premier', damage: 29, attackInterval: 0.9, range: 2.4,
+    targeting: 'premier', damage: 55, attackInterval: 0.9, range: 2.4,
     ability: {
       name: 'Batceinture',
       description: 'Une attaque sur 3 lance 3 batarangs à 80 % sur la cible et ses voisins. Toutes les 10 s, une bombe fumigène ralentit de 40 % les ennemis autour de l’ennemi de tête et les expose (+20 % de dégâts subis) pendant 3 s.',
@@ -282,7 +282,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'superman', name: 'Superman', pack: 'dc', rarity: 'legendaire', role: 'Dégâts / contrôle',
-    targeting: 'fort', damage: 48, attackInterval: 1.2, range: 'globale',
+    targeting: 'fort', damage: 59, attackInterval: 1.2, range: 'globale',
     ability: {
       name: 'Homme d’acier',
       description: 'Vision thermique : chaque coup brûle 15 % des dégâts par seconde pendant 2 s. Toutes les 12 s, le souffle glacial gèle les 4 ennemis de tête pendant 1,5 s (les boss sont ralentis de 30 % pendant 3 s).',
@@ -291,7 +291,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'wonderwoman', name: 'Wonder Woman', pack: 'dc', rarity: 'legendaire', role: 'Zone / anti-boss',
-    targeting: 'premier', damage: 44, attackInterval: 1.1, range: 2.4,
+    targeting: 'premier', damage: 83, attackInterval: 1.1, range: 2.4,
     ability: {
       name: 'Lasso de vérité',
       description: 'L’épée éclabousse à 35 % autour de la cible. Toutes les 10 s, le lasso ligote l’ennemi de tête 1,5 s ; sur un boss, il l’expose : +30 % de dégâts subis pendant 4 s.',
@@ -300,25 +300,25 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'greenlantern', name: 'Green Lantern', pack: 'dc', rarity: 'legendaire', role: 'Constructions',
-    targeting: 'aleatoire', damage: 24, attackInterval: 0.8, range: 3.4,
+    targeting: 'aleatoire', damage: 41, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Construction de l’anneau',
-      description: 'Toutes les 8 s, l’anneau crée une construction, à tour de rôle : un mur qui arrête 1,5 s les ennemis de la ligne de tête, un marteau géant (300 % au plus fort, étourdit 1 s), puis une mitrailleuse (8 tirs à 60 % au hasard).',
-      params: { abilityCooldown: 8, wallDuration: 1.5, hammerDamage: 3, hammerStun: 1, gatlingShots: 8, gatlingDamage: 0.6 },
+      description: 'Toutes les 8 s, l’anneau crée une construction, à tour de rôle : un mur qui arrête 1,5 s les ennemis de la ligne de tête, un marteau géant (300 % au plus fort, étourdit 1 s), puis une mitrailleuse (8 tirs à 60 % au hasard). Formation du Corps : +15 % de dégâts par autre Green Lantern aligné à côté de lui (rangée ou colonne, +30 % au plus) ; à 3 alignés, ses rayons touchent aussi les ennemis autour de la cible (40 %).',
+      params: { abilityCooldown: 8, wallDuration: 1.5, hammerDamage: 3, hammerStun: 1, gatlingShots: 8, gatlingDamage: 0.6, formationDamagePerAlly: 0.15, formationMax: 3, formationSplashAt: 3, formationSplash: 0.4 },
     },
   },
   {
     id: 'flash', name: 'Flash', pack: 'dc', rarity: 'epique', role: 'Multi-coups',
-    targeting: 'premier', damage: 6, attackInterval: 0.5, range: 1.6,
+    targeting: 'premier', damage: 18, attackInterval: 0.5, range: 1.6,
     ability: {
       name: 'Super-vitesse',
-      description: 'Chaque attaque frappe 3 fois (idéal contre les boucliers). Toutes les 12 s, Flash fait le tour du chemin et frappe chaque ennemi à 300 %.',
-      params: { hitsPerAttack: 3, abilityCooldown: 12, lapDamage: 3 },
+      description: 'Chaque attaque frappe 3 fois (idéal contre les boucliers). Toutes les 12 s, Flash fait le tour du chemin et frappe chaque ennemi à 300 %. Échangeur : glisse Flash sur une alliée de même rang (autre héros), ils échangent leurs cases en un éclair, sans limite ; la Force véloce donne alors +20 % de cadence à ses nouvelles voisines pendant 5 s.',
+      params: { hitsPerAttack: 3, abilityCooldown: 12, lapDamage: 3, swapAlly: 1, boost: 0.2, boostDuration: 5 },
     },
   },
   {
     id: 'aquaman', name: 'Aquaman', pack: 'dc', rarity: 'epique', role: 'Perçant / contrôle',
-    targeting: 'premier', damage: 32, attackInterval: 1.1, range: 2.0,
+    targeting: 'premier', damage: 58, attackInterval: 1.1, range: 2.4,
     ability: {
       name: 'Roi d’Atlantis',
       description: 'Le trident transperce : l’ennemi juste derrière la cible subit 50 %. Toutes les 10 s, un kraken saisit les 2 ennemis de tête (sauf boss) : 150 % des dégâts et arrêt de 2 s.',
@@ -327,25 +327,25 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'cyborg', name: 'Cyborg', pack: 'dc', rarity: 'epique', role: 'Soutien technologique',
-    targeting: 'fort', damage: 21, attackInterval: 0.8, range: 'globale',
+    targeting: 'fort', damage: 26, attackInterval: 0.8, range: 'globale',
     ability: {
       name: 'Surcharge système',
-      description: 'Toutes les 12 s, Cyborg pirate le plateau : toutes tes unités gagnent +25 % de vitesse d’attaque pendant 4 s. Le canon sonique réduit l’armure de 10 %.',
-      params: { abilityCooldown: 12, haste: 0.25, hasteDuration: 4, armorBreak: 0.1 },
+      description: 'Boost de vitesse : +15 % de vitesse d’attaque aux unités adjacentes (réseau). Toutes les 12 s, Surcharge système : toutes tes unités gagnent +20 % de vitesse d’attaque pendant 4 s. Le canon sonique réduit l’armure de 10 %.',
+      params: { auraAttackSpeed: 0.15, abilityCooldown: 12, haste: 0.2, hasteDuration: 4, armorBreak: 0.1 },
     },
   },
   {
     id: 'supergirl', name: 'Supergirl', pack: 'dc', rarity: 'epique', role: 'Montée en puissance',
-    targeting: 'fort', damage: 28, attackInterval: 1.0, range: 3.4,
+    targeting: 'fort', damage: 48, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Énergie solaire',
-      description: 'Chaque élimination donne une charge solaire (+6 % de dégâts, max 8). À 8 charges, Éruption solaire : 400 % à tous les ennemis de la ligne de la cible, puis les charges repartent à zéro.',
-      params: { chargeDamage: 0.06, maxCharges: 8, flareDamage: 4 },
+      description: 'Croissance : elle absorbe le soleil jaune, ses dégâts grandissent sans plafond (de plus en plus lentement) tant qu’elle reste sur le plateau et à chaque élimination ; fusionnée, elle transmet la moitié de son bonus. Chaque élimination donne aussi une charge solaire : à 8 charges, Éruption solaire, 400 % à tous les ennemis de la ligne de la cible.',
+      params: { growthPerSecond: 0.004, growthPerKill: 0.03, growthScale: 0.28, growthExponent: 0.75, growthKeepOnMerge: 0.5, maxCharges: 8, flareDamage: 4 },
     },
   },
   {
     id: 'shazam', name: 'Shazam', pack: 'dc', rarity: 'epique', role: 'Transformation',
-    targeting: 'aleatoire', damage: 20, attackInterval: 1.0, range: 2.4,
+    targeting: 'aleatoire', damage: 38, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'SHAZAM !',
       description: 'Toutes les 12 s, la foudre frappe 3 ennemis au hasard à 200 % et Billy devient Shazam pendant 6 s : dégâts ×2 et chaque coup rebondit sur 2 ennemis à 60 %.',
@@ -354,25 +354,25 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'martian', name: 'Martian Manhunter', pack: 'dc', rarity: 'epique', role: 'Anti-boss / contrôle',
-    targeting: 'premier', damage: 24, attackInterval: 1.0, range: 3.4,
+    targeting: 'premier', damage: 41, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Télépathie',
-      description: 'Intangible : insensible à tous les pouvoirs de boss. Toutes les 10 s, il trouble l’esprit des 2 ennemis de tête (sauf boss et volants), qui reculent pendant 2,5 s.',
-      params: { intangible: 1, abilityCooldown: 10, telepathyTargets: 2, confuseDuration: 2.5 },
+      description: 'Copieur métamorphe : glisse-le sur une alliée de même rang (autre héros) ; il prend sa forme, avec sa compétence, à −25 % de dégâts. Intangible : insensible à tous les pouvoirs de boss. Toutes les 10 s, il trouble l’esprit des 2 ennemis de tête (sauf boss et volants), qui reculent pendant 2,5 s.',
+      params: { copyDamageMul: 0.75, intangible: 1, abilityCooldown: 10, telepathyTargets: 2, confuseDuration: 2.5 },
     },
   },
   {
     id: 'robin', name: 'Robin', pack: 'dc', rarity: 'rare', role: 'Acrobate',
-    targeting: 'premier', damage: 18, attackInterval: 0.7, range: 1.6,
+    targeting: 'premier', damage: 55, attackInterval: 0.7, range: 1.6,
     ability: {
       name: 'Bâton de combat',
-      description: 'Une attaque sur 3 balaie 2 ennemis. Disciple : +20 % de dégâts s’il est à côté de Batman ou de Batgirl.',
-      params: { sweepEvery: 3, sweepTargets: 2, mentorBonus: 0.2 },
+      description: 'Booster de fusion : glisse Robin sur une alliée de même rang (autre héros) ; il lui passe le relais, disparaît et l’alliée gagne 1 rang. Une attaque sur 3 balaie 2 ennemis. Disciple : +20 % de dégâts s’il est à côté de Batman ou de Batgirl.',
+      params: { promoteAlly: 1, sweepEvery: 3, sweepTargets: 2, mentorBonus: 0.2 },
     },
   },
   {
     id: 'batgirl', name: 'Batgirl', pack: 'dc', rarity: 'rare', role: 'Malus / anti-armure',
-    targeting: 'fort', damage: 20, attackInterval: 0.75, range: 1.6,
+    targeting: 'fort', damage: 61, attackInterval: 0.75, range: 1.6,
     ability: {
       name: 'Piratage d’Oracle',
       description: 'Toutes les 8 s, elle pirate l’ennemi le plus fort : son bouclier tombe et son armure baisse de 30 %.',
@@ -381,25 +381,25 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     id: 'catwoman', name: 'Catwoman', pack: 'dc', rarity: 'rare', role: 'Économie / ralentissement',
-    targeting: 'aleatoire', damage: 17, attackInterval: 0.6, range: 1.6,
+    targeting: 'aleatoire', damage: 52, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Cambriolage',
-      description: '8 % de chance par coup de voler 3 de mana (+1 par rang). Un coup de fouet sur 5 ralentit de 30 % pendant 2 s.',
-      params: { stealChance: 0.08, stealMana: 3, stealPerRank: 1, whipEvery: 5, whipSlow: 0.3, whipDuration: 2 },
+      description: 'Cambriolage : chaque ennemi touché par Catwoman rapporte du mana en plus quand il est éliminé (+1 au rang 1, jusqu’à +8 au rang 7). Un coup de fouet sur 5 ralentit de 30 % pendant 2 s.',
+      params: { manaPerKill: 1, whipEvery: 5, whipSlow: 0.3, whipDuration: 2 },
     },
   },
   {
     id: 'harley', name: 'Harley Quinn', pack: 'dc', rarity: 'rare', role: 'Chaos',
-    targeting: 'aleatoire', damage: 17, attackInterval: 0.8, range: 1.6,
+    targeting: 'aleatoire', damage: 52, attackInterval: 0.8, range: 1.6,
     ability: {
       name: 'Maillet chaotique',
-      description: 'Effet au hasard à chaque coup : gros maillet (×2,5 et recul d’une case), bombe à confettis (éclaboussure 60 %), tarte à la crème (étourdit 1 s) ou « Oups ! » (×0,5).',
-      params: { malletMul: 2.5, malletKnockback: 1, confettiSplash: 0.6, splashRadius: 1.5, pieStun: 1, oopsMul: 0.5 },
+      description: 'Effet au hasard à chaque coup : gros maillet (×2,5 et recul d’une case), bombe à confettis (éclaboussure 60 %), tarte à la crème (étourdit 1 s) ou « Oups ! » (×0,5). Sacrifice : fusionnée ou détruite, elle tire sa révérence et rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190).',
+      params: { malletMul: 2.5, malletKnockback: 1, confettiSplash: 0.6, splashRadius: 1.5, pieStun: 1, oopsMul: 0.5, sacrificeMana: 1 },
     },
   },
   {
     id: 'greenarrow', name: 'Green Arrow', pack: 'dc', rarity: 'rare', role: 'Salves',
-    targeting: 'premier', damage: 16, attackInterval: 0.8, range: 'globale',
+    targeting: 'premier', damage: 20, attackInterval: 0.8, range: 'globale',
     ability: {
       name: 'Carquois truqué',
       description: 'Une flèche sur 4 est une flèche-filet qui arrête la cible 1 s. Toutes les 8 s, une salve de 5 flèches frappe les 5 ennemis de tête à 70 %.',

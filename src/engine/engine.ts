@@ -580,6 +580,10 @@ function applyCommand(ctx: Ctx, c: Command): void {
       p.grid[c.from] = null;
       b.rank += 1;
       emit(ctx, { type: 'promote', player: p.id, from: c.from, to: c.to, unit: b.unit, rank: b.rank });
+      if (prm.promoteMana) {
+        p.mana += prm.promoteMana;
+        emit(ctx, { type: 'mana', player: p.id, slot: c.to, amount: prm.promoteMana, reason: 'promotion' });
+      }
       return;
     }
     case 'powerup': {

@@ -1,9 +1,9 @@
-// Signatures visuelles des 28 unités : un tir, un impact et une version « compétence » propres à
+// Signatures visuelles des 43 unités (28 + 15 DC) et des pouvoirs de boss : un tir, un impact et une version « compétence » propres à
 // chacune, reprises des effets des planches (rayon, éclair, toile, bulles, notes…).
 // Les rappels de fin (impacts) sont des fonctions de module : aucune fermeture créée par tir.
 import type { BossId, UnitId } from '../../data/types';
 import type { CombatFx, P } from './director';
-import { SNAP_NAME, THANOS_STONES } from '../../data/bosses';
+import { ANTI_LIFE_NAME, BOOM_TUBE_NAME, SNAP_NAME, THANOS_STONES } from '../../data/bosses';
 import { UNIT_FX_COLOR } from '../fxTable';
 import { BeamMode, Curve, Ease, Mode, type Mote } from './pools';
 
@@ -649,6 +649,155 @@ export function playAttack(fx: CombatFx, slot: number, unit: UnitId, key: string
       m.face = true; m.s0 = 0.7; m.s1 = 1.25; m.ease = Ease.In;
       return;
     }
+    // ───────────── Extension DC ─────────────
+    case 'batman': {
+      if (name === 'fumigene') { batSmoke(fx, targets); return; }
+      const list = name === 'batarangs' ? targets : [t0];
+      list.forEach((t, i) => {
+        const b = fx.body(t);
+        if (!b) return;
+        const m = fx.shot('batarang', o, t, fx.travel(o, b, 2100, 0.12, 0.36), hitBatarang, 0x9aa3b8);
+        m.spin = 22; m.sy = 0.7; m.arc = (i - 1) * 40; m.delay = i * 0.04; m.trail = trGhost; m.trailEvery = 0.03;
+      });
+      return;
+    }
+    case 'superman': {
+      if (name === 'souffle') { frostBreath(fx, slot, targets); return; }
+      // Vision thermique : deux rayons rouges depuis les yeux, la cible s'embrase.
+      const dx = b0.x - o.x, dy = b0.y - o.y, L = Math.hypot(dx, dy) || 1;
+      for (const k of [-1, 1]) {
+        const a = { x: o.x - (dy / L) * 6 * k, y: o.y - 18 + (dx / L) * 6 * k };
+        fx.beam(a, b0, 0xff3a2a, 8, 0.2, BeamMode.Flash, t0, 0, true);
+      }
+      fx.glow(o.x, o.y - 18, 0xff6a4a, 1.2, 0.2);
+      fx.later(t0, 0.03, hitHeat);
+      return;
+    }
+    case 'wonderwoman': {
+      if (name === 'lasso') { truthLasso(fx, slot, targets); return; }
+      const m = fx.shot('slash', o, t0, fx.travel(o, b0, 2600, 0.08, 0.2), hitSword, 0xffd24a);
+      m.s.tint = 0xfff4c8; m.face = true; m.s0 = 0.4; m.s1 = 0.7;
+      targets.slice(1).forEach((t, i) => fx.later(t, 0.1 + i * 0.03, hitSmallZap, 0xffd24a));
+      return;
+    }
+    case 'greenlantern': {
+      if (name === 'mur') { lanternWall(fx, targets); return; }
+      if (name === 'marteau') {
+        const f = fx.feet(t0) ?? b0;
+        const h = fx.shotTo('fist', { x: f.x, y: f.y - 420 }, { x: f.x, y: f.y - 30 }, 0.28, lanternHammer, 0x4cff7a);
+        h.s.tint = 0x4cff7a; h.ease = Ease.In; h.rot = Math.PI / 2; h.s0 = 1.6; h.s1 = 2.4; h.p0 = t0;
+        fx.glow(fx.host.cell(slot).x, fx.host.cell(slot).y, 0x4cff7a, 2.6, 0.4, 'ground');
+        return;
+      }
+      if (name === 'mitrailleuse') {
+        fx.glow(o.x, o.y, 0x4cff7a, 1.8, 0.5);
+        targets.forEach((t, i) => {
+          const b = fx.body(t);
+          if (!b) return;
+          const m = fx.shot('streak', o, t, fx.travel(o, b, 3200, 0.06, 0.2), hitSmallZap, 0x4cff7a);
+          m.s.tint = 0x4cff7a; m.s.blendMode = 'add'; m.face = true; m.delay = i * 0.045; m.s0 = m.s1 = 0.8;
+        });
+        return;
+      }
+      // Rayon de l'anneau ; en formation, la zone s'élargit.
+      fx.beam(o, b0, 0x4cff7a, 12, 0.18, BeamMode.Flash, t0, 0);
+      fx.glow(o.x, o.y, 0x8dffa8, 1.2, 0.2);
+      fx.later(t0, 0.02, hitLantern);
+      if (targets.length > 1) fx.ring(b0.x, b0.y, 0x4cff7a, 90, 0.3);
+      return;
+    }
+    case 'flash': {
+      if (name === 'tour') { flashLap(fx, slot, targets); return; }
+      // Trois coups éclair : zigzags jaunes depuis la case.
+      targets.forEach((t, i) => {
+        const b = fx.body(t);
+        if (!b) return;
+        for (let k = 0; k < (i === 0 ? 2 : 1); k++) fx.bolt(o, b, 0xffe03a, 7, 0.16, 0, k * 0.07 + i * 0.05, t);
+        fx.later(t, 0.03 + i * 0.05, hitSpeed);
+      });
+      return;
+    }
+    case 'aquaman': {
+      if (name === 'kraken') { krakenGrab(fx, targets); return; }
+      const far = farthest(fx, o, targets) ?? b0;
+      const m = fx.shotTo('trident', o, far, fx.travel(o, far, 2400, 0.1, 0.3));
+      m.face = true; m.trail = trDroplet; m.trailEvery = 0.03;
+      targets.forEach((t, i) => fx.later(t, 0.08 + i * 0.05, hitDrop));
+      return;
+    }
+    case 'cyborg': {
+      // Canon sonique : anneaux d'onde qui filent jusqu'à la cible.
+      fx.muzzle(o, 0xff3a3a);
+      for (let i = 0; i < 3; i++) {
+        const m = fx.shot('ring', o, t0, fx.travel(o, b0, 2200), i === 2 ? hitSonic : null, 0xff3a3a);
+        m.s.tint = 0xff6a5a; m.s.blendMode = 'add'; m.delay = i * 0.05; m.s0 = 0.25; m.s1 = 0.55; m.sy = 1.6; m.face = true;
+      }
+      return;
+    }
+    case 'supergirl': {
+      if (name === 'eruption') { solarFlare(fx, slot, targets); return; }
+      const m = fx.shot('fist', o, t0, fx.travel(o, b0, 2400, 0.1, 0.3), hitSolarPunch, 0x5aa0ff);
+      m.face = true; m.s0 = 0.7; m.s1 = 1.1; m.ease = Ease.In; m.trail = trGlow; m.trailEvery = 0.02;
+      return;
+    }
+    case 'shazam': {
+      if (name === 'foudre') { skyBolts(fx, targets, 0xfff27a); return; }
+      const m = fx.shot('fist', o, t0, fx.travel(o, b0, 2200, 0.1, 0.3), hitSmallZap, 0xfff27a);
+      m.face = true; m.s0 = 0.7; m.s1 = 1; m.trail = trZap; m.trailEvery = 0.03;
+      return;
+    }
+    case 'martian': {
+      // Rayons des yeux martiens : deux traits verts qui se rejoignent.
+      for (const k of [-1, 1]) fx.beam({ x: o.x + k * 8, y: o.y - 18 }, b0, 0x6fe07a, 7, 0.2, BeamMode.Flash, t0, 0, true);
+      fx.later(t0, 0.03, hitGeneric, 0x6fe07a);
+      fx.glow(b0.x, b0.y, 0x6fe07a, 1.3, 0.2);
+      return;
+    }
+    case 'robin': {
+      targets.forEach((t, i) => {
+        const b = fx.body(t);
+        if (!b) return;
+        const m = fx.shot('staff', o, t, fx.travel(o, b, 2000, 0.12, 0.32), hitStaff, 0xffb43a);
+        m.spin = 20; m.delay = i * 0.06; m.trail = trGhost; m.trailEvery = 0.03;
+      });
+      return;
+    }
+    case 'batgirl': {
+      const m = fx.shot('batarang', o, t0, fx.travel(o, b0, 2300, 0.1, 0.3), hitKickPurple, 0xb08cff);
+      m.spin = 22; m.sy = 0.7; m.s.tint = 0xd8c8ff;
+      return;
+    }
+    case 'catwoman': {
+      // Coup de fouet : le fouet claque jusqu'à la cible, griffure.
+      fx.beam(o, b0, 0x2a2440, 5, 0.22, BeamMode.Extend, t0, 0, false);
+      const c = fx.attach('claw', t0, 0.3);
+      c.delay = 0.08; c.curve = Curve.Pop; c.s0 = 0.4; c.s1 = 0.85; c.rot = rnd(-0.5, 0.5); c.fout = 0.5;
+      fx.later(t0, 0.09, hitGeneric, 0xc8c8d8);
+      return;
+    }
+    case 'harley': {
+      if (name === 'confettis') {
+        const m = fx.shot('dotInk', o, t0, fx.travel(o, b0, 1500, 0.16, 0.42), hitConfetti, 0xffe27a);
+        m.s.tint = 0xff6ab4; m.arc = 70; m.s0 = m.s1 = 1.4;
+        return;
+      }
+      if (name === 'tarte') {
+        const m = fx.shot('pie', o, t0, fx.travel(o, b0, 1500, 0.16, 0.42), hitPie);
+        m.arc = 60; m.spin = 6;
+        return;
+      }
+      const oops = name === 'oups';
+      const m = fx.shot('mallet', o, t0, fx.travel(o, b0, 1600, 0.14, 0.4), oops ? hitOops : hitMallet);
+      m.arc = 70; m.spin = oops ? 20 : 12; m.s0 = m.s1 = oops ? 0.8 : 1.15;
+      return;
+    }
+    case 'greenarrow': {
+      if (name === 'salve') { arrowRain(fx, targets); return; }
+      const net = name === 'filet';
+      const m = fx.shot('arrowLong', o, t0, fx.travel(o, b0, 3000, 0.08, 0.28), net ? hitNet : hitTracer);
+      m.face = true; m.trail = trStreak; m.trailEvery = 0.015;
+      return;
+    }
     default: {
       const m = fx.shot('dotInk', o, t0, fx.travel(o, b0, 2000), hitGeneric, col);
       m.s.tint = col;
@@ -750,6 +899,239 @@ function mulanAvalanche(fx: CombatFx, slot: number, targets: readonly number[]):
   });
   fx.host.shake(8, 0.5);
   fx.host.flash(0.22, 0.35, 0xeaf7ff);
+}
+
+// ---------------------------------------------------------------- extension DC : impacts et grands effets
+
+function hitBatarang(m: Mote): void {
+  const fx = fxOf(m);
+  const s = fx.put('slash', m.x, m.y, 0.2);
+  s.s.tint = 0xd8dde6; s.curve = Curve.Pop; s.s0 = 0.3; s.s1 = 0.7; s.rot = rnd(-0.6, 0.6); s.fout = 0.4;
+  fx.sparks(m.x, m.y, 0xd8dde6, 3, 280, 0.5);
+}
+/** Bombe fumigène : nuage gris qui recouvre la zone, cibles exposées (réticule). */
+function batSmoke(fx: CombatFx, targets: readonly number[]): void {
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    if (i < 6) fx.puffs(b.x, b.y + 10, 0x6a6f80, 3, 1.2, 90, 0.9);
+    const r = fx.attach('reticle', t, 0.7);
+    r.s.tint = 0xffd84a; r.curve = Curve.Out; r.s0 = 2; r.s1 = 1; r.spin = 3; r.delay = 0.1 + i * 0.03; r.fout = 0.5;
+  });
+  const b0 = fx.body(targets[0]);
+  if (b0) { fx.pop(b0.x, b0.y, 0x8a8fa0, 1.4, 0.3); fx.ring(b0.x, b0.y, 0x8a8fa0, 150, 0.45, 'ground', 0.5); }
+}
+function hitHeat(m: Mote): void {
+  const fx = fxOf(m);
+  fx.glow(m.x, m.y, 0xff6a3a, 1.5, 0.25);
+  for (let i = 0; i < fx.n(2); i++) {
+    const f = fx.top.spawn(fx.tex.flame, m.x + rnd(-14, 14), m.y + rnd(-6, 10), 0.35);
+    f.curve = Curve.Pop; f.s0 = 0.2; f.s1 = 0.55; f.vy = -60; f.fout = 0.5; f.delay = i * 0.04;
+  }
+}
+/** Souffle glacial : cône de givre depuis la case, les cibles gelées. */
+function frostBreath(fx: CombatFx, slot: number, targets: readonly number[]): void {
+  const c = fx.host.cell(slot);
+  const o = { x: c.x, y: c.y - 30 };
+  fx.glow(o.x, o.y, 0xbfefff, 2.2, 0.4);
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    fx.beam(o, b, 0xbfefff, 26, 0.4, BeamMode.Grow, t, 0, true, i * 0.04);
+    fx.later(t, 0.15 + i * 0.04, hitIce);
+    for (let k = 0; k < fx.n(2); k++) {
+      const s = fx.shot('snowflake', o, t, 0.3, null);
+      s.delay = i * 0.04 + k * 0.08; s.spin = 6; s.s0 = 0.6; s.s1 = 1; s.wob = 14; s.wobF = 1.5;
+    }
+  });
+  fx.host.flash(0.1, 0.3, 0xbfefff);
+}
+function hitSword(m: Mote): void {
+  const fx = fxOf(m);
+  const s = fx.put('slash', m.x, m.y, 0.24);
+  s.s.tint = 0xfff4c8; s.curve = Curve.Pop; s.s0 = 0.4; s.s1 = 1.05; s.rot = -2.3; s.fout = 0.4;
+  fx.ring(m.x, m.y, 0xffd24a, 64, 0.28);
+  fx.sparks(m.x, m.y, 0xffe9a0, 4, 320, 0.55);
+}
+/** Lasso de vérité : la corde dorée part de la case, la boucle se referme et brille. */
+function truthLasso(fx: CombatFx, slot: number, targets: readonly number[]): void {
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    const o = fx.origin(slot, t);
+    fx.beam(o, b, 0xffd24a, 7, 0.75, BeamMode.Extend, t, 0, false, i * 0.05);
+    const l = fx.attach('lasso', t, 0.8);
+    l.s.tint = 0xffe58a; l.delay = 0.2 + i * 0.05; l.oy = 10; l.curve = Curve.Out; l.s0 = 1.8; l.s1 = 0.9; l.fout = 0.7;
+    const g = fx.attach('glow', t, 0.8);
+    g.s.tint = 0xffd24a; g.s.blendMode = 'add'; g.delay = 0.2; g.s0 = 1.4; g.s1 = 1.8; g.fout = 0.7;
+  });
+}
+function hitLantern(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0x4cff7a, 0.8);
+  fx.ring(m.x, m.y, 0x4cff7a, 44, 0.25);
+  fx.sparks(m.x, m.y, 0xb8ffc8, 3, 260, 0.5);
+}
+/** Construction : mur d'émeraude sur la ligne de tête. */
+function lanternWall(fx: CombatFx, targets: readonly number[]): void {
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    const w = fx.attach('square', t, 1.4, 'shots');
+    w.s.tint = 0x4cff7a; w.a0 = 0.75; w.curve = Curve.Bounce; w.s0 = 0.4; w.s1 = (fx.width(t) / 118) * 3.6; w.sy = 1.4; w.delay = i * 0.04; w.fout = 0.8;
+    fx.glow(b.x, b.y, 0x4cff7a, 2, 0.6);
+  });
+  fx.host.shake(2, 0.12);
+}
+function lanternHammer(m: Mote): void {
+  const fx = fxOf(m);
+  const x = m.x, y = m.y + 30;
+  fx.ring(x, y, 0x4cff7a, 140, 0.4, 'ground', 0.5);
+  fx.pop(x, y - 30, 0x4cff7a, 1.6, 0.3);
+  fx.debris(x, y - 10, 'shard', 0x4cff7a, 6, 520, 0.7);
+  fx.glow(x, y - 20, 0x8dffa8, 3, 0.4);
+  fx.host.shake(6, 0.25);
+  fx.host.flash(0.1, 0.2, 0x4cff7a);
+}
+function hitSpeed(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0xffe03a, 0.7, 0.18);
+  fx.sparks(m.x, m.y, 0xfff6a0, 4, 360, 0.5, 0.2);
+}
+/** Tour du chemin : un éclair jaune relie tous les ennemis, d'un bout à l'autre, très vite. */
+function flashLap(fx: CombatFx, slot: number, targets: readonly number[]): void {
+  const c = fx.host.cell(slot);
+  let a: P = { x: c.x, y: c.y - 20 };
+  const list = targets.slice(0, fx.n(18));
+  list.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    fx.bolt(a, b, 0xffe03a, 9, 0.3, 0, i * 0.025, t);
+    fx.later(t, 0.02 + i * 0.025, hitSpeed);
+    a = b;
+  });
+  fx.bolt(a, { x: c.x, y: c.y - 20 }, 0xffe03a, 9, 0.3, 0, list.length * 0.025);
+  fx.host.shake(3, 0.2);
+  fx.host.flash(0.08, 0.2, 0xffe03a);
+}
+/** Kraken : tentacules qui jaillissent du sol sous les ennemis saisis. */
+function krakenGrab(fx: CombatFx, targets: readonly number[]): void {
+  targets.forEach((t, i) => {
+    const f = fx.feet(t);
+    if (!f) return;
+    for (const k of [-1, 1]) fx.tendril({ x: f.x + k * 50, y: f.y + 30 }, t, 0x2f9fb0, 18, 0.7, i * 0.06 + (k > 0 ? 0.08 : 0));
+    fx.debris(f.x, f.y, 'drop', 0x3fd8c0, 6, 420, 0.6);
+    fx.ring(f.x, f.y, 0x2f9fb0, 100, 0.45, 'ground', 0.45);
+  });
+  fx.host.shake(3, 0.2);
+}
+function hitSonic(m: Mote): void {
+  const fx = fxOf(m);
+  for (let i = 0; i < 2; i++) fx.ring(m.x, m.y, 0xff6a5a, 40 + i * 30, 0.25 + i * 0.08);
+  fx.sparks(m.x, m.y, 0xffb0a0, 3, 300, 0.5);
+}
+function hitSolarPunch(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0x5aa0ff, 1, 0.24);
+  fx.glow(m.x, m.y, 0xffd34a, 1.4, 0.22);
+  fx.ring(m.x, m.y, 0x5aa0ff, 54, 0.26);
+  fx.sparks(m.x, m.y, 0xffe9a0, 4, 340, 0.55);
+}
+/** Éruption solaire : soleil qui grossit sur la case, flammes sur toute la ligne. */
+function solarFlare(fx: CombatFx, slot: number, targets: readonly number[]): void {
+  const c = fx.host.cell(slot);
+  const s = fx.put('glow', c.x, c.y - 30, 0.6);
+  s.s.tint = 0xffd34a; s.s.blendMode = 'add'; s.curve = Curve.Out; s.s0 = 1; s.s1 = 4; s.fout = 0.6;
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    fx.beam({ x: c.x, y: c.y - 30 }, b, 0xffc83a, 16, 0.3, BeamMode.Flash, t, 0, true, 0.1 + i * 0.02);
+    fx.later(t, 0.14 + i * 0.02, hitFire);
+  });
+  fx.host.shake(5, 0.25);
+  fx.host.flash(0.16, 0.3, 0xffd34a);
+}
+/** Foudre venue du ciel (Shazam, Black Adam). */
+function skyBolts(fx: CombatFx, targets: readonly number[], color: number): void {
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    fx.bolt({ x: b.x + rnd(-40, 40), y: b.y - 600 }, b, color, 14, 0.34, 2, i * 0.07, t);
+    fx.later(t, 0.03 + i * 0.07, hitZapBig, color);
+  });
+  fx.host.shake(4, 0.2);
+  fx.host.flash(0.14, 0.2, color);
+}
+function hitZapBig(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, m.color, 1.3, 0.28);
+  fx.glow(m.x, m.y, m.color, 2.2, 0.3);
+  fx.sparks(m.x, m.y, m.color, 6, 420, 0.65);
+}
+function hitStaff(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0xffb43a, 0.8, 0.2);
+  const s = fx.put('slash', m.x, m.y, 0.2);
+  s.s.tint = 0xffe0a0; s.curve = Curve.Pop; s.s0 = 0.3; s.s1 = 0.7; s.rot = rnd(-0.4, 0.4); s.fout = 0.4;
+}
+function hitKickPurple(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0xb08cff, 0.85, 0.22);
+  fx.ring(m.x, m.y, 0xb08cff, 46, 0.24);
+  fx.sparks(m.x, m.y, 0xe0d4ff, 3, 280, 0.5);
+}
+const CONFETTI = [0xff6ab4, 0x5fd6e8, 0xffe14a, 0x8dff6a, 0xff3b3b];
+function hitConfetti(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0xffe27a, 1.2, 0.26);
+  for (let i = 0; i < fx.n(10); i++) {
+    const a = rnd(0, 6.28);
+    const p = fx.top.spawn(fx.tex.square, m.x, m.y, 0.6);
+    p.s.tint = CONFETTI[i % CONFETTI.length]!; p.vx = Math.cos(a) * rnd(160, 320); p.vy = Math.sin(a) * rnd(160, 320) - 120; p.grav = 500; p.drag = 2; p.spin = rnd(-12, 12); p.s0 = 0.5; p.s1 = 0.35;
+  }
+  fx.ring(m.x, m.y, 0xff6ab4, 100, 0.32);
+}
+function hitPie(m: Mote): void {
+  const fx = fxOf(m);
+  fx.puffs(m.x, m.y, 0xfff6e8, 4, 0.8, 140, 0.5);
+  fx.debris(m.x, m.y, 'drop', 0xfff6e8, 5, 300, 0.5);
+  fx.label('SPLAT!', m.x, m.y - fx.width(m.uid) * 0.5, 0xfff6e8, 30);
+}
+function hitMallet(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0xff6ab4, 1.3, 0.28);
+  for (let i = 0; i < fx.n(3); i++) {
+    const a = -Math.PI / 2 + (i - 1) * 0.8;
+    const s = fx.top.spawn(fx.tex.stunStar, m.x, m.y - 10, 0.5);
+    s.vx = Math.cos(a) * 220; s.vy = Math.sin(a) * 220; s.grav = 600; s.drag = 1.5; s.spin = 8; s.s0 = 0.8; s.s1 = 0.5;
+  }
+  if (Math.random() < 0.5) fx.label('BAM!', m.x, m.y - fx.width(m.uid) * 0.5, 0xff6ab4, 32);
+  fx.host.shake(2, 0.1);
+}
+function hitOops(m: Mote): void {
+  const fx = fxOf(m);
+  fx.puffs(m.x, m.y + 20, 0xd8c8b0, 2, 0.5, 60, 0.4);
+  fx.label('Oups !', m.x, m.y - fx.width(m.uid) * 0.5, 0xffffff, 26);
+}
+function hitNet(m: Mote): void {
+  const fx = fxOf(m);
+  const n = fx.attach('webNet', m.uid, 1, 'shots');
+  n.s.tint = 0xd8e0c8; n.curve = Curve.Bounce; n.s0 = 0.2; n.s1 = (fx.width(m.uid) / 118) * 0.9; n.fout = 0.7;
+  fx.sparks(m.x, m.y, 0x8be06a, 3, 240, 0.5);
+}
+/** Salve : les flèches retombent du ciel sur les ennemis de tête. */
+function arrowRain(fx: CombatFx, targets: readonly number[]): void {
+  targets.forEach((t, i) => {
+    const b = fx.body(t);
+    if (!b) return;
+    const m = fx.shotTo('arrowLong', { x: b.x - 120, y: b.y - 520 }, b, 0.32, hitBullseyeGreen, 0x8be06a);
+    m.uid = t; m.face = true; m.ease = Ease.In; m.delay = i * 0.06; m.trail = trStreak; m.trailEvery = 0.02;
+  });
+}
+function hitBullseyeGreen(m: Mote): void {
+  const fx = fxOf(m);
+  fx.pop(m.x, m.y, 0x8be06a, 0.9, 0.22);
+  fx.sparks(m.x, m.y, 0xd8ffc0, 4, 300, 0.5);
 }
 
 // ---------------------------------------------------------------- compétences
@@ -948,6 +1330,64 @@ export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: stri
       f.curve = Curve.Pop; f.s0 = 0.3; f.s1 = 1.8; f.spin = 2; f.fout = 0.7;
       return;
     }
+    // ───────────── Extension DC ─────────────
+    case 'flash': {
+      if (name === 'Tour du chemin') { fx.cellFlare(slot, 0xffe03a); return; }
+      // Échangeur : Flash file de son ancienne case à la nouvelle dans un éclair.
+      const from = t0 !== undefined ? fx.host.cell(t0) : c;
+      fx.bolt({ x: from.x, y: from.y - 20 }, { x: c.x, y: c.y - 20 }, 0xffe03a, 12, 0.35, 1);
+      for (let i = 0; i < fx.n(6); i++) {
+        const k = i / 5;
+        const s = fx.put('streak', from.x + (c.x - from.x) * k, from.y + (c.y - from.y) * k - 20, 0.3);
+        s.s.tint = 0xffe03a; s.s.blendMode = 'add'; s.rot = Math.atan2(c.y - from.y, c.x - from.x); s.delay = i * 0.03; s.s0 = 1.2; s.s1 = 0.3;
+      }
+      fx.glow(c.x, c.y, 0xffe03a, 2.2, 0.4, 'ground');
+      fx.ring(c.x, c.y, 0xffe03a, 90, 0.35);
+      return;
+    }
+    case 'cyborg': {
+      // Surcharge système : onde rouge sur la case, impulsions sur tout le plateau.
+      fx.cellFlare(slot, 0xff3a3a);
+      fx.ring(c.x, c.y, 0xff3a3a, 160, 0.5, 'ground', 0.6);
+      for (let i = 0; i < 15; i++) {
+        const k = fx.host.cell(i);
+        const g = fx.put('glow', k.x, k.y, 0.5, 'ground');
+        g.s.tint = 0xff5a4a; g.s.blendMode = 'add'; g.curve = Curve.Pulse; g.s0 = 1.2; g.s1 = 1.6; g.delay = 0.05 + Math.hypot(k.x - c.x, k.y - c.y) / 2400; g.fout = 0.6;
+      }
+      return;
+    }
+    case 'martian': {
+      for (const t of targets) {
+        const s = fx.attach('spiral', t, 0.8);
+        s.s.tint = 0x6fe07a; s.curve = Curve.Out; s.s0 = 0.3; s.s1 = 1.2; s.spin = -8; s.fout = 0.6;
+        const b = fx.body(t);
+        if (b) fx.glow(b.x, b.y, 0x6fe07a, 2, 0.5);
+      }
+      fx.glow(c.x, c.y - 30, 0x6fe07a, 2, 0.4);
+      return;
+    }
+    case 'batgirl': {
+      // Piratage d'Oracle : pixels violets et bouclier fêlé sur la cible.
+      for (const t of targets) {
+        const b = fx.body(t);
+        if (!b) continue;
+        for (let i = 0; i < fx.n(8); i++) {
+          const p = fx.shotTo('square', { x: c.x + rnd(-30, 30), y: c.y - 30 }, { x: b.x + rnd(-30, 30), y: b.y + rnd(-30, 30) }, 0.35);
+          p.s.tint = i % 2 ? 0xb08cff : 0x5fe8ff; p.ease = Ease.InOut; p.delay = i * 0.025; p.s0 = 0.6; p.s1 = 0.4; p.fout = 0.5;
+        }
+        const s = fx.attach('crackShield', t, 0.7);
+        s.delay = 0.3; s.curve = Curve.Pop; s.s0 = 0.4; s.s1 = 1.2; s.oy = -40; s.fout = 0.6;
+      }
+      return;
+    }
+    case 'shazam': {
+      // SHAZAM ! : la foudre frappe Billy, qui se transforme.
+      fx.bolt({ x: c.x + rnd(-30, 30), y: c.y - 700 }, { x: c.x, y: c.y - 10 }, 0xfff27a, 18, 0.4, 2);
+      fx.pop(c.x, c.y - 20, 0xfff27a, 1.6, 0.3);
+      fx.glow(c.x, c.y, 0xfff27a, 3, 0.5, 'ground');
+      fx.host.flash(0.18, 0.25, 0xfff27a);
+      return;
+    }
     // Compétences déjà portées par l'attaque (Uni-Beam, Smash, Dévorer, Bras bionique, Morsure, Dix Anneaux, Avalanche) :
     default:
       fx.cellFlare(slot, col);
@@ -958,6 +1398,7 @@ export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: stri
 
 const BOSS_COLOR: Record<BossId, number> = {
   jafar: 0xc06aff, cruella: 0x8fcf3a, ursula: 0x9a5ad0, malefique: 0x6fe07a, galactus: 0xb07aff, bouffon: 0xff8a1f, thanos: 0xf6c64a,
+  joker: 0x5fd068, luthor: 0x5fff6a, bane: 0xc8a070, sinestro: 0xffe03a, blackadam: 0xffd34a, darkseid: 0xff3b3b,
 };
 
 function bossLand(m: Mote): void {
@@ -1011,6 +1452,7 @@ export function playBossPower(fx: CombatFx, boss: BossId, slots: readonly number
     fx.glow(src.x, src.y, col, 3.2, 0.5);
     fx.ring(src.x, src.y, col, 140, 0.45);
   }
+  if (DC_BOSSES.includes(boss)) { dcBossPower(fx, boss, src, slots, name, col); return; }
   const code = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'].indexOf(boss);
   const tex = boss === 'bouffon' ? 'pumpkin' : boss === 'jafar' ? 'spiral' : boss === 'thanos' ? 'gem' : boss === 'ursula' ? 'bubble' : 'glow';
   slots.forEach((s, i) => {
@@ -1031,4 +1473,95 @@ export function playBossPower(fx: CombatFx, boss: BossId, slots: readonly number
     m.trail = trGlow; m.trailEvery = 0.03;
   });
   if (snap) fx.host.flash(0.35, 0.4, 0xf6c64a);
+}
+
+// ---------------------------------------------------------------- extension DC : pouvoirs des boss
+
+const DC_BOSSES: readonly BossId[] = ['joker', 'luthor', 'bane', 'sinestro', 'blackadam', 'darkseid'];
+
+function dcBossLand(m: Mote): void {
+  const fx = fxOf(m);
+  const x = m.x, y = m.y, col = m.color;
+  switch (m.p0) {
+    case 0: { // Joker : carte qui explose en confettis, rire
+      fx.pop(x, y, 0x8a3fd0, 1.2, 0.28);
+      for (let i = 0; i < fx.n(8); i++) {
+        const a = rnd(0, 6.28);
+        const p = fx.top.spawn(fx.tex.square, x, y, 0.6);
+        p.s.tint = i % 2 ? 0x8a3fd0 : 0x5fd068; p.vx = Math.cos(a) * 260; p.vy = Math.sin(a) * 260 - 100; p.grav = 500; p.drag = 2; p.spin = rnd(-10, 10); p.s0 = 0.5; p.s1 = 0.3;
+      }
+      fx.label('HA HA!', x, y - 70, 0x5fd068, 30);
+      break;
+    }
+    case 1: // Lex Luthor : la kryptonite irradie
+      fx.glow(x, y, 0x5fff6a, 2.6, 0.6, 'ground');
+      fx.debris(x, y, 'gem', 0x5fff6a, 5, 380, 0.6);
+      break;
+    case 2: // Bane : le sol se fissure sous l'unité
+    {
+      const cr = fx.put('crack', x, y + 20, 0.9, 'ground');
+      cr.curve = Curve.Out; cr.s0 = 0.4; cr.s1 = 0.8; cr.sy = 0.55; cr.fout = 0.6;
+      fx.debris(x, y, 'brick', 0xffffff, 5, 460, 0.8);
+      fx.puffs(x, y + 10, 0xd8c8b0, 4, 0.9, 160, 0.5);
+      fx.host.shake(5, 0.2);
+      break;
+    }
+    case 3: { // Sinestro : cage jaune de la peur
+      const r = fx.put('ringInk', x, y, 2, 'shots');
+      r.s.tint = 0xffe03a; r.curve = Curve.Pulse; r.s0 = 1.1; r.s1 = 1.25; r.sy = 1.2; r.fout = 0.85;
+      for (const dx of [-36, -12, 12, 36]) {
+        const b = fx.put('streak', x + dx, y, 2, 'shots');
+        b.s.tint = 0xffe03a; b.rot = Math.PI / 2; b.s0 = b.s1 = 1.6; b.sy = 0.5; b.fout = 0.85;
+      }
+      fx.glow(x, y, 0xffe03a, 2.2, 0.5);
+      break;
+    }
+    case 4: // Black Adam : impact de foudre dorée
+      fx.pop(x, y, 0xffd34a, 1.4, 0.3);
+      fx.sparks(x, y, 0xfff27a, 6, 420, 0.6);
+      break;
+    default: { // Darkseid : Oméga
+      const o = fx.put('omega', x, y - 30, 0.8);
+      o.curve = Curve.Pop; o.s0 = 0.3; o.s1 = 1.6; o.vy = -30; o.fout = 0.6;
+      fx.glow(x, y, 0xff3b3b, 2.6, 0.5);
+    }
+  }
+  fx.ring(x, y, col, 96, 0.42);
+}
+
+function dcBossPower(fx: CombatFx, boss: BossId, src: P | null, slots: readonly number[], name: string, col: number): void {
+  const code = DC_BOSSES.indexOf(boss);
+  if (name === ANTI_LIFE_NAME) {
+    // Équation d'Anti-Vie : le plateau s'assombrit, des oméga partout.
+    fx.host.flash(0.45, 0.6, 0x1d0a10);
+    fx.host.shake(6, 0.4);
+  }
+  if (name === BOOM_TUBE_NAME && src) {
+    // Boom Tube : grand anneau blanc et bleu d'où jaillissent les Parademons.
+    for (let i = 0; i < 3; i++) fx.ring(src.x, src.y, i % 2 ? 0x9fd8ff : 0xffffff, 120 + i * 50, 0.5 + i * 0.1);
+    fx.glow(src.x, src.y, 0x9fd8ff, 4, 0.6);
+    fx.host.flash(0.15, 0.3, 0x9fd8ff);
+    return;
+  }
+  slots.forEach((s, i) => {
+    const c = fx.host.cell(s);
+    if (boss === 'blackadam') {
+      fx.bolt({ x: c.x + rnd(-40, 40), y: c.y - 700 }, c, 0xffd34a, 16, 0.38, 2, i * 0.08);
+      const m = fx.put('spark', c.x, c.y, 0.01); m.a0 = 0; m.p0 = code; m.color = col; m.delay = i * 0.08; m.end = dcBossLand;
+      return;
+    }
+    if ((boss === 'luthor' || boss === 'darkseid') && src) {
+      // Rayon de kryptonite (vert) ou Rayons Oméga (rouges, en zigzag) depuis le boss.
+      if (boss === 'darkseid') fx.bolt(src, c, 0xff3b3b, 14, 0.4, 1, i * 0.1);
+      else fx.beam(src, c, 0x5fff6a, 16, 0.4, BeamMode.Grow, -1, 0, true, i * 0.1);
+      const m = fx.put('spark', c.x, c.y, 0.01); m.a0 = 0; m.p0 = code; m.color = col; m.delay = 0.2 + i * 0.1; m.end = dcBossLand;
+      return;
+    }
+    if (!src) { const m = fx.put('spark', c.x, c.y, 0.01); m.a0 = 0; m.p0 = code; m.color = col; m.end = dcBossLand; return; }
+    const tex = boss === 'joker' ? 'card' : boss === 'bane' ? 'fist' : boss === 'darkseid' ? 'omega' : 'glow';
+    const m = fx.shotTo(tex, src, c, fx.travel(src, c, 1600, 0.3, 0.55), dcBossLand, col);
+    m.p0 = code; m.arc = boss === 'bane' ? 160 : 80; m.delay = i * 0.08; m.spin = boss === 'joker' ? 10 : 0; m.face = boss === 'bane';
+    if (tex === 'glow') { m.s.tint = col; m.s.blendMode = 'add'; m.s0 = m.s1 = 1.4; }
+    m.trail = trGlow; m.trailEvery = 0.03;
+  });
 }

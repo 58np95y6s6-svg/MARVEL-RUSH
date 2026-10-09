@@ -5,7 +5,8 @@
 //   Sacrifice → mana      sacrificeMana      multiplicateur de SACRIFICE_MANA (1 = barème standard)
 //   Copieur               copyDamageMul      dégâts gardés par la copie (0.75 = −25 %)
 //                         copyRankBonus, copyReady, copyMana  (talents et éveils)
-//   Booster de fusion     promoteAlly        1 = glissée sur une alliée de même rang, la fait monter d'un rang
+//   Booster de fusion     promoteAlly        1 = glissée sur une alliée de même rang, la fait monter d'un rang ;
+//                         promoteMana : mana gagné à chaque promotion (talents et éveils, Robin)
 //   Croissance            growthPerSecond, growthPerKill : points de croissance (counters.growth) ;
 //                         bonus de dégâts = growthScale × points^growthExponent (rendements décroissants,
 //                         sans plafond ; défaut 1 et 1 = linéaire) ; growthKeepOnMerge : part du bonus

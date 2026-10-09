@@ -194,10 +194,8 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
   }
   if (unit) {
     const uid = effectiveId(unit);
-    // Supergirl : une charge solaire par élimination.
+    // Supergirl : une charge solaire par élimination (Éruption solaire).
     if (uid === 'supergirl') unit.counters.solar = (unit.counters.solar ?? 0) + 1;
-    // Passif d'éveil générique : mana bonus par élimination (Catwoman ★10).
-    mana += unitParams(ctx, player, uid).bonusKillMana ?? 0;
   }
   if (unit) growOnKill(ctx, player, unit);
   // Mana par élimination (Tiana) : versé au joueur de l'unité qui a touché l'ennemi.

@@ -160,7 +160,7 @@ export type EngineEvent =
    * Mana gagné hors élimination ordinaire : archétypes (sacrifice, copie, échange) ou victoire sur un boss.
    * `slot` = case d'où part le gain (-1 pour un boss : `enemy` = boss vaincu).
    */
-  | { type: 'mana'; player: PlayerId; slot: number; amount: number; reason: 'sacrifice' | 'copie' | 'echange' | 'boss'; enemy?: number }
+  | { type: 'mana'; player: PlayerId; slot: number; amount: number; reason: 'sacrifice' | 'copie' | 'echange' | 'promotion' | 'boss'; enemy?: number }
   | { type: 'powerup'; player: PlayerId; unit: UnitId; level: number }
   | { type: 'manaUpgrade'; player: PlayerId; level: number }
   | { type: 'attack'; player: PlayerId; slot: number; unit: UnitId; targets: number[]; fx: string }

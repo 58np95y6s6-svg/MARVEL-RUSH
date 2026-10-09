@@ -24,4 +24,11 @@ export const ATTACK_FX = [
   'maui:faucon', 'maui:requin', 'pocahontas:feuilles', 'mulan:souffle', 'mulan:avalanche', 'merida:tir-parfait',
   'ariel:bulles', 'foxhound:double', 'tiana:luciole', 'nemo:ralenti', 'coco:notes', 'nickjudy:carotte',
   'buzzwoody:laser', 'rapunzel:poele', 'vanralph:poing', 'vanralph:brise-bouclier',
+  // Extension DC
+  'batman:batarang', 'batman:batarangs', 'batman:fumigene', 'superman:vision-thermique', 'superman:souffle',
+  'wonderwoman:epee', 'wonderwoman:lasso', 'greenlantern:anneau', 'greenlantern:mur', 'greenlantern:marteau',
+  'greenlantern:mitrailleuse', 'flash:eclair', 'flash:tour', 'aquaman:trident', 'aquaman:kraken',
+  'cyborg:canon-sonique', 'supergirl:poing', 'supergirl:eruption', 'shazam:coup', 'shazam:foudre', 'martian:rayon',
+  'robin:baton', 'robin:balayage', 'batgirl:coup', 'catwoman:fouet', 'harley:maillet', 'harley:confettis',
+  'harley:tarte', 'harley:oups', 'greenarrow:fleche', 'greenarrow:filet', 'greenarrow:salve',
 ] as const;

@@ -759,8 +759,9 @@ function attackOf(
       return { targets: [target], fx: 'cyborg:canon-sonique' };
     }
     case 'supergirl': {
-      const max = Math.max(1, Math.round(prm.maxCharges ?? 10));
-      const d = dmg * (1 + Math.min(max, c.solar ?? 0) * (prm.chargeDamage ?? 0.05));
+      // Croissance (archétype) : déjà comprise dans `dmg` (baseDamage, growthBonus).
+      const max = Math.max(1, Math.round(prm.maxCharges ?? 8));
+      const d = dmg;
       hit(target, d);
       if ((c.solar ?? 0) >= max) {
         const seg = segmentOf(ctx, target);
@@ -803,11 +804,8 @@ function attackOf(
       return { targets: [target], fx: 'robin:baton' };
     }
     case 'catwoman': {
+      // Mana par élimination (archétype) : la marque est posée par unitHit (tagForMana).
       hit(target, dmg);
-      if (rand(ctx) < (prm.stealChance ?? 0.08)) {
-        ctx.st.players[player]!.mana += (prm.stealMana ?? 3) + (prm.stealPerRank ?? 1) * (u.rank - 1);
-        abilityEvent(ctx, player, slot, id, 'Cambriolage', [target]);
-      }
       if ((c.attacks ?? 0) % Math.max(1, Math.round(prm.whipEvery ?? 5)) === 0 && isAlive(target)) {
         applySlow(ctx, target, prm.whipSlow ?? 0.3, (prm.whipDuration ?? 2) * ctrl);
       }
@@ -832,6 +830,13 @@ function attackOf(
       }
       return { targets, fx: `harley:${names[effects[0]!]}` };
     }
+    case 'greenlantern': {
+      hit(target, dmg);
+      // Formation (archétype) : 3 Green Lantern alignés, le rayon de l'anneau devient une attaque de zone.
+      const zone = formationSplash(ctx, player, slot, u);
+      const around = zone > 0 ? splash(target, dmg * zone, 1.5) : [];
+      return { targets: [target, ...around], fx: 'greenlantern:anneau' };
+    }
     case 'greenarrow': {
       hit(target, dmg);
       if ((c.attacks ?? 0) % Math.max(1, Math.round(prm.netEvery ?? 4)) === 0 && isAlive(target)) {
@@ -842,7 +847,7 @@ function attackOf(
     }
     default: {
       // ironman, strange, falcon, moana, pocahontas, tiana, coco, rapunzel, superman (brûlure
-      // générique), greenlantern, martian, batgirl : coup simple.
+      // générique), martian, batgirl : coup simple.
       hit(target, dmg);
       return { targets: [target], fx: `${id}:${BASE_FX[id] ?? 'tir'}` };
     }

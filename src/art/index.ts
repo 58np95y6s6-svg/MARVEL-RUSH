@@ -146,6 +146,10 @@ export const TOKEN_COLORS: Record<string, string> = {
   moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
   ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
   nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
+  // Extension DC : couleurs contrastées avec le costume de chaque héros, distinctes de toutes les autres.
+  batman: '#f7e27a', superman: '#ff4a3d', wonderwoman: '#a8f0ff', greenlantern: '#e6e6f2', flash: '#8ff7e0',
+  aquaman: '#c48bff', cyborg: '#ff3d6e', supergirl: '#ffe9b0', shazam: '#2f6bff', martian: '#ff8fd1',
+  robin: '#fff36b', batgirl: '#ffab6b', catwoman: '#d8ff8a', harley: '#7df0b0', greenarrow: '#ffc2f0',
 };
 /** Couleur de plaque d'un personnage (repli : couleur claire de sa planche). */
 export function tokenColor(id: UnitId): string {

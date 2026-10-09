@@ -359,6 +359,47 @@ const D = {
     g.ellipse(-4, -6, 6, 3).fill({ color: W, alpha: 0.6 });
   },
   brick: (g) => { g.rect(-10, -6, 20, 12).fill(0xc0503a).stroke({ color: INK, width: 3 }); g.rect(-8, -4, 8, 3).fill(0xe88a6a); },
+  // --- Extension DC
+  batarang: (g) => {
+    const wing = [0, -4, 6, -9, 10, -6, 22, -12, 17, -2, 22, 6, 10, 2, 4, 6, 0, 3, -4, 6, -10, 2, -22, 6, -17, -2, -22, -12, -10, -6, -6, -9];
+    g.poly(wing).fill(0x3a3f52).stroke({ color: INK, width: 3.5, join: 'round' });
+    g.poly([0, -2, 5, -6, 8, -4, 4, 2, 0, 0, -4, 2, -8, -4, -5, -6]).fill(0x6a7290);
+  },
+  trident: (g) => {
+    g.moveTo(-30, 0).lineTo(14, 0).stroke({ color: INK, width: 8, cap: 'round' });
+    g.moveTo(-30, 0).lineTo(14, 0).stroke({ color: 0xf6c64a, width: 3.5, cap: 'round' });
+    const head = () => { g.moveTo(10, -10).lineTo(10, 10); g.moveTo(10, -10).lineTo(26, -10); g.moveTo(10, 0).lineTo(30, 0); g.moveTo(10, 10).lineTo(26, 10); };
+    head(); g.stroke({ color: INK, width: 8, cap: 'round' });
+    head(); g.stroke({ color: 0xf6c64a, width: 3.5, cap: 'round' });
+    for (const y of [-10, 0, 10]) { const x = y === 0 ? 30 : 26; g.poly([x, y - 4, x + 7, y, x, y + 4]).fill(0xfff0b0).stroke({ color: INK, width: 2.5, join: 'round' }); }
+  },
+  mallet: (g) => {
+    g.roundRect(-30, -3.5, 30, 7, 3).fill(0x9a6a42).stroke({ color: INK, width: 3 });
+    g.roundRect(-2, -16, 26, 32, 7).fill(0xff6ab4).stroke({ color: INK, width: 4 });
+    g.rect(9, -14, 7, 28).fill(0x2a2a3a);
+    g.roundRect(1, -12, 6, 6, 3).fill({ color: W, alpha: 0.6 });
+  },
+  pie: (g) => {
+    g.ellipse(0, 4, 20, 8).fill(0xd9a05a).stroke({ color: INK, width: 3.5 });
+    g.moveTo(-18, 2).bezierCurveTo(-16, -14, 16, -14, 18, 2).fill(0xfff6e8).stroke({ color: INK, width: 3.5 });
+    g.circle(0, -11, 4).fill(0xff3b5a).stroke({ color: INK, width: 2 });
+  },
+  staff: (g) => {
+    g.roundRect(-30, -4, 60, 8, 4).fill(0x7a7f90).stroke({ color: INK, width: 3.5 });
+    for (const x of [-20, 16]) g.rect(x, -4, 4, 8).fill(0xe8413b);
+    g.roundRect(-24, -2, 46, 2.5, 1).fill({ color: W, alpha: 0.5 });
+  },
+  card: (g) => {
+    g.roundRect(-12, -17, 24, 34, 4).fill(W).stroke({ color: INK, width: 3.5 });
+    g.roundRect(-7, -11, 14, 22, 3).fill(0x8a3fd0);
+    g.circle(0, 0, 4.5).fill(0x5fd068);
+    g.poly([-9, -14, -5, -14, -7, -10]).fill(0xe8413b);
+  },
+  omega: (g) => {
+    const path = () => { g.moveTo(-17, 14).lineTo(-7, 14).arc(0, -2, 12, 1.98, 1.16, false).lineTo(7, 14).lineTo(17, 14); };
+    path(); g.stroke({ color: INK, width: 11, cap: 'round', join: 'round' });
+    path(); g.stroke({ color: 0xff3b3b, width: 5, cap: 'round', join: 'round' });
+  },
   // --- boss
   pumpkin: (g) => {
     for (const x of [-9, 9]) g.ellipse(x, 2, 10, 14).fill(0xff8a1f).stroke({ color: INK, width: 3 });
