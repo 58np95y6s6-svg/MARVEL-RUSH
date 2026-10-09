@@ -10,10 +10,10 @@
 // Clés génériques gérées par le moteur : damageMul, attackSpeedMul, bossDamageMul, armorPierce,
 // auraDiagonal, auraDamage, auraAttackSpeed, burnPerSecond/burnDuration, stunDuration
 // (+ stunEveryAttacks), slow/slowDuration sur les tirs, immuneBossControl,
-// bossEffectDurationMul. Les autres clés de nouvelles mécaniques sont conservées dans les
+// bossEffectDurationFactor. Les autres clés de nouvelles mécaniques sont conservées dans les
 // paramètres résolus et pourront être lues par le moteur au fil de l'équilibrage.
 
-import type { TalentDef, UnitId } from '../data/types';
+import type { AwakeningPassiveDef, TalentDef, UnitId } from '../data/types';
 import { TALENTS, TALENT_TIER_LEVELS } from '../data/talents';
 
 let catalog: readonly TalentDef[] = TALENTS;
@@ -36,7 +36,7 @@ export function activeTalents(unit: UnitId, level: number, choices: readonly ('a
   return out;
 }
 
-export function applyTalentParams(base: Record<string, number>, talents: readonly TalentDef[]): Record<string, number> {
+export function applyTalentParams(base: Record<string, number>, talents: readonly { params: Record<string, number> }[]): Record<string, number> {
   const p: Record<string, number> = { ...base };
   for (const t of talents) {
     for (const [key, v] of Object.entries(t.params)) {
@@ -56,8 +56,42 @@ export function applyTalentParams(base: Record<string, number>, talents: readonl
   return p;
 }
 
+// ───────────── Éveils (§6.6) ─────────────
+// Gains cumulés par étoile : +6 % de dégâts et +4 % de vitesse d'attaque (appliqués dans combat.ts).
+// Passifs débloqués à ★2/4/6/8/10, lus dans src/data/awakenings.ts dès que le fichier existe
+// (chargement automatique par import.meta.glob : aucun câblage à faire), ou fournis par
+// setAwakeningCatalog. Leurs params suivent la même convention que les talents.
+
+export const AWAKENING_DAMAGE = 0.06;
+export const AWAKENING_ATTACK_SPEED = 0.04;
+export const AWAKENING_MAX = 10;
+
+function discoverAwakenings(): AwakeningPassiveDef[] {
+  const mods = import.meta.glob<Record<string, unknown>>('../data/awakenings.ts', { eager: true });
+  for (const mod of Object.values(mods)) {
+    for (const v of Object.values(mod)) {
+      if (Array.isArray(v) && v.every((d) => d && typeof d === 'object' && 'star' in d && 'unit' in d && 'params' in d)) {
+        return v as AwakeningPassiveDef[];
+      }
+    }
+  }
+  return [];
+}
+
+let awakeningCatalog: readonly AwakeningPassiveDef[] = discoverAwakenings();
+
+/** Remplace le catalogue des passifs d'éveil (tests, équilibrage). */
+export function setAwakeningCatalog(defs: readonly AwakeningPassiveDef[]): void {
+  awakeningCatalog = defs;
+}
+
+export function activeAwakeningPassives(unit: UnitId, stars: number): AwakeningPassiveDef[] {
+  return awakeningCatalog.filter((d) => d.unit === unit && d.star <= stars).sort((a, b) => a.star - b.star);
+}
+
 export function resolveUnitParams(
-  unit: UnitId, base: Record<string, number>, level: number, choices: readonly ('a' | 'b')[] | undefined,
+  unit: UnitId, base: Record<string, number>, level: number, choices: readonly ('a' | 'b')[] | undefined, stars = 0,
 ): Record<string, number> {
-  return applyTalentParams(base, activeTalents(unit, level, choices));
+  const withTalents = applyTalentParams(base, activeTalents(unit, level, choices));
+  return applyTalentParams(withTalents, activeAwakeningPassives(unit, stars));
 }

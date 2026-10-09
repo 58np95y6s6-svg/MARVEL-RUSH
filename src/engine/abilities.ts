@@ -9,9 +9,9 @@ import {
   DT, EPS, emit, pick, pickMany, rand, randInt, type Ctx, type SimEnemy, type SimUnit,
 } from './internal';
 import {
-  aliveOn, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate,
+  aliveAll, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate,
   effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, nearest, neighbors, pushBack,
-  segmentOf, selectTarget, teamFor, topBy, unitHit, unitParams, within,
+  progress, segmentOf, selectTarget, sendToStart, teamFor, topBy, unitHit, unitParams, within,
 } from './combat';
 
 export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
@@ -73,7 +73,6 @@ export function updateUnits(ctx: Ctx, player: number): void {
   const p = ctx.st.players[player]!;
   rapunzelCleanse(ctx, player);
   const units = p.grid.filter((u): u is SimUnit => !!u);
-  const lane = ctx.info[player]!.lane;
   for (const u of units) {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
@@ -81,14 +80,14 @@ export function updateUnits(ctx: Ctx, player: number): void {
     if (u.unit === 'loki') lokiTransform(ctx, player, slot, u);
     if (effectiveId(u) === 'maui') mauiForm(ctx, player, slot, u);
     const disabled = isDisabled(u);
-    let enemies = aliveOn(ctx, lane);
+    let enemies = aliveAll(ctx);
     let cur = slot;
     if (!disabled && (u.counters.cd ?? 1) <= EPS) {
       const res = timedAbility(ctx, player, slot, u, enemies);
       if (res !== false) {
         u.counters.cd = unitParams(ctx, player, effectiveId(u)).abilityCooldown ?? 0;
         if (typeof res === 'number') cur = res;
-        enemies = aliveOn(ctx, lane);
+        enemies = aliveAll(ctx);
       }
     }
     u.cooldown = Math.max(0, u.cooldown - DT * attackSpeedOf(ctx, player, cur, u));
@@ -96,7 +95,7 @@ export function updateUnits(ctx: Ctx, player: number): void {
     performAttack(ctx, player, cur, u, enemies);
     const team = teamFor(ctx, player, effectiveId(u));
     if (team.doubleAttackChance > 0 && rand(ctx) < team.doubleAttackChance) {
-      const again = aliveOn(ctx, lane);
+      const again = aliveAll(ctx);
       if (again.length > 0) performAttack(ctx, player, cur, u, again);
     }
     u.cooldown += effectiveDef(u).attackInterval;
@@ -129,7 +128,7 @@ function mauiForm(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
   const targets: number[] = [];
   if (prm.transformBlast) {
     const dmg = baseDamage(ctx, player, slot, u) * prm.transformBlast;
-    for (const e of aliveOn(ctx, ctx.info[player]!.lane)) { unitHit(ctx, player, u, e, dmg, { noOnHit: true }); targets.push(e.uid); }
+    for (const e of aliveAll(ctx)) { unitHit(ctx, player, u, e, dmg, { noOnHit: true }); targets.push(e.uid); }
   }
   emit(ctx, { type: 'ability', player: ctx.st.players[player]!.id, slot, unit: 'maui', name: shark ? 'Métamorphose : requin' : 'Métamorphose : faucon', targets });
 }
@@ -143,7 +142,7 @@ function abilityEvent(ctx: Ctx, player: number, slot: number, unit: UnitId, name
   });
 }
 
-const displaceable = (e: SimEnemy) => !e.bossId && !e.x.flying;
+const displaceable = (e: SimEnemy) => !e.bossId && !e.x.mini && !e.x.flying;
 
 /**
  * Déclenche la compétence à recharge. Renvoie false si elle n'a pas pu partir (on réessaie au
@@ -155,10 +154,10 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
   const ctrl = controlMul(ctx, player, id);
   switch (id) {
     case 'ironman': {
-      const lead = bestBy(enemies, (e) => e.distance);
+      const lead = bestBy(enemies, (e) => progress(ctx, e));
       if (!lead) return false;
-      const seg = segmentOf(ctx, lead.distance);
-      const line = prm.beamAllLines ? enemies : enemies.filter((e) => segmentOf(ctx, e.distance) === seg);
+      const seg = segmentOf(ctx, lead);
+      const line = prm.beamAllLines ? enemies : enemies.filter((e) => segmentOf(ctx, e) === seg);
       const dmg = baseDamage(ctx, player, slot, u) * (prm.beamDamage ?? 2) * (1 + (ctx.mods.beamDamage ?? 0));
       emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: line.map((e) => e.uid), fx: 'ironman:unibeam' });
       for (const e of line) {
@@ -169,10 +168,10 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       return true;
     }
     case 'strange': {
-      const targets = topBy(enemies.filter(displaceable), (e) => e.distance, Math.max(1, prm.portalTargets ?? 1));
+      const targets = topBy(enemies.filter(displaceable), (e) => progress(ctx, e), Math.max(1, prm.portalTargets ?? 1));
       if (targets.length === 0) return false;
       for (const e of targets) {
-        e.distance = 0;
+        sendToStart(e);
         delete e.x.knockFor;
         if (prm.portalSlow) applySlow(ctx, e, prm.portalSlow, (prm.portalSlowDuration ?? 3) * ctrl);
         if (prm.portalDamagePctMaxHp) unitHit(ctx, player, u, e, e.maxHp * prm.portalDamagePctMaxHp, { noOnHit: true });
@@ -193,10 +192,10 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       return true;
     }
     case 'moana': {
-      const targets = topBy(enemies.filter(displaceable), (e) => e.distance, Math.max(1, prm.pushTargets ?? 3));
+      const targets = topBy(enemies.filter(displaceable), (e) => progress(ctx, e), Math.max(1, prm.pushTargets ?? 3));
       if (targets.length === 0) return false;
       for (const e of targets) {
-        pushBack(e, prm.push ?? 1.5);
+        pushBack(ctx, e, prm.push ?? 1.5);
         if (prm.waveSlow) applySlow(ctx, e, prm.waveSlow, (prm.waveSlowDuration ?? 2) * ctrl);
       }
       if (prm.waveDamage) {
@@ -207,30 +206,30 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemie
       return true;
     }
     case 'ariel': {
-      const targets = topBy(enemies.filter((e) => !e.bossId), (e) => e.distance, Math.max(1, prm.songTargets ?? 3));
+      const targets = topBy(enemies.filter((e) => !e.bossId && !e.x.mini), (e) => progress(ctx, e), Math.max(1, prm.songTargets ?? 3));
       if (targets.length === 0) return false;
       for (const e of targets) applyStun(e, (prm.songDuration ?? 1.5) * ctrl);
       abilityEvent(ctx, player, slot, id, 'Chant de sirène', targets);
       return true;
     }
     case 'tiana': {
-      const target = bestBy(enemies.filter(displaceable), (e) => e.distance);
+      const target = bestBy(enemies.filter(displaceable), (e) => progress(ctx, e));
       if (!target) return false;
-      pushBack(target, prm.pull ?? 1);
+      pushBack(ctx, target, prm.pull ?? 1);
       abilityEvent(ctx, player, slot, id, 'Langue de Naveen', [target]);
       return true;
     }
     case 'nickjudy': {
-      const targets = topBy(enemies.filter((e) => !e.bossId), (e) => e.hp, Math.max(1, prm.stopTargets ?? 1));
+      const targets = topBy(enemies.filter((e) => !e.bossId && !e.x.mini), (e) => e.hp, Math.max(1, prm.stopTargets ?? 1));
       if (targets.length === 0) return false;
       for (const e of targets) applyStun(e, (prm.stopDuration ?? 2) * ctrl);
       abilityEvent(ctx, player, slot, id, 'Arrestation', targets);
       return true;
     }
     case 'buzzwoody': {
-      const target = bestBy(enemies.filter(displaceable), (e) => e.distance);
+      const target = bestBy(enemies.filter(displaceable), (e) => progress(ctx, e));
       if (!target) return false;
-      pushBack(target, prm.pull ?? 2);
+      pushBack(ctx, target, prm.pull ?? 2);
       if (prm.pullStun) applyStun(target, prm.pullStun * ctrl);
       abilityEvent(ctx, player, slot, id, 'Lasso de Woody', [target]);
       return true;
@@ -284,7 +283,7 @@ function attackOf(
   const c = u.counters;
   const hit = (e: SimEnemy, d: number, o?: { crit?: boolean; shieldBreak?: boolean; noOnHit?: boolean }) => unitHit(ctx, player, u, e, d, o);
   const splash = (center: SimEnemy, d: number, radius: number) => {
-    const around = within(enemies, center, radius).filter(isAlive);
+    const around = within(ctx, enemies, center, radius).filter(isAlive);
     for (const e of around) hit(e, d, { noOnHit: true });
     return around;
   };
@@ -298,7 +297,7 @@ function attackOf(
         if (stacks >= max) {
           target.x.webStacks = 0;
           if (!applyStun(target, (prm.rootDuration ?? 1) * ctrl)) applySlow(ctx, target, max * (prm.slowPerStack ?? 0.1), (prm.slowDuration ?? 2) * ctrl);
-          if (prm.rootSplashRadius) for (const e of within(enemies, target, prm.rootSplashRadius)) applyStun(e, (prm.rootDuration ?? 1) * ctrl);
+          if (prm.rootSplashRadius) for (const e of within(ctx, enemies, target, prm.rootSplashRadius)) applyStun(e, (prm.rootDuration ?? 1) * ctrl);
           abilityEvent(ctx, player, slot, id, 'Toile collante', [target]);
         } else {
           target.x.webStacks = stacks;
@@ -315,7 +314,7 @@ function attackOf(
       const around = splash(target, d * (prm.splash ?? 0.4), prm.splashRadius ?? 1.5);
       const every = Math.max(1, Math.round(prm.smashEveryHits ?? 8));
       if (hits % every === 0) {
-        const zone = [target, ...within(enemies, target, prm.smashRadius ?? 2)].filter(isAlive);
+        const zone = [target, ...within(ctx, enemies, target, prm.smashRadius ?? 2)].filter(isAlive);
         for (const e of zone) {
           applyStun(e, (prm.smashStun ?? 1) * ctrl);
           if (prm.smashDamage) hit(e, d * prm.smashDamage, { noOnHit: true });
@@ -332,7 +331,7 @@ function attackOf(
       const seen = new Set([target.uid]);
       let cur = target;
       while (chain.length < n) {
-        const next = nearest(enemies, cur, 1, seen)[0];
+        const next = nearest(ctx, enemies, cur, 1, seen)[0];
         if (!next) break;
         chain.push(next);
         seen.add(next.uid);
@@ -378,7 +377,7 @@ function attackOf(
     }
     case 'cap': {
       const n = Math.max(1, Math.round(prm.bounces ?? 3));
-      const list = [target, ...nearest(enemies, target, n - 1, new Set([target.uid]))];
+      const list = [target, ...nearest(ctx, enemies, target, n - 1, new Set([target.uid]))];
       for (const e of list) hit(e, dmg);
       return { targets: list, fx: 'cap:bouclier' };
     }
@@ -415,7 +414,7 @@ function attackOf(
         return { targets: [target], fx: 'hawkeye:glace' };
       }
       const n = Math.max(1, Math.round(prm.chain ?? 2)) + (ctx.mods.chainBounces ?? 0);
-      const list = [target, ...nearest(enemies, target, n - 1, new Set([target.uid]))];
+      const list = [target, ...nearest(ctx, enemies, target, n - 1, new Set([target.uid]))];
       for (const e of list) hit(e, dmg);
       return { targets: list, fx: 'hawkeye:electrique' };
     }
@@ -527,8 +526,8 @@ function attackOf(
       return { targets: [target], fx: 'nickjudy:carotte' };
     }
     case 'buzzwoody': {
-      const seg = segmentOf(ctx, target.distance);
-      const line = enemies.filter((e) => isAlive(e) && segmentOf(ctx, e.distance) === seg);
+      const seg = segmentOf(ctx, target);
+      const line = enemies.filter((e) => isAlive(e) && segmentOf(ctx, e) === seg);
       const d = dmg * (1 + (ctx.mods.beamDamage ?? 0));
       for (const e of line) hit(e, d);
       return { targets: line, fx: 'buzzwoody:laser' };

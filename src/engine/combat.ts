@@ -10,18 +10,43 @@ import {
   DT, EPS, LEVEL_DAMAGE, NO_TEAM, POWERUP_DAMAGE, emit, pick, rand,
   type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
 } from './internal';
-import { resolveUnitParams } from './talents';
+import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitParams } from './talents';
 
 // ───────────── Ennemis du chemin ─────────────
+// Solo : une branche 'a' jusqu'au château. Coop : deux branches 'a' et 'b' qui se rejoignent
+// dans le tronc commun 'tronc'. Toutes les unités touchent tous les ennemis, sur toutes les branches.
 
-export function aliveOn(ctx: Ctx, lane: LaneId): SimEnemy[] {
+export function aliveAll(ctx: Ctx): SimEnemy[] {
   const out: SimEnemy[] = [];
-  for (const e of ctx.st.enemies) if (e.lane === lane && e.hp > 0 && !e.x.gone) out.push(e);
+  for (const e of ctx.st.enemies) if (e.hp > 0 && !e.x.gone) out.push(e);
   return out;
 }
 
 export function isAlive(e: SimEnemy): boolean {
   return e.hp > 0 && !e.x.gone;
+}
+
+export function laneLength(ctx: Ctx, lane: LaneId): number {
+  return ctx.laneLen[lane] ?? 0;
+}
+
+/** Cases restantes avant le château. */
+export function remaining(ctx: Ctx, e: SimEnemy): number {
+  if (e.lane === 'tronc') return laneLength(ctx, 'tronc') - e.distance;
+  return laneLength(ctx, e.lane) - e.distance + (ctx.coop ? laneLength(ctx, 'tronc') : 0);
+}
+
+/** Avancée vers le château (plus grand = plus avancé), pour le ciblage « premier ». */
+export function progress(ctx: Ctx, e: SimEnemy): number {
+  return -remaining(ctx, e);
+}
+
+/** Distance entre deux ennemis le long du chemin en Y. */
+export function gap(ctx: Ctx, a: SimEnemy, b: SimEnemy): number {
+  if (a.lane === b.lane) return Math.abs(a.distance - b.distance);
+  if (a.lane === 'tronc') return laneLength(ctx, b.lane) - b.distance + a.distance;
+  if (b.lane === 'tronc') return laneLength(ctx, a.lane) - a.distance + b.distance;
+  return laneLength(ctx, a.lane) - a.distance + laneLength(ctx, b.lane) - b.distance;
 }
 
 function better(a: SimEnemy, b: SimEnemy, key: (e: SimEnemy) => number): boolean {
@@ -42,32 +67,53 @@ export function topBy(list: readonly SimEnemy[], key: (e: SimEnemy) => number, n
 
 export function selectTarget(ctx: Ctx, list: readonly SimEnemy[], targeting: Targeting): SimEnemy | undefined {
   if (list.length === 0) return undefined;
-  if (targeting === 'premier') return bestBy(list, (e) => e.distance);
+  if (targeting === 'premier') return bestBy(list, (e) => progress(ctx, e));
   if (targeting === 'fort') return bestBy(list, (e) => e.hp);
   return pick(ctx, list);
 }
 
 /** Les ennemis les plus proches de `from` sur le chemin (hors exclus). */
-export function nearest(list: readonly SimEnemy[], from: SimEnemy, n: number, exclude: ReadonlySet<number>): SimEnemy[] {
+export function nearest(ctx: Ctx, list: readonly SimEnemy[], from: SimEnemy, n: number, exclude: ReadonlySet<number>): SimEnemy[] {
   return list
     .filter((e) => !exclude.has(e.uid))
-    .sort((a, b) => Math.abs(a.distance - from.distance) - Math.abs(b.distance - from.distance) || a.uid - b.uid)
-    .slice(0, n);
+    .map((e) => [e, gap(ctx, e, from)] as const)
+    .sort((a, b) => a[1] - b[1] || a[0].uid - b[0].uid)
+    .slice(0, n)
+    .map(([e]) => e);
 }
 
-export function within(list: readonly SimEnemy[], from: SimEnemy, radius: number): SimEnemy[] {
-  return list.filter((e) => e !== from && Math.abs(e.distance - from.distance) <= radius);
+export function within(ctx: Ctx, list: readonly SimEnemy[], from: SimEnemy, radius: number): SimEnemy[] {
+  return list.filter((e) => e !== from && gap(ctx, e, from) <= radius);
 }
 
-/** Le chemin est découpé en 3 lignes (montée, traversée, descente), comme le U de Rush Royale. */
-export function segmentOf(ctx: Ctx, distance: number): number {
-  return Math.min(2, Math.floor(distance / (ctx.pathLength / 3)));
+/** Chaque branche est découpée en 3 lignes (montée, traversée, descente), comme le U de Rush Royale. */
+export function segmentOf(ctx: Ctx, e: SimEnemy): string {
+  const len = laneLength(ctx, e.lane);
+  return `${e.lane}${Math.min(2, Math.max(0, Math.floor(e.distance / (len / 3))))}`;
+}
+
+/** Recule un ennemi (en repassant du tronc à sa branche d'origine si besoin). */
+export function retreat(ctx: Ctx, e: SimEnemy, cells: number): void {
+  const d = e.distance - cells;
+  if (d >= 0) { e.distance = d; return; }
+  if (e.lane === 'tronc' && e.x.from) {
+    e.lane = e.x.from;
+    e.distance = Math.max(0, laneLength(ctx, e.lane) + d);
+    return;
+  }
+  e.distance = 0;
+}
+
+/** Renvoie un ennemi au début de son chemin (portail de Doctor Strange). */
+export function sendToStart(e: SimEnemy): void {
+  if (e.lane === 'tronc' && e.x.from) e.lane = e.x.from;
+  e.distance = 0;
 }
 
 // ───────────── Effets ─────────────
 
 export function applyStun(e: SimEnemy, duration: number): boolean {
-  if (e.bossId || duration <= 0) return false;
+  if (e.bossId || e.x.mini || duration <= 0) return false;
   e.effects.stunFor = Math.max(e.effects.stunFor ?? 0, duration);
   return true;
 }
@@ -81,9 +127,9 @@ export function applySlow(ctx: Ctx, e: SimEnemy, value: number, duration: number
 }
 
 /** Déplace un ennemi vers le début du chemin (sauf boss et volants). */
-export function pushBack(e: SimEnemy, cells: number): boolean {
-  if (e.bossId || e.x.flying) return false;
-  e.distance = Math.max(0, e.distance - cells);
+export function pushBack(ctx: Ctx, e: SimEnemy, cells: number): boolean {
+  if (e.bossId || e.x.mini || e.x.flying) return false;
+  retreat(ctx, e, cells);
   return true;
 }
 
@@ -163,10 +209,15 @@ export function unitParams(ctx: Ctx, player: number, unit: UnitId): Record<strin
   const info = ctx.info[player]!;
   let p = info.params[unit];
   if (!p) {
-    p = resolveUnitParams(unit, UNITS[unit].ability.params, info.levels[unit] ?? 1, info.talents[unit]);
+    p = resolveUnitParams(unit, UNITS[unit].ability.params, info.levels[unit] ?? 1, info.talents[unit], awakeningOf(ctx, player, unit));
     info.params[unit] = p;
   }
   return p;
+}
+
+/** Étoiles d'éveil (0..10) d'une unité pour un joueur. */
+export function awakeningOf(ctx: Ctx, player: number, unit: UnitId): number {
+  return Math.max(0, Math.min(AWAKENING_MAX, ctx.info[player]!.awakening[unit] ?? 0));
 }
 
 export function teamFor(ctx: Ctx, player: number, unit: UnitId): TeamAgg {
@@ -227,7 +278,7 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   let bonus = aurasAt(ctx, player, slot).attackSpeed + team.attackSpeed;
   if ((u.counters.hasteFor ?? 0) > EPS) bonus += u.counters.haste ?? 0;
   if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
-  let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1);
+  let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id));
   if (id === 'maui' && !u.counters.form) mul *= prm.hawkSpeedMul ?? 1;
   if (id === 'cmarvel' && (u.counters.binaryFor ?? 0) > EPS) mul *= prm.binaryAttackSpeedMul ?? 1;
   return mul;
@@ -248,6 +299,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
   if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
   dmg *= prm.damageMul ?? 1;
+  dmg *= 1 + AWAKENING_DAMAGE * awakeningOf(ctx, player, id);
   if (u.status.transformedInto) dmg *= 1 + (prm.transformDamageBonus ?? 0);
   return dmg;
 }

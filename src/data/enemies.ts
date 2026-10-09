@@ -28,17 +28,17 @@ export const WAVE_RULES = {
   baseHp: 100,           // PV d'un ennemi normal en vague 1
   hpGrowth: 1.18,        // PV = baseHp × hpGrowth^(vague-1)
   baseSpeed: 2,          // cases par seconde d'un ennemi normal
-  firstBossWave: 3,      // premier boss, puis toutes les `bossEvery` vagues
-  bossEvery: 3,
-  thanosEvery: 15,       // Survie et Coop
+  /** Rythme des boss (§4.3), remplaçable par GameConfig.bossRhythm. */
+  smallBossEvery: 5,     // petit boss (lieutenant) : vagues 5, 15, 25…
+  bigBossEvery: 10,      // gros boss : vagues 10, 20, 30…
+  thanosEvery: 50,       // modes infinis : Thanos à la 50, puis toutes les 50
+  minionWavesBefore: 2,  // les sbires du prochain gros boss arrivent dans les 2 vagues d'avant
+  milestoneEvery: 10,    // événement « milestone » tous les 10 vagues franchies
   /** Intervalle entre deux apparitions : max(min, start − step × (vague − 1)). */
   spawnIntervalStart: 1.8,
   spawnIntervalStep: 0.06,
   spawnIntervalMin: 0.6,
-  /** Les sbires du boss à venir arrivent dans la vague qui le précède, à partir de cette seconde. */
-  minionsFrom: 10,
-  minionEvery: 3,        // une apparition sur 3 est un groupe de sbires
-  duelSuddenDeathWave: 15, // Duel : PV ×2 par vague à partir de cette vague
+  minionEvery: 3,        // dans ces vagues, une apparition sur 3 est un groupe de sbires
 };
 
 /**

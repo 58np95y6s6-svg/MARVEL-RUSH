@@ -2,9 +2,12 @@
 // Calée sur l'écran de combat de Rush Royale : HUD en haut, chemin en U autour de la grille 3 × 5,
 // zone du bas libre pour le mana, le bouton Invoquer et les 5 améliorations du deck.
 //
-// Le chemin part en bas à gauche, monte le long de la grille, la longe par le haut et redescend à
-// droite (sortie en bas à droite). Toutes les longueurs sont normalisées à PATH_CELLS cases, quel que
-// soit le mode ou la forme : le moteur lit `pathLength`, le rendu convertit avec `pointAt`.
+// Solo : le chemin part en bas à gauche (portail), monte le long de la grille, la longe par le haut et
+// redescend à droite jusqu'à la porte du château. Coop : deux plateaux empilés (partenaire en haut, moi
+// en bas) ; deux portails à gauche, une branche longe chaque plateau par l'extérieur puis remonte (ou
+// descend) à droite ; les deux branches se rejoignent à droite dans le tronc commun, qui passe entre les
+// plateaux et mène au château au centre. Toutes les longueurs sont normalisées à PATH_CELLS cases
+// (branche + tronc en Coop) : le moteur lit les longueurs, le rendu convertit avec `lanePoint`.
 // Pur calcul : aucun accès au DOM.
 
 import { GRID_COLS, GRID_ROWS } from '../engine/types';
@@ -14,7 +17,7 @@ export const SCREEN = { w: 1000, h: 1600 } as const;
 /** Longueur de tous les chemins, en cases (identique pour toutes les maps et tous les modes). */
 export const PATH_CELLS = 14;
 
-export type LayoutMode = 'solo' | 'coop' | 'duel';
+export type LayoutMode = 'solo' | 'coop';
 /** Variantes de tracé : U simple, arche (pont), marches (toits), dents de scie, vague. */
 export type PathShape = 'u' | 'arch' | 'steps' | 'zigzag' | 'wave';
 export const PATH_SHAPES: PathShape[] = ['u', 'arch', 'steps', 'zigzag', 'wave'];
@@ -64,28 +67,23 @@ export interface SoloLayout {
 export interface CoopLayout {
   mode: 'coop';
   hud: Rect;
-  /** Plateau du partenaire, en haut. */
+  /** Plateau de la partenaire, en haut. */
   partner: BoardLayout;
   /** Mon plateau, en bas. */
   self: BoardLayout;
-  /** Chemin commun entre les deux plateaux. */
-  lane: Lane;
+  /** Branche 'a' : portail en bas à gauche, longe mon plateau par le bas puis remonte à droite. */
+  branchA: Lane;
+  /** Branche 'b' : portail en haut à gauche, longe le plateau de la partenaire par le haut puis descend à droite. */
+  branchB: Lane;
+  /** Tronc commun : de la jonction (à droite) jusqu'au château (au centre), entre les deux plateaux. Les boss y arrivent. */
+  trunk: Lane;
+  /** Point de jonction des deux branches (= début du tronc). */
+  merge: Point;
+  /** Bandeau d'information entre les plateaux (« 1 vague avant le boss… »). */
+  banner: Rect;
   controls: Controls;
 }
-export interface DuelLayout {
-  mode: 'duel';
-  hud: Rect;
-  /** Bandeau entre les deux plateaux (vague, minuteur, vies adverses). */
-  midHud: Rect;
-  /** Mon plateau, grand, en bas. */
-  self: BoardLayout;
-  selfLane: Lane;
-  /** Plateau adverse, en miniature, en haut (lecture seule). */
-  opponent: BoardLayout;
-  opponentLane: Lane;
-  controls: Controls;
-}
-export type AnyLayout = SoloLayout | CoopLayout | DuelLayout;
+export type AnyLayout = SoloLayout | CoopLayout;
 
 // ---------------------------------------------------------------- outils géométriques
 
@@ -200,7 +198,7 @@ function topRun(shape: PathShape, L: number, R: number, T: number, cell: number,
 /** Chemin en U inversé autour d'une grille, normalisé à PATH_CELLS cases en ajustant les jambes. */
 function uLane(b: BoardLayout, shape: PathShape, bump = 1): Lane {
   const c = b.cell;
-  const gap = Math.round(c * 0.2);
+  const gap = Math.round(c * 0.25);
   const half = b.pathWidth / 2;
   const L = b.grid.x - gap - half, R = b.grid.x + b.grid.w + gap + half;
   const T = b.grid.y - gap - half;
@@ -217,52 +215,43 @@ function uLane(b: BoardLayout, shape: PathShape, bump = 1): Lane {
   return { points: pts, pixels: polylineLength(pts), cells: PATH_CELLS, cell: c, width: b.pathWidth };
 }
 
-/** Chemin commun de la Coop : descend à gauche du plateau du haut, traverse, descend à droite du plateau du bas. */
-function coopLane(top: BoardLayout, bottom: BoardLayout, shape: PathShape): Lane {
-  const c = top.cell;
-  const gap = Math.round(c * 0.3);
-  const half = top.pathWidth / 2;
-  const L = top.grid.x - gap - half, R = top.grid.x + top.grid.w + gap + half;
-  const M = (top.grid.y + top.grid.h + bottom.grid.y) / 2;
-  const target = PATH_CELLS * c;
-  const mid = (): Point[] => {
-    const W = R - L;
-    if (shape === 'u' || shape === 'arch' || shape === 'steps') {
-      if (shape === 'steps') {
-        const h = 0.18 * c;
-        return [{ x: L, y: M }, { x: L + W * 0.35, y: M }, { x: L + W * 0.35, y: M - h }, { x: L + W * 0.65, y: M - h },
-          { x: L + W * 0.65, y: M + h }, { x: R - 0.0001, y: M + h }, { x: R, y: M }];
-      }
-      return [{ x: L, y: M }, { x: R, y: M }];
-    }
-    const pts: Point[] = [];
-    const n = 40, h = 0.2 * c;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      const y = shape === 'wave' ? M + h * Math.sin(2 * Math.PI * t) : M + h * (((i % 10) < 5 ? (i % 5) : 5 - (i % 5)) / 5 * 2 - 1) * 0.6;
-      pts.push({ x: L + W * t, y });
-    }
-    return pts;
-  };
-  let leg = (target - (R - L)) / 2;
-  let pts: Point[] = [];
-  for (let it = 0; it < 6; it++) {
-    const midPts = mid();
-    const raw = [{ x: L, y: M - leg }, ...midPts, { x: R, y: M + leg }];
-    pts = roundCorners(raw.filter((p, i, a) => i === 0 || Math.hypot(p.x - a[i - 1]!.x, p.y - a[i - 1]!.y) > 0.5), c * 0.4);
-    const diff = target - polylineLength(pts);
-    if (Math.abs(diff) < 0.05) break;
-    leg += diff / 2;
-  }
-  return { points: pts, pixels: polylineLength(pts), cells: PATH_CELLS, cell: c, width: top.pathWidth };
+function mkLane(points: Point[], cell: number, width: number): Lane {
+  const pixels = polylineLength(points);
+  return { points, pixels, cells: Math.round((pixels / cell) * 100) / 100, cell, width };
 }
 
-function controls(top: number, bottom: number): Controls {
+/**
+ * Coop : branches symétriques (miroir horizontal) + tronc. La longueur d'une branche plus celle du tronc
+ * vaut PATH_CELLS cases : on ajuste l'extrémité du tronc (le château) pour y arriver.
+ */
+function coopLanes(top: BoardLayout, bottom: BoardLayout, shape: PathShape): { a: Lane; b: Lane; trunk: Lane; merge: Point } {
+  const c = top.cell;
+  const gap = Math.round(c * 0.25);
+  const half = top.pathWidth / 2;
+  const L = top.grid.x - gap - half, R = top.grid.x + top.grid.w + gap + half;
+  const T = top.grid.y - gap - half;
+  const B = bottom.grid.y + bottom.grid.h + gap + half;
+  const M = (top.grid.y + top.grid.h + bottom.grid.y) / 2;
+  const start = c * 0.75;
+  const run = topRun(shape, L, R, T, c, 0.5);
+  const rawB = [{ x: L, y: T + start }, ...run, { x: R, y: M }];
+  const rawA = [{ x: L, y: B - start }, ...topRun(shape, L, R, B, c, 0.4).map((p) => ({ x: p.x, y: 2 * B - p.y })), { x: R, y: M }];
+  const clean = (p: Point[]) => p.filter((q, i, arr) => i === 0 || Math.hypot(q.x - arr[i - 1]!.x, q.y - arr[i - 1]!.y) > 0.5);
+  const b = mkLane(roundCorners(clean(rawB), c * 0.38), c, top.pathWidth);
+  const a = mkLane(roundCorners(clean(rawA), c * 0.38), c, top.pathWidth);
+  const branch = Math.max(a.pixels, b.pixels);
+  const trunkPx = Math.max(c * 1.5, PATH_CELLS * c - branch);
+  const merge = { x: R, y: M };
+  const trunk = mkLane([merge, { x: Math.round((R - trunkPx) * 10) / 10, y: M }], c, Math.round(top.pathWidth * 1.15));
+  return { a, b, trunk, merge };
+}
+
+function controls(top: number, bottom: number, upH = 130): Controls {
   // Rangée de 5 améliorations juste sous la zone de jeu, puis le bouton Invoquer centré.
-  const upH = 130, gapX = 14, w = (SCREEN.w - 2 * 60 - 4 * gapX) / 5;
+  const gapX = 14, w = (SCREEN.w - 2 * 60 - 4 * gapX) / 5;
   const upgrades: Rect[] = [];
   for (let i = 0; i < 5; i++) upgrades.push({ x: 60 + i * (w + gapX), y: top, w, h: upH });
-  const sy = top + upH + 30, sh = Math.min(170, bottom - sy);
+  const sy = top + upH + 24, sh = Math.min(170, bottom - sy);
   return {
     upgrades,
     summon: { x: 330, y: sy, w: 340, h: sh },
@@ -275,44 +264,34 @@ function controls(top: number, bottom: number): Controls {
 
 /** Solo (et tutoriel) : un plateau, un chemin en U. */
 export function soloLayout(shape: PathShape = 'u'): SoloLayout {
-  const cell = 144;
-  const b = board((SCREEN.w - 5 * cell) / 2, 430, cell);
+  const cell = 140;
+  const b = board((SCREEN.w - 5 * cell) / 2, 440, cell);
   return { mode: 'solo', hud: { x: 0, y: 0, w: 1000, h: 200 }, board: b, lane: uLane(b, shape), controls: controls(1190, 1560) };
 }
 
-/** Coop : plateau du partenaire en haut, le mien en bas, chemin commun entre les deux (symétrie centrale). */
+/** Coop : plateau de la partenaire en haut, le mien en bas ; deux branches qui se rejoignent dans le tronc. */
 export function coopLayout(shape: PathShape = 'u'): CoopLayout {
-  const cell = 128;
+  const cell = 120;
   const x = (SCREEN.w - 5 * cell) / 2;
-  const partner = board(x, 210, cell);
-  const self = board(x, 210 + 3 * cell + 160, cell);
+  const partner = board(x, 250, cell);
+  const self = board(x, 250 + 3 * cell + 180, cell);
+  const { a, b, trunk, merge } = coopLanes(partner, self, shape);
   return {
-    mode: 'coop', hud: { x: 0, y: 0, w: 1000, h: 170 }, partner, self,
-    lane: coopLane(partner, self, shape), controls: controls(1210, 1580),
-  };
-}
-
-/** Duel : mon plateau en grand en bas, celui de l'adversaire en miniature en haut ; un chemin chacun. */
-export function duelLayout(shape: PathShape = 'u'): DuelLayout {
-  const cell = 132, mini = 76;
-  const self = board((SCREEN.w - 5 * cell) / 2, 800, cell);
-  const opponent = board((SCREEN.w - 5 * mini) / 2, 268, mini);
-  return {
-    mode: 'duel', hud: { x: 0, y: 0, w: 1000, h: 190 }, midHud: { x: 0, y: 572, w: 1000, h: 64 },
-    self, selfLane: uLane(self, shape, 0.5), opponent, opponentLane: uLane(opponent, shape),
-    controls: controls(1290, 1590),
+    mode: 'coop', hud: { x: 0, y: 0, w: 1000, h: 136 }, partner, self,
+    branchA: a, branchB: b, trunk, merge,
+    banner: { x: 150, y: merge.y - 32, w: 700, h: 64 },
+    controls: controls(1290, 1590, 104),
   };
 }
 
 export function layoutFor(mode: LayoutMode, shape: PathShape = 'u'): AnyLayout {
-  return mode === 'solo' ? soloLayout(shape) : mode === 'coop' ? coopLayout(shape) : duelLayout(shape);
+  return mode === 'solo' ? soloLayout(shape) : coopLayout(shape);
 }
 
 /** Tous les plateaux et chemins d'une disposition (utile au rendu des décors). */
 export function boardsOf(l: AnyLayout): { boards: BoardLayout[]; lanes: Lane[] } {
   if (l.mode === 'solo') return { boards: [l.board], lanes: [l.lane] };
-  if (l.mode === 'coop') return { boards: [l.partner, l.self], lanes: [l.lane] };
-  return { boards: [l.opponent, l.self], lanes: [l.opponentLane, l.selfLane] };
+  return { boards: [l.partner, l.self], lanes: [l.branchB, l.branchA, l.trunk] };
 }
 
 /** Distance minimale d'un point à une ligne brisée. */

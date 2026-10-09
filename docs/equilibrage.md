@@ -7,13 +7,13 @@
 
 1. **Une rareté = une bande de puissance, pas un saut.** Comme dans Rush Royale, une Rare bien placée doit rester jouable en fin de campagne ; un Légendaire apporte surtout une **mécanique** (zone, contrôle de masse, anti-boss) plutôt que des dégâts bruts.
 2. **Chaque unité a un rôle clair** (dégâts monocible, zone, contrôle, soutien, économie, anti-boss). Un deck qui couvre 3 rôles doit battre un deck de 5 dégâts purs sur les vagues tardives.
-3. **Les boss sont le vrai test.** Un deck sans réponse aux boss (dégâts monocible ou anti-contrôle) doit tomber vers la vague 12-15 ; les decks de contrôle pur doivent tomber sur les boss, pas sur les vagues.
+3. **Les boss sont le vrai test.** Rythme du prompt §4.3 : petit boss « lieutenant » toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50. Un deck sans réponse aux boss (dégâts monocible ou anti-contrôle) doit tomber sur le gros boss de la vague 10 ou 20 ; les decks de contrôle pur doivent tomber sur les boss, pas sur les vagues.
 4. **On équilibre avec un seul fichier par catégorie** et des multiplicateurs, jamais en codant des exceptions dans le moteur.
 5. **Ordre de réglage** : ennemis et vagues → unités de rareté Rare (deck de départ) → Épiques → Légendaires → équipes → talents → boss.
 
 ## 2. Rôle et bande de puissance par unité
 
-**Indice de puissance (IP)** : on part du **deck témoin** (deck de départ Marvel, niveau 1, sans talent), on remplace l'unité la plus faible du témoin par l'unité testée, et on mesure la vague moyenne en Survie (1 000 parties). IP = vague moyenne obtenue / vague moyenne du témoin. Pour une unité du témoin, on la remplace par Falcon (ou par Tiana si c'est Falcon).
+**Indice de puissance (IP)** : on part du **deck témoin** (deck de départ Marvel, niveau 1, sans talent), on remplace l'unité la plus faible du témoin par l'unité testée, et on mesure la vague moyenne en Solo Infini (1 000 parties). IP = vague moyenne obtenue / vague moyenne du témoin. Pour une unité du témoin, on la remplace par Falcon (ou par Tiana si c'est Falcon).
 
 Bandes cibles (au même niveau de collection) :
 - **Rare** : IP 0,95 – 1,05 ;
@@ -65,11 +65,12 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 Le simulateur est écrit par l'agent Moteur en parallèle ; il n'existe pas encore au moment de ce document. Usage attendu :
 
 ```
-npx tsx scripts/simulate.ts --deck thor,hulk,ironman,cap,widow --level 1 --games 1000 --mode survie --seed 1
+npx tsx scripts/simulate.ts --deck thor,hulk,ironman,cap,widow --level 1 --games 1000 --mode solo-infini --seed 1
 npx tsx scripts/simulate.ts --decks docs/decks-reference.json --level 5 --games 1000 --csv out/equilibrage.csv
 npx tsx scripts/simulate.ts --ip spiderman --level 1          # indice de puissance (§2)
 npx tsx scripts/simulate.ts --campaign 1 --games 200          # taux de victoire des 10 niveaux du chapitre 1
-npx tsx scripts/simulate.ts --duel deckA,deckB --games 1000   # Duel, même graine pour les deux
+npx tsx scripts/simulate.ts --coop deckA,deckB --games 1000   # Coop Infini à deux joueurs automatiques
+npx tsx scripts/simulate.ts --coop-campaign 1 --games 200     # taux de victoire de la campagne Coop (docs/campagne-coop.md)
 ```
 
 (Le format exact des options est à la main de l'agent Moteur ; les **sorties** ci-dessous sont, elles, demandées.)
@@ -85,37 +86,39 @@ Variante « joueur expert » (optionnelle) : place les soutiens au centre, garde
 ### Mesures à rapporter (par deck)
 | Mesure | Pourquoi |
 |---|---|
-| Vague moyenne, médiane, écart-type, p10, p90 (Survie) | Critère principal ; l'écart-type repère les decks trop aléatoires. |
+| Vague moyenne, médiane, écart-type, p10, p90 (Solo Infini) | Critère principal ; l'écart-type repère les decks trop aléatoires. |
 | Taux de victoire par niveau de campagne (avec `targetWaves`) | Courbe de `docs/campagne.md`. |
 | Part des dégâts par unité et par source (attaque, compétence, brûlure, éclaboussure) | Repérer une compétence qui fait tout le travail. |
 | DPS effectif moyen par unité, par rang | Comparer aux bandes du §2. |
-| Temps moyen pour tuer chaque boss, et % de boss passés en rage | Les boss sont le vrai test. |
+| Temps moyen pour tuer chaque lieutenant et chaque gros boss, et % passés en rage | Les boss sont le vrai test. |
 | Cause de la défaite : vague normale, sbires, boss (lequel), rage | Savoir quoi régler. |
 | Vies perdues par vague | Montrer où la pression monte. |
 | Mana gagné, dépensé en invocations, en améliorations | Économie (Tiana, Pocahontas, Venom). |
 | Rang max atteint et vague de premier rang 5 / 7 | Rythme de fusion. |
 | Effets de boss : unités touchées, rangs perdus, unités détruites, effets retirés (Raiponce) ou restaurés (Coco) | Valeur des unités anti-boss. |
 | Bonus d'équipe actifs et leur gain (partie miroir sans bonus) | §2, équipes. |
-| En Duel : taux de victoire A contre B et vague de fin | Matrice des decks. |
+| En Coop : vague moyenne du duo, part des dégâts et du mana par joueur, dégâts faits sur la branche de l'autre, paliers atteints (§5) | Coop Infini et campagne Coop. |
 | Durée de calcul par partie | Le simulateur doit tenir 1 000 parties en moins de 2 min. |
 
 Sortie : un tableau texte lisible plus un CSV, pour suivre les réglages d'une version à l'autre (garder les CSV dans `out/`, non commités).
 
 ### Cibles chiffrées
 
-| Situation (Survie, joueur automatique) | Vague moyenne visée |
-|---|---|
-| Deck de départ (Marvel ou Disney), niveau 1, sans talent | **10 – 12** |
-| Deck de départ, niveau 3 | 13 – 15 |
-| Deck « méta » d'un pack, niveau 5, palier 1 | 17 – 20 |
-| Deck « méta », niveau 7, paliers 1-2 | 21 – 25 |
-| Deck « méta », niveau 10, 3 paliers | **28 – 34** (Thanos à 15 et 30 : la vague 30 est le mur) |
+Solo Infini, joueur automatique (petit boss aux vagues 5, 15, 25… ; gros boss aux vagues 10, 20, 30, 40 ; Thanos à la 50) :
+
+| Situation | Vague moyenne visée | Mur attendu |
+|---|---|---|
+| Deck de départ (Marvel ou Disney), niveau 1, sans talent | **9 – 12** | 1er gros boss (vague 10) |
+| Deck de départ, niveau 3 | 13 – 17 | lieutenant 15 / gros boss 20 |
+| Deck « méta » d'un pack, niveau 5, palier 1 | 20 – 25 | gros boss 20 |
+| Deck « méta », niveau 7, paliers 1-2 | 28 – 35 | gros boss 30 |
+| Deck « méta », niveau 10, 3 paliers | **40 – 48** | gros boss 40, puis **Thanos à la 50** |
 
 Contraintes :
 - les deux decks de départ (Marvel et Disney) à **±5 %** l'un de l'autre ;
 - entre tous les decks de référence de même niveau : **écart < 20 %** entre le meilleur et le moins bon (critère du §1 bis) ;
-- en Duel, aucune paire de decks méta ne dépasse **60 / 40** ;
-- Thanos à la vague 15 tue moins de **25 %** des decks méta niveau 5 et plus de **60 %** des decks de départ niveau 1.
+- un lieutenant est tué en **15 à 25 s** par un deck du niveau attendu, un gros boss en **25 à 40 s** (la rage à 45 s doit rester rare : < 15 % des boss) ;
+- Thanos (vague 50) est vaincu par **moins de 25 %** des decks méta niveau 10 en Solo, et par **30 à 50 %** des duos méta niveau 10 en Coop Infini.
 
 ## 4. Decks de référence
 
@@ -136,7 +139,38 @@ Contraintes :
 
 Ces decks sont à mettre dans un fichier de données du simulateur (par exemple `scripts/decks-reference.json`, à créer par l'agent Moteur).
 
-## 5. Boucle de réglage
+## 5. Coop Infini : paliers de récompenses
+
+Coffres du prompt §5.2, donnés **à chacun** à la fin de la partie, selon le palier atteint (un palier est « atteint » quand la vague correspondante est terminée, boss compris) :
+
+| Palier | Coffre (pour chacun) |
+|---|---|
+| Vague 10 | bronze : 150 éclats, 10 cartes |
+| Vague 20 | argent : 300 éclats, 1 parchemin, 20 cartes |
+| Vague 30 | or : 500 éclats, 2 parchemins, 1 carte Épique garantie |
+| Vague 40 | héroïque : 800 éclats, 3 parchemins, 1 skin au hasard |
+| Vague 50 (Thanos vaincu) | légendaire : 1 500 éclats, 1 Légendaire garanti, cadre « Vainqueur de Thanos » |
+| Ensuite, tous les 10 | +300 éclats et 1 parchemin |
+
+À cela s'ajoutent +10 éclats par vague pour chacun (§6.1). Les coffres se cumulent (atteindre la vague 30 donne bronze + argent + or).
+
+**Cibles** (simulateur `--coop`, deux joueurs automatiques, 1 000 parties par paire de decks) :
+
+| Duo | Vague 10 | Vague 20 | Vague 30 | Vague 40 | Vague 50 |
+|---|---|---|---|---|---|
+| Deux decks de départ, niveau 1-2 | ≥ 75 % | 15 – 30 % | < 5 % | — | — |
+| Decks intermédiaires, niveau 5, palier 1 | ≥ 95 % | ≥ 60 % | 20 – 35 % | < 5 % | — |
+| Decks méta, niveau 7, paliers 1-2 | 100 % | ≥ 90 % | ≥ 60 % | 20 – 35 % | < 5 % |
+| Decks méta, niveau 10, 3 paliers | 100 % | 100 % | ≥ 90 % | ≥ 60 % | **30 – 50 %** |
+
+Règles de cohérence :
+- un duo tient en moyenne **+30 à +50 %** de vagues de plus que le meilleur des deux decks seul en Solo Infini (deux plateaux, mais des vagues Coop plus fortes : PV ×1,6 et 1,5 fois plus d'apparitions, à régler par l'agent Moteur) ;
+- **économie** : une partie Coop Infini rapporte environ **50 à 80 éclats par minute** et par joueur jusqu'à la vague 30, contre 15 à 25 en campagne Solo ; c'est voulu (jouer ensemble est la récompense), mais **les parchemins Coop** (0 à 6 par partie jusqu'à la vague 40) ne doivent pas dépasser **40 %** des parchemins gagnés par un profil sur une semaine de jeu type (mesurer avec les journaux de partie) ;
+- **contribution** : aucun des deux joueurs ne doit faire plus de **65 %** des dégâts dans une paire de decks de même niveau (sinon la jonction des chemins avantage trop un côté).
+
+Paires de decks de référence pour la Coop : `depart-marvel` + `depart-disney` ; `meta-marvel` + `meta-disney` ; `agents-ailes` + `princesses` ; `arcanes` + `pixar-animaux` ; `controle` + `anti-boss`.
+
+## 6. Boucle de réglage
 
 1. Lancer tous les decks de référence au niveau 1 puis au niveau 5 (1 000 parties chacun).
 2. Corriger d'abord les ennemis si **tous** les decks sont hors cible dans le même sens.

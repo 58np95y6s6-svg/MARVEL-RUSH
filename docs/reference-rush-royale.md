@@ -48,33 +48,28 @@ Rush Royale change ses chiffres à chaque saison : on reproduit **la structure e
 - **Bouton Invoquer** : en bas au centre, le plus gros bouton de l'écran, jaune quand on peut payer, grisé sinon. Le **coût** est affiché dessous (ou dedans) avec l'icône de mana.
 - **Mana** : compteur en bas à gauche du bouton Invoquer, gros chiffre blanc à contour sombre, icône de mana.
 - **Améliorations** : rangée des **5 cartes du deck** sous le bouton Invoquer, chacune avec le portrait, le niveau d'amélioration en cours (« Lv.1 » … « MAX ») et le coût de la prochaine amélioration. Une carte trop chère est grisée ; une carte au maximum affiche « MAX ».
-- **Vague et minuteur** : en haut, « Vague N » et le compte à rebours de la vague. **[ÉCART]** Rush Royale place le compteur de vague dans un médaillon entre les deux plateaux en PvP ; en Solo nous le mettons en haut (le prompt §8.10 le demande).
-- **Barre du boss** : en haut, sous la barre des vies, avec portrait, nom et PV en pourcentage ; elle n'apparaît que pendant le boss. Le minuteur de rage (§4.4 : 45 s) s'affiche à côté.
+- **Vague et minuteur** : en haut, « Vague N » et le compte à rebours de la vague. **[ÉCART]** Rush Royale place le compteur de vague dans un médaillon entre les deux plateaux ; en Solo nous le mettons en haut (le prompt §8.10 le demande).
+- **Barre du boss** : en haut, sous la barre des vies, avec portrait, nom et PV en pourcentage ; elle n'apparaît que pendant un boss (petit boss « lieutenant » : barre plus courte, cadre argent ; gros boss et Thanos : barre pleine largeur, cadre rouge). Le minuteur de rage (§4.4 : 45 s) s'affiche à côté.
 - **Vies** : 3 cœurs (Rush Royale les montre à côté de la porte du château ; nous les mettons en haut à gauche pour la lisibilité sur 375 px).
 - **Bandeau d'annonce** : pilule sombre semi-transparente, texte blanc et icône du boss, entre le chemin et les boutons : « 1 vague avant le boss X » (copie directe de la capture), « Fusionne ! », « Plateau plein ».
 - **Emotes** : un petit bouton rond (visage) en bas à droite. Il ouvre une roue de 6 bulles ; une bulle s'affiche 2 s au-dessus du plateau de l'émetteur. En Solo, il est caché.
 
-### 1.2 Duel (PvP)
+### 1.2 PvP de Rush Royale — hors périmètre
 
-D'après la capture `rr-combat-coop-donjons.jpg` (gauche) et le PvP de Rush Royale :
+**Choix de l'utilisateur (prompt §5.2) : pas de Duel.** Marvel Rush n'a que deux façons de jouer : Solo et Coop. Le PvP de Rush Royale (plateau adverse en haut, envoi des monstres tués, trophées) n'est **pas reproduit**. On en garde un seul élément visuel, réutilisé en Coop : la **rangée des 5 cartes du deck de l'autre joueur** en haut de l'écran, avec leurs badges d'amélioration (« MAX »), son avatar et son pseudo (capture `rr-combat-coop-donjons.jpg`, à gauche).
 
-- **Plateau adverse en haut**, en miniature (environ 60 % de la taille), avec **son propre chemin** ; le tien en bas, en grand.
-- **Tout en haut** : la rangée des **5 cartes du deck adverse** avec leur niveau d'amélioration en badge (« MAX » quand l'amélioration est au maximum), puis l'**avatar** et le **pseudo** de l'adversaire à droite. On voit donc en direct ce que l'adversaire améliore.
-- Entre les deux plateaux : le médaillon vague/minuteur et le bandeau d'annonce du boss.
-- Le plateau adverse est **en lecture seule** : pas de glisser, pas d'appui long (sauf l'info d'une unité, autorisée).
-- Les chiffres de dégâts adverses s'affichent aussi, plus petits.
-- **[ÉCART]** Dans Rush Royale, les monstres tués chez soi sont envoyés chez l'adversaire et chaque vague se termine par un boss. Le prompt (§5.3) impose des **vagues identiques (même graine)** sans envoi, et le boss à partir de la vague 3 puis toutes les 3 vagues. On suit le prompt.
+### 1.3 Coop : deux chemins qui se rejoignent
 
-### 1.3 Coop
+D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave before boss Plague Doctor »), la Coop de Rush Royale et le prompt §5.2 :
 
-D'après la capture (gauche, qui montre une partie à deux plateaux avec le bandeau « 1 wave before boss Plague Doctor ») et la Coop de Rush Royale :
-
-- **Deux plateaux** : celui du partenaire en haut, le tien en bas, **taille égale ou presque** (le partenaire légèrement plus petit sur 375 px).
-- **Un seul chemin commun** qui passe entre et autour des deux plateaux : les unités des deux joueurs tirent sur les mêmes ennemis.
-- En haut : les 5 cartes du deck du partenaire avec leurs badges d'amélioration, son avatar et son pseudo.
-- Le bandeau « N vague(s) avant le boss X » se place **entre les deux plateaux**.
-- Vies **partagées** (cœurs communs en haut), mana individuel.
-- Bouton **« Offrir »** (§5.2) à côté des emotes, actif une fois par vague.
+- **Deux plateaux** : celui de la partenaire en haut, le tien en bas, de taille presque égale (le haut légèrement plus petit sur 375 px).
+- **Deux portails**, un de chaque côté. Chaque flot longe d'abord **le plateau d'un joueur** (branche du haut, branche du bas), puis les deux branches **se rejoignent au centre** en un **tronc commun** qui mène à la **porte du château**. **[ÉCART]** Dans Rush Royale, la Coop n'a qu'un chemin ; la jonction est propre à Marvel Rush.
+- **Toutes les unités des deux joueurs** touchent tout ennemi, sur les deux branches et sur le tronc : il faut s'entraider.
+- Les **petits et gros boss** arrivent **par le tronc commun** ; leurs pouvoirs visent un plateau au hasard.
+- Tout en haut : la rangée des 5 cartes du deck de la partenaire avec leurs badges, son avatar et son pseudo.
+- Le bandeau « N vague(s) avant le boss X » se place **entre les deux plateaux**, sur le tronc.
+- Vies **partagées** (3 cœurs communs en haut), mana individuel (le coup final rapporte le mana).
+- Bouton **« Offrir »** à côté des emotes, actif une fois par vague.
 
 ### 1.4 Style des éléments (captures)
 
@@ -110,18 +105,17 @@ D'après la capture (gauche, qui montre une partie à deux plateaux avec le band
 | Portée | Globale : toute unité touche tout ennemi, selon son ciblage. | Identique. |
 | Ciblage | Premier (le plus avancé), aléatoire, le plus fort (PV max) selon l'unité. | Identique (premier, aléatoire, fort). |
 | Mana de départ | 100 *(à confirmer, varie selon le mode)*. | 100. |
-| Mana par élimination | Fixe par ennemi, plus élevé pour les gros et les boss ; augmente avec les vagues en PvP *(à confirmer)*. | 10 normal, 30 gros, 100 boss (§4.2). |
+| Mana par élimination | Fixe par ennemi, plus élevé pour les gros et les boss ; augmente avec les vagues *(à confirmer)*. | 10 normal, 30 gros, 100 boss (§4.2). |
 | Coût d'invocation | **10**, puis **+10** à chaque invocation (10, 20, 30…). Le coût ne redescend pas. | Identique. |
 | Fusion | Deux unités **identiques de même rang** → une unité **aléatoire du deck** au **rang +1**, sur la case de destination. Rang max **7**, affiché en pastilles. Certaines unités ont des fusions spéciales (Mime, Arlequin…) — **hors périmètre** chez nous. | Identique (§4.2). |
 | Effet du rang | Multiplie les dégâts et parfois la compétence. | Dégâts × rang ; compétences selon le tableau §4.5. |
 | Améliorations en partie | Bouton par carte du deck, coûts **100 / 200 / 400 / 700**, niveaux 1 à 5 ; bonus propre à chaque unité. | Identique, mais bonus uniforme : **+15 % de dégâts** par niveau (§4.2). **[ÉCART]** |
-| Vagues | Minuteur par vague ; à la fin du minuteur, les monstres restants disparaissent et le boss arrive. | Vagues de **30 s**. **[ÉCART]** Les ennemis restants **ne disparaissent pas** (ils continuent leur chemin) ; prévoir que le moteur les garde. |
-| Cadence des boss en PvP | **Un boss à la fin de chaque vague**, dans un ordre de boss aléatoire annoncé. | Boss à partir de la vague 3, puis toutes les 3 vagues (§4.3). **[ÉCART]** |
-| Cadence des boss en Coop | **Un boss toutes les 10 vagues** (10, 20, 30…), plus fort à chaque fois, et des vagues très denses entre-temps. | Boss toutes les 3 vagues aussi ; **Thanos toutes les 15 vagues** (§4.4). **[ÉCART]** |
+| Vagues | Minuteur par vague ; à la fin du minuteur, les monstres restants disparaissent et le boss arrive. | Vagues de **30 s**. Pendant un boss, les apparitions s'arrêtent ; la vague suivante commence quand le boss est vaincu (§4.3), comme dans Rush Royale. **[ÉCART]** Les ennemis restants **ne disparaissent pas** à l'arrivée du boss (ils continuent leur chemin). |
+| Cadence des boss | PvP : un boss à la fin de chaque vague. Coop : **un boss toutes les 10 vagues** (10, 20, 30…), plus fort à chaque fois, avec des vagues denses entre-temps. | Calé sur la Coop de Rush Royale, partout (Solo, Coop, campagnes) : **petit boss « lieutenant » toutes les 5 vagues** (5, 15, 25…, PV ×12, pouvoir affaibli toutes les 10 s) ; **gros boss toutes les 10 vagues** (10, 20, 30…, PV ×25, pouvoir toutes les 6 s), rotation des 6 sans répétition ; **Thanos à la vague 50** puis toutes les 50 en mode infini, et au dernier niveau de la campagne (§4.3, §4.4). Le petit boss est un **[ÉCART]** (ajout). |
+| Sbires | Les monstres de la vague portent les traits du boss à venir *(à confirmer)*. | Les sbires du prochain gros boss se mêlent aux 2 vagues qui le précèdent. |
 | Rage du boss | Le boss accélère s'il traîne *(à confirmer)*. | Rage à 45 s : vitesse ×2. |
 | Vies | 3 vies (cœurs) par joueur ; un monstre qui passe la porte en retire une, un boss en retire plusieurs. | 3 vies ; ennemi normal −1, boss −toutes (§4.1). |
-| Fin du PvP | Premier à 0 vie perd ; en cas de longue partie, les monstres deviennent beaucoup plus forts jusqu'à la décision. | Premier à 0 vie perd ; **mort subite à la vague 15** : PV ×2 à chaque vague (§5.3). |
-| Envoi de monstres en PvP | Les monstres tués partent chez l'adversaire. | **[ÉCART]** Pas d'envoi : vagues identiques par graine. |
+| PvP (fin de partie, envoi des monstres tués, mort subite) | Premier à 0 vie perd ; les monstres tués partent chez l'adversaire. | **Hors périmètre, par choix de l'utilisateur** : pas de Duel (§5.2). |
 | Héros | Un héros par joueur avec une compétence active (Trainer au départ). | **Hors périmètre** (pas de héros). |
 | Coup critique | Chance de critique (5 % de base, plus pour certaines unités) × **dégâts critiques** du compte. | Pas de stat de compte ; les critiques viennent des compétences (Soldat de l'hiver, Rebelle) et des équipes (Les Agents). |
 
@@ -140,7 +134,9 @@ D'après la capture (gauche, qui montre une partie à deux plateaux avec le band
 | **Dégâts critiques (stat de compte)** | Chaque montée de niveau d'une carte augmente les dégâts critiques de tout le compte. | **Hors périmètre** (remplacé par +10 % de dégâts par niveau de collection, §4.5). |
 | **Decks** | 5 unités, plusieurs emplacements de deck. | **À reproduire** : 5 unités, jusqu'à 3 decks (§6.4). |
 | **Factions** | 5 factions, bonus hebdomadaire. | **Adapté** : bonus d'équipe (§4.6). |
-| **Trophées et ligues/arènes** | Trophées gagnés/perdus en PvP, ligues. | **Hors périmètre** ; remplacé par le score du duo (§5.4). |
+| **PvP** | Mode principal de Rush Royale. | **Hors périmètre, par choix de l'utilisateur** : seulement Solo et Coop (§5.2). |
+| **Coop** | Partie à deux, vagues infinies, récompenses selon la vague atteinte. | **Adapté** : Coop Niveaux (campagne à deux, `docs/campagne-coop.md`) et Coop Infini avec coffres par palier (§5.2, `docs/equilibrage.md`). |
+| **Trophées et ligues/arènes** | Trophées gagnés/perdus en PvP, ligues. | **Hors périmètre** ; remplacé par les étoiles Coop et le record du duo (§5.4). |
 | **Route des trophées / Passe de saison** | Paliers de récompenses gratuits et payants. | **Hors périmètre** (pas de monétisation) ; le niveau de compte joue ce rôle. |
 | **Quêtes quotidiennes** | 3 quêtes par jour. | **Adapté** : seulement le coffre quotidien (§6.1). Option future, non demandée. |
 | **Donjons** | Mode avec des étages (« Étage 2 », « Étage 3 »), chaque étage a sa mini-scène, son coffre, son coût et un bouton « Jouer ». | **Adapté** : modèle visuel de la **Campagne** (voir `docs/campagne.md`). |
@@ -183,12 +179,12 @@ Principes à garder : **aucun texte long**, une action à la fois, tout le reste
 13. La rangée des 5 cartes du deck sous le bouton sert aux améliorations, avec coût et badge de niveau (« MAX » au maximum).
 14. Les améliorations coûtent 100, 200, 400 puis 700 et touchent toutes les unités de ce type.
 15. Vies, vague et minuteur sont en haut ; la barre du boss apparaît seulement pendant le boss.
-16. Un bandeau « 1 vague avant le boss X » apparaît la vague qui précède un boss.
+16. Un bandeau « 1 vague avant le boss X » apparaît la vague qui précède un boss ; un petit boss toutes les 5 vagues, un gros toutes les 10, et le lieutenant annonce « Le maître arrive dans 5 vagues ».
 17. L'arrivée du boss déclenche une annonce plein écran et un tremblement d'écran.
 18. Les chiffres de dégâts flottent ; les critiques sont plus gros et plus vifs.
 19. Un appui long sur une unité ouvre sa bulle d'info sans bloquer la partie.
-20. En Duel, le plateau adverse est en haut, en lecture seule, avec la rangée de ses 5 cartes et leurs badges.
-21. En Coop, les deux plateaux bordent un chemin commun et les vies sont partagées.
+20. Aucun mode Duel/PvP n'existe ; en Coop, la rangée des 5 cartes de la partenaire (badges « MAX ») est en haut de l'écran.
+21. En Coop, deux portails, deux branches qui longent chacune un plateau puis se rejoignent en un tronc commun vers la porte ; les boss arrivent par le tronc ; vies partagées.
 22. Les boutons sont gros, arrondis, en dégradé, avec liseré sombre et ombre, et s'enfoncent à l'appui.
 23. La navigation principale est une barre d'onglets en bas avec **Combat au centre**.
 24. L'écran Deck montre les 5 cartes du deck en haut et la collection en grille à cadres de rareté avec barre de cartes.

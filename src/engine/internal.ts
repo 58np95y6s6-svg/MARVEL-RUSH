@@ -17,6 +17,7 @@ export const POWERUP_MAX = 5;
 export const POWERUP_DAMAGE = 0.15;
 export const LEVEL_DAMAGE = 0.1;
 export const DEFAULT_PATH_LENGTH = 30;
+export const DEFAULT_COOP_LENGTHS = { a: 18, b: 18, tronc: 14 };
 export const START_LIVES = 3;
 
 export type SimUnit = UnitInstance;
@@ -36,8 +37,11 @@ export interface EnemyExtra {
   enraged?: number;
   snapped?: number;
   snapIn?: number;
-  owner?: number;         // index du joueur visé par les pouvoirs (Duel)
-  mini?: number;          // sbire géant (niveaux 5 de la campagne) : se comporte comme un boss sans pouvoir
+  owner?: number;         // index du joueur dont le plateau borde la branche (Coop)
+  from?: 'a' | 'b';       // branche d'origine (Coop), pour revenir en arrière depuis le tronc
+  lieutenant?: number;    // petit boss : sbire géant du prochain gros boss
+  mini?: number;          // petit boss (sbire géant) : compte comme un boss pour les vies, la rage et la fin de vague
+  master?: BossId;        // petit boss : boss dont il utilise une version affaiblie du pouvoir
 }
 
 export interface SimEnemy extends EnemyInstance {
@@ -91,7 +95,6 @@ export interface TeamAgg {
 
 export interface PlayerInfo {
   idx: number;
-  lane: LaneId;
   teams: TeamBonusDef[];
   team: Partial<Record<UnitId, TeamAgg>>;
   markSlow: number;
@@ -100,6 +103,7 @@ export interface PlayerInfo {
   manaPerWave: number;
   params: Partial<Record<UnitId, Record<string, number>>>;
   levels: Partial<Record<UnitId, number>>;
+  awakening: Partial<Record<UnitId, number>>;
   talents: Partial<Record<UnitId, ('a' | 'b')[]>>;
 }
 
@@ -107,7 +111,8 @@ export interface Ctx {
   cfg: GameConfig;
   st: SimState;
   ev: EngineEvent[];
-  pathLength: number;
+  laneLen: Record<LaneId, number>;
+  coop: boolean;
   mods: Record<string, number>;
   info: PlayerInfo[];
 }

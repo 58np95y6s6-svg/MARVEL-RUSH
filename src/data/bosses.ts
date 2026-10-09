@@ -96,9 +96,37 @@ export const BOSSES: Record<BossId, BossDef> = Object.fromEntries(BOSS_LIST.map(
 /** Les 6 boss en rotation (Thanos est hors rotation). */
 export const ROTATING_BOSSES: BossId[] = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'];
 
+/**
+ * Petits boss (§4.4) : le lieutenant du prochain gros boss, un de ses sbires en version géante
+ * (taille ×2), avec une version affaiblie du pouvoir de son maître toutes les 10 s.
+ * `params` remplace les paramètres du pouvoir du maître (mêmes clés).
+ */
+export interface LieutenantDef {
+  name: string;
+  power: { name: string; description: string; interval: number; params: Record<string, number> };
+}
+
+export const LIEUTENANTS: Record<BossId, LieutenantDef> = {
+  jafar: { name: 'Cobra géant', power: { name: 'Hypnose', description: 'Hypnotise 1 unité pendant 2 s.', interval: 10, params: { minUnits: 1, maxUnits: 1, duration: 2 } } },
+  cruella: { name: 'Homme de main géant', power: { name: 'Vol de manteau', description: 'Une unité de rang 3 ou plus perd 1 rang.', interval: 10, params: { units: 1, rankLoss: 1, minRank: 3 } } },
+  ursula: { name: 'Murène géante', power: { name: 'Contrat', description: 'Échange la position de 2 unités.', interval: 10, params: { units: 2 } } },
+  malefique: { name: 'Garde gobelin géant', power: { name: 'Sommeil maudit', description: 'Endort 2 unités pendant 2 s.', interval: 10, params: { units: 2, duration: 2 } } },
+  galactus: { name: 'Drone cosmique géant', power: { name: 'Dévoreur', description: 'Détruit une unité de rang 1.', interval: 10, params: { maxRank: 1, units: 1 } } },
+  bouffon: { name: 'Citrouille géante', power: { name: 'Bombes citrouilles', description: 'Étourdit 1 unité pendant 2 s.', interval: 10, params: { units: 1, duration: 2 } } },
+  thanos: {
+    name: 'Outrider géant',
+    power: {
+      name: 'Gant de l’infini', description: 'Le pouvoir affaibli d’une Pierre au hasard.', interval: 10,
+      params: { powerUnits: 1, powerDuration: 1, spaceUnits: 2, realityUnits: 1, soulManaSteal: 0.1, timeHeal: 0.02, mindUnits: 1, mindDuration: 2 },
+    },
+  },
+};
+
 /** Statistiques communes des boss. */
 export const BOSS_STATS = {
-  hpMul: 25,          // PV = 25 × PV d'un ennemi normal de la vague
+  smallHpMul: 12,     // petit boss : PV = 12 × PV d'un ennemi normal de la vague
+  scriptedMiniHpMul: 8, // script.miniBoss (campagne, niveaux 5) : PV ×8
+  hpMul: 25,          // gros boss : PV = 25 × PV d'un ennemi normal de la vague
   speed: 0.5,         // cases par seconde (un normal va à 2)
   rageAfter: 45,      // secondes avant la rage
   rageSpeedMul: 2,
