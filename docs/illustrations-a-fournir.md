@@ -15,7 +15,7 @@ Pour chaque image reçue :
 
 **Disney** : ✅ moana (Vaïana & Pua), ✅ maui, ✅ pocahontas (& Meeko), ✅ mulan (& Mushu), ✅ merida (Rebelle), ✅ ariel (& Sébastien), ✅ foxhound (Rox & Rouky), ✅ tiana (& Naveen), ✅ nemo (& Dory), ✅ coco (Miguel), ✅ nickjudy (Nick & Judy), ✅ buzzwoody (Buzz & Woody), ✅ rapunzel (Raiponce & Pascal), ✅ vanralph (Vanellope & Ralph).
 
-**Boss** : jafar (& Iago), cruella, ursula, malefique, galactus, bouffon (Bouffon Vert), ✅ thanos.
+**Boss** : ✅ jafar (& Iago), ✅ cruella, ✅ ursula, ✅ malefique, ✅ galactus, ✅ bouffon (Bouffon Vert), ✅ thanos.
 
 ## Extension DC (18/10)
 
