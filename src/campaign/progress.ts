@@ -8,7 +8,7 @@ import type { UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import type { LevelResult, Profile, Reward } from '../meta/profile';
 import {
-  CHAPTERS, STAR_CHEST_THRESHOLDS, chapterLevels, getChapter, getLevel, guaranteedHero, hash32, levelId,
+  CHAPTERS, STAR_CHEST_THRESHOLDS, chapterLevels, getChapter, prevChapter, getLevel, guaranteedHero, hash32, levelId,
   type CampaignLevel, type Constraint,
 } from './levels';
 import type { BattleOutcome } from './tracker';
@@ -43,7 +43,7 @@ export function constraintMet(c: Constraint, r: BattleOutcome, level?: CampaignL
     }
     case 'summonsBelow': return r.summons < c.max;
     case 'packCount': return deck.filter((u) => UNITS[u]?.pack === c.pack).length >= c.min;
-    case 'packEach': return deck.some((u) => UNITS[u]?.pack === 'marvel') && deck.some((u) => UNITS[u]?.pack === 'disney');
+    case 'packEach': return (c.packs ?? ['marvel', 'disney']).every((pk) => deck.some((u) => UNITS[u]?.pack === pk));
     case 'emptyCells': return r.emptyCells >= c.min;
     case 'deckHasAny': return deck.some((u) => c.units.includes(u));
     case 'team': {
@@ -95,8 +95,9 @@ export const isLevelWon = (p: Progress, id: string): boolean => !!p.campaign[id]
 export function isChapterUnlocked(p: Progress, chapter: number): boolean {
   const ch = getChapter(chapter);
   if (!ch) return false;
-  if (chapter === 1) return true;
-  return isLevelWon(p, levelId(chapter - 1, 10)) && totalStars(p) >= ch.unlockStars;
+  const prev = prevChapter(chapter);
+  if (!prev) return true;
+  return isLevelWon(p, levelId(prev.n, 10)) && totalStars(p) >= ch.unlockStars;
 }
 
 /** Les niveaux d'un chapitre s'ouvrent l'un après l'autre. */
@@ -154,7 +155,7 @@ export function chestReward(threshold: number, cardUnit: UnitId | null): Reward 
 
 export const chestKey = (chapter: number, threshold: number): string => `c${chapter}-${threshold}`;
 
-/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or). */
+/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or ; chapitres d'extension : héroïque). */
 const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent', 'or', 'or'];
 
 /**
@@ -163,7 +164,7 @@ const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent',
  * Cristaux dans le coffre à la première victoire d'un niveau de boss (lieutenant 10 ✦, boss 20 ✦).
  */
 export function victoryChest(level: CampaignLevel, earned: Stars, firstWin: boolean): VictoryChest {
-  let i = CHEST_TIERS.indexOf(CHAPTER_CHEST[level.chapter - 1] ?? 'bois');
+  let i = CHEST_TIERS.indexOf(CHAPTER_CHEST[level.chapter - 1] ?? 'heroique');
   if (earned.every(Boolean)) i += 1;
   if (level.boss?.kind === 'lieutenant') i += 1;
   if (level.boss?.kind === 'boss') i += 2;
@@ -266,7 +267,7 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
     const hero = guaranteedHero(ch, (profile as Profile | null) ?? null);
     lines.push({
       kind: 'boss', label: `${level.boss?.name ?? 'Boss'} vaincu`,
-      reward: { scrolls: 2, shards: BOSS_FIRST_GEMS, heroes: [hero], ...(ch.n === 6 ? { crystals: THANOS_CRYSTALS } : {}) },
+      reward: { scrolls: 2, shards: BOSS_FIRST_GEMS, heroes: [hero], ...(ch.boss === 'thanos' || ch.boss === 'megatron' ? { crystals: THANOS_CRYSTALS } : {}) },
     });
   }
   if (firstWin && level.chapter === 6 && level.n === 8 && C6N8_SCROLLS) {
