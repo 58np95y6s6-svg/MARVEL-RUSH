@@ -1,4 +1,4 @@
-// Signatures visuelles des 28 unités : un tir, un impact et une version « compétence » propres à
+// Signatures visuelles des 43 unités (les 15 héros Pixar dans pxSignatures.ts) : un tir, un impact et une version « compétence » propres à
 // chacune, reprises des effets des planches (rayon, éclair, toile, bulles, notes…).
 // Les rappels de fin (impacts) sont des fonctions de module : aucune fermeture créée par tir.
 import type { BossId, UnitId } from '../../data/types';
@@ -6,6 +6,7 @@ import type { CombatFx, P } from './director';
 import { SNAP_NAME, THANOS_STONES } from '../../data/bosses';
 import { UNIT_FX_COLOR } from '../fxTable';
 import { BeamMode, Curve, Ease, Mode, type Mote } from './pools';
+import { playPxAbility, playPxAttack } from './pxSignatures';
 
 const fxOf = (m: Mote) => m.o as CombatFx;
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
@@ -645,6 +646,12 @@ export function playAttack(fx: CombatFx, slot: number, unit: UnitId, key: string
       m.face = true; m.s0 = 0.7; m.s1 = 1.25; m.ease = Ease.In;
       return;
     }
+    // Extension Pixar : un tir par héros et son « coup de duo », src/render/fx/pxSignatures.ts.
+    case 'mrincredible': case 'elastigirl': case 'frozone': case 'violetflash': case 'sullimike':
+    case 'mcqueen': case 'carlrussell': case 'joysadness': case 'remy': case 'walleeve':
+    case 'lucaalberto': case 'mei': case 'jessie': case 'ianbarley': case 'joe':
+      if (!playPxAttack(fx, slot, unit, name, targets, o, b0, t0, col)) fx.shot('dotInk', o, t0, fx.travel(o, b0, 2000), hitGeneric, col);
+      return;
     default: {
       const m = fx.shot('dotInk', o, t0, fx.travel(o, b0, 2000), hitGeneric, col);
       m.s.tint = col;
@@ -795,6 +802,8 @@ function mulanAvalanche(fx: CombatFx, slot: number, targets: readonly number[]):
 
 export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: string, targets: readonly number[]): void {
   const col = UNIT_FX_COLOR[unit] ?? 0xffffff;
+  // Extension Pixar : compétences des duos.
+  if (playPxAbility(fx, slot, unit, name, targets, col)) return;
   const c = fx.host.cell(slot);
   const t0 = targets[0];
   switch (unit) {
@@ -997,6 +1006,7 @@ export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: stri
 
 const BOSS_COLOR: Record<BossId, number> = {
   jafar: 0xc06aff, cruella: 0x8fcf3a, ursula: 0x9a5ad0, malefique: 0x6fe07a, galactus: 0xb07aff, bouffon: 0xff8a1f, thanos: 0xf6c64a,
+  syndrome: 0x7ad8ff, randall: 0xc88aff, lotso: 0xff8ab8, hopper: 0xd8e04a, muntz: 0xffb347, zurg: 0xff3b6a,
 };
 
 function bossLand(m: Mote): void {

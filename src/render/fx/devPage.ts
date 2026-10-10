@@ -54,6 +54,22 @@ const DEMO: Record<UnitId, Demo> = {
   buzzwoody: { atk: [['buzzwoody:laser', 'line']], ab: { name: 'Lasso de Woody', tgt: 'first' } },
   rapunzel: { atk: [['rapunzel:poele', 'first']], ab: { name: 'Fleur magique', fx: 'rapunzel:poele', tgt: 'first' } },
   vanralph: { atk: [['vanralph:poing', 'first'], ['vanralph:brise-bouclier', 'first']], ab: { name: 'Glitch', tgt: 'first' } },
+  // Extension Pixar (coup normal puis coup de duo ; compétence)
+  mrincredible: { atk: [['mrincredible:poing', 'first']], ab: { name: 'Coup de poing sismique', tgt: 'line', status: { stunFor: 1.2 } } },
+  elastigirl: { atk: [['elastigirl:bras', 'first']], ab: { name: 'Bras élastiques', tgt: 'first' }, status: { slow: 0.15, slowFor: 1 } },
+  frozone: { atk: [['frozone:glace', 'first']], ab: { name: 'Pont de glace', tgt: 'chain', status: { slow: 0.45, slowFor: 3 } } },
+  violetflash: { atk: [['violetflash:coup', 'first'], ['violetflash:duo', 'first']], ab: { name: 'Champ de force', tgt: 'first' } },
+  sullimike: { atk: [['sullimike:griffe', 'first']], ab: { name: 'Rugissement', tgt: 'chain' } },
+  mcqueen: { atk: [['mcqueen:turbo', 'first'], ['mcqueen:duo', 'first']], ab: { name: 'Turbo', tgt: 'first' } },
+  carlrussell: { atk: [['carlrussell:canne', 'first']], ab: { name: 'Ballons', tgt: 'first', status: { stunFor: 2 } } },
+  joysadness: { atk: [['joysadness:souvenir', 'first'], ['joysadness:duo', 'first']], ab: { name: 'Souvenir bleu', tgt: 'first' }, status: { burn: 1, burnFor: 3 } },
+  remy: { atk: [['remy:louche', 'first'], ['remy:duo', 'chain']], ab: { name: 'Recette', tgt: 'first' } },
+  walleeve: { atk: [['walleeve:cube', 'first'], ['walleeve:duo', 'chain']], ab: { name: 'Directive', tgt: 'first' } },
+  lucaalberto: { atk: [['lucaalberto:vague', 'first'], ['lucaalberto:duo', 'first']], ab: { name: 'Silenzio, Bruno !', tgt: 'first' } },
+  mei: { atk: [['mei:panda', 'chain']], ab: { name: 'Panda géant', tgt: 'first' } },
+  jessie: { atk: [['jessie:lasso', 'first'], ['jessie:duo', 'first']], ab: { name: 'Lasso', tgt: 'first' }, status: { marked: 0.1, markedFor: 4 } },
+  ianbarley: { atk: [['ianbarley:baton', 'first']], ab: { name: 'Boule de feu', tgt: 'chain' } },
+  joe: { atk: [['joe:notes', 'first'], ['joe:duo', 'first']], ab: { name: 'Musique de l’âme', tgt: 'first' }, crit: true },
 };
 
 const UNIT_IDS = UNIT_LIST.map((u) => u.id);
