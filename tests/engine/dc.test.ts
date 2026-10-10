@@ -61,7 +61,7 @@ describe('extension DC : données', () => {
     expect(dc.map((u) => u.id).sort()).toEqual(DC_HEROES.slice().sort());
     const count = (r: string) => dc.filter((u) => u.rarity === r).length;
     expect([count('legendaire'), count('epique'), count('rare')]).toEqual([4, 6, 5]);
-    expect(PACKS.dc).toMatchObject({ price1: 100, price10: 900, pityLegendary: 40, rates: PACKS.marvel.rates });
+    expect(PACKS.dc).toMatchObject({ price1: 100, price10: 900, pityLegendary: PACKS.marvel.pityLegendary, rates: PACKS.marvel.rates });
   });
 
   it('chaque héros DC a 6 talents (3 paliers × 2) et 5 passifs d’éveil', () => {

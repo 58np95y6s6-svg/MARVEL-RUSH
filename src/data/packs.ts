@@ -14,7 +14,7 @@ export const PACK_LIST: PackDef[] = [
   // Extension DC Comics : mêmes prix, taux et garantie (compteur de garantie propre au pack).
   {
     id: 'dc', name: 'Pack DC', price1: 100, price10: 900,
-    rates: { rare: 0.72, epique: 0.24, legendaire: 0.04 }, pityLegendary: 40,
+    rates: { rare: 0.72, epique: 0.24, legendaire: 0.04 }, pityLegendary: 30,
   },
 ];
 

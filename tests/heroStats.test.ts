@@ -1,6 +1,7 @@
 // Chiffres de la fiche de héros (onglets Principal et Stats), façon fiche d'unité de Rush Royale.
 import { describe, expect, it } from 'vitest';
 import { abilityStats, coreStats } from '../src/ui/heroStats';
+import { UNITS, UNIT_IDS } from '../src/data/units';
 
 const base = { level: 1, rank: 1, powerUp: 1, stars: 0 };
 
@@ -26,5 +27,20 @@ describe('fiche de héros : statistiques', () => {
     expect(ronin.value).toBe('800 %');
     // Les tableaux par niveau de Rush Royale ressortent en vert (gain au niveau suivant).
     expect(abilityStats('spiderman', base).find((t) => t.key === 'netDamage')!.next).toBe('+19');
+  });
+
+  it('extension DC : chaque héros DC a des chiffres de compétence sur sa fiche', () => {
+    const dc = UNIT_IDS.filter((id) => UNITS[id].pack === 'dc');
+    expect(dc.length).toBe(15);
+    for (const id of dc) {
+      const ab = abilityStats(id, base);
+      expect(ab.length, id).toBeGreaterThan(0);
+      for (const t of ab) expect(t.value, `${id}.${t.key}`).not.toMatch(/NaN|undefined/);
+    }
+    const bat = Object.fromEntries(abilityStats('batman', base).map((t) => [t.key, t]));
+    expect(bat.executeThreshold!.value).toBe('20,5 %');
+    expect(bat.executeThreshold!.next).toBe('+1,5 %');
+    expect(abilityStats('harley', { ...base, rank: 3 }).find((t) => t.key === 'sacrificeMana')!.value).toBe('45');
+    expect(abilityStats('catwoman', { ...base, rank: 2 }).find((t) => t.key === 'manaPerKill')!.value).toBe('4');
   });
 });

@@ -6,7 +6,7 @@ import type { UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, resolveUnitParams } from '../engine/talents';
 import { LEVEL_DAMAGE, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE } from '../engine/internal';
-import { growthBonus } from '../engine/archetypes';
+import { growthBonus, KILL_MANA, SACRIFICE_MANA } from '../engine/archetypes';
 
 export interface StatCtx {
   level: number;       // niveau de collection (1..10)
@@ -89,6 +89,39 @@ const ABILITY_ROWS: Record<string, Row> = {
   formationDamagePerAlly: { label: 'Dégâts par allié relié', icon: 'aura', fmt: P, delta: dP },
   formationMax: { label: 'Alliés comptés au plus', icon: 'aura', fmt: N },
   swapSleep: { label: 'Bug après échange', icon: 'temps', fmt: S },
+  // ——— Extension DC ———
+  executeThreshold: { label: 'Exécution sous ce seuil de PV', icon: 'epee', fmt: P, delta: dP },                                    // Bourreau (Batman)
+  executeBossFactor: { label: 'Seuil contre les boss', icon: 'max', fmt: (v, _u, _c, prm) => pct(v * (prm.executeThreshold ?? 0)) },
+  blizzardSlowPerRank: { label: 'Ralentissement par givre', icon: 'controle', fmt: (v, _u, c) => pct(v * c.rank) },                // Givre (Superman)
+  blizzardStacks: { label: 'Givre cumulé au plus', icon: 'max', fmt: N },
+  blizzardDuration: { label: 'Durée du givre', icon: 'temps', fmt: S },
+  powerSpeed: { label: 'Vitesse en Fureur', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },                                           // Moine (Wonder Woman)
+  powerSplash: { label: 'Dégâts de zone en Fureur', icon: 'zone', fmt: P },
+  powerDuration: { label: 'Durée de la Fureur', icon: 'temps', fmt: S },
+  formationTargetsPerAlly: { label: 'Cibles en plus par allié relié', icon: 'zone', fmt: N },                                        // Cultiste (Green Lantern)
+  formationTargetsMax: { label: 'Cibles en plus au plus', icon: 'max', fmt: N },
+  formationDoubleAt: { label: 'Dégâts doublés à partir de', icon: 'aura', fmt: (v) => `${nf(v, 0)} reliés` },
+  rageChancePerEnemy: { label: 'Chance de rage par ennemi', icon: 'crit', fmt: P },                                                  // Cogneur (Flash)
+  rageSpeed: { label: 'Vitesse en rage', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },
+  rageDamage: { label: 'Dégâts en rage', icon: 'epee', fmt: (v) => `+${pct(v)}` },
+  rageDuration: { label: 'Durée de la rage', icon: 'temps', fmt: S },
+  reapChance: { label: 'Chance de faucher', icon: 'crit', fmt: P, delta: dP },                                                      // Faucheuse (Aquaman)
+  vortexSpeed: { label: 'Vitesse par charge', icon: 'vitesse', fmt: P },                                                             // Génie (Cyborg)
+  vortexDamage: { label: 'Dégâts par charge', icon: 'epee', fmt: P },
+  vortexMax: { label: 'Charges au plus', icon: 'max', fmt: N },
+  auraAttackSpeed: { label: 'Vitesse aux voisines', icon: 'aura', fmt: P },
+  growthPerKill: { label: 'Croissance par élimination', icon: 'epee', fmt: N },                                                      // Barde (Supergirl)
+  growthKeepOnMerge: { label: 'Croissance gardée à la fusion', icon: 'aura', fmt: P },
+  haste: { label: 'Accélération (compétence)', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },
+  hasteDuration: { label: 'Durée de l’accélération', icon: 'temps', fmt: S },
+  meteorDamage: { label: 'Dégâts du Météore', icon: 'zone', fmt: P },                                                                // Météore (Shazam)
+  meteorStun: { label: 'Étourdissement', icon: 'controle', fmt: S },
+  promoteDoubleChance: { label: 'Chance de monter de 2 rangs', icon: 'crit', fmt: P, delta: dP },                                   // Ferrailleur (Robin)
+  manaPerKill: { label: 'Mana par ennemi marqué', icon: 'mana', fmt: (v, _u, c) => nf(Math.round((KILL_MANA[c.rank - 1] ?? 1) * v), 0) }, // Démonologue (Catwoman)
+  sacrificeMana: { label: 'Mana du sacrifice', icon: 'mana', fmt: (v, _u, c, prm) => prm.sacrificeManaPerRank ? '' : nf(Math.round((SACRIFICE_MANA[c.rank - 1] ?? 10) * v), 0) }, // Clown (Harley Quinn)
+  coldSlowPerHit: { label: 'Ralentissement par flèche', icon: 'controle', fmt: P },                                                  // Flèches cryogéniques (Green Arrow)
+  coldMaxSlow: { label: 'Ralentissement au plus', icon: 'max', fmt: P },
+  coldDuration: { label: 'Durée du froid', icon: 'temps', fmt: S },
   abilityCooldown: { label: 'Recharge de la compétence', icon: 'temps', fmt: (v, _u, c, prm) => sec(Math.max(0.5, v + (prm.abilityCooldownPerRank ?? 0) * (c.rank - 1))), delta: dS },
 };
 
@@ -134,7 +167,9 @@ export function abilityStats(id: UnitId, c: StatCtx): StatTile[] {
   for (const [key, row] of Object.entries(ABILITY_ROWS)) {
     const v = prm[key];
     if (v === undefined || !(key in base)) continue;
-    const tile: StatTile = { key, label: row.label, value: row.fmt(v, u, c, prm), icon: row.icon };
+    const value = row.fmt(v, u, c, prm);
+    if (!value) continue;
+    const tile: StatTile = { key, label: row.label, value, icon: row.icon };
     const nv = nxt[key];
     if (row.delta && nv !== undefined && Math.abs(nv - v) > 1e-9) tile.next = row.delta(nv - v);
     out.push(tile);
