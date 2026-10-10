@@ -146,6 +146,10 @@ export const TOKEN_COLORS: Record<string, string> = {
   moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
   ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
   nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
+  // Extension Transformers : couleurs contrastées avec le métal de chaque Autobot, distinctes des autres.
+  optimus: '#ffb03a', bumblebee: '#4a5aa8', ironhide: '#9ad0e8', ratchet: '#ff8a8a', jazz: '#c8f04a',
+  arcee: '#5ae0c8', grimlock: '#e05a3a', wheeljack: '#ff6ad0', hotrod: '#6ac8ff', elita: '#9af0a0',
+  bulkhead: '#ffd84a', sideswipe: '#8a9ad8', prowl: '#e8c0ff', mirage: '#ffcf8a', ultramagnus: '#ff6a6a',
 };
 /** Couleur de plaque d'un personnage (repli : couleur claire de sa planche). */
 export function tokenColor(id: UnitId): string {
@@ -231,6 +235,7 @@ export function bossTint(id: BossId): readonly [string, string] {
 /* ---------- sbires ---------- */
 const MOTION: Record<BossId, 'walk' | 'float'> = {
   jafar: 'walk', cruella: 'walk', ursula: 'float', malefique: 'walk', galactus: 'float', bouffon: 'float', thanos: 'walk',
+  starscream: 'float', soundwave: 'float', shockwave: 'walk', devastator: 'walk', blitzwing: 'float', megatron: 'walk', unicron: 'walk',
 };
 /** Pas de marche : jambes « legA » / « legB » inclinées, pivot en haut de la jambe. */
 function walkLegs(svg: string, frameNo: 0 | 1): string {
