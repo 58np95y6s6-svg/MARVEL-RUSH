@@ -75,7 +75,7 @@ const STAT_SVG: Record<StatIcon, string> = {
   univers: SVG(`<path d="M24 3 L42 12 V36 L24 45 L6 36 V12Z" fill="#3fb8a8" stroke="${INK}" stroke-width="3.2" stroke-linejoin="round"/><path d="M24 11 l4 8 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1z" fill="#ffd84a" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>`),
   type: SVG(`<path d="M15 6 C22 12 24 20 24 26 a9 9 0 0 1 -18 0 C6 20 9 12 15 6Z" fill="#f2793b" stroke="${INK}" stroke-width="2.8"/><path d="M33 6 C40 12 42 20 42 26 a9 9 0 0 1 -18 0 C24 20 27 12 33 6Z" fill="#9b59e6" stroke="${INK}" stroke-width="2.8"/><path d="M24 18 C31 24 33 32 33 37 a9 9 0 0 1 -18 0 C15 32 18 24 24 18Z" fill="#3c8bf0" stroke="${INK}" stroke-width="2.8"/>`),
 };
-const statIcon = (k: StatIcon) => `<i class="fs-si">${STAT_SVG[k]}</i>`;
+const statIcon = (k: StatIcon) => `<i class="rr-si fs-si">${STAT_SVG[k]}</i>`;
 
 const TAB_SVG: Record<HeroSheetTab, string> = {
   principal: SVG(`<path d="M24 5 C36 5 42 16 42 28 V40 H6 V28 C6 16 12 5 24 5Z" fill="#fff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M13 30 C16 22 32 22 35 30 L32 36 H16Z" fill="${INK}"/><circle cx="19" cy="30" r="2.4" fill="#9fd8ff"/><circle cx="29" cy="30" r="2.4" fill="#9fd8ff"/>`),
@@ -137,15 +137,15 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
   let infoTab: 'competence' | 'equipes' | 'carte' = 'competence';
   let stopLoop: (() => void) | null = null;
 
-  const wrap = el('div', 'fs-wrap');
-  wrap.innerHTML = `<div class="fs-veil"></div>
+  const wrap = el('div', 'rr-modal fs-wrap');
+  wrap.innerHTML = `<div class="rr-veil fs-veil"></div>
     <button class="fs-arrow prev" data-a="prev" aria-label="Héros précédent"></button>
     <button class="fs-arrow next" data-a="next" aria-label="Héros suivant"></button>
-    <div class="fs-panel" role="dialog" aria-modal="true">
-      <header class="fs-head"><span class="fs-mini"></span><div class="fs-titles"><h2></h2><small></small></div>
-        <button class="fs-close" data-a="close" aria-label="Fermer" data-tuto="sheet-close">${SVG(`<path d="M14 14 L34 34 M34 14 L14 34" stroke="${INK}" stroke-width="11" stroke-linecap="round"/><path d="M14 14 L34 34 M34 14 L14 34" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/>`)}</button></header>
+    <div class="rr-panel fs-panel" role="dialog" aria-modal="true">
+      <header class="rr-head fs-head"><span class="fs-mini"></span><div class="rr-titles fs-titles"><h2></h2><small></small></div>
+        <button class="rr-close fs-close" data-a="close" aria-label="Fermer" data-tuto="sheet-close">${SVG(`<path d="M14 14 L34 34 M34 14 L14 34" stroke="${INK}" stroke-width="11" stroke-linecap="round"/><path d="M14 14 L34 34 M34 14 L14 34" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/>`)}</button></header>
       <div class="fs-body"></div>
-      <nav class="fs-tabs" role="tablist">${TABS.map((t) => `<button role="tab" data-tab="${t}" aria-label="${TAB_LABEL[t]}">${TAB_SVG[t]}<span>${t === 'info' ? 'Info' : TAB_LABEL[t]}</span></button>`).join('')}</nav>
+      <nav class="rr-tabs fs-tabs" role="tablist">${TABS.map((t) => `<button role="tab" data-tab="${t}" aria-label="${TAB_LABEL[t]}">${TAB_SVG[t]}<span>${t === 'info' ? 'Info' : TAB_LABEL[t]}</span></button>`).join('')}</nav>
     </div>`;
   host.appendChild(wrap);
   const body = wrap.querySelector<HTMLElement>('.fs-body')!;
@@ -164,7 +164,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
   });
 
   function tile(t: StatTile, cls = ''): string {
-    return `<div class="fs-tile ${cls}${t.next ? ' up' : ''}">${statIcon(t.icon)}<span class="fs-tl">${esc(t.label)}\u00a0:</span><b class="fs-tv">${esc(t.value)}${t.next ? ` <em>${esc(t.next)}</em>` : ''}</b></div>`;
+    return `<div class="rr-tile fs-tile ${cls}${t.next ? ' up' : ''}">${statIcon(t.icon)}<span class="rr-tl fs-tl">${esc(t.label)}\u00a0:</span><b class="rr-tv fs-tv">${esc(t.value)}${t.next ? ` <em>${esc(t.next)}</em>` : ''}</b></div>`;
   }
 
   // ---------------------------------------------------------------- Principal
@@ -185,12 +185,12 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
         : `<span class="fs-cbar ${g!.kind}${g!.ready ? ' ready' : ''}"><i style="width:${w}%"></i><b class="fs-cup">${g!.kind === 'eveil' ? '★' : UP_ARROW}</b><span>${g!.have}/${g!.need}</span></span>`;
     const inDeck = !o.onDeck;
     const reward = h && lc ? `<p class="fs-reward">Récompense d’amélioration : ${icon('xp')}<b>${10 * (h.level + 1)} XP</b></p>` : `<p class="fs-reward">${h ? 'Niveau maximal : place à l’éveil !' : 'Trouve ce héros dans les tirages.'}</p>`;
-    const upBtn = !h ? `<button class="fs-btn grey" aria-disabled="true"><span>Améliorer</span><small>Non possédé</small></button>`
-      : lc ? `<button class="fs-btn ${miss ? 'grey' : 'gold'}" data-a="up" data-tuto="hero-upgrade" ${miss ? 'aria-disabled="true"' : ''}><span>Améliorer</span><small>${icon('or')}<b class="${(p?.gold ?? 0) < lc.gold ? 'no' : ''}">${fmt(lc.gold)}</b>${icon('cartes')}<b class="${h.cards < lc.cards ? 'no' : ''}">${lc.cards}</b></small></button>`
-        : `<button class="fs-btn purple" data-a="tab" data-to="eveil" data-tuto="hero-awaken"><span>Éveil</span><small>★${h.awakening}/${MAX_AWAKENING}</small></button>`;
-    const selBtn = !h ? `<button class="fs-btn orange" data-a="packs"><span>Trouver</span></button>`
-      : inDeck ? `<button class="fs-btn orange on" aria-disabled="true"><span>✔ Dans le deck</span></button>`
-        : `<button class="fs-btn orange" data-a="deck" data-tuto="hero-to-deck"><span>Sélectionner</span></button>`;
+    const upBtn = !h ? `<button class="rr-btn fs-btn grey" aria-disabled="true"><span>Améliorer</span><small>Non possédé</small></button>`
+      : lc ? `<button class="rr-btn fs-btn ${miss ? 'grey' : 'gold'}" data-a="up" data-tuto="hero-upgrade" ${miss ? 'aria-disabled="true"' : ''}><span>Améliorer</span><small>${icon('or')}<b class="${(p?.gold ?? 0) < lc.gold ? 'no' : ''}">${fmt(lc.gold)}</b>${icon('cartes')}<b class="${h.cards < lc.cards ? 'no' : ''}">${lc.cards}</b></small></button>`
+        : `<button class="rr-btn fs-btn purple" data-a="tab" data-to="eveil" data-tuto="hero-awaken"><span>Éveil</span><small>★${h.awakening}/${MAX_AWAKENING}</small></button>`;
+    const selBtn = !h ? `<button class="rr-btn fs-btn orange" data-a="packs"><span>Trouver</span></button>`
+      : inDeck ? `<button class="rr-btn fs-btn orange on" aria-disabled="true"><span>✔ Dans le deck</span></button>`
+        : `<button class="rr-btn fs-btn orange" data-a="deck" data-tuto="hero-to-deck"><span>Sélectionner</span></button>`;
     return `<div class="fs-main">
       <div class="fs-art" style="--u1:${c1};--u2:${c2}">
         <div class="fs-scene"><i class="fs-rays"></i><i class="fs-pod"></i></div>
@@ -202,7 +202,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
       </div>
       <div class="fs-tiles">${tiles.map((t) => tile(t)).join('')}</div>
       ${reward}
-      <div class="fs-btns">${selBtn}${upBtn}<button class="fs-btn blue fs-eveil" data-a="tab" data-to="eveil" aria-label="Éveil">${SVG(`<path d="M6 34 L24 12 L42 34Z" fill="#fff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`)}</button></div>
+      <div class="fs-btns">${selBtn}${upBtn}<button class="rr-btn fs-btn blue fs-eveil" data-a="tab" data-to="eveil" aria-label="Éveil">${SVG(`<path d="M6 34 L24 12 L42 34Z" fill="#fff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`)}</button></div>
     </div>`;
   }
 
@@ -223,7 +223,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
       ...abilityStats(id, c).map((t) => tile(t)),
     ];
     const lvl = c.level;
-    return `<div class="fs-content scroll"><div class="fs-grid">${tiles.join('')}</div></div>
+    return `<div class="rr-content fs-content scroll"><div class="fs-grid">${tiles.join('')}</div></div>
       <div class="fs-prev">
         <button class="fs-pbtn" data-a="pv-rank" aria-label="Rang de fusion ${pv.rank}">${rankShape(pv.rank)}<span>Rang ${pv.rank}</span></button>
         <button class="fs-pbtn" data-a="pv-pu" aria-label="Amélioration en partie ${pv.powerUp}">${POTION}<span>L.${pv.powerUp}</span></button>
@@ -271,8 +271,8 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
       const st = talentTierState(p, h, t);
       const isChosen = chosen(t) === selTalent.opt;
       action = isChosen ? '<span class="fs-tstate ok">✔ Talent choisi</span>'
-        : st === 'choisi' ? `<button class="fs-btn small green" data-a="choose">Changer (gratuit)</button>`
-          : st === 'ouvrable' ? `<button class="fs-btn small gold" data-a="choose">Choisir · ${icon('parchemins')} ${TALENT_TIER_SCROLLS[t]}</button>`
+        : st === 'choisi' ? `<button class="rr-btn fs-btn small green" data-a="choose">Changer (gratuit)</button>`
+          : st === 'ouvrable' ? `<button class="rr-btn fs-btn small gold" data-a="choose">Choisir · ${icon('parchemins')} ${TALENT_TIER_SCROLLS[t]}</button>`
             : st === 'niveau' ? `<span class="fs-tstate">${icon('lock')} Niveau ${TALENT_TIER_LEVELS[t]}</span>`
               : st === 'precedent' ? '<span class="fs-tstate">Choisis d’abord le palier précédent</span>'
                 : `<span class="fs-tstate">${icon('parchemins')} ${TALENT_TIER_SCROLLS[t]} requis (tu en as ${p.scrolls})</span>`;
@@ -285,7 +285,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
       : level < TALENT_TIER_LEVELS[1] ? `Les talents sont disponibles à partir du niveau ${TALENT_TIER_LEVELS[1]}`
         : nextLock ? `Palier suivant au niveau ${TALENT_TIER_LEVELS[nextLock]} · ${p?.scrolls ?? 0} parchemin${(p?.scrolls ?? 0) > 1 ? 's' : ''}`
           : `Tous les paliers sont ouverts · ${p?.scrolls ?? 0} parchemin${(p?.scrolls ?? 0) > 1 ? 's' : ''}`;
-    return `<div class="fs-content scroll fs-tcontent">
+    return `<div class="rr-content fs-content scroll fs-tcontent">
         <div class="fs-tdesc">${sel ? `<h4>${esc(sel.name)}${selTalent.tier === 4 ? ' <small>Ultime</small>' : ''}</h4>${rich(sel.description, [UNITS[id].name])}` : ''}<div class="fs-tact">${action}</div></div>
         <div class="fs-tree">${rows}${finRow}</div>
       </div>
@@ -295,14 +295,14 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
   // ---------------------------------------------------------------- Éveil
   function eveilTab(p: Profile | null, h: HeroState | null): string {
     const list = passivesFor(id).map((x) => `<li class="${(h?.awakening ?? 0) >= x.star ? 'on' : ''}${x.star === 10 ? ' ult' : ''}"><span>★${x.star}</span><div><b>${esc(x.name)}</b><small>${esc(x.description)}</small></div></li>`).join('');
-    if (!h || !p) return `<div class="fs-content scroll"><div class="aw"><h3 class="aw-title">Éveil</h3><p class="aw-why">L’éveil s’ouvre au niveau ${MAX_HERO_LEVEL}.</p><ul class="aw-list">${list}</ul></div></div>`;
+    if (!h || !p) return `<div class="rr-content fs-content scroll"><div class="aw"><h3 class="aw-title">Éveil</h3><p class="aw-why">L’éveil s’ouvre au niveau ${MAX_HERO_LEVEL}.</p><ul class="aw-list">${list}</ul></div></div>`;
     const c = awakeningCost(h);
     const stars = Array.from({ length: MAX_AWAKENING }, (_, i) => `<i class="${i < h.awakening ? 'on' : ''}" style="--i:${i}">★</i>`).join('');
     const next = passivesFor(id).find((x) => x.star > h.awakening);
     const cur = h.awakening, nx = Math.min(MAX_AWAKENING, cur + 1);
     const ok = c && canAfford(p, h, c);
     const reason = !c ? (h.level < MAX_HERO_LEVEL ? `L’éveil s’ouvre au niveau ${MAX_HERO_LEVEL} (niveau ${h.level} pour l’instant).` : 'Éveil maximal atteint !') : missingFor(p, h, c);
-    return `<div class="fs-content scroll"><div class="aw">
+    return `<div class="rr-content fs-content scroll"><div class="aw">
       <div class="aw-stars">${stars}</div>
       ${c ? `<div class="aw-costs">
         <div class="${h.cards >= c.cards ? 'ok' : ''}">${icon('cartes')}<b>${h.cards}/${c.cards}</b><span>copies</span></div>
@@ -312,7 +312,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
         <span>Vitesse <b>+${pctS(AWAKENING_SPEED_PER_STAR * cur)}</b> → <b class="up">+${pctS(AWAKENING_SPEED_PER_STAR * nx)}</b></span></div>` : ''}
       ${next ? `<div class="aw-passive"><small>Prochain passif · ★${next.star}${next.star === 10 ? ' (ultime)' : ''}</small><b>${esc(next.name)}</b><span>${esc(next.description)}</span></div>` : ''}
       ${reason && !ok ? `<p class="aw-why">${esc(reason)}</p>` : ''}
-      ${c ? `<button class="fs-btn ${ok ? 'gold' : 'grey'} aw-go" data-a="awaken" data-tuto="hero-awaken-go" ${ok ? '' : 'aria-disabled="true"'}><span>Éveiller ★${nx}</span></button>` : ''}
+      ${c ? `<button class="rr-btn fs-btn ${ok ? 'gold' : 'grey'} aw-go" data-a="awaken" data-tuto="hero-awaken-go" ${ok ? '' : 'aria-disabled="true"'}><span>Éveiller ★${nx}</span></button>` : ''}
       <ul class="aw-list">${list}</ul>
     </div></div>`;
   }
@@ -340,7 +340,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
       <div class="fs-cats">${cats.map((k) => `<span><i>${HERO_CATEGORIES[k].icon}</i><b>${esc(HERO_CATEGORIES[k].label)}</b><small>${esc(HERO_CATEGORIES[k].description)}</small></span>`).join('')}</div>`;
     }
     const sub = (k: typeof infoTab, svg: string, label: string) => `<button class="${infoTab === k ? 'on' : ''}" data-a="itab" data-k="${k}" aria-label="${label}">${svg}</button>`;
-    return `<div class="fs-content scroll fs-info">${inner}</div>
+    return `<div class="rr-content fs-content scroll fs-info">${inner}</div>
       <div class="fs-isub">${sub('competence', TAB_SVG.info, 'Compétence')}${sub('equipes', STAT_SVG.epee, 'Équipes')}${sub('carte', icon('cartes'), 'Carte')}</div>`;
   }
 
@@ -350,7 +350,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
     const p = profile();
     const h = hero(p);
     const u = UNITS[id];
-    wrap.className = `fs-wrap r-${u.rarity}`;
+    wrap.className = `rr-modal fs-wrap r-${u.rarity}`;
     wrap.dataset['tab'] = tab;
     wrap.querySelector('h2')!.textContent = u.name;
     wrap.querySelector('.fs-titles small')!.textContent = tab === 'principal' ? `Carte ${RARITY_LABEL[u.rarity].toLowerCase()}` : TAB_LABEL[tab];

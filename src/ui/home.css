@@ -12,16 +12,17 @@
 .hm {
   position: absolute; inset: 0; overflow: hidden; color: #fff; text-align: center;
   display: flex; flex-direction: column; align-items: center; justify-content: space-evenly;
-  padding: 6px 16px 10px; gap: 6px;
+  padding: 6px 14px 12px; gap: 6px;
   background:
-    radial-gradient(120% 55% at 50% 108%, #f2a36b 0, rgba(242,163,107,0) 62%),
-    linear-gradient(#2c2458 0%, #4b3f7e 52%, #a8607a 100%);
+    radial-gradient(90% 40% at 50% 22%, rgba(99,133,187,.45), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 14px, transparent 14px 28px),
+    linear-gradient(var(--rr-bg), var(--rr-bg2));
 }
 .hm > * { position: relative; }
 .hm-sky { position: absolute; inset: 0; pointer-events: none; }
 .hm-sky i {
-  position: absolute; height: 34px; border-radius: 30px; background: rgba(255,255,255,.1);
-  box-shadow: 26px -14px 0 4px rgba(255,255,255,.08), 56px 0 0 rgba(255,255,255,.08);
+  position: absolute; height: 34px; border-radius: 30px; background: rgba(255,255,255,.05);
+  box-shadow: 26px -14px 0 4px rgba(255,255,255,.04), 56px 0 0 rgba(255,255,255,.04);
   animation: hm-cloud 40s linear infinite;
 }
 .hm-sky .c1 { top: 8%; left: -30%; width: 90px; }
@@ -29,44 +30,51 @@
 .hm-sky .c3 { top: 58%; left: -40%; width: 70px; animation-duration: 47s; animation-delay: -34s; }
 @keyframes hm-cloud { to { transform: translateX(170vw); } }
 .hm-logo { font-size: clamp(42px, 12.5vw, 64px); margin-top: 4px; }
-.hm-deck { display: flex; justify-content: center; gap: 0; min-height: 56px; }
-.hm-deck img { width: min(16vw, 66px); height: auto; animation: mr-bob 2.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.35s); }
+/* Deck actif : panneau ardoise-bleu (contour encre), jetons sur fond clair */
+.hm-deck {
+  display: flex; justify-content: center; gap: 0; min-height: 56px; width: min(100%, 380px); padding: 8px 6px 6px; border-radius: 18px;
+  background: linear-gradient(var(--rr-in), #c3d0e0); border: 4px solid var(--ink); box-shadow: 0 0 0 4px var(--rr-frame), 0 0 0 7px var(--ink), 0 9px 0 2px rgba(0,0,0,.35);
+  margin: 4px 0;
+}
+.hm-deck img { width: min(16vw, 64px); height: auto; animation: mr-bob 2.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.35s); filter: drop-shadow(0 3px 0 rgba(20,32,60,.35)); }
 @keyframes mr-bob { 50% { transform: translateY(-7px); } }
-.hm .mr-btn small { display: block; font-family: var(--body); font-weight: 800; font-size: 13px; opacity: .92; text-shadow: none; margin-top: 2px; }
-.hm .mr-btn small .ic { width: 16px; height: 16px; vertical-align: -3px; }
-.hm-campaign { width: min(84vw, 330px); border-radius: 24px; padding: 12px 0 14px; animation: hm-pulse 2.4s ease-in-out infinite; }
-.hm-campaign .t { font-size: 40px; line-height: 1; display: block; }
+.hm .mr-btn small { display: flex; align-items: center; justify-content: center; gap: 3px; font: 400 14px var(--display); -webkit-text-stroke-width: 3.5px; margin-top: 3px; }
+.hm .mr-btn small .ic { width: 18px; height: 18px; }
+.hm-campaign { width: min(86vw, 340px); border-radius: 20px; padding: 12px 0 14px; animation: hm-pulse 2.4s ease-in-out infinite; --sh: #a8461b; box-shadow: 0 7px 0 var(--sh), inset 0 4px 0 rgba(255,255,255,.4); }
+.hm-campaign .t { font-size: 42px; line-height: 1; display: block; -webkit-text-stroke-width: 7px; }
 @keyframes hm-pulse { 50% { transform: scale(1.03); } }
 .hm-campaign:active { animation: none; }
-.hm-resume { width: min(76vw, 300px); padding: 8px 0 10px; }
+.hm-resume { width: min(78vw, 310px); padding: 8px 0 10px; }
 .hm-resume[hidden] { display: none; }
 .hm-resume .t { font-size: 24px; line-height: 1; display: block; }
-.hm-resume small { display: block; font-size: 13px; opacity: .95; }
-.hm-infinite { width: min(76vw, 300px); padding: 8px 0 10px; background: linear-gradient(#b48cff, #6b3fd0); }
-.hm-infinite .t { font-size: 26px; line-height: 1; display: block; }
-.hm-infinite.locked { background: linear-gradient(#8a83a8, #5a5378); }
+.hm-infinite { width: min(78vw, 310px); padding: 8px 0 10px; background: linear-gradient(#d39bff, #8a4fe0); --sh: #4a2590; }
+.hm-infinite .t { font-size: 27px; line-height: 1; display: block; }
+.hm-infinite.locked { background: linear-gradient(#d3dae4, #a2adbd); --sh: #626d80; }
+.hm-infinite.locked small { color: #ff5d5d; }
 .hm-infinite.nope { animation: hm-nope .35s; }
 @keyframes hm-nope { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-.hm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: min(100%, 380px); }
+.hm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: min(100%, 384px); }
+/* Tuiles : cadre ardoise-bleu, icône sur pastille claire, libellé blanc cerné */
 .hm-tile {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 7px; cursor: pointer;
-  border-radius: 16px; border: 3px solid var(--ink); color: #fff;
-  background: linear-gradient(#5a4c97, #3a2f6b); box-shadow: 0 5px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,.2);
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 6px; cursor: pointer;
+  border-radius: 14px; border: 3px solid var(--ink); color: #fff;
+  background: linear-gradient(var(--rr-frame-l), var(--rr-frame)); box-shadow: 0 5px 0 var(--rr-frame-dd), 0 5px 0 3px var(--ink), inset 0 3px 0 rgba(255,255,255,.3);
 }
-.hm-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,.2); }
-.hm-tile .ic { width: 34px; height: 34px; }
-.hm-tile b { font-family: var(--display); font-weight: 400; font-size: 15px; text-shadow: 0 2px 0 var(--ink); }
-.hm-tile small { font-weight: 900; font-size: 11px; opacity: .8; margin-top: -2px; }
-.hm-tile.chest.ready { background: linear-gradient(#ffcf5a, #e07a1f); animation: hm-wiggle 2s ease-in-out infinite; }
-.hm-tile.chest.ready small { opacity: 1; }
+.hm-tile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--rr-frame-dd), inset 0 3px 0 rgba(255,255,255,.3); }
+.hm-tile .ic { width: 44px; height: 38px; padding: 3px 6px; border-radius: 10px; background: linear-gradient(var(--rr-tile-l), var(--rr-tile)); border: 2px solid var(--rr-frame-dd); box-sizing: border-box; }
+.hm-tile b { font-family: var(--display); font-weight: 400; font-size: 15px; margin-top: 2px; paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); }
+.hm-tile small { font: 400 12px var(--display); color: #dfe8f0; margin-top: -1px; paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink); }
+.hm-tile.chest.ready { background: linear-gradient(#ffc84a, #f59a1f); box-shadow: 0 5px 0 #a8461b, 0 5px 0 3px var(--ink), inset 0 3px 0 rgba(255,255,255,.35); animation: hm-wiggle 2s ease-in-out infinite; }
+.hm-tile.chest.ready small { color: #fff; }
 .hm-tile.chest.open .ic { animation: hm-open .8s ease-out; }
 @keyframes hm-wiggle { 0%, 80%, 100% { transform: rotate(0); } 84% { transform: rotate(-5deg); } 88% { transform: rotate(5deg); } 92% { transform: rotate(-3deg); } }
 @keyframes hm-open { 30% { transform: scale(1.4) rotate(-8deg); } 60% { transform: scale(.9); } }
 .hm-badge {
-  position: absolute; top: -8px; right: -4px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
-  background: #e8413b; border: 2.5px solid var(--ink); font: 900 12px/17px var(--body); color: #fff;
+  position: absolute; top: -9px; right: -6px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; z-index: 2;
+  background: radial-gradient(circle at 40% 35%, #ff7a6e, #e5333a 60%); border: 2.5px solid var(--ink);
+  font: 400 13px/17px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink);
 }
-.hm-tile.ready:not(.chest) { background: linear-gradient(#6fd36a, #2f8f3a); }
+.hm-tile.ready:not(.chest) { background: linear-gradient(#a8ef6a, #4cb63a); box-shadow: 0 5px 0 #2a6e24, 0 5px 0 3px var(--ink), inset 0 3px 0 rgba(255,255,255,.35); }
 .hm-tile .hm-badge[hidden] { display: none; }
 @media (max-height: 700px) {
   .hm-logo { font-size: 40px; }

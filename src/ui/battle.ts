@@ -480,7 +480,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   function showEnd(outcome: 'victoire' | 'defaite', w: number): void {
     if (destroyed) return;
     const win = outcome === 'victoire';
-    endModal.innerHTML = `<div class="mr-panel"><h2 class="mr-outline-s ${win ? '' : 'lose'}">${win ? 'Victoire !' : 'Défaite'}</h2>
+    endModal.innerHTML = `<div class="mr-panel"><h2 class="mr-outline-s ${win ? 'win' : 'lose'}">${win ? 'Victoire !' : 'Défaite'}</h2>
       <p>Vague atteinte<span class="big mr-outline-s">${w}</span></p>
       <div class="row"><button class="mr-btn yellow" data-a="replay">Rejouer</button><button class="mr-btn" data-a="home">Accueil</button></div></div>`;
     endModal.classList.add('on');

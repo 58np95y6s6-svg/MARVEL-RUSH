@@ -13,6 +13,7 @@ import { getHeroProgress, MAX_AWAKENING, type HeroProgress } from '../meta/colle
 import { ficheUrl } from '../access/fiches';
 import { heroCardHtml } from './heroCard';
 import { openHeroSheet, type HeroSheet } from './heroSheet';
+import { CLOSE_SVG } from './kit';
 import { getProfile } from '../meta/profile';
 import type { BossDef, Rarity, Targeting, UnitDef } from '../data/types';
 
@@ -237,7 +238,7 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
     sheetHost.innerHTML = `
       <div class="cx-veil" data-a="close"></div>
       <div class="cx-sheet ${kind}" role="dialog" aria-modal="true">
-        <button class="cx-close" data-a="close" aria-label="Fermer">✕</button>
+        <button class="cx-close" data-a="close" aria-label="Fermer">${CLOSE_SVG}</button>
         <div class="cx-sheet-body scroll">${html}</div>
       </div>`;
     sheetHost.querySelectorAll('[data-a="close"]').forEach((el) => el.addEventListener('click', closeSheet));

@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10o',
+    title: 'Nouveau style façon Rush Royale',
+    date: '10 octobre 2026',
+    items: [
+      'Toute l’app adopte le style de la nouvelle fiche de héros façon Rush Royale : cadres bleu ardoise, contenus clairs, tuiles, gros boutons orange et bleus, croix rouge ronde.',
+      'Nouvelle barre de monnaies en haut (gemmes, or, cristaux, parchemins) : chaque ➕ explique comment en gagner et mène au bon écran.',
+      'Nouvelle barre d’onglets en bas, à grandes icônes, avec l’onglet actif surélevé ; tous les écrans sont harmonisés.',
+    ],
+  },
+  {
     id: '2026-10-10n',
     title: 'Thor s’illumine',
     date: '10 octobre 2026',

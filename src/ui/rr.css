@@ -1,0 +1,174 @@
+/* Direction artistique « Rush Royale » partagée par toute l'app, extraite de la fiche de héros
+   (src/ui/heroSheet.css, références design/references/ecrans/rr-fiche-unite-*.png) :
+   cadres ardoise-bleu à contour encre, contenu bleu très clair, tuiles gris-bleu (icône + libellé + valeur),
+   tuiles vertes pour les gains, boutons orange (principal) / bleu (secondaire) / gris (indisponible, prix en
+   rouge), croix rouge ronde, barres d'onglets à icônes avec l'onglet actif surélevé, titres Lilita blancs
+   cernés d'encre, fond bleu nuit derrière les panneaux. Jetons de couleur : voir :root dans base.css. */
+
+/* ------------------------------------------------------------------ texte */
+.rr-out { color: #fff; paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); }
+.rr-h {
+  margin: 0; font: 400 26px/1 var(--display); color: #fff; text-align: center;
+  paint-order: stroke fill; -webkit-text-stroke: 6px var(--ink); filter: drop-shadow(0 2px 0 var(--ink));
+}
+.rr-h small { display: block; margin-top: 3px; font-size: 16px; -webkit-text-stroke-width: 4.5px; color: #ffd23f; }
+
+/* Fond d'écran bleu nuit (derrière les panneaux), avec un léger motif. */
+.rr-screen-bg {
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(91,125,179,.28), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.018) 0 14px, transparent 14px 28px),
+    linear-gradient(var(--rr-bg), var(--rr-bg2));
+}
+
+/* ------------------------------------------------------------------ fenêtre modale (fiche, panneaux centrés) */
+.rr-modal {
+  position: absolute; inset: 0; z-index: 40; display: grid; place-items: center;
+  padding: max(10px, var(--safe-top)) 12px max(10px, var(--safe-bottom));
+  transition: opacity .18s ease-in;
+}
+.rr-modal.out { opacity: 0; pointer-events: none; }
+.rr-veil { position: absolute; inset: 0; background: rgba(8,12,26,.72); animation: rr-fade .2s ease-out; }
+@keyframes rr-fade { from { opacity: 0; } }
+
+/* ------------------------------------------------------------------ panneau à cadre ardoise-bleu */
+.rr-panel {
+  position: relative; display: flex; flex-direction: column; color: #fff;
+  background: var(--rr-frame); border: 4px solid var(--ink); border-radius: 24px; overflow: hidden;
+  box-shadow: 0 7px 0 rgba(0,0,0,.4), inset 0 3px 0 rgba(255,255,255,.22);
+}
+.rr-modal > .rr-panel { animation: rr-pop .24s cubic-bezier(.2,1.4,.4,1); }
+@keyframes rr-pop { from { transform: scale(.9); opacity: 0; } }
+/* En-tête : vignette (ou vide) · titres · croix */
+.rr-head { position: relative; z-index: 4; flex: none; display: grid; grid-template-columns: 58px 1fr 58px; align-items: center; min-height: 66px; padding: 6px 8px 4px; }
+.rr-titles { text-align: center; display: grid; justify-items: center; line-height: 1; min-width: 0; }
+.rr-titles h2 { margin: 0; font: 400 27px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 6px var(--ink); filter: drop-shadow(0 2px 0 var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rr-titles small { margin-top: 3px; font: 400 17px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 4.5px var(--ink); }
+
+/* Croix rouge ronde */
+.rr-close {
+  justify-self: end; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--ink); cursor: pointer; padding: 0; position: relative;
+  background: radial-gradient(circle at 40% 35%, #ff7a6e, #e5333a 55%, #b51f2c); box-shadow: 0 3px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,.4);
+  color: #fff; font: 900 0/1 var(--body);
+}
+.rr-close svg { width: 30px; height: 30px; display: block; margin: auto; }
+.rr-close:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+
+/* Contenu clair (onglets Stats, Talents…, feuilles) */
+.rr-content {
+  flex: 1; min-height: 0; overflow-y: auto; margin: 2px 12px 8px; padding: 12px 10px; border-radius: 16px; color: var(--rr-navy);
+  background: var(--rr-in); border: 3px solid var(--rr-frame-dd); box-shadow: inset 0 3px 0 rgba(0,0,0,.08);
+  overscroll-behavior: contain;
+}
+
+/* ------------------------------------------------------------------ barre d'onglets à icônes (onglet actif surélevé) */
+.rr-tabs { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); height: 62px; background: var(--rr-frame-d); border-top: 3px solid var(--rr-frame-dd); }
+.rr-tabs > button {
+  position: relative; display: grid; place-items: center; padding: 0; border: 0; border-right: 2px solid var(--rr-frame-dd); background: none; cursor: pointer;
+}
+.rr-tabs > button:last-child { border-right: 0; }
+.rr-tabs > button svg { width: 32px; height: 32px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); transition: transform .15s; }
+.rr-tabs > button[aria-selected="true"], .rr-tabs > button.on { background: var(--rr-frame); margin-top: -8px; border-radius: 16px 16px 0 0; border: 0; box-shadow: 0 -3px 0 var(--rr-frame-dd); }
+.rr-tabs > button[aria-selected="true"] svg, .rr-tabs > button.on svg { transform: scale(1.25); }
+
+/* Onglets texte (segments) : bleu clair, actif orange */
+.rr-seg { display: flex; gap: 6px; }
+.rr-seg > button {
+  flex: 1; min-width: 0; padding: 6px 6px 7px; border-radius: 12px; border: 3px solid var(--ink); cursor: pointer; color: #fff;
+  background: linear-gradient(#6f8fc4, #3a5482); font: 400 17px var(--display); line-height: 1; box-shadow: 0 3px 0 var(--rr-frame-dd), inset 0 2px 0 rgba(255,255,255,.25);
+  paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink);
+}
+.rr-seg > button[aria-selected="true"], .rr-seg > button.on { background: linear-gradient(#ffc84a, #f59a1f); box-shadow: 0 3px 0 #a8461b, inset 0 2px 0 rgba(255,255,255,.35); }
+
+/* ------------------------------------------------------------------ boutons (orange principal, bleu secondaire, vert gain, gris indisponible, rouge danger) */
+.rr-btn, .mr-btn {
+  position: relative; display: grid; place-items: center; align-content: center; gap: 1px; min-height: 58px; padding: 4px 6px 6px; cursor: pointer;
+  border: 3px solid var(--ink); border-radius: 14px; color: #fff; font: 400 20px var(--display); line-height: 1;
+  background: linear-gradient(#5ab4ff, #2b74de); --sh: #1b468f;
+  box-shadow: 0 5px 0 var(--sh), inset 0 3px 0 rgba(255,255,255,.35);
+}
+.rr-btn > span, .mr-btn { paint-order: stroke fill; -webkit-text-stroke: 5px var(--ink); }
+.rr-btn small, .mr-btn small { display: flex; align-items: center; justify-content: center; gap: 3px; font: 400 16px var(--display); paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); }
+.rr-btn small .ic, .mr-btn small .ic { width: 20px; height: 20px; flex: none; }
+.rr-btn small b, .mr-btn small b { font-weight: 400; }
+.rr-btn small b.no, .mr-btn small b.no { color: #ff5d5d; }
+.rr-btn:active, .mr-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--sh); }
+.rr-btn.orange, .mr-btn.orange, .mr-btn.yellow { background: linear-gradient(#ffc84a, #f59a1f); --sh: #a8461b; }
+.rr-btn.orange.on { filter: saturate(.6) brightness(.95); }
+.rr-btn.gold, .rr-btn.green, .mr-btn.green { background: linear-gradient(#a8ef6a, #4cb63a); --sh: #2a6e24; }
+.rr-btn.grey, .mr-btn.grey { background: linear-gradient(#d3dae4, #a2adbd); --sh: #626d80; }
+.rr-btn.purple, .mr-btn.purple { background: linear-gradient(#d39bff, #8a4fe0); --sh: #4a2590; }
+.rr-btn.blue, .mr-btn.blue { background: linear-gradient(#5ab4ff, #2b74de); --sh: #1b468f; }
+.rr-btn.red, .mr-btn.red { background: linear-gradient(#ff7a6e, #d8322c); --sh: #7e1620; }
+.rr-btn.blue svg { width: 34px; height: 34px; }
+.rr-btn.small { min-height: 40px; font-size: 16px; padding: 3px 12px 5px; border-radius: 12px; }
+.rr-btn.small .ic { width: 18px; height: 18px; vertical-align: -4px; }
+/* Bouton du méta-jeu : taille réglée par l'écran, hauteur libre. */
+.mr-btn { min-height: 0; padding: 9px 14px 11px; font-size: 22px; }
+.mr-btn small { font-size: 14px; -webkit-text-stroke-width: 3.5px; }
+.mr-btn[disabled], .mr-btn.locked, .mr-btn[aria-disabled="true"] { background: linear-gradient(#d3dae4, #a2adbd); --sh: #626d80; cursor: default; filter: none; }
+.mr-btn[disabled] small, .mr-btn[disabled] small b { color: #ff5d5d; }
+.mr-btn[disabled]:active { transform: none; box-shadow: 0 5px 0 var(--sh), inset 0 3px 0 rgba(255,255,255,.35); }
+.mr-btn.ghost { background: linear-gradient(#6f8fc4, #3a5482); --sh: var(--rr-frame-dd); }
+
+/* ➕ carré bleu (raccourci, ajout) */
+.rr-plus {
+  flex: none; width: 38px; height: 38px; border-radius: 9px; border: 3px solid var(--ink); background: linear-gradient(#5ab4ff, #2b74de); color: #fff;
+  font: 900 26px/1 var(--body); padding: 0 0 3px; cursor: pointer; box-shadow: 0 3px 0 #1b468f, inset 0 2px 0 rgba(255,255,255,.35); -webkit-text-stroke: 1.5px var(--ink);
+}
+
+/* ------------------------------------------------------------------ tuiles (icône + libellé + valeur) */
+.rr-tile {
+  min-width: 0; display: grid; justify-items: center; align-content: start; gap: 1px; padding: 5px 3px 6px; border-radius: 11px; text-align: center;
+  background: linear-gradient(var(--rr-tile-l) 0 46%, var(--rr-tile) 46%); border: 2.5px solid var(--rr-tile-b); box-shadow: 0 3px 0 rgba(20,32,60,.35);
+  color: var(--rr-navy);
+}
+.rr-si { display: block; width: 32px; height: 32px; }
+.rr-si svg { width: 100%; height: 100%; }
+.rr-tl { font: 400 13px/1.05 var(--display); color: var(--rr-navy); overflow-wrap: break-word; }
+.rr-tv { font: 400 16px/1.1 var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); white-space: nowrap; }
+.rr-tv em { font-style: normal; color: var(--rr-green); }
+/* Tuile en ligne (listes) : icône à gauche, texte, valeur ou bouton à droite. */
+.rr-row {
+  display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 12px; text-align: left; color: var(--rr-navy);
+  background: linear-gradient(var(--rr-tile-l) 0 50%, var(--rr-tile) 50%); border: 2.5px solid var(--rr-tile-b); box-shadow: 0 3px 0 rgba(20,32,60,.25);
+}
+.rr-row.up, .rr-tile.up { background: linear-gradient(#9fe26a 0 46%, #7fcf4a 46%); border-color: #4f9a2a; }
+.rr-row.up .rr-tl, .rr-tile.up .rr-tl { color: #20401a; }
+.rr-row.hot { background: linear-gradient(#ffe7a6 0 50%, #ffd77a 50%); border-color: #d99a2a; }
+.rr-row.dim { opacity: .6; }
+
+/* ------------------------------------------------------------------ rubans, pastilles, barres */
+/* Ruban de section : bandeau bleu à contour encre, titre blanc cerné, compteur à droite */
+.rr-ribbon {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 4px 12px 5px; border-radius: 10px; border: 3px solid var(--ink);
+  background: linear-gradient(#5ab4ff, #2b74de); box-shadow: 0 3px 0 #1b468f, inset 0 2px 0 rgba(255,255,255,.3);
+  font: 400 18px/1.1 var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink);
+}
+.rr-ribbon.orange { background: linear-gradient(#ffc84a, #f59a1f); box-shadow: 0 3px 0 #a8461b, inset 0 2px 0 rgba(255,255,255,.3); }
+.rr-ribbon.green { background: linear-gradient(#a8ef6a, #4cb63a); box-shadow: 0 3px 0 #2a6e24, inset 0 2px 0 rgba(255,255,255,.3); }
+.rr-ribbon.purple { background: linear-gradient(#d39bff, #8a4fe0); box-shadow: 0 3px 0 #4a2590, inset 0 2px 0 rgba(255,255,255,.3); }
+.rr-ribbon > small { margin-left: auto; font-size: 15px; -webkit-text-stroke-width: 3.5px; }
+/* Titre de section sur fond clair */
+.rr-sub { margin: 12px 2px 6px; font: 400 18px/1.1 var(--display); color: #f08a1a; }
+.rr-sub small { font: 800 12px var(--body); color: var(--rr-text); }
+/* Pastille rouge (compteur) */
+.rr-badge {
+  position: absolute; top: -8px; right: -6px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; z-index: 2;
+  background: radial-gradient(circle at 40% 35%, #ff7a6e, #e5333a 60%); border: 2.5px solid var(--ink);
+  font: 400 13px/17px var(--display); color: #fff; text-align: center; paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink);
+}
+.rr-badge[hidden] { display: none; }
+/* Étiquette (prix, gain) */
+.rr-chip {
+  display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px 2px 3px; border-radius: 10px; border: 2.5px solid var(--ink);
+  background: var(--rr-navy); font: 400 15px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); white-space: nowrap;
+}
+.rr-chip .ic { width: 20px; height: 20px; }
+/* Barre de progression : rail bleu nuit, remplissage bleu (vert prêt, violet éveil, or max) */
+.rr-bar { position: relative; height: 24px; border-radius: 8px; border: 3px solid var(--ink); background: #1e2f52; display: grid; place-items: center; overflow: hidden; }
+.rr-bar > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: linear-gradient(#5fc0ff, #2d7fe0); }
+.rr-bar.green > i { background: linear-gradient(#a8ef6a, #43ad36); }
+.rr-bar.purple > i { background: linear-gradient(#d39bff, #8a4fe0); }
+.rr-bar.gold > i { background: linear-gradient(#ffd84a, #e09a1c); }
+.rr-bar > span { position: relative; font: 400 14px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); white-space: nowrap; }

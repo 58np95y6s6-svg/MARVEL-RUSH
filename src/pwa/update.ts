@@ -17,20 +17,23 @@ window.addEventListener('mr-game', (e) => {
   if (!gameRunning && pendingUpdate) { const show = pendingUpdate; pendingUpdate = null; show(); }
 });
 
+// Même direction artistique que le reste de l'app (src/ui/rr.css) : cadre ardoise-bleu, titre blanc cerné,
+// contenu bleu très clair, bouton orange. Couleurs en dur : la feuille peut s'afficher avant le chargement de l'app.
 const STYLE = `
-.mr-sheet-bg{position:fixed;inset:0;z-index:9999;background:rgba(14,10,31,.6);display:flex;align-items:flex-end;justify-content:center;animation:mr-fade .2s ease-out}
-.mr-sheet{width:min(440px,100%);max-height:85dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;background:#2a2347;color:#fff;font:16px 'Nunito',system-ui,sans-serif;border:3px solid #4b4370;border-bottom:0;border-radius:26px 26px 0 0;padding:22px 20px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.45);animation:mr-up .25s cubic-bezier(.2,.9,.3,1.2)}
-.mr-sheet h2{margin:0;font:400 24px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;color:#f6c64a;text-shadow:0 2px 0 #1d1733}
-.mr-sheet p{margin:4px 0 0;opacity:.8;font-size:14px}
-.mr-sheet .mr-list{overflow-y:auto;overscroll-behavior:contain;margin:0;padding:0 2px;list-style:none;display:grid;gap:10px}
-.mr-sheet .mr-list li{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;line-height:1.35}
-.mr-sheet .mr-list li::before{content:'★';color:#f6c64a;font-size:18px;line-height:1.2}
-.mr-sheet .mr-ver{font-size:13px;opacity:.65;margin:8px 0 2px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-.mr-actions{display:grid;gap:8px}
-.mr-btn{font:400 19px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;letter-spacing:.02em;color:#fff;border:3px solid #1d1733;border-radius:16px;padding:13px;background:linear-gradient(#ffd45a,#f2a93b);text-shadow:0 2px 0 #1d1733;box-shadow:0 5px 0 #1d1733;cursor:pointer}
-.mr-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #1d1733}
-.mr-btn.mr-secondary{background:linear-gradient(#5d9cff,#3c6fe0)}
-.mr-link{font:inherit;font-size:14px;background:none;border:0;color:#b9b2d8;padding:6px;cursor:pointer}
+.mr-sheet-bg{position:fixed;inset:0;z-index:9999;background:rgba(8,12,26,.72);display:flex;align-items:flex-end;justify-content:center;animation:mr-fade .2s ease-out}
+.mr-sheet{width:min(440px,calc(100% - 8px));max-height:85dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;background:#4b6a9b;color:#fff;font:16px 'Nunito',system-ui,sans-serif;border:4px solid #1d1733;border-bottom:0;border-radius:24px 24px 0 0;padding:16px 12px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -6px 0 rgba(0,0,0,.3),inset 0 3px 0 rgba(255,255,255,.22);animation:mr-up .25s cubic-bezier(.2,.9,.3,1.2)}
+.mr-sheet h2{margin:0;text-align:center;font:400 27px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;color:#fff;paint-order:stroke fill;-webkit-text-stroke:6px #1d1733;filter:drop-shadow(0 2px 0 #1d1733)}
+.mr-sheet h2 + p{margin:4px 0 0;text-align:center;font:400 15px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;color:#ffd23f;paint-order:stroke fill;-webkit-text-stroke:3.5px #1d1733}
+.mr-sheet .mr-list,.mr-sheet .mr-note{overflow-y:auto;overscroll-behavior:contain;margin:0;padding:10px 10px 12px;list-style:none;display:grid;align-content:start;gap:8px;background:#dfe8f0;color:#2b3a5c;border:3px solid #2c4268;border-radius:16px;box-shadow:inset 0 3px 0 rgba(0,0,0,.08)}
+.mr-sheet .mr-note{display:block;font-weight:700;font-size:14.5px;line-height:1.4;color:#3a4a6c}
+.mr-sheet .mr-list li{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;line-height:1.35;font-weight:700;font-size:14.5px;padding:7px 9px;border-radius:12px;background:linear-gradient(#dbe4ee 0 50%,#ccd7e4 50%);border:2.5px solid #8b9cb9}
+.mr-sheet .mr-list li::before{content:'★';color:#f59a1f;font-size:18px;line-height:1.1;-webkit-text-stroke:1.5px #1d1733}
+.mr-sheet .mr-ver{font:400 15px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;color:#f08a1a;margin:6px 2px 0}
+.mr-actions{display:grid;gap:6px}
+.mr-sheet .mr-btn{font:400 22px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;color:#fff;border:3px solid #1d1733;border-radius:14px;padding:11px 13px 13px;background:linear-gradient(#ffc84a,#f59a1f);paint-order:stroke fill;-webkit-text-stroke:5px #1d1733;box-shadow:0 5px 0 #a8461b,inset 0 3px 0 rgba(255,255,255,.35);cursor:pointer}
+.mr-sheet .mr-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8461b}
+.mr-sheet .mr-btn:disabled{background:linear-gradient(#d3dae4,#a2adbd);box-shadow:0 5px 0 #626d80}
+.mr-sheet .mr-link{font:400 16px 'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;background:none;border:0;color:#fff;padding:6px;cursor:pointer;paint-order:stroke fill;-webkit-text-stroke:3.5px #1d1733}
 @keyframes mr-fade{from{opacity:0}}
 @keyframes mr-up{from{transform:translateY(100%)}}
 `;
@@ -79,8 +82,8 @@ function showWhatsNew(notes: ReleaseNote[]): void {
 
 function showUpdateAvailable(apply: () => void): void {
   const { bg, close } = sheet(`
-    <div><h2>Nouvelle version disponible</h2><p>Une mise à jour de Marvel Rush est prête. Elle s'installe en quelques secondes ; ta progression est conservée.</p></div>
-    <div></div>
+    <div><h2>Nouvelle version</h2><p>Mise à jour disponible</p></div>
+    <p class="mr-note">Une mise à jour de Marvel Rush est prête. Elle s'installe en quelques secondes ; ta progression est conservée.</p>
     <div class="mr-actions">
       <button class="mr-btn" data-act="update">Mettre à jour</button>
       <button class="mr-link" data-act="later">Plus tard</button>

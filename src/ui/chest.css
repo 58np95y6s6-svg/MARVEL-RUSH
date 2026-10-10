@@ -26,29 +26,29 @@
 /* barre des monnaies (l'« en-tête » du coffre) */
 .ch-bar {
   position: relative; z-index: 7; display: flex; justify-content: center; gap: 5px; width: 100%;
-  padding: calc(8px + var(--safe-top)) 8px 8px; background: linear-gradient(rgba(29,23,51,.9), rgba(29,23,51,.55)); border-bottom: 3px solid var(--ink);
+  gap: 16px; padding: calc(9px + var(--safe-top)) 8px 9px 22px; background: linear-gradient(#141d35, #0f1629); border-bottom: 3px solid #070b18; box-shadow: 0 3px 0 rgba(0,0,0,.35);
 }
+/* même barre de monnaies que l'en-tête de la coquille */
 .ch-pill {
-  display: flex; align-items: center; gap: 2px; height: 28px; padding: 0 8px 0 1px; border-radius: 14px; min-width: 0;
-  background: rgba(15,11,28,.8); border: 2.5px solid var(--ink);
+  position: relative; display: flex; align-items: center; height: 28px; padding: 0 8px 0 18px; border-radius: 8px; min-width: 0;
+  background: linear-gradient(#0a0f1f, #1a2340); box-shadow: inset 0 -2px 0 rgba(255,255,255,.08), 0 0 0 2px rgba(0,0,0,.35);
 }
-.ch-pill .ic { width: 24px; height: 24px; margin: -4px 0 -4px -6px; filter: drop-shadow(0 1px 0 var(--ink)); }
-.ch-pill b { font: 400 15px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink); white-space: nowrap; }
-.ch-pill.gold b { color: #ffe27a; }
-.ch-pill.shards b { color: #ffc2e2; }
+.ch-pill .ic { position: absolute; left: -12px; top: 50%; width: 28px; height: 28px; margin-top: -14px; filter: drop-shadow(0 2px 0 var(--ink)); }
+.ch-pill b { font: 400 16px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); white-space: nowrap; }
 .ch-pill.bump { animation: ch-bump .45s ease-out; }
-@keyframes ch-bump { 40% { transform: scale(1.22); background: rgba(58,168,58,.85); } }
+@keyframes ch-bump { 40% { transform: scale(1.18); background: rgba(76,182,58,.9); } }
 
 .ch-top { position: relative; z-index: 6; display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 10px 12px 0; }
 .ch-titles { flex: 1; min-width: 0; text-align: center; padding-left: 64px; }
 .ch-title { margin: 0; font: 400 28px/1.05 var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 6px var(--ink); filter: drop-shadow(0 3px 0 var(--ink)); }
 .ch.look-or .ch-title, .ch.look-legendaire .ch-title { color: #ffe27a; }
 .ch.look-heroique .ch-title { color: #e2c4ff; }
-.ch-sub { margin: 3px 0 0; font: 800 14px var(--body); opacity: .92; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
-.ch-count { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 9px; background: rgba(0,0,0,.4); font-weight: 900; }
+.ch-sub { margin: 3px 0 0; font: 400 16px var(--display); color: #ffd23f; paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); }
+.ch-count { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 8px; background: var(--rr-navy); border: 2px solid var(--ink); color: #fff; }
 .ch-skip {
-  flex: none; width: 64px; padding: 5px 0; border-radius: 12px; border: 2.5px solid rgba(255,255,255,.65);
-  background: rgba(0,0,0,.35); color: #fff; font: 800 14px var(--body); cursor: pointer;
+  flex: none; width: 66px; padding: 5px 0 6px; border-radius: 11px; border: 3px solid var(--ink); cursor: pointer; color: #fff;
+  background: linear-gradient(#5ab4ff, #2b74de); box-shadow: 0 3px 0 #1b468f, inset 0 2px 0 rgba(255,255,255,.3);
+  font: 400 15px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink);
 }
 .ch.done .ch-skip { visibility: hidden; }
 
@@ -110,16 +110,16 @@
 .ch.opened .ch-items { max-height: none; flex: 0 1 auto; min-height: 0; overflow-y: auto; padding-top: 6px; padding-bottom: 4px; }
 .ch-item {
   position: relative; width: calc((100% - 16px) / 3); max-width: 108px; display: grid; justify-items: center; gap: 1px;
-  padding: 7px 4px 6px; border-radius: 16px; border: 3px solid var(--ink); text-align: center;
-  background: linear-gradient(#5a4c97, #2f2660); box-shadow: 0 4px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,.18);
+  padding: 7px 4px 6px; border-radius: 14px; border: 3px solid var(--ink); text-align: center; color: var(--rr-navy);
+  background: linear-gradient(var(--rr-tile-l) 0 50%, var(--rr-tile) 50%); box-shadow: 0 4px 0 rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.5);
   opacity: 0; transform: translate(var(--fx, 0), var(--fy, 0)) scale(.2);
 }
 .ch-item.out { animation: ch-out .5s cubic-bezier(.25,1.4,.5,1) forwards; }
 @keyframes ch-out { 0% { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(.2) rotate(-20deg); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
-.ch-item.money { background: linear-gradient(#4f8d3a, #285020); }
-.ch-item.r-rare { background: linear-gradient(#3b78d8, #1f3c80); }
-.ch-item.r-epique { background: linear-gradient(#9b59e6, #4c2290); }
-.ch-item.r-legendaire { background: linear-gradient(#ffb53d, #c0560e); }
+.ch-item.money { background: linear-gradient(#9fe26a 0 50%, #7fcf4a 50%); color: #1d3a12; }
+.ch-item.r-rare { background: linear-gradient(#5ab4ff, #2b74de); color: #fff; }
+.ch-item.r-epique { background: linear-gradient(#d39bff, #8a4fe0); color: #fff; }
+.ch-item.r-legendaire { background: linear-gradient(#ffc84a, #f59a1f); color: #fff; }
 .ch-item.wow::before {
   content: ''; position: absolute; inset: -10px; z-index: -1; border-radius: 22px;
   background: radial-gradient(closest-side, var(--glow), transparent); animation: ch-wow 1.6s ease-in-out infinite;
@@ -133,8 +133,9 @@
   padding: 0 6px; border-radius: 8px; background: #e8413b; border: 2px solid var(--ink); font: 400 11px var(--display); font-style: normal;
 }
 .ch-iamt { font: 400 21px/1.05 var(--display); paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); color: #fff; min-height: 18px; }
-.ch-item.money .ch-iamt { color: #ffe27a; }
-.ch-item small { font: 800 11px/1.15 var(--body); opacity: .95; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch-item.money .ch-iamt { color: #fff; }
+.ch-item[class*=' r-'] small { paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink); }
+.ch-item small { font: 400 12px/1.15 var(--display); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .ch-bottom { position: relative; z-index: 3; display: grid; justify-items: center; gap: 6px; min-height: 92px; padding: 6px 12px calc(16px + var(--safe-bottom)); }
 .ch-hint { margin: 0; min-height: 22px; font: 400 20px var(--display); paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); opacity: 0; transition: opacity .3s; }

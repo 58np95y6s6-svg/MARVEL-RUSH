@@ -7,7 +7,8 @@ import { getProfile, onProfileChange, type Profile } from '../meta/profile';
 import { freePullsTotal } from '../meta/pulls';
 import { createView } from './view';
 import { frameColor } from '../meta/road';
-import { el, fmtShort, icon, portraitUrl, type IconName } from './kit';
+import { PLUS_SVG, el, fmtShort, icon, portraitUrl, type IconName } from './kit';
+import { openCurrencySheet, type Currency } from './currencySheet';
 
 export type TabId = 'tirages' | 'collection' | 'accueil' | 'campagne' | 'encyclopedie';
 
@@ -34,24 +35,32 @@ export interface Shell {
 export function mountShell(root: HTMLElement, o: { onProfile: () => void; go: (hash: string) => void }): Shell {
   // ---------- en-tête
   const header = el('header', 'sh-head');
+  // Barre de monnaies façon Rush Royale : gemmes, or, cristaux et parchemins, chacun avec son ➕ (d'où ça vient).
+  const cur = (key: string, cls: string, ic: IconName, c: Currency, title: string) =>
+    `<span class="sh-cur sh-pill ${cls}" data-m="${key}" title="${title}">${icon(ic)}<b>0</b><button class="sh-plus" data-cur="${c}" aria-label="${title} : comment en gagner">${PLUS_SVG}</button></span>`;
   header.innerHTML = `
     <button class="sh-me" data-tuto="profile" aria-label="Profil et réglages">
       <span class="sh-avatar"><img alt=""></span>
       <span class="sh-lv"><b>1</b></span>
-      <span class="sh-who"><span class="sh-name"></span><span class="sh-xp"><i></i></span></span>
+      <span class="sh-xp"><i></i></span>
     </button>
     <div class="sh-money">
-      <span class="sh-pill gold" data-m="gold" title="Or : monte tes héros de niveau">${icon('or')}<b>0</b></span>
-      <span class="sh-pill gems" data-m="shards" title="Gemmes : ouvre des packs">${icon('gemmes')}<b>0</b></span>
+      ${cur('shards', 'gems', 'gemmes', 'gems', 'Gemmes : ouvre des packs')}
+      ${cur('gold', 'gold', 'or', 'gold', 'Or : monte tes héros de niveau')}
       <span class="sh-mini">
-        <span class="sh-pill" data-m="crystals" title="Cristaux d'éveil">${icon('cristaux')}<b>0</b></span>
-        <span class="sh-pill" data-m="scrolls" title="Parchemins de talent">${icon('parchemins')}<b>0</b></span>
+        ${cur('crystals', 'crystals', 'cristaux', 'crystals', 'Cristaux d’éveil')}
+        ${cur('scrolls', 'scrolls', 'parchemins', 'scrolls', 'Parchemins de talent')}
       </span>
     </div>`;
   const avatar = header.querySelector<HTMLImageElement>('.sh-avatar img')!;
   const lvB = header.querySelector<HTMLElement>('.sh-lv b')!;
-  const nameEl = header.querySelector<HTMLElement>('.sh-name')!;
+  const meBtn = header.querySelector<HTMLElement>('.sh-me')!;
   const xpBar = header.querySelector<HTMLElement>('.sh-xp i')!;
+  header.addEventListener('click', (e) => {
+    const c = (e.target as HTMLElement).closest<HTMLElement>('[data-cur]')?.dataset['cur'] as Currency | undefined;
+    const p = getProfile();
+    if (c && p) openCurrencySheet(overlay, p, c, o.go);
+  });
   header.querySelector('.sh-me')!.addEventListener('click', o.onProfile);
 
   // ---------- contenu
@@ -61,7 +70,7 @@ export function mountShell(root: HTMLElement, o: { onProfile: () => void; go: (h
   const footer = el('nav', 'sh-tabs');
   footer.setAttribute('aria-label', 'Navigation');
   footer.innerHTML = TABS.map((t) => `<button class="sh-tab${t.id === 'accueil' ? ' main' : ''}" data-tab="${t.id}" data-tuto="tab-${t.id}">
-      <span class="sh-ic">${icon(t.icon)}</span><span class="sh-tl">${t.label}</span><span class="sh-badge" hidden></span></button>`).join('');
+      <span class="sh-ic">${icon(t.icon)}</span><span class="sh-tl">${t.label}</span><span class="sh-badge rr-badge" hidden></span></button>`).join('');
   footer.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>('[data-tab]');
     const t = TABS.find((x) => x.id === b?.dataset['tab']);
@@ -90,7 +99,7 @@ export function mountShell(root: HTMLElement, o: { onProfile: () => void; go: (h
     avatar.src = portraitUrl(p.avatar);
     const a = accountLevel(p.xp);
     lvB.textContent = String(a.level);
-    nameEl.textContent = p.name;
+    meBtn.setAttribute('aria-label', `Profil et réglages : ${p.name}`);
     xpBar.style.width = `${Math.round((a.into / a.need) * 100)}%`;
     bump('gold', p.gold ?? 0); bump('shards', p.shards); bump('crystals', p.crystals); bump('scrolls', p.scrolls);
     const fc = frameColor(p.frame);
