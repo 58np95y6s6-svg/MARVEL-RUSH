@@ -332,10 +332,10 @@ Les 15 héros Pixar reprennent chacun une unité Rush Royale libre (ni Marvel, n
 | Sulli & Bob | Chaman | 150 / 1,0 s | moyenne | — |
 | Ian & Barley | Archimage | 140 / 1,0 s | longue | — (sort toutes les 6 s) |
 | Flash McQueen & Martin | Dryade des montagnes | 140 / 0,8 s | moyenne | 1 sur 5 : remorquage 1 s |
-| Rémy & Linguini | Médecin de peste | 135 / 0,9 s | moyenne | 1 sur 4 : marmite 60 % autour |
+| Rémy & Linguini | Alchimiste | 135 / 0,9 s | moyenne | 1 sur 4 : soupe 50 % × rang autour d'un ennemi au hasard |
 | Carl & Russell | Invocateur | 135 / 1,0 s | longue | — (ballons toutes les 6 s) |
 | Jessie & Pile-Poil | Lierre | 135 / 0,8 s | moyenne | 1 sur 4 : recul 1,5 s |
-| Frozone | Alchimiste | 107 / 1,0 s (130 avant la revue des portées) | longue | — (pont de glace toutes les 5 s) |
+| Frozone | Médecin de peste | 107 / 1,0 s (130 avant la revue des portées) | longue | — (nuage de glace à la mort d'un ennemi gelé) |
 | Luca & Alberto | Tréant | 125 / 0,8 s | moyenne | 1 sur 5 : vague, recul ½ case |
 | Violette & Flèche | Maître des esprits | 115 / 0,6 s | courte | 1 sur 3 : deux coups de plus |
 | Joie & Tristesse | Empoisonneur | 110 / 0,9 s | longue | 1 sur 4 : souvenir doré ou bleu |

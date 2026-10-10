@@ -765,6 +765,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Valkyrie (adaptation C).
     id: 'mrincredible', name: 'M. Indestructible', pack: 'pixar', rarity: 'legendaire', role: 'Contrôle de zone',
     targeting: 'premier', damage: 420, attackInterval: 1.0, range: 1.6,
+    rr: { id: 'valkyrie', name: 'Valkyrie', rarity: 'legendaire' },
     ability: {
       name: 'Coup de poing sismique',
       description: 'Toutes les 7 s, M. Indestructible frappe le sol : toute la ligne du chemin de l’ennemi de tête subit 250 % de ses dégâts et les ennemis sont étourdis 1,2 s (sauf boss).',
@@ -773,8 +774,9 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Rôdeur du crépuscule (Twilight Ranger, adaptation C).
-    id: 'elastigirl', name: 'Elastigirl', pack: 'pixar', rarity: 'epique', role: 'Tir de tête',
+    id: 'elastigirl', name: 'Elastigirl', pack: 'pixar', rarity: 'legendaire', role: 'Tir de tête',
     targeting: 'premier', damage: 160, attackInterval: 0.9, range: 'globale',
+    rr: { id: 'twilight-ranger', name: 'Rôdeur du crépuscule', rarity: 'legendaire' },
     ability: {
       name: 'Bras élastiques',
       description: 'Ses bras s’étirent sur tout le chemin : +50 % de dégâts sur l’ennemi de tête, et chaque coup le ralentit de 15 % pendant 1 s.',
@@ -782,20 +784,23 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Alchimiste (flaque périodique sur le chemin). Portée longue (rafales de glace projetées, fioles
-    // lancées de l'Alchimiste), dégâts ×1,4/1,7 : 130 → 107.
+    // Rush Royale : Médecin de peste (épique ; revue des raretés : l'Alchimiste, rare, va à Rémy). Vise le premier
+    // ennemi pas encore infecté ; à sa mort, il laisse un nuage (ici, de glace) qui blesse ceux qui passent : on frappe
+    // et on ralentit tout de suite les ennemis autour (C). Portée longue (rafales de glace), 107 gardé.
     id: 'frozone', name: 'Frozone', pack: 'pixar', rarity: 'epique', role: 'Ralentissement / zone',
     targeting: 'premier', damage: 107, attackInterval: 1.0, range: 3.4,
+    rr: { id: 'plague-doctor', name: 'Médecin de peste', rarity: 'epique' },
     ability: {
-      name: 'Pont de glace',
-      description: 'Toutes les 5 s, un pont de glace gèle le chemin autour de l’ennemi de tête : 120 % des dégâts et 45 % de ralentissement pendant 3 s.',
-      params: { abilityCooldown: 5, iceDamage: 1.2, iceSlow: 0.45, iceDuration: 3, iceRadius: 1.2 },
+      name: 'Nuage de glace',
+      description: 'Vise le premier ennemi qui n’est pas encore gelé et le gèle. Quand un ennemi gelé meurt, il éclate en nuage de glace : 150 % des dégâts du coup et 45 % de ralentissement pendant 3 s aux ennemis à 1,2 case.',
+      params: { plagueCloud: 1.5, plagueRadius: 1.2, plagueSlow: 0.45, plagueSlowDuration: 3 },
     },
   },
   {
     // Rush Royale : Maître des esprits (dégâts, améliorations).
     id: 'violetflash', name: 'Violette & Flèche', pack: 'pixar', rarity: 'rare', role: 'Échangeur',
     targeting: 'premier', damage: 115, attackInterval: 0.6, range: 1.6,
+    rr: { id: 'spirit-master', name: 'Maître des esprits', rarity: 'legendaire' },
     ability: {
       name: 'Champ de force',
       description: 'Échangeur : glisse-les sur une alliée de même rang, elles échangent leurs cases ; Violette protège l’alliée par un champ de force (insensible aux pouvoirs de boss 3 s). Coup de duo (1 attaque sur 3) : Flèche frappe deux fois de plus.',
@@ -806,6 +811,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Chaman (étourdit à la fusion).
     id: 'sullimike', name: 'Sulli & Bob', pack: 'pixar', rarity: 'epique', role: 'Mana / recul',
     targeting: 'premier', damage: 150, attackInterval: 1.0, range: 2.4,
+    rr: { id: 'shaman', name: 'Chaman', rarity: 'legendaire' },
     ability: {
       name: 'Rugissement',
       description: 'Mana par élimination : Bob compte les points, chaque ennemi touché rapporte du mana à sa mort (+2 au rang 1, jusqu’à +12 au rang 7). Toutes les 8 s, Sulli rugit : les ennemis à portée reculent d’une case (sauf boss).',
@@ -816,6 +822,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Dryade des montagnes (Mountain Avens, adaptation C).
     id: 'mcqueen', name: 'Flash McQueen & Martin', pack: 'pixar', rarity: 'rare', role: 'Soutien / vitesse',
     targeting: 'premier', damage: 140, attackInterval: 0.8, range: 2.4,
+    rr: { id: 'mountain-avens', name: 'Dryade des montagnes', rarity: 'legendaire' },
     ability: {
       name: 'Turbo',
       description: 'Boost de vitesse : ses 4 voisines tirent 25 % plus vite. Coup de duo (1 attaque sur 5) : Martin remorque la cible en arrière pendant 1 s (sauf boss).',
@@ -826,6 +833,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Invocateur (la fusion invoque une unité).
     id: 'carlrussell', name: 'Carl & Russell', pack: 'pixar', rarity: 'rare', role: 'Booster de fusion',
     targeting: 'premier', damage: 135, attackInterval: 1.0, range: 3.4,
+    rr: { id: 'summoner', name: 'Invocateur', rarity: 'legendaire' },
     ability: {
       name: 'Ballons',
       description: 'Booster de fusion : glisse-les sur une alliée de même rang, ils disparaissent et l’alliée gagne 1 rang. Toutes les 6 s, les ballons soulèvent un ennemi au hasard hors du chemin pendant 2 s (sauf boss).',
@@ -834,8 +842,9 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Empoisonneur (poison qui monte avec le rang).
-    id: 'joysadness', name: 'Joie & Tristesse', pack: 'pixar', rarity: 'epique', role: 'Copieur',
+    id: 'joysadness', name: 'Joie & Tristesse', pack: 'pixar', rarity: 'rare', role: 'Copieur',
     targeting: 'premier', damage: 110, attackInterval: 0.9, range: 3.4,
+    rr: { id: 'poisoner', name: 'Empoisonneur', rarity: 'commune' },
     ability: {
       name: 'Souvenirs',
       description: 'Copieur : glisse-les sur une alliée de même rang (autre héros) ; elles en deviennent le souvenir, à −25 % de dégâts. Tristesse empoisonne : chaque coup inflige 8 % des dégâts par seconde et par rang pendant 3 s. Coup de duo (1 sur 4) : un souvenir au hasard, doré (+20 % de dégâts à une alliée 5 s) ou bleu (cible ralentie de 40 % 2 s).',
@@ -843,19 +852,22 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Médecin de peste (nuage).
+    // Rush Royale : Alchimiste (rare ; revue des raretés : le Médecin de peste, épique, va à Frozone). Flaques d'acide
+    // périodiques sur le chemin, dégâts selon le rang (ici, la soupe renversée) ; archétype Sacrifice gardé (C).
     id: 'remy', name: 'Rémy & Linguini', pack: 'pixar', rarity: 'rare', role: 'Sacrifice / mana',
     targeting: 'premier', damage: 135, attackInterval: 0.9, range: 2.4,
+    rr: { id: 'alchemist', name: 'Alchimiste', rarity: 'rare' },
     ability: {
       name: 'Recette',
-      description: 'Sacrifice : fusionné ou détruit, rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190). Recette : +4 de mana par rang au début de chaque vague. Coup de duo (1 sur 4) : Linguini renverse la marmite, 60 % des dégâts autour de la cible.',
-      params: { sacrificeMana: 1, waveManaPerRank: 4, duoEvery: 4, potSplash: 0.6 },
+      description: 'Sacrifice : fusionné ou détruit, rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190). Recette : +4 de mana par rang au début de chaque vague. Coup de duo (1 sur 4) : Linguini renverse la soupe sur un ennemi au hasard, 50 % des dégâts par rang autour de lui.',
+      params: { sacrificeMana: 1, waveManaPerRank: 4, duoEvery: 4, puddleDamage: 0.5, puddleRadius: 1 },
     },
   },
   {
     // Rush Royale : Robot (adaptation C).
     id: 'walleeve', name: 'WALL-E & EVE', pack: 'pixar', rarity: 'legendaire', role: 'Dégâts / rayon',
     targeting: 'premier', damage: 360, attackInterval: 1.0, range: 'globale',
+    rr: { id: 'robot', name: 'Robot', rarity: 'legendaire' },
     ability: {
       name: 'Directive',
       description: 'WALL-E lance des cubes compactés. Coup de duo (1 attaque sur 3) : le rayon d’EVE frappe la cible et tous les ennemis à 1,5 case autour (150 %).',
@@ -866,6 +878,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Tréant (adaptation C).
     id: 'lucaalberto', name: 'Luca & Alberto', pack: 'pixar', rarity: 'rare', role: 'Formation',
     targeting: 'premier', damage: 125, attackInterval: 0.8, range: 2.4,
+    rr: { id: 'treant', name: 'Tréant', rarity: 'legendaire' },
     ability: {
       name: 'Silenzio, Bruno !',
       description: 'Formation : chaque autre Luca & Alberto relié (cases voisines) lui donne +15 % de dégâts (3 au plus) ; à 3, ses coups touchent aussi autour (50 %). Coup de duo (1 sur 5) : une vague de mer fait reculer la cible d’une demi-case (sauf boss).',
@@ -876,6 +889,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Élémentaire de terre (dégâts qui montent à chaque coup).
     id: 'mei', name: 'Mei (panda roux)', pack: 'pixar', rarity: 'epique', role: 'Croissance',
     targeting: 'premier', damage: 170, attackInterval: 1.0, range: 1.6,
+    rr: { id: 'earth-elemental', name: 'Élémentaire de terre', rarity: 'legendaire' },
     ability: {
       name: 'Panda géant',
       description: 'Croissance : chaque élimination et chaque seconde rendent le panda plus grand, sans plafond (de plus en plus lentement) ; fusionnée, elle garde la moitié de son bonus. Chaque coup écrase aussi les ennemis autour (50 %).',
@@ -884,8 +898,9 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Lierre (malus et graines).
-    id: 'jessie', name: 'Jessie & Pile-Poil', pack: 'pixar', rarity: 'rare', role: 'Contrôle / malus',
+    id: 'jessie', name: 'Jessie & Pile-Poil', pack: 'pixar', rarity: 'epique', role: 'Contrôle / malus',
     targeting: 'premier', damage: 135, attackInterval: 0.8, range: 2.4,
+    rr: { id: 'ivy', name: 'Lierre', rarity: 'epique' },
     ability: {
       name: 'Lasso',
       description: 'Chaque coup marque la cible : +10 % de dégâts subis pendant 4 s. Coup de duo (1 sur 4) : Jessie lance son lasso et Pile-Poil galope, la cible recule pendant 1,5 s (sauf boss).',
@@ -896,6 +911,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Archimage (adaptation C).
     id: 'ianbarley', name: 'Ian & Barley', pack: 'pixar', rarity: 'epique', role: 'Sorts aléatoires',
     targeting: 'premier', damage: 140, attackInterval: 1.0, range: 3.4,
+    rr: { id: 'archmage', name: 'Archimage', rarity: 'legendaire' },
     ability: {
       name: 'Bâton magique',
       description: 'Toutes les 6 s, un sort au hasard : boule de feu (300 % autour d’un ennemi), arrêt du temps (ennemis à portée étourdis 1,5 s), sort de croissance (+30 % de dégâts à une alliée 8 s) ou rayon (200 % à 3 ennemis).',
@@ -906,6 +922,7 @@ export const UNIT_LIST: UnitDef[] = [
     // Rush Royale : Nécromancien (adaptation C).
     id: 'joe', name: 'Joe & 22', pack: 'pixar', rarity: 'legendaire', role: 'Soutien / galvanisation',
     targeting: 'premier', damage: 260, attackInterval: 0.8, range: 3.4,
+    rr: { id: 'necromancer', name: 'Nécromancien', rarity: 'legendaire' },
     ability: {
       name: 'Musique de l’âme',
       description: 'Toutes les 10 s, Joe joue : toutes tes unités gagnent +25 % de vitesse d’attaque pendant 5 s. Coup de duo (1 sur 5) : l’étincelle de 22 double les dégâts du coup.',
@@ -937,6 +954,15 @@ export const RR_RARITY_GAPS: Partial<Record<string, string>> = {
   ratchet: 'Rare sur la Sorcière (légendaire) : aucune rare ou commune libre (la fusion enchante une alliée).',
   jazz: 'Rare sur le Loup de mer (légendaire) : aucune rare ou commune libre.',
   prowl: 'Rare sur le Maléfice (légendaire) : aucune rare ou commune libre (renforce les 4 voisines).',
+  // Extension Pixar : plus aucune unité épique, rare ou commune libre ; Élémentaire de terre, Archimage et
+  // Nécromancien sont des adaptations (unités non trouvées dans une source, rareté supposée légendaire).
+  sullimike: 'Épique sur le Chaman (légendaire) : aucune épique libre.',
+  mei: 'Épique sur l’Élémentaire de terre (rareté non vérifiée) : aucune épique libre.',
+  ianbarley: 'Épique sur l’Archimage (rareté non vérifiée) : aucune épique libre.',
+  violetflash: 'Rare sur le Maître des esprits (légendaire) : aucune rare ou commune libre.',
+  mcqueen: 'Rare sur la Dryade des montagnes (légendaire) : aucune rare ou commune libre.',
+  carlrussell: 'Rare sur l’Invocateur (légendaire) : aucune rare ou commune libre.',
+  lucaalberto: 'Rare sur le Tréant (légendaire) : aucune rare ou commune libre.',
 };
 
 /** Decks de départ (§6.1). */

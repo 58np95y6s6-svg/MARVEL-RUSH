@@ -530,13 +530,13 @@ export const TALENTS: TalentDef[] = [
     ['Maman au volant', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
     ['Parachute', 'Les coups ignorent 50 % de l’armure.', { armorPierce: 0.5 }],
   ),
-  ...u('frozone', // Alchimiste
-    ['Verglas', 'Le pont ralentit de 55 % au lieu de 45 %.', { iceSlowAdd: 0.1 }],
-    ['Glace dure', 'Le pont frappe à 180 %.', { iceDamageAdd: 0.6 }],
-    ['Patinoire', 'Le pont touche 1,7 case autour.', { iceRadiusAdd: 0.5 }],
+  ...u('frozone', // Médecin de peste
+    ['Verglas', 'Le nuage ralentit de 55 % au lieu de 45 %.', { plagueSlowAdd: 0.1 }],
+    ['Glace dure', 'Le nuage frappe à 200 % au lieu de 150 %.', { plagueCloudAdd: 0.5 }],
+    ['Patinoire', 'Le nuage s’étend à 1,7 case.', { plagueRadiusAdd: 0.5 }],
     ['Lucius', '+20 % de dégâts.', { damageMul: 1.2 }],
-    ['Blizzard', 'Pont de glace toutes les 3,5 s.', { abilityCooldownAdd: -1.5 }],
-    ['Givre durable', 'Le ralentissement dure 5 s.', { iceDurationAdd: 2 }],
+    ['Blizzard', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Givre durable', 'Le ralentissement dure 5 s.', { plagueSlowDurationAdd: 2 }],
   ),
   ...u('violetflash', // Maître des esprits
     ['Champ renforcé', 'Le champ de force dure 5 s.', { swapShieldAdd: 2 }],
@@ -578,11 +578,11 @@ export const TALENTS: TalentDef[] = [
     ['Souvenir central', 'La copie a sa compétence prête tout de suite.', { copyReady: 1 }],
     ['Joie', '+20 % de dégâts.', { damageMul: 1.2 }],
   ),
-  ...u('remy', // Médecin de peste
+  ...u('remy', // Alchimiste
     ['Ratatouille', 'Le sacrifice rapporte 30 % de mana en plus.', { sacrificeManaMul: 1.3 }],
     ['Chef étoilé', 'La recette rapporte 6 de mana par rang.', { waveManaPerRankAdd: 2 }],
     ['Coup de chance', '25 % de chance que le sacrifice rapporte deux fois plus.', { sacrificeDoubleChance: 0.25 }],
-    ['Marmite', 'La marmite renversée frappe à 90 %.', { potSplashAdd: 0.3 }],
+    ['Marmite', 'La soupe renversée frappe à 75 % par rang au lieu de 50 %.', { puddleDamageAdd: 0.25 }],
     ['Gusteau', '+25 % de dégâts.', { damageMul: 1.25 }],
     ['Service', 'Son sacrifice donne +15 % de vitesse d’attaque à toutes tes unités pendant 6 s.', { sacrificeHaste: 0.15, sacrificeHasteDuration: 6 }],
   ),

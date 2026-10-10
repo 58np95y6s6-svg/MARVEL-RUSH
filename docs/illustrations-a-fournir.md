@@ -114,6 +114,26 @@ de l'unité convient), puis les chiffrer avec
 | `wukong` | Wukong | légendaire | Mirage |
 | `enchanted-sword` | Épées enchantées | légendaire | Ultra Magnus |
 
+**Extension Pixar**
+
+| id | Unité | Rareté Rush Royale | Héros |
+|---|---|---|---|
+| `valkyrie` | Valkyrie | légendaire | M. Indestructible |
+| `twilight-ranger` | Rôdeur du crépuscule | légendaire | Elastigirl |
+| ✂ `plague-doctor` | Médecin de peste | épique | Frozone |
+| `spirit-master` | Maître des esprits | légendaire | Violette & Flèche |
+| ✂ `shaman` | Chaman | légendaire | Sulli & Bob |
+| `mountain-avens` | Dryade des montagnes | légendaire | Flash McQueen & Martin |
+| `summoner` | Invocateur | légendaire | Carl & Russell |
+| ✂ `poisoner` | Empoisonneur | commune | Joie & Tristesse |
+| ✂ `alchemist` | Alchimiste | rare | Rémy & Linguini |
+| ✂ `robot` | Robot | légendaire | WALL-E & EVE |
+| `treant` | Tréant | légendaire | Luca & Alberto |
+| `earth-elemental` | Élémentaire de terre | légendaire | Mei (panda roux) |
+| ✂ `ivy` | Lierre | épique | Jessie & Pile-Poil |
+| `archmage` | Archimage | légendaire | Ian & Barley |
+| `necromancer` | Nécromancien | légendaire | Joe & 22 |
+
 Les extensions ajoutent leurs unités sur leur branche (même tableau, même dossier `rr/`).
 
 ## Conseils pour les images

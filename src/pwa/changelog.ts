@@ -21,6 +21,7 @@ export const CHANGELOG: ReleaseNote[] = [
       'Attention à Zurg : à 30 % de ses PV, « Je suis ton père » mélange tes unités et hypnotise tout ton plateau.',
       'Trois nouveaux chapitres de campagne (13 à 15) : Metroville, Paradise Falls et la planète Z, avec trois nouvelles maps.',
       'Nouvelles équipes : Les Indestructibles, Monstres & Cie, Émotions, et Toy Story avec Buzz & Woody et Jessie.',
+      'Raretés alignées sur Rush Royale : Elastigirl (Rôdeur du crépuscule) est Légendaire, Jessie & Pile-Poil (Lierre) Épique, Joie & Tristesse (Empoisonneur) Rare. Frozone reprend le Médecin de peste : un ennemi gelé éclate en nuage de glace ; Rémy reprend l’Alchimiste : Linguini renverse la soupe.',
       'Chaque héros Pixar a une portée à son image : les rafales de Frozone portent loin, M. Indestructible, Mei et Flèche frappent au contact, Elastigirl étire ses bras sur tout le chemin.',
     ],
   },

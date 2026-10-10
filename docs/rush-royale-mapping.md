@@ -167,6 +167,20 @@ Bilan DC : 5 Légendaires (Batman, Superman, Wonder Woman, Green Lantern, Shazam
 
 Bilan Transformers : 4 Légendaires (Optimus, Grimlock, Ultra Magnus, Mirage), 5 Épiques, 6 Rares (avant 3/5/7).
 
+### Extension Pixar (revue des raretés)
+
+| Héros | Rareté avant → après | Unité avant → après | Choix |
+|---|---|---|---|
+| Frozone | Épique | Alchimiste (rare) → **Médecin de peste** (ép.) | (a) : échange avec Rémy, le nuage devient de glace. |
+| Rémy & Linguini | Rare | Médecin de peste (ép.) → **Alchimiste** (rare) | (a) : la soupe renversée ↔ la flaque de l'Alchimiste. |
+| Elastigirl | Épique → **Légendaire** | Rôdeur du crépuscule (lég.) | (b) : tireuse de tête sur tout le chemin. |
+| Jessie & Pile-Poil | Rare → **Épique** | Lierre (ép.) | (b) : le lasso qui entrave. |
+| Joie & Tristesse | Épique → **Rare** | Empoisonneur (commune) | (b) : la mélancolie qui monte avec le rang. |
+| Sulli & Bob, Mei, Ian & Barley | Épique | Chaman (lég.), Élémentaire de terre et Archimage (rareté non vérifiée) | **écart gardé** : aucune épique libre. |
+| Violette & Flèche, McQueen, Carl & Russell, Luca & Alberto | Rare | Maître des esprits, Dryade des montagnes, Invocateur, Tréant (lég.) | **écart gardé** : aucune rare ou commune libre. |
+
+Bilan Pixar : 4 Légendaires (M. Indestructible, Elastigirl, WALL-E & EVE, Joe & 22), 5 Épiques, 6 Rares (avant 3/6/6).
+
 ## Thor (Inquisiteur) — fiche d'unité et arbre de talents
 
 Source : 4 captures de la fiche « Inquisiteur » (design/references/ecrans/rr-fiche-unite-*.png), conf. A,
@@ -334,13 +348,13 @@ Thunderer.
 |---|---|---|---|---|
 | **M. Indestructible** | **Valkyrie** | Frappe une ligne entière d'ennemis → **coup de poing sismique** toutes les 7 s : toute la ligne du chemin de l'ennemi de tête (250 %, étourdit 1,2 s). | — | C |
 | **Elastigirl** | **Rôdeur du crépuscule** (Twilight Ranger) | Tireur à longue portée qui vise l'ennemi de tête → bras élastiques, +50 % sur la tête, ralentit 15 %. | — | C |
-| **Frozone** | **Alchimiste** | Flaque qui ralentit et blesse autour de la cible → pont de glace toutes les 5 s (120 %, −45 % de vitesse 3 s). | — | B |
+| **Frozone** | **Médecin de peste** (Plague Doctor) | *(raretés, octobre 2026)* Épique ↔ épique (l'Alchimiste, rare, va à Rémy). Vise le premier ennemi pas encore gelé ; un ennemi gelé éclate en mourant en nuage de glace (150 % du coup, −45 % de vitesse 3 s, 1,2 case) : le nuage de peste, appliqué tout de suite *(C)*. | — | C |
 | **Violette & Flèche** | **Maître des esprits** (Spirit Master) | Échange de place avec une alliée → champ de force (l'alliée ignore les pouvoirs de boss 3 s) ; duo 1 sur 3 : Flèche frappe deux fois de plus. | Échangeur | B |
 | **Sulli & Bob** | **Chaman** (Shaman) | Mana par ennemi tué → Bob compte les points (+2 à +12 de mana par élimination) ; rugissement toutes les 8 s (recul d'une case). | Mana par élimination | B |
 | **Flash McQueen & Martin** | **Dryade des montagnes** (Mountain Avens) | Soutien qui accélère ses voisines → turbo +25 % de cadence aux 4 voisines ; duo 1 sur 5 : Martin remorque la cible. | Boost de vitesse | C |
 | **Carl & Russell** | **Invocateur** (Summoner) | Fait monter une alliée de rang → booster de fusion ; les ballons soulèvent un ennemi 2 s toutes les 6 s. | Booster de fusion | B |
 | **Joie & Tristesse** | **Empoisonneur** (Poisoner) | Poison qui monte avec le rang → mélancolie de Tristesse (8 % des dégâts par s et par rang, 3 s) ; copieur (−25 %) ; duo 1 sur 4 : souvenir doré ou bleu. | Copieur | B |
-| **Rémy & Linguini** | **Médecin de peste** (Plague Doctor) | Unité qu'on sacrifie pour l'effet → recette : mana selon le rang en sacrifice, +4 de mana par rang à chaque vague ; duo 1 sur 4 : marmite renversée (60 % autour). | Sacrifice → mana | B |
+| **Rémy & Linguini** | **Alchimiste** | *(raretés)* Rare ↔ rare. Flaques d'acide selon le rang → coup de duo : Linguini renverse la soupe sur un ennemi au hasard, 50 % des dégâts par rang autour ; Sacrifice et recette gardés. | — | C |
 | **WALL-E & EVE** | **Robot** | Unité à deux modes de tir → cubes compactés ; duo 1 sur 3 : rayon d'EVE (150 % à 1,5 case autour). | — | C |
 | **Luca & Alberto** | **Tréant** | Plus fort à plusieurs, reliés → formation (+15 % par Luca & Alberto voisin, 3 au plus, zone à 3) ; duo 1 sur 5 : vague qui fait reculer. | Formation | C |
 | **Mei (panda roux)** | **Élémentaire de terre** (Earth Elemental) | Grandit au fil du combat → croissance sans plafond (par seconde et par élimination), écrase autour (50 %). | Croissance | B |
@@ -357,13 +371,13 @@ facteur ancien en cas de changement de catégorie).
 |---|---|---|---|
 | M. Indestructible | Valkyrie | courte → **courte** | Coups de poing qui fendent le sol ; la Valkyrie frappe au contact. |
 | Elastigirl | Rôdeur du crépuscule | globale → **globale** | Bras qui s'étirent sur tout le chemin ; flèches du Rôdeur. |
-| **Frozone** | Alchimiste | moyenne → **longue** (130 → 107) | Rafales de glace projetées et ponts de glace, comme les fioles lancées de l'Alchimiste. |
+| **Frozone** | Médecin de peste | moyenne → **longue** (130 → 107) | Rafales de glace projetées et ponts de glace, comme les fioles lancées de l'Alchimiste. |
 | Violette & Flèche | Maître des esprits | courte → **courte** | Flèche cogne en courant, Violette protège de près. |
 | Sulli & Bob | Chaman | moyenne → **moyenne** | Rugissement qui porte à quelques cases. |
 | Flash McQueen & Martin | Dryade des montagnes | moyenne → **moyenne** | Coups de pare-chocs et remorquage. |
 | Carl & Russell | Invocateur | longue → **longue** | Ballons qui s'envolent loin. |
 | Joie & Tristesse | Empoisonneur | longue → **longue** | Souvenirs lancés, larmes de Tristesse. |
-| Rémy & Linguini | Médecin de peste | moyenne → **moyenne** | Cuisine de près, marmite renversée. |
+| Rémy & Linguini | Alchimiste | moyenne → **moyenne** | Cuisine de près, soupe renversée. |
 | WALL-E & EVE | Robot | globale → **globale** | Rayon d'EVE, cubes lancés. |
 | Luca & Alberto | Tréant | moyenne → **moyenne** | Vagues de mer près du bord. |
 | Mei (panda roux) | Élémentaire de terre | courte → **courte** | Panda géant qui écrase. |

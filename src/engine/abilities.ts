@@ -502,6 +502,11 @@ function chooseTarget(ctx: Ctx, player: number, u: SimUnit, pool: SimEnemy[]): S
   // Transformation (Autobots) : robot = le plus de PV, véhicule = le plus avancé.
   const tf = chooseTfTarget(ctx, prm, u, pool);
   if (tf !== null) return tf;
+  // Médecin de peste (Frozone) : le premier ennemi qui n'est pas encore gelé.
+  if (prm.plagueCloud) {
+    const fresh = pool.filter((e) => !(e.x.plague ?? 0));
+    return selectTarget(ctx, fresh.length ? fresh : pool, 'premier');
+  }
   // Chimiste (Nick & Judy) : le premier ennemi qui n'est pas encore fiché.
   if (prm.vulnPerRank) {
     const fresh = pool.filter((e) => !(e.x.vuln ?? 0));

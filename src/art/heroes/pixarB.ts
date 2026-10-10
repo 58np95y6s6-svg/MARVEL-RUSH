@@ -145,7 +145,7 @@ export const PIXAR_B: CharDef[] = [
   },
 },
 {
-  id: 'jessie', name: 'Jessie & Pile-Poil', role: 'Contrôle / malus', rarity: 'Rare', rar: 'var(--rare)', tint: '#ffe0d0', tint2: '#f09a7a', stats: [2, 4, 3],
+  id: 'jessie', name: 'Jessie & Pile-Poil', role: 'Contrôle / malus', rarity: 'Épique', rar: 'var(--epi)', tint: '#ffe0d0', tint2: '#f09a7a', stats: [2, 4, 3],
   atk: 'Coups de lasso qui marquent la cible.', skill: 'Lasso : la cible recule, Pile-Poil galope (coup de duo).',
   sh: { L: [70, 150], R: [130, 150] },
   poses: [{ L: 12, R: -12 }, { L: 22, R: -170 }, { L: 30, R: -110, body: [6, 0, 6, 1, 1] }],

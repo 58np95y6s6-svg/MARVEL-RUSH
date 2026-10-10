@@ -89,7 +89,7 @@ const DEMO: Record<UnitId, Demo> = {
   // Extension Pixar (coup normal puis coup de duo ; compétence)
   mrincredible: { atk: [['mrincredible:poing', 'first']], ab: { name: 'Coup de poing sismique', tgt: 'line', status: { stunFor: 1.2 } } },
   elastigirl: { atk: [['elastigirl:bras', 'first']], ab: { name: 'Bras élastiques', tgt: 'first' }, status: { slow: 0.15, slowFor: 1 } },
-  frozone: { atk: [['frozone:glace', 'first']], ab: { name: 'Pont de glace', tgt: 'chain', status: { slow: 0.45, slowFor: 3 } } },
+  frozone: { atk: [['frozone:glace', 'first']], ab: { name: 'Nuage de glace', tgt: 'chain', status: { slow: 0.45, slowFor: 3 } } },
   violetflash: { atk: [['violetflash:coup', 'first'], ['violetflash:duo', 'first']], ab: { name: 'Champ de force', tgt: 'first' } },
   sullimike: { atk: [['sullimike:griffe', 'first']], ab: { name: 'Rugissement', tgt: 'chain' } },
   mcqueen: { atk: [['mcqueen:turbo', 'first'], ['mcqueen:duo', 'first']], ab: { name: 'Turbo', tgt: 'first' } },

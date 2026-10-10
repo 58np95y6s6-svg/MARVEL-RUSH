@@ -226,6 +226,19 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
   p.mana += mana;
   emit(ctx, { type: 'kill', enemy: e.uid, player: p.id, mana });
   bossReward(ctx, e);
+  plagueCloud(ctx, e);
+}
+
+/** Médecin de peste (Frozone) : un ennemi gelé laisse en mourant un nuage de glace qui frappe et ralentit autour. */
+function plagueCloud(ctx: Ctx, e: SimEnemy): void {
+  const d = e.x.plague ?? 0;
+  if (d <= 0) return;
+  e.x.plague = 0;
+  const by = e.x.plagueBy ?? 0;
+  for (const n of within(ctx, aliveAll(ctx), e, e.x.plagueRadius ?? 1.2)) {
+    dealDamage(ctx, n, d, by);
+    if (isAlive(n)) applySlow(ctx, n, e.x.plagueSlow ?? 0.45, e.x.plagueFor ?? 3);
+  }
 }
 
 /** Multiplicateur du rendement du mana (« Mana + ») d'un joueur. */

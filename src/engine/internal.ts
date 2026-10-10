@@ -63,6 +63,7 @@ export interface EnemyExtra {
   biteAcc?: number;       // mana accumulé pas encore versé (fractions)
   manaTag?: number;       // archétype « mana par élimination » : mana bonus versé à sa mort…
   manaTagBy?: number;     // …au joueur de l'unité qui l'a touché
+  plague?: number; plagueBy?: number; plagueSlow?: number; plagueRadius?: number; plagueFor?: number; // Frozone (Médecin de peste) : nuage de glace à la mort
   arrivalStun?: number; arrivalStunUnits?: number;
   // Boss
   powerIn?: number;

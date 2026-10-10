@@ -35,7 +35,7 @@ export const PIXAR_A: CharDef[] = [
   },
 },
 {
-  id: 'elastigirl', name: 'Elastigirl', role: 'Tir de tête', rarity: 'Épique', rar: 'var(--epi)', tint: '#ffd0d0', tint2: '#e87a7a', stats: [3, 5, 3],
+  id: 'elastigirl', name: 'Elastigirl', role: 'Tir de tête', rarity: 'Légendaire', rar: 'var(--leg)', tint: '#ffd0d0', tint2: '#e87a7a', stats: [3, 5, 3],
   atk: 'Bras élastique qui s’étire sur tout le chemin.', skill: 'Frappe l’ennemi de tête et le ralentit.',
   sh: { L: [68, 150], R: [132, 150] },
   poses: [{ L: 12, R: -12 }, { L: 22, R: -40 }, { L: 30, R: -92, body: [6, 0, 6, 1, 1] }],
@@ -222,7 +222,7 @@ export const PIXAR_A: CharDef[] = [
   },
 },
 {
-  id: 'joysadness', name: 'Joie & Tristesse', role: 'Copieur', rarity: 'Épique', rar: 'var(--epi)', tint: '#fff4c0', tint2: '#f0d060', stats: [3, 3, 4],
+  id: 'joysadness', name: 'Joie & Tristesse', role: 'Copieur', rarity: 'Rare', rar: 'var(--rare)', tint: '#fff4c0', tint2: '#f0d060', stats: [3, 3, 4],
   atk: 'Billes de souvenirs ; Tristesse empoisonne de mélancolie.', skill: 'Souvenirs : copie une alliée.',
   sh: { L: [70, 150], R: [130, 150] },
   poses: [{ L: 12, R: -12 }, { L: 30, R: -150 }, { L: 140, R: -100, body: [4, -4, 4, 1, 1] }],

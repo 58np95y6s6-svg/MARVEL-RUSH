@@ -61,20 +61,6 @@ export function pxTimedAbility(ctx: Ctx, player: number, slot: number, u: SimUni
       abilityEv(ctx, player, slot, id, 'Coup de poing sismique', line);
       return true;
     }
-    case 'frozone': {
-      // Alchimiste : flaque (ici, pont de glace) autour de l'ennemi de tête.
-      const lead = bestBy(enemies, (e) => progress(ctx, e));
-      if (!lead) return false;
-      const zone = [lead, ...within(ctx, all, lead, prm.iceRadius ?? 1.2)].filter(isAlive);
-      const dmg = baseDamage(ctx, player, slot, u) * (prm.iceDamage ?? 1.2);
-      for (const e of zone) {
-        unitHit(ctx, player, u, e, dmg, { noOnHit: true });
-        if (isAlive(e)) applySlow(ctx, e, prm.iceSlow ?? 0.45, (prm.iceDuration ?? 3) * ctrl);
-      }
-      fxEv(ctx, player, slot, id, zone, 'frozone:pont');
-      abilityEv(ctx, player, slot, id, 'Pont de glace', zone);
-      return true;
-    }
     case 'sullimike': {
       // Chaman : rugissement, les ennemis à portée reculent.
       if (enemies.length === 0) return false;
@@ -160,7 +146,15 @@ export function pxAttack(
       return { targets: [target], fx: 'elastigirl:bras' };
     }
     case 'frozone': {
+      // Médecin de peste : la cible gèle ; à sa mort, elle laisse un nuage de glace (combat.ts, killEnemy).
       hit(target, dmg);
+      if (isAlive(target)) {
+        target.x.plague = Math.max(target.x.plague ?? 0, dmg * (prm.plagueCloud ?? 1.5));
+        target.x.plagueBy = player;
+        target.x.plagueSlow = Math.max(target.x.plagueSlow ?? 0, prm.plagueSlow ?? 0.45);
+        target.x.plagueRadius = prm.plagueRadius ?? 1.2;
+        target.x.plagueFor = (prm.plagueSlowDuration ?? 3) * ctrl;
+      }
       return { targets: [target], fx: 'frozone:glace' };
     }
     case 'violetflash': {
@@ -210,10 +204,14 @@ export function pxAttack(
       return { targets: [target], fx: 'joysadness:souvenir' };
     }
     case 'remy': {
+      // Alchimiste : flaque (ici, la soupe renversée par Linguini, coup de duo) sur un ennemi au hasard,
+      // dégâts × rang de fusion.
       hit(target, dmg);
       if (!duo) return { targets: [target], fx: 'remy:louche' };
-      const around = splash(target, dmg * (prm.potSplash ?? 0.6), 1);
-      return { targets: [target, ...around], fx: 'remy:duo' };
+      const center = pick(ctx, enemies.filter(isAlive)) ?? target;
+      const zone = [center, ...within(ctx, enemies, center, prm.puddleRadius ?? 1)].filter(isAlive);
+      for (const e of zone) hit(e, dmg * (prm.puddleDamage ?? 0.5) * u.rank, { noOnHit: true });
+      return { targets: [target, ...zone.filter((e) => e !== target)], fx: 'remy:duo' };
     }
     case 'walleeve': {
       hit(target, dmg);

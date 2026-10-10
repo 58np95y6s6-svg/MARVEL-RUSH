@@ -172,13 +172,14 @@ const ABILITY_ROWS: Record<string, Row> = {
   lineDamage: { label: 'Coup de poing sismique', icon: 'zone', fmt: P },                                  // Valkyrie (M. Indestructible)
   lineStun: { label: 'Étourdissement', icon: 'controle', fmt: S },
   leadBonus: { label: 'Bonus sur l’ennemi de tête', icon: 'epee', fmt: (v) => `+${pct(v)}` },             // Rôdeur (Elastigirl)
-  iceDamage: { label: 'Dégâts du pont de glace', icon: 'zone', fmt: P },                                  // Alchimiste (Frozone)
-  iceSlow: { label: 'Ralentissement', icon: 'controle', fmt: P },
+  plagueCloud: { label: 'Dégâts du nuage de glace', icon: 'zone', fmt: P },                              // Médecin de peste (Frozone)
+  plagueSlow: { label: 'Ralentissement', icon: 'controle', fmt: P },
+  puddleDamage: { label: 'Soupe renversée (par rang)', icon: 'zone', fmt: (v, _u, c) => pct(v * c.rank) }, // Alchimiste (Rémy)
   swapShield: { label: 'Champ de force', icon: 'temps', fmt: S },                                         // Maître des esprits (Violette)
   roarPush: { label: 'Recul du rugissement', icon: 'controle', fmt: (v) => `${nf(v, 1)} case` },          // Chaman (Sulli)
   liftDuration: { label: 'Soulevé par les ballons', icon: 'controle', fmt: S },                           // Invocateur (Carl)
   poisonPerRank: { label: 'Poison par seconde', icon: 'epee', fmt: (v, _u, c) => pct(v * c.rank) },        // Empoisonneur (Tristesse)
-  waveManaPerRank: { label: 'Mana par vague', icon: 'mana', fmt: (v, _u, c) => nf(v * c.rank, 0) },        // Médecin de peste (Rémy)
+  waveManaPerRank: { label: 'Mana par vague', icon: 'mana', fmt: (v, _u, c) => nf(v * c.rank, 0) },        // Alchimiste (Rémy)
   eveDamage: { label: 'Rayon d’EVE', icon: 'zone', fmt: P },                                              // Robot (WALL-E)
   crushSplash: { label: 'Écrasement', icon: 'zone', fmt: P },                                             // Élémentaire de terre (Mei)
   lassoMark: { label: 'Dégâts subis (lasso)', icon: 'epee', fmt: (v) => `+${pct(v)}` },                   // Lierre (Jessie)

@@ -7,7 +7,7 @@ import { PACKS } from '../../src/data/packs';
 import { activeTeams } from '../../src/data/teams';
 import { TALENTS } from '../../src/data/talents';
 import { AWAKENINGS } from '../../src/data/awakenings';
-import { UNIT_LIST } from '../../src/data/units';
+import { UNITS, UNIT_LIST } from '../../src/data/units';
 import type { BossId, UnitId } from '../../src/data/types';
 import { createEngine, finalBossAt } from '../../src/engine';
 import type { Engine } from '../../src/engine/types';
@@ -31,11 +31,10 @@ function withBoss(boss: BossId, units: [number, UnitId, number][]): { e: Engine;
 }
 
 describe('extension Pixar : contenu', () => {
-  it('15 héros du pack Pixar (3 Légendaires, 6 Épiques, 6 Rares), même pack que les autres', () => {
+  it('15 héros du pack Pixar (4 Légendaires, 5 Épiques, 6 Rares : raretés de leurs unités Rush Royale), même pack que les autres', () => {
     expect(PX.map((u) => u.id)).toEqual(['mrincredible', 'elastigirl', 'frozone', 'violetflash', 'sullimike', 'mcqueen', 'carlrussell', 'joysadness', 'remy', 'walleeve', 'lucaalberto', 'mei', 'jessie', 'ianbarley', 'joe']);
     const by = (r: string) => PX.filter((u) => u.rarity === r).length;
-    expect(by('legendaire')).toBe(3);
-    expect(by('epique') + by('rare')).toBe(12);
+    expect([by('legendaire'), by('epique'), by('rare')]).toEqual([4, 5, 6]);
     expect(PACKS.pixar).toMatchObject({ price1: 100, price10: 900, pityLegendary: 30, rates: PACKS.marvel.rates });
   });
 
@@ -124,6 +123,34 @@ describe('compétences des héros Pixar', () => {
     const ab = ofType(ev, 'ability').find((x) => x.name === 'Coup de poing sismique');
     expect(ab).toBeDefined();
     expect(ab!.targets).toEqual(expect.arrayContaining([a.uid, b.uid]));
+  });
+
+  it('Frozone (Médecin de peste) : vise le premier ennemi pas encore gelé ; un ennemi gelé éclate en nuage de glace', () => {
+    const e = arena('frozone');
+    const lead = debugSpawn(e, { hp: 1e9, distance: 20 });
+    const back = debugSpawn(e, { hp: 1e9, distance: 10 });
+    step(e, 1);
+    expect(lead.x.plague ?? 0).toBeGreaterThan(0);
+    step(e, 25);
+    expect(back.x.plague ?? 0).toBeGreaterThan(0); // le premier est déjà gelé : il passe au suivant
+    const k = arena('frozone');
+    const weak = debugSpawn(k, { hp: 1e9, distance: 10.5 });
+    const near = debugSpawn(k, { hp: 1e9, distance: 10 });
+    step(k, 1);
+    expect(weak.x.plague ?? 0).toBeGreaterThan(0);
+    weak.hp = 1;
+    debugPlace(k, 0, 0, 'hawkeye'); // une autre unité l'achève
+    step(k, 5);
+    expect(weak.hp).toBeLessThanOrEqual(0);
+    expect(near.effects.slow ?? 0).toBeCloseTo(0.45);
+  });
+
+  it('Rémy & Linguini (Alchimiste) : la soupe renversée (coup de duo) frappe à 50 % par rang autour d’un ennemi', () => {
+    const e = arena('remy', 2);
+    for (const d of [10, 10.3]) debugSpawn(e, { hp: 1e9, distance: d });
+    const hits = ofType(step(e, 20 * 5), 'hit');
+    expect(hits.some((h) => Math.abs(h.damage - UNITS.remy.damage) < 1e-6)).toBe(true);
+    expect(hits.some((h) => Math.abs(h.damage - UNITS.remy.damage * 0.5 * 2) < 1e-6)).toBe(true);
   });
 
   it('Rémy & Linguini : +4 de mana par rang au début de chaque vague', () => {
