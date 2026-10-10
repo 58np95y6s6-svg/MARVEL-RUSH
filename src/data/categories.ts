@@ -86,7 +86,7 @@ export const UNIT_CATEGORIES: Partial<Record<string, HeroCategory[]>> = {
   ironhide: ['zone', 'antiboss'],
   ratchet: ['soutien'],
   jazz: ['mana', 'controle'],
-  arcee: ['melee', 'critique'],
+  arcee: ['critique'],
   grimlock: ['melee', 'croissance', 'zone'],
   wheeljack: ['manipulation', 'zone'],
   hotrod: ['zone'],

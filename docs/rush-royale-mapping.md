@@ -229,6 +229,30 @@ montée…), marqués *(C)* dans `src/data/talents.ts`.
 Talents : trois paliers de même famille que l'unité Rush Royale (rampe, cibles, bombes, aura, croissance…), marqués
 *(C)* dans `src/data/talents.ts` ; Rush Royale ne publie pas les talents de ces unités dans les extraits trouvés.
 
+### Portées Transformers (revue d'octobre 2026)
+
+Le moteur n'a qu'une portée par unité (pas de portée par mode : `unitRange(effectiveDef(u))`) ; la portée est donc
+choisie pour le héros, en pensant à ses deux modes, avec la même règle que la section « Portées » (dégâts × facteur
+nouveau / facteur ancien en cas de changement de catégorie).
+
+| Héros | Unité Rush Royale | Avant → après | Pourquoi |
+|---|---|---|---|
+| Optimus Prime | Banshee | moyenne → **moyenne** | Hache d'énergie et charge du camion ; le cri de la Banshee touche les ennemis proches. |
+| Bumblebee | Mage de foudre | longue → **longue** | Canon du bras ; éclairs du Mage. |
+| **Ironhide** | Chasseur de démons | moyenne → **longue** (270 → 222) | Double canon lourd sur plusieurs cibles, comme les carreaux du Chasseur. |
+| Ratchet | Sorcière | longue → **longue** | Médecin qui soigne à distance ; sorts de la Sorcière. |
+| Jazz | Loup de mer | longue → **longue** | Projecteur et blaster ; tir du pirate. |
+| **Arcee** | Cristallomancien | courte → **moyenne** (150 → 85) | Blasters du bras et lames ; les cristaux sont tirés, mais elle reste une combattante rapprochée. |
+| Grimlock | Chaperon rouge | courte → **courte** | Épée, mâchoires du T-rex ; le loup du Chaperon mord. |
+| **Wheeljack** | Corsaire | moyenne → **longue** (130 → 107) | Grenades lancées et mines, comme les bombes du Corsaire. |
+| Hot Rod | Blazey | moyenne → **moyenne** | Tir double de près, traînée de flammes du bolide. |
+| Elita-1 | Sentinelle | globale → **globale** | Tireuse de précision. |
+| Bulkhead | Gargouille | courte → **courte** | Boulet de démolition. |
+| Sideswipe | Lanceur | moyenne → **moyenne** | Lames tournoyantes et voiture qui traverse. |
+| Prowl | Maléfice | globale → **globale** | Tacticien : analyse et ralentit sur tout le chemin. |
+| Mirage | Wukong | moyenne → **moyenne** | Tirs furtifs et leurres. |
+| Ultra Magnus | Épées enchantées | moyenne → **moyenne** | Marteau du commandant. |
+
 Unités Rush Royale encore libres après l'extension Transformers (pour l'extension Pixar) : Valkyrie, Rôdeur du
 crépuscule (Twilight Ranger), Alchimiste, Maître des esprits, Chaman, Dryade des montagnes (Mountain Avens),
 Invocateur, Empoisonneur, Médecin de peste, Robot, Tréant, Élémentaire de terre, Lierre, Archimage, Nécromancien,

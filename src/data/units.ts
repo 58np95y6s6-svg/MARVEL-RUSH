@@ -514,9 +514,10 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Chasseur de démons (frappe autant de premières cibles que son rang).
+    // Rush Royale : Chasseur de démons (frappe autant de premières cibles que son rang). Portée longue (canons lourds,
+    // carreaux du Chasseur), dégâts ×1,4/1,7 : 270 → 222.
     id: 'ironhide', name: 'Ironhide', pack: 'transformers', rarity: 'epique', role: 'Multi-cibles / transformation',
-    targeting: 'fort', damage: 270, attackInterval: 1.0, range: 2.4,
+    targeting: 'fort', damage: 222, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Double canon',
       description: 'Robot : le double canon lourd frappe autant d’ennemis que son rang (les plus forts). Fourgon : 50 % des dégâts autour de la cible.',
@@ -553,9 +554,10 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Cristallomancien (dégâts qui montent à chaque coup sur la même cible).
+    // Rush Royale : Cristallomancien (dégâts qui montent à chaque coup sur la même cible). Portée moyenne (blasters du
+    // bras et lames ; cristaux tirés), dégâts ×1,7/3 : 150 → 85.
     id: 'arcee', name: 'Arcee', pack: 'transformers', rarity: 'epique', role: 'Critique / transformation',
-    targeting: 'fort', damage: 150, attackInterval: 0.8, range: 1.6,
+    targeting: 'fort', damage: 85, attackInterval: 0.8, range: 2.4,
     ability: {
       name: 'Lames d’Arcee',
       description: 'Robot : chaque coup sur la même cible +12 % de dégâts (+120 % au plus) et 20 % de chance de critique ×2. Moto : vise l’ennemi le plus rapide.',
@@ -580,9 +582,10 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Corsaire (pièges explosifs, deux sortes de bombes).
+    // Rush Royale : Corsaire (pièges explosifs, deux sortes de bombes). Portée longue (grenades lancées, bombes du
+    // Corsaire), dégâts ×1,4/1,7 : 130 → 107.
     id: 'wheeljack', name: 'Wheeljack', pack: 'transformers', rarity: 'epique', role: 'Booster de fusion',
-    targeting: 'fort', damage: 130, attackInterval: 1.0, range: 2.4,
+    targeting: 'fort', damage: 107, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Inventions',
       description: 'Booster de fusion : glisse-le sur une alliée de même rang, il disparaît et l’alliée gagne 1 rang. Robot : grenade expérimentale à effet aléatoire (étourdit, ralentit, brûle ou double dégâts). Voiture de course : toutes les 5 s, une mine explose sous l’ennemi de tête (200 % autour).',

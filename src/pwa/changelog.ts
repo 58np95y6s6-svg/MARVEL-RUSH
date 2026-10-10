@@ -21,6 +21,7 @@ export const CHANGELOG: ReleaseNote[] = [
       'Les Decepticons attaquent : Starscream, Soundwave, Shockwave, Devastator (qui se reforme une fois) et Blitzwing, puis Megatron, boss final de l’extension ; nouvelles équipes Autobots, Dinobots, Aériens et Les Machines (Iron Man, Optimus et, avec l’extension DC, Cyborg).',
       '30 nouveaux niveaux longs, chapitres 10 à 12 (Cybertron, la Terre, le Némésis), de 100 à 150 vagues, avec Megatron à la vague 150 ; nouvelles maps Cybertron, base Autobot et Mission City, et 7 arènes.',
       'Modes infinis : Unicron, le dévoreur de mondes, arrive à la vague 150, avec un nouveau palier légendaire.',
+      'Chaque Autobot a une portée à son image : les canons d’Ironhide et les grenades de Wheeljack portent loin, Arcee tire au blaster à moyenne portée, Grimlock et Bulkhead cognent au contact.',
     ],
   },
   {

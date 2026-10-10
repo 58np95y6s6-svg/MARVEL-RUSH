@@ -278,6 +278,11 @@ courte → longue (130 → 61). `--casual`, niveau 1 : `dc-rares` 16,70 → 17,5
 
 ## 2 septies. Extension Transformers : profils Rush Royale, transformation et chapitres longs (octobre 2026)
 
+**Revue des portées Transformers** (`docs/rush-royale-mapping.md` « Portées Transformers ») : Ironhide moyenne → longue
+(270 → 222), Wheeljack moyenne → longue (130 → 107), Arcee courte → moyenne (150 → 85). `--casual`, niveau 1, 20
+parties : `tf-rares` 18,50 inchangé, `meta-tf` 23,70 → 24,15, `autobots` 22,00 → 22,90, Arcee + Wheeljack + Hot Rod +
+Mirage + Sideswipe 17,80 → 19,25, départ Marvel 17,90 inchangé ; chapitre 10 `--attendu` 100 % (pire 100 %).
+
 Les 15 Autobots reprennent chacun une unité Rush Royale libre (ni Marvel, ni Disney, ni DC : `docs/rush-royale-mapping.md`, « Extension Transformers »). Règle de fusion de Rush Royale (intervalle ÷ rang), portées de notre système. **Transformation** : robot ×1,45 dégâts et ×0,75 cadence (≈ ×1,09 de DPS, vise le plus de PV), véhicule ×0,7 dégâts et ×1,6 cadence (≈ ×1,12, vise le plus avancé), toutes les 8 s ou d'un appui. Les dégâts des unités sans chiffres publiés (C) sont réglés au simulateur : au premier jet (Optimus 210, Grimlock 180, Ultra Magnus 160), le méta Transformers plafonnait à la vague 20 (18,6, −30 % du méta Marvel) ; les Légendaires et Épiques ont été relevés en quatre passes.
 
 | Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée |
@@ -285,9 +290,9 @@ Les 15 Autobots reprennent chacun une unité Rush Royale libre (ni Marvel, ni Di
 | Optimus Prime | Banshee | 570 / 1,0 s | moyenne |
 | Grimlock | Chaperon rouge | 490 / 1,0 s | courte |
 | Ultra Magnus | Épées enchantées | 450 / 1,0 s | moyenne |
-| Ironhide | Chasseur de démons | 270 / 1,0 s | moyenne |
-| Arcee | Cristallomancien | 150 / 0,8 s | courte |
-| Wheeljack | Corsaire | 130 / 1,0 s | moyenne |
+| Ironhide | Chasseur de démons | 222 / 1,0 s (270 avant la revue des portées) | longue |
+| Arcee | Cristallomancien | 85 / 0,8 s (150 avant la revue des portées) | moyenne |
+| Wheeljack | Corsaire | 107 / 1,0 s (130 avant la revue des portées) | longue |
 | Hot Rod | Blazey | 120 / 0,8 s | moyenne |
 | Mirage | Wukong | 95 / 0,9 s | moyenne |
 | Bumblebee | Mage de foudre | 70 / 0,8 s | longue |
