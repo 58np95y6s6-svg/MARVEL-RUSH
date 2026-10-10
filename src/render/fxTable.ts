@@ -29,4 +29,5 @@ export const ATTACK_FX = [
   'mcqueen:turbo', 'mcqueen:duo', 'carlrussell:canne', 'joysadness:souvenir', 'joysadness:duo', 'remy:louche', 'remy:duo',
   'walleeve:cube', 'walleeve:duo', 'lucaalberto:vague', 'lucaalberto:duo', 'mei:panda', 'jessie:lasso', 'jessie:duo',
   'ianbarley:baton', 'joe:notes', 'joe:duo',
+  'mrincredible:seisme', 'frozone:pont', 'sullimike:rugissement', 'carlrussell:ballons', 'ianbarley:feu', 'ianbarley:temps', 'ianbarley:rayon',
 ] as const;

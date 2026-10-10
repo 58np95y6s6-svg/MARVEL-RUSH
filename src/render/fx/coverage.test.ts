@@ -9,7 +9,7 @@ const src = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
 describe('signatures visuelles', () => {
   it('couvrent tous les effets d’attaque du moteur', () => {
     const engine = src('../../engine/abilities.ts') + src('../../engine/pixar.ts');
-    const emitted = [...engine.matchAll(/fx: '([a-z]+:[a-z-]+)'/g)].map((m) => m[1]!);
+    const emitted = [...engine.matchAll(/fx: '([a-z]+:[a-z-]+)'/g), ...engine.matchAll(/fxEv\([^)]*'([a-z]+:[a-z-]+)'\)/g), ...engine.matchAll(/\? '([a-z]+:[a-z-]+)' : '([a-z]+:[a-z-]+)'/g)].flatMap((m) => m.slice(1).filter(Boolean) as string[]);
     expect(emitted.length).toBeGreaterThan(20);
     for (const fx of emitted) expect(ATTACK_FX as readonly string[]).toContain(fx);
   });

@@ -47,9 +47,14 @@ function hitPoison(m: Mote): void {
 
 // ---------------------------------------------------------------- attaques
 
+/** Suffixes d'effet émis avec une compétence : l'animation est jouée par la compétence elle-même. */
+const PX_ABILITY_FX: readonly string[] = ['seisme', 'pont', 'rugissement', 'ballons', 'feu', 'temps', 'rayon'];
+
 /** Attaque d'un héros Pixar (`name` : partie après « unité: » de l'effet). Renvoie false si l'unité n'est pas Pixar. */
 export function playPxAttack(fx: CombatFx, slot: number, unit: UnitId, name: string, targets: readonly number[], o: P, b0: P, t0: number, col: number): boolean {
   const duo = name === 'duo';
+  // Effets des compétences à recharge (séisme, pont de glace, rugissement, ballons, sorts) : portés par playPxAbility.
+  if (PX_ABILITY_FX.includes(name)) return true;
   switch (unit) {
     case 'mrincredible': {
       const m = fx.shot('fist', o, t0, fx.travel(o, b0, 2000, 0.1, 0.32), hitHeavy, 0xffb347);
