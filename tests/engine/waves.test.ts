@@ -46,13 +46,25 @@ describe('vagues', () => {
     expect(waveHp(2)).toBeCloseTo(waveHp(1) * WAVE_RULES.hpGrowth);
   });
 
-  it('le taux de croissance des PV augmente toutes les 10 vagues ; mana d’élimination +10 toutes les 10 vagues (50 au plus)', () => {
+  it('croissance des PV : blocs de 10 vagues, puis frein des modes infinis après la vague 20 ; mana d’élimination +10 toutes les 10 vagues (50 au plus)', () => {
     const g = WAVE_RULES.hpGrowth - 1;
     expect(waveGrowth(1)).toBeCloseTo(1 + g);
     expect(waveGrowth(10)).toBeCloseTo(1 + g);
     expect(waveGrowth(11)).toBeCloseTo(1 + g * (1 + WAVE_RULES.hpGrowthStep));
-    expect(waveGrowth(31)).toBeCloseTo(1 + g * (1 + 3 * WAVE_RULES.hpGrowthStep));
-    for (let w = 2; w <= 60; w++) expect(waveHp(w)).toBeGreaterThan(waveHp(w - 1));
+    expect(waveGrowth(20)).toBeCloseTo(1 + g * (1 + WAVE_RULES.hpGrowthStep));
+    // Campagne (croissance fournie) : la règle des blocs continue.
+    expect(waveGrowth(31, WAVE_RULES.hpGrowth)).toBeCloseTo(1 + g * (1 + 3 * WAVE_RULES.hpGrowthStep));
+    // Modes infinis : après la vague 20, le taux redescend régulièrement vers le plancher, sans mur.
+    for (let w = 21; w <= 150; w++) {
+      expect(waveGrowth(w)).toBeLessThan(waveGrowth(w - 1));
+      expect(waveGrowth(w)).toBeGreaterThan(1 + WAVE_RULES.lateFloor);
+    }
+    expect(waveGrowth(30)).toBeLessThan(1.15);
+    expect(waveGrowth(60)).toBeLessThan(1.08);
+    for (let w = 2; w <= 150; w++) expect(waveHp(w)).toBeGreaterThan(waveHp(w - 1));
+    // Le début de partie ne change pas ; la vague 40 est 8 fois moins solide qu'avec la règle des blocs.
+    expect(waveHp(20)).toBeCloseTo(waveHp(20, WAVE_RULES.hpGrowth));
+    expect(waveHp(40, WAVE_RULES.hpGrowth) / waveHp(40)).toBeGreaterThan(6);
     expect([1, 10, 11, 21, 41, 51, 90].map(killMana)).toEqual([10, 10, 20, 30, 50, 50, 50]);
     // Types de monstres de Rush Royale : rapide PV ×0,5 et vitesse ×2 ; gros PV ×5, mana ×5, 2 vies.
     expect(ENEMIES.rapide).toMatchObject({ hpMul: 0.5, speedMul: 2 });

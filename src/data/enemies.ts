@@ -52,6 +52,16 @@ export const WAVE_RULES = {
    */
   hpGrowth: 1.17,
   hpGrowthStep: 0.25,
+  /**
+   * Modes infinis (Solo et Coop Infini, sans script.waveHpGrowth), octobre 2026 : après la vague
+   * `lateFrom`, le taux de croissance par vague ne monte plus par bloc ; il redescend en douceur
+   * (exponentielle de constante `lateDecay` vagues) vers `lateFloor`. Sans ce frein, les PV montaient
+   * de 25 à 35 % par vague après la 30e et faisaient un mur vers la vague 35 quelle que soit la
+   * collection (docs/equilibrage.md §10). La campagne garde la règle des blocs.
+   */
+  lateFrom: 20,
+  lateFloor: 0.06,
+  lateDecay: 15,
   /** Mana d'élimination : 10, +10 toutes les 10 vagues, 50 au plus (Rush Royale, Coop). */
   killManaBase: 10,
   killManaStep: 10,
@@ -74,21 +84,35 @@ export const WAVE_RULES = {
   minionEvery: 3,        // dans ces vagues, une apparition sur 3 est un groupe de sbires
 };
 
-/** Croissance des PV pendant la vague `wave` (bloc de 10 vagues : le taux monte à chaque bloc). */
-export function waveGrowth(wave: number, growth: number = WAVE_RULES.hpGrowth): number {
+/** Croissance par la règle des blocs de 10 vagues (le taux monte à chaque bloc). */
+function blockGrowth(wave: number, growth: number): number {
   const block = Math.floor(Math.max(0, wave - 1) / 10);
   return 1 + (growth - 1) * (1 + WAVE_RULES.hpGrowthStep * block);
 }
 
+/**
+ * Croissance des PV pendant la vague `wave`.
+ * - `growth` fourni (campagne : script.waveHpGrowth) : règle des blocs, le taux monte à chaque bloc de 10 vagues.
+ * - Modes infinis (`growth` absent) : règle des blocs jusqu'à la vague `lateFrom`, puis le taux redescend
+ *   vers `lateFloor` (WAVE_RULES).
+ */
+export function waveGrowth(wave: number, growth?: number): number {
+  if (growth !== undefined) return blockGrowth(wave, growth);
+  const { hpGrowth, lateFrom, lateFloor, lateDecay } = WAVE_RULES;
+  if (wave <= lateFrom) return blockGrowth(wave, hpGrowth);
+  const top = blockGrowth(lateFrom, hpGrowth) - 1;
+  return 1 + lateFloor + (top - lateFloor) * Math.exp(-(wave - lateFrom) / lateDecay);
+}
+
 /** PV d'un ennemi normal au début de la vague `wave` (avant le multiplicateur de script). */
-export function waveHp(wave: number, growth: number = WAVE_RULES.hpGrowth): number {
+export function waveHp(wave: number, growth?: number): number {
   let hp = WAVE_RULES.baseHp;
   for (let w = 1; w < wave; w++) hp *= waveGrowth(w, growth);
   return hp;
 }
 
 /** PV du monstre numéro `index` (0..count−1) de la vague : ils montent à chaque nouveau monstre. */
-export function monsterHp(wave: number, index: number, count: number, growth: number = WAVE_RULES.hpGrowth): number {
+export function monsterHp(wave: number, index: number, count: number, growth?: number): number {
   const f = count > 0 ? Math.min(1, Math.max(0, index) / count) : 0;
   return waveHp(wave, growth) * Math.pow(waveGrowth(wave, growth), f);
 }
