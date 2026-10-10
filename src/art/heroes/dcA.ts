@@ -5,8 +5,8 @@ import { SKB, SKBD, cape, clasps, cowl, ears, lenses, jaw, domino, sShield, batS
 
 export const DC_A: CharDef[] = [
 {
-  id:'batman',name:'Batman',role:'Exécution',rarity:'Légendaire',rar:'var(--leg)',tint:'#d6dbe8',tint2:'#8e97b3',stats:[4,3,4],
-  atk:'Batarang qui file vers l’ennemi le plus avancé.',skill:'Chevalier noir : coups critiques garantis contre les ennemis étourdis ou ralentis.',
+  id:'batman',name:'Batman',role:'Multi-cibles',rarity:'Légendaire',rar:'var(--leg)',tint:'#d6dbe8',tint2:'#8e97b3',stats:[4,3,4],
+  atk:'Batarang qui file vers l’ennemi le plus avancé.',skill:'Batarangs : frappe plusieurs ennemis de tête à la fois.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:12,R:-12},{L:22,R:-162,body:[-3,-3,-6,1,1.02]},{L:30,R:-98,body:[7,0,7,1,1]}],
   draw(this: CharDef, x: Ctx): string {

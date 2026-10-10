@@ -192,7 +192,7 @@ function reform(ctx: Ctx, e: SimEnemy): boolean {
   return true;
 }
 
-/** Dégâts subis en plus : fiche du Chimiste (Nick & Judy) et toiles du Trappeur (Spider-Man). */
+/** Dégâts subis en plus : fiche du Chimiste (Nick & Judy) et toiles du Trappeur (clés génériques). */
 export function vulnerability(e: SimEnemy): number {
   let v = e.x.vuln ?? 0;
   if ((e.x.netFor ?? 0) > EPS) v += (e.x.netVuln ?? 0) * (e.x.netStacks ?? 0);
@@ -345,7 +345,7 @@ export function unitActive(ctx: Ctx, player: number, u: SimUnit): boolean {
   return (u.counters.dark ?? 0) > 0 || (u.counters.activeFor ?? 0) > EPS || inquisitorActive(ctx, player, effectiveId(u));
 }
 
-/** Shang-Chi (Danse-lames) : nombre d'exemplaires qui dansent (sans voisin identique). */
+/** Mulan (Danse-lames) : nombre d'exemplaires qui dansent (sans voisin identique). */
 export function dancers(ctx: Ctx, player: number, unit: UnitId): number {
   const grid = ctx.st.players[player]!.grid;
   let n = 0;
@@ -373,15 +373,15 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
   const puSpeed = prm.powerUpAttackSpeed ?? POWERUP_ATTACK_SPEED;
   let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id))
-    * (1 + RANK_ATTACK_SPEED * (u.rank - 1))
+    * (prm.rankDamage ? 1 : 1 + RANK_ATTACK_SPEED * (u.rank - 1)) // Catapulte (Spider-Man) : le rang monte les dégâts
     * (1 + puSpeed * Math.max(0, (jammed(u) ? 1 : ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
   mul *= tfSpeedMul(prm, u);                                                                              // Transformation (Autobots)
   // Compétences de cadence des profils Rush Royale.
   if (prm.hawkSpeed !== undefined) mul *= 1 + (u.counters.form ? prm.sharkSpeed ?? 0 : prm.hawkSpeed);   // Borée (Maui)
   if ((u.counters.hurricaneFor ?? 0) > EPS) mul *= prm.hurricaneSpeedMul ?? 1;                           // Archer du vent (Vaïana)
   if (prm.activeCounts && unitActive(ctx, player, u)) mul *= prm.activeAttackSpeed ?? 1;                // Inquisiteur (Thor)
-  if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Shang-Chi)
-  if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (Mulan)
+  if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Mulan)
+  if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (clés génériques)
   if (prm.bossWaveAttackSpeedMul && ctx.st.phase === 'boss') mul *= prm.bossWaveAttackSpeedMul;          // Tireur d'élite (Falcon)
   // Extension DC.
   if (prm.vortexSpeed) mul *= 1 + prm.vortexSpeed * (u.counters.vortex ?? 0);                            // Génie (Cyborg)
@@ -400,7 +400,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   const level = info.levels[id] ?? 1;
   const pu = jammed(u) ? 1 : p.powerUps[id] ?? 1; // Brouillage de Soundwave : améliorations en partie perdues
   const flat = (prm.rankDamageFlat ?? 0) * (u.rank - 1); // Archer du vent (Vaïana) : +30 dégâts par rang
-  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * levelDamageMul(def, level) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  let dmg = (def.damage + flat) * (prm.rankDamage ? u.rank : 1 + RANK_DAMAGE * (u.rank - 1)) * levelDamageMul(def, level) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
   dmg *= 1 + teamFor(ctx, player, id).damage;
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);

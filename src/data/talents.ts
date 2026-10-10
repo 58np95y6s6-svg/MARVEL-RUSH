@@ -48,13 +48,13 @@ export const TALENTS: TalentDef[] = [
     ['Surtension', 'Iron Man arrive sur le plateau avec 1 charge.', { chargeStart: 1 }],
     ['Mark LXXXV', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
   ),
-  ...u('spiderman', // Trappeur
-    ['Toile renforcée', 'Les toiles ralentissent de 40 % au lieu de 30 %.', { netSlowAdd: 0.1 }],
-    ['Double lance-toile', 'Lance 3 toiles au lieu de 2.', { netsAdd: 1 }],
-    ['Toile acide', 'Chaque toile fait subir +15 % de dégâts au lieu de +10 % (Trappeur : réduction d’armure).', { netVulnAdd: 0.05 }],
-    ['Toile durable', 'Les toiles durent 7 s au lieu de 5 s.', { netDurationAdd: 2 }],
-    ['Toile géante', 'Les toiles couvrent un rayon de 1,5 case au lieu de 1.', { netRadiusAdd: 0.5 }],
-    ['Cocon', 'Les toiles immobilisent 1 s (sauf boss).', { netStun: 1 }],
+  ...u('spiderman', // Catapulte (talents Rush Royale non publiés : même famille, C)
+    ['Toile renforcée', 'Les ennemis restent collés 1,5 s au lieu de 1 s.', { webStunAdd: 0.5 }],
+    ['Double lance-toile', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Toile géante', 'La boule de toile couvre un rayon de 1,5 case au lieu de 1.', { webRadiusAdd: 0.5 }],
+    ['Sens d’araignée', 'Un même ennemi peut être recollé après 6 s au lieu de 9 s.', { webRestunAdd: -3 }],
+    ['Toile acide', '+25 % de dégâts.', { damageMul: 1.25 }],
+    ['Ami du quartier', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
   ),
   ...u('hulk', // Minotaure
     ['Berserker', 'À son arrivée et à la fusion, Hulk passe 15 s en Berserker : Séisme +50 % de dégâts.', { berserkDuration: 15, berserkQuake: 0.5 }],
@@ -114,13 +114,13 @@ export const TALENTS: TalentDef[] = [
     ['Glorious Purpose', 'La copie garde 15 points de dégâts de plus.', { copyDamageMulAdd: 0.15 }],
     ['Variant', 'La copie arrive avec 1 rang de plus.', { copyRankBonus: 1 }],
   ),
-  ...u('bucky', // Voleur
-    ['Bras de vibranium', 'Bonus aléatoire jusqu’à +250 % au lieu de +200 %.', { rogueCritMulAdd: 0.5 }],
-    ['Tireur d’élite', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
-    ['Coup de crosse', '10 % de chance d’étourdir 0,5 s.', { stunDuration: 0.5, stunChance: 0.1 }],
+  ...u('bucky', // Bourreau
+    ['Interrogatoire', 'Seuil d’exécution +5 points.', { executeThresholdAdd: 0.05 }],
+    ['Entraînement de l’Hydra', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Cible prioritaire', 'Contre les boss et les mini-boss, le seuil n’est réduit que d’un quart.', { executeBossFactorAdd: 0.25 }],
+    ['Bras de vibranium', '+20 % de dégâts.', { damageMul: 1.2 }],
     ['Assassin', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
-    ['Soldat de l’hiver', 'Bonus aléatoire jusqu’à +300 %.', { rogueCritMulAdd: 1 }],
-    ['Sans pitié', '+25 % de dégâts.', { damageMul: 1.25 }],
+    ['Coup de crosse', 'Chaque coup a 10 % de chance d’étourdir 0,5 s.', { stunChance: 0.1, stunDuration: 0.5 }],
   ),
   ...u('hawkeye', // Archer
     ['Flèches empoisonnées', '15 % de chance de toucher aussi 2 ennemis au hasard (talent de l’Archer de Rush Royale).', { poisonArrowChance: 0.15 }],
@@ -146,13 +146,13 @@ export const TALENTS: TalentDef[] = [
     ['Veuve noire', 'Sacrifice : 40 de mana par rang en plus.', { sacrificeManaPerRankAdd: 40 }],
     ['Espionne', '+30 % de vitesse d’attaque.', { attackSpeedMul: 1.3 }],
   ),
-  ...u('shangchi', // Danse-lames
-    ['Kung-fu', 'En dansant, +130 % de vitesse d’attaque au lieu de +100 %.', { aloneAttackSpeedAdd: 0.3 }],
-    ['Dix Anneaux', 'Chaque Shang-Chi qui danse donne +15 % de dégâts au lieu de +10 %.', { dancerDamageAdd: 0.05 }],
-    ['Maître', '+30 % de dégâts contre les boss et mini-boss (Danse-lames de Rush Royale).', { bossDamageMul: 1.3 }],
+  ...u('shangchi', // Tonnerre (talents Rush Royale non publiés : même famille, C)
+    ['Kung-fu', 'La chaîne fait 70 % des dégâts au lieu de 50 %.', { thunderDamageAdd: 0.2 }],
+    ['Anneaux rapides', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Ta Lo', 'La chaîne touche 1 ennemi de plus.', { thunderTargetsAdd: 1 }],
     ['Bâton', '+20 % de dégâts.', { damageMul: 1.2 }],
-    ['Ta Lo', 'Le bonus compte jusqu’à 12 danseurs au lieu de 8.', { dancerMaxAdd: 4 }],
-    ['Wenwu', 'Ignore la moitié de l’armure.', { armorPierce: 0.5 }],
+    ['Maître', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+    ['Wenwu', 'Étourdissement de la chaîne 0,4 s au lieu de 0,2 s.', { thunderDazeAdd: 0.2 }],
   ),
 
   // ───────────── Pack Disney ─────────────
@@ -180,13 +180,13 @@ export const TALENTS: TalentDef[] = [
     ['Couleurs du vent', '+5 points de vitesse d’attaque par rang en plus.', { auraAttackSpeedPerRankAdd: 0.05 }],
     ['L’esprit de la forêt', 'Les voisines gagnent +6 % de dégâts par rang.', { auraDamagePerRank: 0.06 }],
   ),
-  ...u('mulan', // Pyrotechnicien
-    ['Feu d’artifice', 'Nombre impair : l’explosion fait 120 % au lieu de 100 %.', { oddSplashAdd: 0.2 }],
-    ['Grande gerbe', 'Nombre impair : rayon de l’explosion +0,4 case.', { oddRadiusAdd: 0.4 }],
-    ['Discipline', 'Nombre pair : −20 % de dégâts seulement au lieu de −40 %.', { evenDamageMulAdd: 0.2 }],
+  ...u('mulan', // Danse-lames
+    ['Danse de l’épée', 'En dansant, +130 % de vitesse d’attaque au lieu de +100 %.', { aloneAttackSpeedAdd: 0.3 }],
+    ['Fleur qui s’épanouit', 'Chaque Mulan qui danse donne +15 % de dégâts au lieu de +10 %.', { dancerDamageAdd: 0.05 }],
+    ['Honneur', '+30 % de dégâts contre les boss et mini-boss (Danse-lames de Rush Royale).', { bossDamageMul: 1.3 }],
     ['Souffle de Mushu', 'Brûle la cible : 20 % des dégâts par seconde pendant 3 s.', { burnPerSecond: 0.2, burnDuration: 3 }],
-    ['Fleur qui s’épanouit', 'Nombre impair : cadence ×0,87 au lieu de ×0,67.', { oddSpeedMulAdd: 0.2 }],
-    ['Honneur', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+    ['Armée impériale', 'Le bonus compte jusqu’à 12 danseuses au lieu de 8.', { dancerMaxAdd: 4 }],
+    ['Sauveuse de la Chine', '+25 % de dégâts.', { damageMul: 1.25 }],
   ),
   ...u('merida', // Chasseur
     ['Trophée', 'Chaque boss ou mini-boss qu’elle achève : +4 % de dégâts pour la partie (talent du Chasseur).', { bossTrophy: 0.04 }],
@@ -204,13 +204,13 @@ export const TALENTS: TalentDef[] = [
     ['Trident', 'Les boss pris par le chant sont ralentis de 50 %.', { stasisBossSlow: 0.5 }],
     ['Sous l’océan', 'Deux sphères de chant au lieu d’une.', { stasisTargets: 2 }],
   ),
-  ...u('foxhound', // Jumeaux
-    ['Chasse', 'Le second coup fait +75 % au lieu de +50 %.', { secondHitBonusAdd: 0.25 }],
+  ...u('foxhound', // Voleur
+    ['Flair', 'Bonus aléatoire jusqu’à +250 % au lieu de +200 %.', { rogueCritMulAdd: 0.5 }],
     ['Course', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
-    ['Flair', '+20 % de dégâts.', { damageMul: 1.2 }],
-    ['Meute', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
-    ['Trio', 'Une troisième attaque.', { hitsAdd: 1 }],
     ['Morsure', '10 % de chance d’étourdir 0,5 s.', { stunDuration: 0.5, stunChance: 0.1 }],
+    ['Meute', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+    ['Meilleurs amis', 'Bonus aléatoire jusqu’à +300 %.', { rogueCritMulAdd: 1 }],
+    ['Chasse', '+25 % de dégâts.', { damageMul: 1.25 }],
   ),
   ...u('tiana', // Vampire
     ['Gumbo', 'Mana à l’élimination ×1,3 (talent du Vampire : +30 % de mana).', { manaPerKillMul: 1.3 }],
@@ -270,11 +270,11 @@ export const TALENTS: TalentDef[] = [
   ),
 
   // ───────────── Pack DC (extension) : talents de même famille que l’unité Rush Royale (C) ─────────────
-  ...u('batman', // Bourreau
-    ['Interrogatoire', 'Seuil d’exécution +5 points.', { executeThresholdAdd: 0.05 }],
-    ['Entraînement de la Ligue des Ombres', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
-    ['Le plus grand détective', 'Contre les boss et les lieutenants, le seuil n’est réduit que d’un quart.', { executeBossFactorAdd: 0.25 }],
+  ...u('batman', // Chasseur de démons (talents Rush Royale : critiques et cibles, même famille, C)
     ['Batarangs affûtés', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Entraînement de la Ligue des Ombres', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Ceinture utilitaire', 'Les batarangs touchent 5 ennemis au plus au lieu de 4.', { targetsMaxAdd: 1 }],
+    ['Le plus grand détective', 'Les coups ignorent 50 % de l’armure.', { armorPierce: 0.5 }],
     ['Bat-signal', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
     ['Gaz incapacitant', 'Chaque coup a 10 % de chance d’étourdir 0,5 s.', { stunChance: 0.1, stunDuration: 0.5 }],
   ),
@@ -408,12 +408,12 @@ export const TALENTS: TalentDef[] = [
     ['Gardien de Sam', 'En voiture, la rafale touche 3 ennemis à 100, 70 et 30 %, plus fort de 25 %.', { vehicleDamageAdd: 0.175 }],
     ['Éclaireur', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
   ),
-  ...u('ironhide', // Chasseur de démons
-    ['Vétéran', '+20 % de dégâts.', { damageMul: 1.2 }],
-    ['Canons lourds', 'En robot, 5 cibles au plus au lieu de 4.', { targetsMaxAdd: 1 }],
+  ...u('ironhide', // Pyrotechnicien
+    ['Feu d’artifice', 'Nombre impair : les roquettes font 120 % au lieu de 100 %.', { oddSplashAdd: 0.2 }],
+    ['Grande gerbe', 'Nombre impair : rayon des roquettes +0,4 case.', { oddRadiusAdd: 0.4 }],
+    ['Discipline', 'Nombre pair : −20 % de dégâts seulement au lieu de −40 %.', { evenDamageMulAdd: 0.2 }],
     ['Blindage', 'Ironhide ignore les pouvoirs de boss.', { immuneBossControl: 1 }],
-    ['Fourgon piégé', 'En fourgon, la zone frappe à 75 %.', { vanSplashAdd: 0.25 }],
-    ['Perforants', 'Les coups ignorent 50 % de l’armure.', { armorPierce: 0.5 }],
+    ['Chargeur rapide', 'Nombre impair : cadence ×0,87 au lieu de ×0,67.', { oddSpeedMulAdd: 0.2 }],
     ['Tank', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
   ),
   ...u('ratchet', // Sorcière

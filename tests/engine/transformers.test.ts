@@ -26,10 +26,10 @@ function arena(u: UnitId, rank = 1, deck = deckWith(u)): Engine {
 const unitAt = (e: Engine, slot: number) => simState(e).players[0]!.grid[slot]!;
 
 describe('extension Transformers : contenu', () => {
-  it('15 Autobots du pack Transformers (3 Légendaires, 5 Épiques, 7 Rares), même pack que les autres', () => {
+  it('15 Autobots du pack Transformers (4 Légendaires, 5 Épiques, 6 Rares, raretés de leurs unités Rush Royale), même pack que les autres', () => {
     expect(TF.map((u) => u.id)).toEqual(['optimus', 'bumblebee', 'ironhide', 'ratchet', 'jazz', 'arcee', 'grimlock', 'wheeljack', 'hotrod', 'elita', 'bulkhead', 'sideswipe', 'prowl', 'mirage', 'ultramagnus']);
     const by = (r: string) => TF.filter((u) => u.rarity === r).length;
-    expect([by('legendaire'), by('epique'), by('rare')]).toEqual([3, 5, 7]);
+    expect([by('legendaire'), by('epique'), by('rare')]).toEqual([4, 5, 6]);
     expect(PACKS.transformers).toMatchObject({ price1: 100, price10: 900, pityLegendary: 30, rates: PACKS.marvel.rates });
   });
 
@@ -149,11 +149,17 @@ describe('profils Rush Royale des Autobots', () => {
     expect(dropAction(unitAt(e, 7), unitAt(e, 0))).toBe('swap');
   });
 
-  it('Ironhide (Chasseur de démons) : en robot, autant de cibles que son rang', () => {
-    const e = arena('ironhide', 3);
-    for (let i = 0; i < 5; i++) debugSpawn(e, { hp: 1e9, distance: 2 + i });
-    const atk = ofType(step(e, 30), 'attack').find((a) => a.fx === 'ironhide:canons');
-    expect(atk!.targets).toHaveLength(3);
+  it('Ironhide (Pyrotechnicien) : nombre impair, roquettes de zone ; nombre pair, −40 % de dégâts', () => {
+    const e = arena('ironhide');
+    debugSpawn(e, { hp: 1e9, distance: 10 });
+    debugSpawn(e, { hp: 1e9, distance: 10.4 });
+    const hits = ofType(step(e, 30), 'hit');
+    expect(hits.length).toBeGreaterThanOrEqual(2);
+    const x = arena('ironhide');
+    debugPlace(x, 0, 0, 'ironhide');
+    debugSpawn(x, { hp: 1e9, distance: 10 });
+    const one = ofType(step(x, 30), 'attack').filter((a) => a.unit === 'ironhide');
+    expect(one.every((a) => a.targets.length === 1)).toBe(true);
   });
 
   it('Ratchet (Sorcière) : aura de vitesse en ambulance seulement', () => {

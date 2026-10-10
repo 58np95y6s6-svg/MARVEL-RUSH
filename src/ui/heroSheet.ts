@@ -12,12 +12,12 @@
 // - Éveil : étoiles, coût, passifs ;
 // - Info : description complète de la compétence (chiffres en couleur), équipes, carte.
 import './heroSheet.css';
-import { ficheUrl } from '../access/fiches';
+import { ficheUrl, rrUrl } from '../access/fiches';
 import { passivesFor } from '../data/awakenings';
 import { HERO_CATEGORIES, categoriesFor, rangeLabel } from '../data/categories';
 import { FINAL_TALENT_LEVEL, TALENT_TIER_LEVELS, TALENT_TIER_SCROLLS, finalTalentOf, talentsFor } from '../data/talents';
 import { TEAM_LIST } from '../data/teams';
-import type { TalentDef, UnitId } from '../data/types';
+import type { RrRarity, TalentDef, UnitDef, UnitId } from '../data/types';
 import { UNITS, UNIT_IDS } from '../data/units';
 import {
   AWAKENING_ATTACK_PER_STAR, AWAKENING_SPEED_PER_STAR, MAX_AWAKENING, MAX_HERO_LEVEL, awaken, awakeningCost, canAfford,
@@ -46,6 +46,28 @@ export interface HeroSheet extends Sheet {
   /** Affiche un autre héros dans la même fiche. */
   show(id: UnitId): void;
   readonly unit: UnitId;
+}
+
+const RR_RARITY: Record<RrRarity, string> = { commune: 'Commune', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
+/** Initiales d'un nom d'unité Rush Royale (cadre neutre quand l'image chiffrée manque). */
+const initials = (name: string) => name.split(/[\s’'-]+/).filter((w) => w.length > 2 || /^[A-ZÉ]/.test(w)).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
+/** « Copie Rush Royale : <Nom> » : image de l'unité (chiffrée, sinon initiales) aux couleurs de sa rareté. */
+function rrBadge(u: UnitDef, cls: string): string {
+  if (!u.rr) return '';
+  const r = u.rr;
+  return `<span class="fs-rr ${cls} rr-${r.rarity}" title="Copie Rush Royale : ${esc(r.name)} (${RR_RARITY[r.rarity].toLowerCase()})">
+    <i class="fs-rr-pic" data-rr="${esc(r.id)}"><b>${esc(initials(r.name))}</b></i>
+    <span><small>Copie Rush Royale</small><b>${esc(r.name)}</b>${cls === 'big' ? `<em>${RR_RARITY[r.rarity]}</em>` : ''}</span></span>`;
+}
+/** Remplace les initiales par l'image déchiffrée quand elle existe. */
+function fillRrPics(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>('.fs-rr-pic[data-rr]').forEach((pic) => {
+    void rrUrl(pic.dataset['rr']!).then((url) => {
+      if (!url || !pic.isConnected) return;
+      pic.style.backgroundImage = `url("${url}")`;
+      pic.classList.add('has-img');
+    });
+  });
 }
 
 const TARGETING: Record<string, string> = { premier: 'Premier', aleatoire: 'Au hasard', fort: 'Le plus fort' };
@@ -198,6 +220,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
         <img class="fs-fig${h ? '' : ' unowned'}" alt="" src="${figureUrl(id, 0)}">
         <div class="fs-badge"><span class="fs-token"><img src="${portraitUrl(id)}" alt=""></span>${stars}<span class="fs-lv">${h ? `Niv. ${h.level}` : 'Niv. —'}</span></div>
         <div class="fs-cards">${bar}<button class="fs-plus" data-a="packs" aria-label="Obtenir des cartes">＋</button></div>
+        ${rrBadge(u, 'small')}
         <div class="fs-side"><span title="${esc(packLabel(u.pack))}">${STAT_SVG.univers}</span><span title="${esc(TARGETING[u.targeting] ?? '')}">${STAT_SVG.cible}</span></div>
       </div>
       <div class="fs-tiles">${tiles.map((t) => tile(t)).join('')}</div>
@@ -337,6 +360,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
         <div><dt>Niveau</dt><dd>${h ? `${h.level}/${MAX_HERO_LEVEL}` : 'Non possédé'}</dd></div>
         <div><dt>Éveil</dt><dd>${h ? `★${h.awakening}/${MAX_AWAKENING}` : '—'}</dd></div>
       </dl>
+      ${rrBadge(u, 'big')}
       <div class="fs-cats">${cats.map((k) => `<span><i>${HERO_CATEGORIES[k].icon}</i><b>${esc(HERO_CATEGORIES[k].label)}</b><small>${esc(HERO_CATEGORIES[k].description)}</small></span>`).join('')}</div>`;
     }
     const sub = (k: typeof infoTab, svg: string, label: string) => `<button class="${infoTab === k ? 'on' : ''}" data-a="itab" data-k="${k}" aria-label="${label}">${svg}</button>`;
@@ -362,6 +386,7 @@ export function openHeroSheet(host: HTMLElement, first: UnitId, o: HeroSheetOpti
         : tab === 'talents' ? talentsTab(p, h)
           : tab === 'eveil' ? eveilTab(p, h)
             : infoTabHtml(p, h);
+    fillRrPics(body);
     if (tab === 'principal') {
       const img = body.querySelector<HTMLImageElement>('.fs-fig');
       if (img) stopLoop = attackLoop(img, id);

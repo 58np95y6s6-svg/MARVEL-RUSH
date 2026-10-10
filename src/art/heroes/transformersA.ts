@@ -60,7 +60,7 @@ export const TF_A: CharDef[] = [
   },
 },
 {
-  id: 'ironhide', name: 'Ironhide', role: 'Multi-cibles', rarity: 'Épique', rar: 'var(--epi)', tint: '#ffd8d0', tint2: '#e88a7a', stats: [4, 2, 4],
+  id: 'ironhide', name: 'Ironhide', role: 'Dégâts de zone', rarity: 'Épique', rar: 'var(--epi)', tint: '#ffd8d0', tint2: '#e88a7a', stats: [4, 2, 4],
   atk: 'Double canon lourd sur plusieurs ennemis ; en fourgon, dégâts de zone.', skill: 'Vétéran : autant de cibles que son rang.',
   sh: { L: [62, 150], R: [138, 150] },
   poses: POSES,

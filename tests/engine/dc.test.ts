@@ -56,11 +56,11 @@ function reachWave(e: Engine, w: number): EngineEvent[] {
 }
 
 describe('extension DC : données', () => {
-  it('15 héros DC, pack DC, raretés réparties comme les autres packs (4 / 6 / 5)', () => {
+  it('15 héros DC, pack DC, raretés de leurs unités Rush Royale (5 / 6 / 4)', () => {
     const dc = UNIT_LIST.filter((u) => u.pack === 'dc');
     expect(dc.map((u) => u.id).sort()).toEqual(DC_HEROES.slice().sort());
     const count = (r: string) => dc.filter((u) => u.rarity === r).length;
-    expect([count('legendaire'), count('epique'), count('rare')]).toEqual([4, 6, 5]);
+    expect([count('legendaire'), count('epique'), count('rare')]).toEqual([5, 6, 4]);
     expect(PACKS.dc).toMatchObject({ price1: 100, price10: 900, pityLegendary: PACKS.marvel.pityLegendary, rates: PACKS.marvel.rates });
   });
 
@@ -95,33 +95,16 @@ describe('extension DC : données', () => {
 });
 
 describe('extension DC : profils Rush Royale des 15 héros', () => {
-  it('Batman (Bourreau) : exécute sous 20,5 % des PV, seuil réduit de moitié contre les boss', () => {
-    const e = arena('batman');
-    const t = debugSpawn(e, { hp: 1000 });
-    t.hp = 300; // 300 − 200 = 100 < 205
-    const ev = step(e, 20);
-    expect(t.hp).toBe(0);
-    expect(abilityNames(ev)).toContain('Justicier');
-    const b = arena('batman');
-    const boss = debugSpawn(b, { hp: BIG, bossId: 'cruella' });
-    boss.x.powerIn = 1e9;
-    boss.hp = boss.maxHp * 0.15;
-    step(b, 20);
-    expect(boss.hp).toBeGreaterThan(0);
-    boss.hp = boss.maxHp * 0.09;
-    step(b, 20);
-    expect(boss.hp).toBe(0);
-    // Le seuil monte avec le niveau (+1,5 point par niveau).
-    const l1 = arena('batman');
-    const y = debugSpawn(l1, { hp: 1000 });
-    y.hp = 500; // 500 − 200 = 300 > 205
-    step(l1, 1);
-    expect(y.hp).toBeGreaterThan(0);
-    const lv = arena('batman', 1, { levels: { batman: 5 } });
-    const x = debugSpawn(lv, { hp: 1000 });
-    x.hp = 500; // 500 − 200 × 1,4 = 220 < 265
-    step(lv, 1);
-    expect(x.hp).toBe(0);
+  it('Batman (Chasseur de démons) : frappe autant de premiers ennemis que son rang, 4 au plus', () => {
+    const e = arena('batman', 3);
+    const lead = debugSpawn(e, { hp: BIG, distance: 20 });
+    for (const d of [5, 10, 15, 18]) debugSpawn(e, { hp: BIG, distance: d });
+    const atk = ofType(step(e, 1), 'attack').find((a) => a.unit === 'batman')!;
+    expect(atk.targets).toHaveLength(3);
+    expect(atk.targets[0]).toBe(lead.uid);
+    const r7 = arena('batman', 7);
+    for (const d of [5, 10, 15, 18, 20, 22]) debugSpawn(r7, { hp: BIG, distance: d });
+    expect(ofType(step(r7, 1), 'attack').find((a) => a.unit === 'batman')!.targets).toHaveLength(4);
   });
 
   it('Superman (Givre) : souffle glacial sur tout le chemin toutes les 6 s, 4 % par rang, cumulable 3 fois, boss compris', () => {
@@ -375,9 +358,9 @@ describe('extension DC : talents et passifs d’éveil lus par le moteur', () =>
     expect(t.x.frostStacks).toBe(5);
   });
 
-  it('Batman ★10 : seuil d’exécution +7 points (★4 et ★10)', () => {
+  it('Batman ★10 : les batarangs touchent un ennemi de plus', () => {
     const base = UNITS.batman.ability.params;
-    expect(resolveUnitParams('batman', base, 1, undefined, 10).executeThreshold).toBeCloseTo(0.205 + 0.07);
+    expect(resolveUnitParams('batman', base, 1, undefined, 10).targetsMax).toBe(5);
   });
 });
 

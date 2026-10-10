@@ -6,7 +6,7 @@ import { cape, clasps, cowl, ears, lenses, jaw, domino, batSym, boltSym, swoosh,
 
 export const DC_B: CharDef[] = [
 {
-  id:'shazam',name:'Shazam',role:'Dégâts en chaîne',rarity:'Épique',rar:'var(--epi)',tint:'#ffe6c2',tint2:'#f4b65a',stats:[4,3,3],
+  id:'shazam',name:'Shazam',role:'Dégâts en chaîne',rarity:'Légendaire',rar:'var(--leg)',tint:'#ffe6c2',tint2:'#f4b65a',stats:[4,3,3],
   atk:'Éclair magique qui tombe du ciel.',skill:'SHAZAM ! : un éclair géant frappe 5 ennemis et les étourdit 1 s.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:14,R:-14},{L:30,R:-172,body:[-2,-6,-3,1,1.03]},{L:28,R:-136,body:[5,-2,5,1,1]}],

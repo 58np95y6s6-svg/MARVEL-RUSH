@@ -584,7 +584,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const growthTag = growth > 0.0049 ? `<span class="grow">Croissance +${Math.round(growth * 100)} %</span>` : '';
     info.innerHTML = `<h3>${d.name}<small>Rang ${u.rank}/${MAX_RANK}</small></h3>
       <p><span class="abl">${d.ability.name}</span> : ${d.ability.description}</p>${copyNote}
-      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + POWERUP_DAMAGE * (lv - 1)) * copyMul * (1 + growth) * (1 + formation))}</span>${growthTag}${formationTag}<span>Cadence ${(d.attackInterval / ((1 + RANK_ATTACK_SPEED * (u.rank - 1)) * (1 + POWERUP_ATTACK_SPEED * (lv - 1)))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>${nextUp}`;
+      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (d.ability.params.rankDamage ? u.rank : 1 + RANK_DAMAGE * (u.rank - 1)) * (1 + POWERUP_DAMAGE * (lv - 1)) * copyMul * (1 + growth) * (1 + formation))}</span>${growthTag}${formationTag}<span>Cadence ${(d.attackInterval / ((d.ability.params.rankDamage ? 1 : 1 + RANK_ATTACK_SPEED * (u.rank - 1)) * (1 + POWERUP_ATTACK_SPEED * (lv - 1)))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>${nextUp}`;
     const c = scene.cellCenter(slot);
     const x = Math.max(20, Math.min(1000 - 20 - 560, c.x - 280));
     info.style.left = `${x}px`;

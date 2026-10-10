@@ -39,7 +39,7 @@ export const MARVEL_A: CharDef[] = [
 },
 {
   id:'spiderman',name:'Spider-Man',role:'Contrôle',rarity:'Épique',rar:'var(--epi)',tint:'#d5e0ff',tint2:'#93abef',stats:[2,5,3],
-  atk:'Tir de toile rapide.',skill:'Toile collante : ralentit de 30 %, cumulable jusqu’à immobiliser.',
+  atk:'Boule de toile.',skill:'Boule de toile : colle les ennemis autour du premier.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:12,R:-12},{L:150,R:-40,body:[0,8,-3,1.05,.92]},{L:30,R:-118,body:[5,-6,5,1,1]}],
   draw(this: CharDef, x: Ctx): string {
@@ -178,7 +178,7 @@ export const MARVEL_A: CharDef[] = [
   }
 },
 {
-  id:'venom',name:'Venom',role:'Croissance',rarity:'Épique',rar:'var(--epi)',tint:'#dcdbef',tint2:'#9c9ac4',stats:[4,3,1],
+  id:'venom',name:'Venom',role:'Croissance',rarity:'Rare',rar:'var(--rare)',tint:'#dcdbef',tint2:'#9c9ac4',stats:[4,3,1],
   atk:'Coup de griffes au corps à corps.',skill:'Symbiote : plus il reste de mana, plus Venom frappe fort.',
   sh:{L:[66,150],R:[134,150]},
   poses:[{L:16,R:-16},{L:58,R:-58,body:[0,8,0,1.07,.9]},{L:108,R:-108,body:[0,-3,0,.98,1.05],head:[0,10,1.17]}],
