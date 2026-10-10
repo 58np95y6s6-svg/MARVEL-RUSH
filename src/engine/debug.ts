@@ -51,6 +51,7 @@ export function debugSpawn(engine: Engine, d: DebugEnemy = {}): SimEnemy {
     effects: {}, x: {},
   };
   if (d.flying) e.x.flying = 1;
+  if (ctx.coop && (e.lane === 'a' || e.lane === 'b')) { e.x.from = e.lane; e.x.owner = e.lane === 'a' ? 0 : 1; }
   if (d.minionOf) e.minionOf = d.minionOf;
   if (d.bossId) {
     e.bossId = d.bossId;

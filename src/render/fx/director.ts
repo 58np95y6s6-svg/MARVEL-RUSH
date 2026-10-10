@@ -15,6 +15,11 @@ export interface FxEnemy { x: number; y: number; width: number; enemy: EnemyInst
 
 export interface FxHost {
   cell(slot: number): { x: number; y: number };
+  /**
+   * Clé stable d'une case pour un effet différé (retour du bouclier de Cap) : en Coop, la case de la partenaire
+   * reste la sienne même quand l'effet se termine hors de `withCells`. Absente : la case elle-même.
+   */
+  cellKey?(slot: number): number;
   enemy(uid: number): FxEnemy | undefined;
   enemies(): Iterable<FxEnemy>;
   shake(amp: number, dur: number): void;

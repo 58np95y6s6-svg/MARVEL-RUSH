@@ -33,6 +33,8 @@ export interface Endpoint {
   connect(id: string, timeoutMs?: number): Promise<Link>;
   /** Perte définitive du point d'accès (serveur injoignable, identifiant perdu). */
   onLost(h: () => void): () => void;
+  /** Retour au premier plan : reconnexion immédiate au serveur de rendez-vous si elle a été perdue. */
+  wake?(): void;
   destroy(): void;
 }
 
@@ -62,6 +64,11 @@ export interface MemoryNetwork extends Network {
   cut(id: string): void;
   /** Rend le réseau injoignable (true) ou le rétablit. */
   setDown(down: boolean): void;
+  /**
+   * Simule un appareil fermé brutalement (application tuée) : ses liens tombent mais le serveur garde son
+   * identifiant `holdMs` ms (comme le serveur PeerJS) ; une réouverture pendant ce temps reçoit « taken ».
+   */
+  kill(id: string, holdMs: number): void;
   ids(): string[];
 }
 
@@ -136,6 +143,13 @@ export function createMemoryNetwork(o: { latencyMs?: number } = {}): MemoryNetwo
       };
       return ep;
     },
+    kill(id, holdMs) {
+      const rec = eps.get(id);
+      if (!rec) return;
+      rec.dead = true;
+      for (const l of [...rec.links]) { l._closed(); const other = l.other; later(() => other?._closed()); }
+      setTimeout(() => { if (eps.get(id) === rec) eps.delete(id); }, holdMs);
+    },
     cut(id) {
       const rec = eps.get(id);
       if (!rec) return;
@@ -192,8 +206,14 @@ function wrapConn(c: DataConn): Link {
   c.on('error', fireClose);
   // Détection rapide d'une coupure WebRTC (téléphone qui perd le réseau).
   const pc = (c as unknown as { peerConnection?: RTCPeerConnection }).peerConnection;
+  // « disconnected » peut se rétablir seul (changement de réseau) : 5 s de grâce avant de fermer le lien.
+  let grace: ReturnType<typeof setTimeout> | null = null;
   pc?.addEventListener?.('iceconnectionstatechange', () => {
-    if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') fireClose();
+    const st = pc.iceConnectionState;
+    if (st === 'failed' || st === 'closed') { if (grace) clearTimeout(grace); fireClose(); return; }
+    if (st === 'disconnected') {
+      if (!grace) grace = setTimeout(() => { grace = null; if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') { try { c.close(); } catch { /* */ } fireClose(); } }, 5000);
+    } else if (grace) { clearTimeout(grace); grace = null; }
   });
   return {
     remote: c.peer,
@@ -238,14 +258,28 @@ export function createPeerNetwork(): Network {
         if (err.type === 'unavailable-id' || err.type === 'invalid-id' || err.type === 'browser-incompatible') {
           if (!destroyed) { destroyed = true; onLost.emit(); try { peer.destroy(); } catch { /* */ } }
         }
+        // 'network', 'server-error', 'socket-error' : PeerJS signale aussi « disconnected », traité plus bas.
       });
-      // Signalisation perdue : on se reconnecte (les liens directs déjà ouverts restent valables).
+      // Signalisation perdue (réseau coupé, page en arrière-plan) : on se reconnecte avec une attente croissante
+      // (les liens directs déjà ouverts restent valables). Après 8 échecs, le point d'accès est déclaré perdu
+      // (la présence en rouvre un, au besoin sous un nouvel identifiant).
       let retry = 0;
+      let retryTimer: ReturnType<typeof setTimeout> | null = null;
+      const lose = () => { if (!destroyed) { destroyed = true; onLost.emit(); try { peer.destroy(); } catch { /* */ } } };
+      const reconnectNow = () => {
+        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+        if (destroyed || !peer.disconnected) return;
+        if (peer.destroyed) { lose(); return; }
+        try { peer.reconnect(); } catch { lose(); }
+      };
       peer.on('disconnected', () => {
         if (destroyed) return;
+        if (retry >= 8) { lose(); return; }
         const wait = Math.min(15000, 1000 * 2 ** retry++);
-        setTimeout(() => { if (!destroyed && peer.disconnected) { try { peer.reconnect(); } catch { /* */ } } }, wait);
+        if (retryTimer) clearTimeout(retryTimer);
+        retryTimer = setTimeout(reconnectNow, wait);
       });
+      peer.on('close', () => { if (!destroyed) lose(); });
       peer.on('open', () => { retry = 0; });
       peer.on('connection', (c: DataConn) => {
         const l = wrapConn(c);
@@ -256,6 +290,7 @@ export function createPeerNetwork(): Network {
         id,
         onLink: (h) => onLink.add(h),
         onLost: (h) => onLost.add(h),
+        wake() { if (!destroyed && peer.disconnected) { retry = 0; reconnectNow(); } },
         connect(target, ms = 10000) {
           return new Promise<Link>((resolve, reject) => {
             if (destroyed) { reject(new NetError('closed', 'Connexion fermée.')); return; }
@@ -271,11 +306,30 @@ export function createPeerNetwork(): Network {
         destroy() {
           if (destroyed) return;
           destroyed = true;
+          if (retryTimer) clearTimeout(retryTimer);
           try { peer.destroy(); } catch { /* */ }
         },
       };
     },
   };
+}
+
+/**
+ * Ouvre `id` en réessayant quand il est encore « pris » : après une fermeture brutale de l'application, le
+ * serveur de rendez-vous garde l'ancien identifiant quelques secondes (jusqu'à ~1 min). Renvoie null si l'id
+ * reste pris après toutes les attentes ; les autres erreurs remontent.
+ */
+export async function openRetrying(net: Network, id: string, waitsMs: readonly number[] = [1500, 3000, 5000]): Promise<Endpoint | null> {
+  for (let i = 0; ; i++) {
+    try {
+      return await net.open(id);
+    } catch (e) {
+      if (!(e instanceof NetError) || e.code !== 'taken') throw e;
+      const w = waitsMs[i];
+      if (w === undefined) return null;
+      await new Promise((r) => setTimeout(r, w));
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------------------------

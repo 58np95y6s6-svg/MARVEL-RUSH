@@ -6,8 +6,9 @@
 // redescend à droite jusqu'à la porte du château. Coop : deux plateaux empilés (partenaire en haut, moi
 // en bas) ; deux portails à gauche, une branche longe chaque plateau par l'extérieur puis remonte (ou
 // descend) à droite ; les deux branches se rejoignent à droite dans le tronc commun, qui passe entre les
-// plateaux et mène au château au centre. Toutes les longueurs sont normalisées à PATH_CELLS cases
-// (branche + tronc en Coop) : le moteur lit les longueurs, le rendu convertit avec `lanePoint`.
+// plateaux sur toute leur largeur jusqu'au château (à gauche). Le chemin Solo fait PATH_CELLS cases ; en Coop,
+// branche + tronc est plus long (≈ 17 cases) : les boss de chaque joueur entrent par sa branche et ont le temps
+// de traverser. Le moteur lit les longueurs, le rendu convertit avec `lanePoint`.
 // Pur calcul : aucun accès au DOM.
 
 import { GRID_COLS, GRID_ROWS } from '../engine/types';
@@ -79,6 +80,12 @@ export interface CoopLayout {
   trunk: Lane;
   /** Point de jonction des deux branches (= début du tronc). */
   merge: Point;
+  /**
+   * Début de la dernière ligne droite de chaque branche avant la jonction, en cases depuis le portail : à partir
+   * de là, les ennemis de la branche de la partenaire deviennent touchables par mes unités (et inversement).
+   */
+  crossA: number;
+  crossB: number;
   /** Bandeau d'information entre les plateaux (« 1 vague avant le boss… »). */
   banner: Rect;
   controls: Controls;
@@ -220,11 +227,35 @@ function mkLane(points: Point[], cell: number, width: number): Lane {
   return { points, pixels, cells: Math.round((pixels / cell) * 100) / 100, cell, width };
 }
 
+/** Début de la dernière ligne droite d'un tracé (en pixels depuis son départ) : on remonte depuis la fin tant que
+ * les segments gardent la direction du dernier. */
+export function lastStraightStart(pts: Point[]): number {
+  const n = pts.length;
+  if (n < 2) return 0;
+  const a = pts[n - 2]!, b = pts[n - 1]!;
+  const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+  let i = n - 2;
+  while (i > 0) {
+    const p = pts[i - 1]!, q = pts[i]!;
+    const ex = q.x - p.x, ey = q.y - p.y, m = Math.hypot(ex, ey);
+    if (m < 1e-6) { i--; continue; }
+    const cross = Math.abs(ex * dy - ey * dx) / (m * l), dotp = (ex * dx + ey * dy) / (m * l);
+    if (cross > 0.02 || dotp < 0) break;
+    i--;
+  }
+  return polylineLength(pts.slice(0, i + 1));
+}
+
+/** Longueur minimale du tronc commun en Coop, en cases (il longe les plateaux sur toute leur largeur). */
+export const COOP_TRUNK_MIN_CELLS = 5.5;
+
 /**
- * Coop : branches symétriques (miroir horizontal) + tronc. La longueur d'une branche plus celle du tronc
- * vaut PATH_CELLS cases : on ajuste l'extrémité du tronc (le château) pour y arriver.
+ * Coop : branches symétriques (miroir horizontal) + tronc. Chaque branche longe le plateau de son joueur par
+ * l'extérieur puis rejoint la jonction (à droite, entre les plateaux) par une dernière ligne droite ; le tronc
+ * commun repart vers la gauche entre les deux plateaux, sur toute leur largeur, jusqu'au château (au bord gauche des plateaux).
+ * Les boss de chaque joueur entrent par sa branche et font tout le chemin, comme les monstres.
  */
-function coopLanes(top: BoardLayout, bottom: BoardLayout, shape: PathShape): { a: Lane; b: Lane; trunk: Lane; merge: Point } {
+function coopLanes(top: BoardLayout, bottom: BoardLayout, shape: PathShape): { a: Lane; b: Lane; trunk: Lane; merge: Point; crossA: number; crossB: number } {
   const c = top.cell;
   const gap = Math.round(c * 0.25);
   const half = top.pathWidth / 2;
@@ -239,11 +270,12 @@ function coopLanes(top: BoardLayout, bottom: BoardLayout, shape: PathShape): { a
   const clean = (p: Point[]) => p.filter((q, i, arr) => i === 0 || Math.hypot(q.x - arr[i - 1]!.x, q.y - arr[i - 1]!.y) > 0.5);
   const b = mkLane(roundCorners(clean(rawB), c * 0.38), c, top.pathWidth);
   const a = mkLane(roundCorners(clean(rawA), c * 0.38), c, top.pathWidth);
-  const branch = Math.max(a.pixels, b.pixels);
-  const trunkPx = Math.max(c * 1.5, PATH_CELLS * c - branch);
   const merge = { x: R, y: M };
-  const trunk = mkLane([merge, { x: Math.round((R - trunkPx) * 10) / 10, y: M }], c, Math.round(top.pathWidth * 1.15));
-  return { a, b, trunk, merge };
+  // Tronc : de la jonction (à droite) au château (à gauche), entre les deux plateaux.
+  const end = Math.min(top.grid.x, R - COOP_TRUNK_MIN_CELLS * c);
+  const trunk = mkLane([merge, { x: Math.round(end * 10) / 10, y: M }], c, Math.round(top.pathWidth * 1.15));
+  const cells = (px: number) => Math.round((px / c) * 100) / 100;
+  return { a, b, trunk, merge, crossA: cells(lastStraightStart(a.points)), crossB: cells(lastStraightStart(b.points)) };
 }
 
 function controls(top: number, bottom: number, upH = 130): Controls {
@@ -275,10 +307,10 @@ export function coopLayout(shape: PathShape = 'u'): CoopLayout {
   const x = (SCREEN.w - 5 * cell) / 2;
   const partner = board(x, 250, cell);
   const self = board(x, 250 + 3 * cell + 180, cell);
-  const { a, b, trunk, merge } = coopLanes(partner, self, shape);
+  const { a, b, trunk, merge, crossA, crossB } = coopLanes(partner, self, shape);
   return {
     mode: 'coop', hud: { x: 0, y: 0, w: 1000, h: 136 }, partner, self,
-    branchA: a, branchB: b, trunk, merge,
+    branchA: a, branchB: b, trunk, merge, crossA, crossB,
     banner: { x: 150, y: merge.y - 32, w: 700, h: 64 },
     controls: controls(1290, 1590, 104),
   };

@@ -738,3 +738,32 @@ au niveau 8 : Légendaires 1 452, Épiques 1 540, Rares 873. Mulan : 520 → **8
 Rare médiane). Les Légendaires restent sous les Épiques au niveau 8 dans cette mesure parce que quatre d'entre elles
 sont des unités d'effet (Hulk au contact, Loki copieur, Ariel qui fige, Coco booster) ; en Solo Infini, Iron Man et Thor
 dominent (IP ×1,34 et ×1,09 au niveau 8).
+
+## 12. Coop : long tronc commun, un boss par branche, règle de ciblage (octobre 2026)
+
+> Retours sur deux téléphones : « Les boss spawnent près de la fin », « Les boss se déplacent moins vite aussi »,
+> « Les personnages sur le terrain de l'autre ne doivent être touchables qu'après le second virage ».
+
+**Changements** (src/maps/layout.ts, src/engine) : le tronc commun part de la jonction (à droite, entre les plateaux) et
+traverse toute la largeur des plateaux jusqu'au château (5,6 cases ; branche ≈ 11 ; chemin complet ≈ 16,7 cases contre
+14 en Solo). À chaque vague de boss, **un boss par branche** (petit ou gros), qui fait tout le chemin ; pouvoirs sur le
+plateau de son côté. Mes unités touchent ma branche et le tronc, et la branche de ma partenaire seulement sur sa
+dernière ligne droite (≈ 4 cases avant la jonction, `geometry.cross`).
+
+| Réglage (Coop seulement) | Valeur |
+|---|---|
+| Gros boss : vitesse | 0,35 case/s (Solo 0,5) : traversée ≈ 48 s (Solo 28 s) |
+| Mini-boss : vitesse | ×0,7 d'un monstre commun (Solo ×0,8) |
+| PV de chaque boss (Coop Infini) | 65 % d'un boss Solo de la vague (`COOP_BOSS.hpShare`) |
+| PV de chaque boss imposé (Coop Niveaux, `endOnBossKill`, les deux à abattre) | 140 % (`COOP_BOSS.levelHpShare`) |
+| PV des monstres | ×3,5 (`COOP_ENEMY_HP_MUL`), atteint progressivement de la vague 1 à la vague 15 (`COOP_HP_RAMP_WAVES`) |
+
+**Mesures** (`scripts/simulate.ts --coop --max 150`, 30 parties ; bot de référence / `--casual`) :
+
+| Duo | Avant | Après le seul changement de chemin | Après réglage |
+|---|---|---|---|
+| Départ Marvel × 2 | 13,8 / 13,7 | 23,3 / 20,2 | 16,0 / 13,5 |
+| Moyenne × 2 (Thor, Iron Man, Spider-Man, Soldat de l'hiver, Black Widow ; niv. 6, 1 palier, ★1) | 37,2 / 34,4 | 55,2 / 51,9 | 37,3 / 34,0 |
+
+Coop Niveaux (`--coop-niveaux all 8`, collection attendue par chapitre) : victoire moyenne 85 % → 87 % ; niveaux de
+boss des chapitres 1 à 3 (12 parties) : 26 % → 31 % de victoires en moyenne.

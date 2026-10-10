@@ -58,6 +58,8 @@ export interface CoopBattle {
   partner: { name: string; avatar: UnitId };
   /** Abandon confirmé : quitter la partie. */
   onQuit: () => void;
+  /** Hôte : sauvegarde immédiate (partenaire partie : reprise plus tard). */
+  saveNow?: () => void;
   /** Observateur de la partie (statistiques des deux joueurs) : avant et après chaque pas de simulation. */
   observe?: { before(st: Engine['state']): void; after(st: Engine['state'], evs: EngineEvent[]): void };
 }
@@ -169,6 +171,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const bossImg = bossBar.querySelector('img')!, bossName = bossBar.querySelector('.mr-boss-name span') as HTMLElement;
   const bossRage = bossBar.querySelector('.mr-boss-name small') as HTMLElement;
   const bossFill = bossBar.querySelector('.mr-boss-fill') as HTMLElement, bossPct = bossBar.querySelector('.mr-boss-pct') as HTMLElement;
+  // Coop : un boss de chaque côté ; la barre a deux segments (à gauche le mien, à droite celui de la partenaire).
+  const bossFill2 = document.createElement('div');
+  bossFill2.className = 'mr-boss-fill b';
+  if (coop) { bossBar.classList.add('duo'); bossFill.insertAdjacentElement('afterend', bossFill2); }
 
   // Bandeaux
   const banner = el('div', 'mr-banner', '<img alt=""><span></span>');
@@ -262,6 +268,15 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   let toastTimer = 0;
   let lastSnapAt = 0;
   let giftArmed = false;
+  let giftTimer = 0;
+  /** Désarme « Offrir » (après un don, un glisser, un toucher hors unité ou 5 s sans choix). */
+  function disarmGift(): void {
+    clearTimeout(giftTimer);
+    giftTimer = 0;
+    if (!giftArmed) return;
+    giftArmed = false;
+    coopHud?.armGift(false);
+  }
   let coopHud: CoopHud | null = null;
 
   const apply = (c: Command) => engine.apply(c);
@@ -358,24 +373,29 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       cache.lives = st.lives;
     }
 
-    // Barre du boss
-    const boss = st.enemies.find((e) => e.bossId || e.giant);
+    // Barre du boss (Coop : les deux boss, un de chaque côté ; mon boss = celui de ma branche, apparu le premier pour p1).
+    const bosses = st.enemies.filter((e) => e.bossId || e.giant).sort((a, b) => a.uid - b.uid);
+    const boss = coop && bosses.length > 1 ? bosses[meIdx] ?? bosses[0] : bosses[0];
     if (boss) {
       const small = !boss.bossId;
       const id = (boss.bossId ?? boss.minionOf) as BossId;
-      const key = `${boss.uid}`;
+      const other = coop ? bosses.find((e) => e !== boss) : undefined;
+      const key = `${bosses.map((e) => e.uid).join(',')}`;
       if (cache.bossKey !== key) {
         cache.bossKey = key;
         bossImg.src = svgUrl(small ? minionSvg(id, 0) : bossSvg(id, 0));
-        bossName.textContent = small ? LIEUTENANTS[id].name : BOSSES[id].name;
+        bossName.textContent = (small ? LIEUTENANTS[id].name : BOSSES[id].name) + (other ? ' ×2' : '');
         bossBar.classList.add('on');
         bossBar.classList.toggle('small', small);
+        bossBar.classList.toggle('two', !!other);
         cache.bossPct = -1;
       }
-      const pct = Math.max(0, Math.min(1, boss.hp / boss.maxHp));
+      const left = (e: typeof boss | undefined) => (e ? Math.max(0, Math.min(1, e.hp / e.maxHp)) : 0);
+      const pct = other ? (left(boss) + left(other)) / 2 : left(boss);
       if (Math.abs(pct - cache.bossPct) > 0.002) {
         cache.bossPct = pct;
-        bossFill.style.transform = `scaleX(${pct})`;
+        bossFill.style.transform = `scaleX(${left(boss)})`;
+        bossFill2.style.transform = `scaleX(${left(other)})`;
         bossPct.textContent = `${Math.ceil(pct * 100)} %`;
       }
       const r = st.bossRageIn;
@@ -412,7 +432,12 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     }
   }
 
+  let lastAnnounce = '';
   function announceBoss(boss: BossId, small: boolean): void {
+    // Coop : deux boss apparaissent en même temps (un par branche) : une seule annonce.
+    const tag = `${boss}:${small}:${engine.state.wave}`;
+    if (tag === lastAnnounce) return;
+    lastAnnounce = tag;
     const img = announce.querySelector('img')!;
     img.src = svgUrl(small ? minionSvg(boss, 2) : bossSvg(boss, 1));
     (announce.querySelector('.tag') as HTMLElement).textContent = small ? 'LIEUTENANT !' : 'BOSS !';
@@ -474,6 +499,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
           break;
         case 'bossPower':
           showToast(`${ev.name} !`);
+          break;
+        case 'gift':
+          // Coop : on voit clairement qui a donné quoi (une unité offerte change de plateau).
+          if (coop && ev.to === me) showToast(`${coop.partner.name} t’offre ${UNITS[ev.unit].name} !`);
           break;
         case 'mana':
           if (ev.player !== me) break;
@@ -621,23 +650,21 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   // Glisser-fusionner (toucher et souris)
   const pt = { x: 0, y: 0 };
-  let press: { id: number; slot: number; x: number; y: number; dragging: boolean; held: boolean; unit: UnitId } | null = null;
+  let press: { id: number; slot: number; x: number; y: number; dragging: boolean; held: boolean; unit: UnitId; gift?: boolean } | null = null;
   function onDown(e: PointerEvent): void {
     if (!scene || over || userPaused || press) return;
     scene.toLogical(e.clientX, e.clientY, pt);
     const slot = scene.slotAt(pt.x, pt.y);
     const u = slot >= 0 ? myP().grid[slot] : null;
-    if (giftArmed) {
-      // Offrir : l'unité touchée part sur une case vide du plateau de la partenaire.
-      giftArmed = false;
-      coopHud?.armGift(false);
-      if (u) { apply({ type: 'gift', player: me, slot }); navigator.vibrate?.(20); }
-      else showToast('Touche une de tes unités pour l’offrir.');
+    if (giftArmed && !u) {
+      disarmGift();
+      showToast('Offrir annulé.');
       e.preventDefault();
       return;
     }
     if (!u) { hideInfo(); return; }
-    press = { id: e.pointerId, slot, x: pt.x, y: pt.y, dragging: false, held: false, unit: u.unit };
+    // Offrir armé : l'unité ne part qu'au relâcher, sur un simple toucher (un glisser annule l'offre).
+    press = { id: e.pointerId, slot, x: pt.x, y: pt.y, dragging: false, held: false, unit: u.unit, gift: giftArmed };
     try { host.setPointerCapture(e.pointerId); } catch { /* ignoré */ }
     e.preventDefault();
     const p = press;
@@ -655,7 +682,8 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     if (!scene || !press || e.pointerId !== press.id) return;
     scene.toLogical(e.clientX, e.clientY, pt);
     if (!press.dragging && Math.hypot(pt.x - press.x, pt.y - press.y) > 22) {
-      // Le doigt bouge : glisser-fusionner (même après un appui long).
+      // Le doigt bouge : glisser-fusionner (même après un appui long). Un glisser annule une offre armée.
+      if (press.gift) { press.gift = false; disarmGift(); }
       endHold();
       press.held = false;
       if (!myP().grid[press.slot]) { press = null; return; }
@@ -669,6 +697,18 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const p = press;
     press = null;
     scene.toLogical(e.clientX, e.clientY, pt);
+    if (p.gift) {
+      clearTimeout(holdTimer);
+      holdTimer = 0;
+      if (p.held) endHold();
+      disarmGift();
+      if (myP().grid[p.slot]?.unit === p.unit) {
+        apply({ type: 'gift', player: me, slot: p.slot });
+        showToast(`Cadeau pour ${coop?.partner.name ?? 'ta partenaire'} : ${UNITS[p.unit].name}`);
+        navigator.vibrate?.(20);
+      }
+      return;
+    }
     if (p.held) { endHold(); return; }
     clearTimeout(holdTimer);
     holdTimer = 0;
@@ -788,12 +828,17 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
         coopHud = createCoopHud({
           stage, wrap, dock, extra, scene: s, engine, me, partner: coop.partner, session: coop.session,
           toast: showToast,
+          saveNow: coop.saveNow,
           onGift: () => {
             if (over) return;
             if (myP().giftUsedThisWave) { showToast('Tu as déjà offert une unité pendant cette vague.'); return; }
-            giftArmed = !giftArmed;
-            coopHud?.armGift(giftArmed);
-            if (giftArmed) { hideInfo(); showToast('Touche l’unité à offrir à ta partenaire.'); }
+            if (giftArmed) { disarmGift(); return; }
+            giftArmed = true;
+            coopHud?.armGift(true);
+            hideInfo();
+            showToast('Touche l’unité à offrir à ta partenaire (5 s).');
+            clearTimeout(giftTimer);
+            giftTimer = window.setTimeout(disarmGift, 5000);
           },
         });
         if (coopHost) {
@@ -805,7 +850,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
             const release = () => { if (released) return; released = true; offLoaded(); engine.apply({ type: 'pause', paused: false }); coopHud?.waiting(null); };
             const offLoaded = coopHost.onGuestLoaded(release);
             window.setTimeout(release, 15000);
-          }
+          } else if (engine.state.phase === 'pause') engine.apply({ type: 'pause', paused: false }); // reprise d'une sauvegarde faite en pause
         } else guestSession?.loaded();
         lastSnapAt = performance.now();
       }

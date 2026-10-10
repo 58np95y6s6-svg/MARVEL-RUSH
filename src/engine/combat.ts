@@ -188,7 +188,9 @@ function reform(ctx: Ctx, e: SimEnemy): boolean {
   if (e.bossId !== 'devastator' || e.x.reformed) return false;
   e.x.reformed = 1;
   e.hp = e.maxHp * (BOSSES.devastator.power.params.reformHp ?? 0.4);
-  emit(ctx, { type: 'bossPower', boss: 'devastator', player: ctx.st.players[0]!.id, slots: [], name: REFORM_NAME });
+  // Coop : annoncé du côté du boss (un Devastator par branche).
+  const side = ctx.st.players[e.x.owner ?? 0] ?? ctx.st.players[0]!;
+  emit(ctx, { type: 'bossPower', boss: 'devastator', player: side.id, slots: [], name: REFORM_NAME });
   return true;
 }
 

@@ -22,7 +22,7 @@ import { activeDeck, getProfile, onProfileChange, updateProfile, type Profile } 
 import { CoopGuest, CoopHost, remoteEngine, type IncomingInvite, type InviteHandle } from '../net/coop';
 import { NetError } from '../net/peer';
 import type { CoopMode, CoopResult, LobbyPlayer, PresenceInfo } from '../net/protocol';
-import { coopService, deckSetup, type Session } from '../net/service';
+import { clearCoopSave, coopService, deckSetup, saveCoopGame, type Session } from '../net/service';
 import { balanceOf, chestMiniSvg, playChests } from './chestOpening';
 import { confirmBox, el, esc, icon, portraitUrl, toast, tokenUrl, type IconName } from './kit';
 import { runTotals, totalsHtml } from './rewards';
@@ -67,7 +67,7 @@ export function installInvitePopup(go: Go): () => void {
     const box = el('div', 'du-invite');
     box.innerHTML = `<div class="du-invite-card" role="dialog" aria-label="Invitation">
       <img alt="" src="${portraitUrl(inv.from.avatar, 1)}">
-      <p><b>${esc(inv.from.name)}</b> t’invite à jouer en <b>${inv.mode === 'coop-infini' ? 'Coop Infini' : `Coop Niveaux${lvl ? ` (${esc(coopLevelTitle(lvl))})` : ''}`}</b></p>
+      <p><b>${esc(inv.from.name)}</b> ${inv.resumeWave ? 'te propose de reprendre votre partie en' : 't’invite à jouer en'} <b>${inv.mode === 'coop-infini' ? 'Coop Infini' : `Coop Niveaux${lvl ? ` (${esc(coopLevelTitle(lvl))})` : ''}`}</b>${inv.resumeWave ? ` (vague ${inv.resumeWave})` : ''}</p>
       <div class="du-invite-bar"><i></i></div>
       <div class="du-invite-row"><button class="mr-btn grey" data-a="no">Refuser</button><button class="mr-btn green" data-a="yes">Accepter</button></div>
     </div>`;
@@ -93,13 +93,21 @@ export function installInvitePopup(go: Go): () => void {
     });
   };
   const off = coopService.onInvite(show);
+  // Application rouverte pendant une partie : l'invitée a rejoint la session, on retourne au combat.
+  const offRejoin = coopService.onRejoined(() => { toast('Partie retrouvée !'); go('#coop/combat'); });
   const pending = coopService.takePendingInvite();
   if (pending) show(pending);
-  return off;
+  return () => { off(); offRejoin(); };
 }
 
 // ---------------------------------------------------------------------------------------------
 // Écran Coop
+
+const DIAG_LABEL: Record<string, string> = {
+  salon: 'connecté au salon', direct: 'lien direct avec ta partenaire', attente: 'en attente de ta partenaire',
+  connexion: 'connexion…', erreur: 'erreur réseau', off: 'arrêtée',
+};
+export const diagText = (): string => `Présence : ${DIAG_LABEL[coopService.diag()] ?? 'en attente'}`;
 
 export function mountCoop(host: HTMLElement, o: { go: Go; overlay: HTMLElement; joinCode?: string }): () => void {
   const wrap = el('div', 'du scroll');
@@ -131,12 +139,18 @@ export function mountCoop(host: HTMLElement, o: { go: Go; overlay: HTMLElement; 
     const inviting = !!invite;
     const left = Math.max(0, Math.ceil((inviteEnd - Date.now()) / 1000));
     const chOpen = (n: number) => coopChapterOpen(n, mine, theirs);
+    const save = coopService.save;
     wrap.innerHTML = `
       <div class="du-head"><button class="qs-back du-back" data-a="back">‹ Accueil</button><h2 class="scr-title">Jouer à deux</h2></div>
       <section class="du-partner${l.online ? ' on' : ''}">
         <span class="du-av"><img alt="" src="${portraitUrl(l.avatar)}"><i></i></span>
-        <span class="du-pt"><b>${esc(l.name)}</b><small>${esc(l.text)}</small></span>
+        <span class="du-pt"><b>${esc(l.name)}</b><small>${esc(l.text)}</small><small class="du-diag" data-diag>${esc(diagText())}</small></span>
+        <button class="mr-btn grey du-refresh" data-a="refresh" aria-label="Actualiser la présence">Actualiser</button>
       </section>
+      ${save && !inviting ? `<section class="du-panel du-save">
+        <p><b>Partie sauvegardée</b><small>${save.mode === 'coop-infini' ? 'Coop Infini' : esc(coopLevelTitle(getCoopLevel(save.levelId ?? '') ?? COOP_LEVELS[0]!))} · vague ${save.wave} · avec ${esc(save.partnerName)}</small></p>
+        <div class="du-row"><button class="mr-btn yellow" data-a="resume">Reprendre</button><button class="mr-btn grey" data-a="drop-save">Effacer</button></div>
+      </section>` : ''}
       <div class="rr-seg du-seg" role="tablist">
         <button role="tab" data-mode="coop-infini" aria-selected="${pick.mode === 'coop-infini'}">Coop Infini</button>
         <button role="tab" data-mode="coop-niveaux" aria-selected="${pick.mode === 'coop-niveaux'}">Coop Niveaux</button>
@@ -205,16 +219,25 @@ export function mountCoop(host: HTMLElement, o: { go: Go; overlay: HTMLElement; 
     const a = t.closest<HTMLElement>('[data-a]')?.dataset['a'];
     if (!a) return;
     if (a === 'back') o.go('');
-    else if (a === 'invite') {
+    else if (a === 'refresh') {
+      const d = wrap.querySelector<HTMLElement>('[data-diag]');
+      if (d) d.textContent = 'Présence : actualisation…';
+      await coopService.refresh();
+      render();
+    } else if (a === 'drop-save') {
+      if (await confirmBox(host, 'Effacer la partie sauvegardée ?', 'Vous ne pourrez plus la reprendre.', 'Effacer')) { clearCoopSave(); render(); }
+    } else if (a === 'resume' || a === 'invite') {
       const partner = coopService.partner();
       const l0 = partnerLine(partner, getProfile());
       if (!partner) { toast(coopService.state === 'unavailable' ? 'Présence indisponible : utilise un code (Autres options).' : `${l0.name} n’est pas en ligne : le jeu doit être ouvert de son côté.`, 'warn'); return; }
+      const sv = a === 'resume' ? coopService.save : null;
+      if (sv && sv.partnerProfileId !== partner.profileId) { toast(`Cette partie se reprend avec ${sv.partnerName}.`, 'warn'); return; }
       const lvl = pick.mode === 'coop-niveaux' ? getCoopLevel(pick.levelId) : undefined;
-      if (pick.mode === 'coop-niveaux') {
+      if (!sv && pick.mode === 'coop-niveaux') {
         const { mine, theirs } = chapterState(getProfile(), partner);
         if (!lvl || !coopLevelOpen(lvl, getProfile()?.coopLevels, mine, theirs)) { toast('Choisis un niveau ouvert pour vous deux.', 'warn'); return; }
       }
-      const h = coopService.invite(pick.mode, lvl?.id, lvl?.map ?? 'toits-new-york');
+      const h = sv ? coopService.resumeSaved() : coopService.invite(pick.mode, lvl?.id, lvl?.map ?? 'toits-new-york');
       if (!h) return;
       invite = h;
       inviteEnd = Date.now() + 60000;
@@ -250,7 +273,13 @@ export function mountCoop(host: HTMLElement, o: { go: Go; overlay: HTMLElement; 
     }
   });
 
+  // Ligne de diagnostic : mise à jour discrète (sans redessiner l'écran).
+  const diagTimer = window.setInterval(() => {
+    const d = wrap.querySelector<HTMLElement>('[data-diag]');
+    if (d && !d.textContent?.includes('actualisation')) d.textContent = diagText();
+  }, 2000);
   const offs = [
+    () => clearInterval(diagTimer),
     coopService.onChange(() => { if (!invite) render(); }),
     onProfileChange(() => render()),
     coopService.onSession((s) => {
@@ -315,7 +344,7 @@ export function mountCoopLobby(host: HTMLElement, o: { go: Go; overlay: HTMLElem
     const blocked = !!(lvl && other && meP && !coopLevelOpen(lvl, p?.coopLevels, meP.soloChapters, other.soloChapters) && !coopLevelOpen(lvl, p?.coopLevels, other.soloChapters, meP.soloChapters));
     wrap.innerHTML = `
       <div class="du-head"><button class="qs-back du-back" data-a="leave">‹ Quitter</button><h2 class="scr-title">Salon</h2></div>
-      <p class="du-mode">${esc(lob ? modeLabel(lob.mode, lob.levelId) : '…')}${lvl ? `<small>${lvl.waves} vagues · ★★★ ${esc(coopConstraintLabel(lvl.bonus, lvl))}</small>` : '<small>3 vies partagées · le plus de vagues possible</small>'}</p>
+      <p class="du-mode">${esc(lob ? modeLabel(lob.mode, lob.levelId) : '…')}${lob?.resumeWave ? `<small>Reprise de votre partie à la vague ${lob.resumeWave} (decks de la partie)</small>` : lvl ? `<small>${lvl.waves} vagues · ★★★ ${esc(coopConstraintLabel(lvl.bonus, lvl))}</small>` : '<small>3 vies partagées · le plus de vagues possible</small>'}</p>
       <section class="du-players">${card(other, false)}${card(meP, true)}</section>
       <section class="du-decks"><small>Ton deck</small><div class="du-deckpick">${decks.map((d, i) => `<button data-deck="${i}" class="${i === deckIdx ? 'on' : ''}"${ready ? ' disabled' : ''}><b>Deck ${i + 1}</b>${deckRow(d)}</button>`).join('')}</div></section>
       ${blocked ? `<p class="du-note du-warn">Ce niveau n’est pas encore ouvert pour vous deux : il faut avoir fini le chapitre ${lvl!.chapter} en Solo.</p>` : ''}
@@ -397,10 +426,28 @@ export async function mountCoopBattle(root: HTMLElement, o: { go: Go }): Promise
     : undefined;
   const duo = duoTracking();
   let quitting = false;
+  // Hôte : sauvegarde de la partie à chaque vague (et à la demande) pour la reprendre plus tard à deux.
+  const host = s instanceof CoopHost ? s : null;
+  const saveNow = host ? () => {
+    const eng = host.boundEngine;
+    if (!eng || eng.state.result || !partner) return;
+    saveCoopGame({
+      v: 1, at: Date.now(), mode: lob.mode, levelId: lob.levelId, mapId: cfg.mapId, wave: eng.state.wave,
+      partnerProfileId: partner.profileId, partnerName: partner.name, config: cfg, engine: eng.serialize(),
+    });
+  } : undefined;
+  const observe = host ? {
+    before: (st: EngineState) => duo.before(st),
+    after: (st: EngineState, evs: EngineEvent[]) => {
+      duo.after(st, evs);
+      if (evs.some((e) => e.type === 'waveStart')) saveNow?.();
+    },
+  } : undefined;
   const b = mountBattle(root, {
     deck: myDeck,
     mapId: cfg.mapId,
     config: cfg,
+    saved: host?.savedEngine,
     title: modeLabel(lob.mode, lob.levelId),
     onHome: () => { coopService.leave(); o.go(''); },
     onReplay: () => o.go('#coop/salon'),
@@ -408,7 +455,8 @@ export async function mountCoopBattle(root: HTMLElement, o: { go: Go }): Promise
       session: s,
       engine,
       partner: partnerInfo,
-      observe: s instanceof CoopHost ? duo : undefined,
+      observe,
+      saveNow,
       onQuit: () => {
         if (!s.connected || s.isOver) { coopService.leave(); o.go('#coop'); return; } // partenaire déjà partie
         if (quitting) return;
@@ -425,7 +473,11 @@ export async function mountCoopBattle(root: HTMLElement, o: { go: Go }): Promise
         outcome: r.won ? 'victoire' : 'defaite', wave: r.wave, mode: lob.mode, levelId: lob.levelId, livesLeft: r.livesLeft,
         bossKills: r.bossKills.map((k) => ({ boss: k.boss, small: k.small, wave: k.wave })),
       };
+      // Deux boss par vague de boss en Coop (un de chaque côté) : une seule victoire par boss et par vague.
+      const seenKills = new Set<string>();
+      result.bossKills = result.bossKills.filter((k) => { const key = `${k.boss}:${k.small}:${k.wave}`; if (seenKills.has(key)) return false; seenKills.add(key); return true; });
       if (s instanceof CoopHost) {
+        clearCoopSave();
         const lvl = lob.levelId ? getCoopLevel(lob.levelId) : undefined;
         if (lvl) {
           const st = duo.stats();

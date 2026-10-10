@@ -37,6 +37,8 @@ export interface CoopHudOptions {
   session: CoopHost | CoopGuest;
   toast: (msg: string) => void;
   onGift: () => void;
+  /** Hôte : sauvegarde immédiate de la partie (reprise plus tard avec « Reprendre »). */
+  saveNow?: () => void;
 }
 
 const GIFT_SVG = `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="20" width="34" height="22" rx="4" fill="#ff7ab8" stroke="#1d1733" stroke-width="4"/><rect x="4" y="13" width="40" height="10" rx="4" fill="#ff9ad0" stroke="#1d1733" stroke-width="4"/><path d="M24 13 V42" stroke="#ffe27a" stroke-width="6"/><path d="M24 13 C16 2 8 8 14 13 M24 13 C32 2 40 8 34 13" fill="none" stroke="#1d1733" stroke-width="4" stroke-linecap="round"/></svg>`;
@@ -120,25 +122,45 @@ export function createCoopHud(o: CoopHudOptions): CoopHud {
   let paused = false;
   const stopCount = () => { clearInterval(countdown); countdown = 0; };
   const setPause = (p: boolean) => { if (paused === p) return; paused = p; o.engine.apply({ type: 'pause', paused: p }); };
+  // Attente de l'hôte : 30 s de compte à rebours (partie en pause), puis le choix.
+  const waitFor = (secs: number) => {
+    setPause(true);
+    let left = secs;
+    const say = () => waiting(`${o.partner.name} a perdu la connexion. On l’attend… (${left} s)`);
+    say();
+    stopCount();
+    countdown = window.setInterval(() => {
+      left = Math.max(0, left - 1);
+      if (left > 0) say();
+      else if (host && !host.connected) { stopCount(); choices(); }
+    }, 1000);
+  };
+  const choices = () => {
+    // Pas revenue à temps : attendre encore, continuer seule, ou quitter (la partie est sauvegardée).
+    o.saveNow?.();
+    waiting(`${o.partner.name} n’est pas revenue. La partie est sauvegardée : vous pourrez la reprendre ensemble (« Reprendre » sur l’écran Coop).`, [
+      { label: 'Attendre encore', onClick: () => waitFor(30) },
+      { label: 'Continuer seule', onClick: () => { waiting(null); setPause(false); } },
+      { label: 'Quitter', onClick: () => { o.saveNow?.(); quit(); } },
+    ]);
+  };
   const onPeer = (s: PeerStatus) => {
     if (ended) return;
     dot.classList.toggle('off', s === 'lost' || s === 'gone');
     if (host) {
       if (s === 'lost') {
-        setPause(true);
-        let left = 30;
-        waiting(`${o.partner.name} a perdu la connexion. On l’attend… (${left} s)`);
-        stopCount();
-        countdown = window.setInterval(() => {
-          left = Math.max(0, left - 1);
-          if (left > 0) waiting(`${o.partner.name} a perdu la connexion. On l’attend… (${left} s)`);
-        }, 1000);
+        waitFor(30);
       } else if (s === 'back' || s === 'connected') {
         stopCount(); waiting(null); setPause(false); host.hold(false);
         o.toast(`${o.partner.name} est de retour !`);
       } else if (s === 'gone') {
-        stopCount(); waiting(null); setPause(false);
-        o.toast(`${o.partner.name} a quitté la partie : on continue !`);
+        stopCount();
+        if (host.partnerQuit) {
+          waiting(null); setPause(false);
+          o.toast(`${o.partner.name} a quitté la partie : on continue !`);
+          return;
+        }
+        choices();
       }
     } else {
       if (s === 'lost') waiting('Connexion perdue. Reconnexion en cours…');

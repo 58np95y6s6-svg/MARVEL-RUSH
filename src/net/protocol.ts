@@ -25,6 +25,8 @@ export interface PresenceInfo {
   status: PresenceStatus;
   /** Chapitres Solo terminés (ouverture des chapitres Coop). */
   chapters?: number[];
+  /** Vrai si l'appareil tient le rendez-vous (résolution de deux rendez-vous concurrents). */
+  lobby?: boolean;
 }
 
 /** Joueur du salon Coop. */
@@ -74,12 +76,12 @@ export type NetMessage =
   | { v: number; t: 'presence'; who: PresenceInfo }
   | { v: number; t: 'roster'; list: PresenceInfo[] }
   // ---- invitations (connexion directe vers l'identifiant personnel de la partenaire)
-  | { v: number; t: 'invite'; inviteId: string; from: HelloInfo; mode: CoopMode; levelId?: string; expiresAt: number }
+  | { v: number; t: 'invite'; inviteId: string; from: HelloInfo; mode: CoopMode; levelId?: string; expiresAt: number; resumeWave?: number }
   | { v: number; t: 'inviteReply'; inviteId: string; accept: boolean; reason?: string }
   | { v: number; t: 'inviteCancel'; inviteId: string }
   // ---- salon
   | { v: number; t: 'hello'; who: HelloInfo; setup: DeckSetup }
-  | { v: number; t: 'lobby'; session: string; mode: CoopMode; levelId?: string; mapId: string; hostPeer: string; players: LobbyPlayer[] }
+  | { v: number; t: 'lobby'; session: string; mode: CoopMode; levelId?: string; mapId: string; hostPeer: string; players: LobbyPlayer[]; resumeWave?: number }
   | { v: number; t: 'deck'; setup: DeckSetup }
   | { v: number; t: 'ready'; ready: boolean }
   | { v: number; t: 'start'; session: string; config: GameConfig; you: PlayerId; startAt: number; resume?: boolean }
