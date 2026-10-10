@@ -334,7 +334,7 @@ Contraintes :
 - les deux decks de départ (Marvel et Disney) à **±5 %** l'un de l'autre ;
 - entre tous les decks de référence de même niveau : **écart < 20 %** entre le meilleur et le moins bon (critère du §1 bis) ;
 - un lieutenant est tué en **15 à 25 s** par un deck du niveau attendu, un gros boss en **25 à 40 s** (la rage à 45 s doit rester rare : < 15 % des boss) ;
-- Thanos (vague 50) est vaincu par **moins de 25 %** des decks méta niveau 10 en Solo, et par **30 à 50 %** des duos méta niveau 10 en Coop Infini.
+- Thanos (vague 50) est vaincu par **60 à 70 %** des collections fortes (niveau 10, 3 paliers, ★3) en Solo (§10 ; avant : moins de 25 % des decks méta niveau 10), et par **30 à 50 %** des duos méta niveau 10 en Coop Infini.
 
 ## 4. Decks de référence
 
@@ -615,3 +615,53 @@ effectif× 1,1 → 1,4, boss× 1,0 → 1,3, croissance 1,14 / 1,10 / 1,10 / 1,09
 niveau rendent les Légendaires bien plus forts aux niveaux 6 à 8 (méta niveau 8 : +18 % de vagues en Solo) ;
 les chapitres 4 à 6 restent à 100 % avec la collection attendue. Si les joueurs les trouvent trop faciles,
 relever d'abord `DIFFICULTY.hp[1]` (fin de campagne).
+
+## 10. Fin de partie des modes infinis : plus de mur vers la vague 35 (octobre 2026)
+
+> Retours de joueuse : « En illimité, à partir de la vague 35 c'est impossible » ; « tuer un monstre revient
+> à tuer un boss » ; « Maléfique à la vague 40, je lui fais 4 % de dégâts » ; 7 Thor de rangs 4 à 6 : 20 %
+> des PV de Jafar à la vague 40.
+
+**Cause** : la règle des blocs (taux de croissance +25 % par bloc de 10 vagues) faisait monter les PV de
+25 % par vague dans les vagues 21-30, 30 % dans les 31-40, 34 % dans les 41-50. Les dégâts d'un plateau
+plafonnent (rang 7, améliorations, éveils) : toutes les collections butaient entre la vague 32 et la 44.
+Le boss de la vague 40 avait 18,3 M PV ; sur les toits de New York, il traverse le chemin (14 cases à
+0,5 case/s) en **28 s**, avant même la rage (45 s) : 7 Thor de rang 5 au niveau 6 (335 k DPS mesurés,
+340 k attendus, rampe +600 % atteinte en 4,7 s : pas de bogue) ne lui retirent que 22 à 26 %.
+
+**Règle** (`src/data/enemies.ts`, `waveGrowth`) : modes infinis seulement (sans `script.waveHpGrowth`),
+inchangé jusqu'à la vague 20 ; ensuite le taux redescend vers un plancher :
+croissance(v) = 1 + 0,06 + (0,2125 − 0,06) × e^(−(v − 20)/15) (`lateFrom` 20, `lateFloor` 0,06,
+`lateDecay` 15), soit +20 % à la vague 21, +14 % à la 30, +10 % à la 40, +8 % à la 50, +7 % à la 60, +6 %
+au-delà. Mini-boss ×5 et gros boss ×25 (Thanos ×50) restent les pics. La campagne garde la règle des blocs
+(simulations c1, c3, c6 identiques à l'unité près).
+
+| Vague | PV d'un commun avant → après | Mini-boss (×5) | Gros boss (×25) |
+|---|---|---|---|
+| 20 | 6,0 k → 6,0 k | 30 k → 30 k | 150 k → 150 k |
+| 30 | 56 k → 30 k | 280 k → 150 k | 1,40 M → 750 k |
+| 40 | 734 k → 92 k | 3,7 M → 462 k | 18,3 M → 2,31 M |
+| 50 (Thanos ×2) | 13,3 M → 219 k | 66 M → 1,1 M | 663 M → 11,0 M |
+| 60 | 328 M → 455 k | 1,6 G → 2,3 M | 8,2 G → 11,4 M |
+| 80 | 4,9 × 10¹¹ → 1,6 M | — | 1,2 × 10¹³ → 41 M |
+
+**Mesures** (`scripts/simulate.ts --max 150`, 20 parties, joueur `--casual` / bot de référence ;
+`--paliers` et `--eveil` ajoutés pour les collections) :
+
+| Collection | Avant | Après | Cible (occasionnel) |
+|---|---|---|---|
+| Départ Marvel, niveau 1 | 18,1 / 19,6 | 18,1 / 19,6 | 16-19 |
+| Moyenne : Thor, Iron Man, Spider-Man, Soldat de l'hiver, Black Widow ; niveau 6, 1 palier, ★1 | 31,7 / 32,1 | **38,6** / 42,8 | 35-45 |
+| Forte : Iron Man, Thor, Hulk, Cap, Black Widow ; niveau 10, 3 paliers, ★3 | 38,0 / 39,2 | **64,7** / 70,0 | 55-70 |
+| Maximale : idem, ★10 | 42,0 / 44,3 | **99,2** / 106,1 | 80-100+ |
+| Coop Infini, départ × 2 | 17,6 / 19,5 | 17,6 / 19,5 | — |
+| Coop Infini, moyenne × 2 | 31,5 / 33,3 | 36,0 / 40,9 | — |
+
+Boss (occasionnel, tués / atteints) : collection moyenne, boss de la vague 30 19/19 en 16 s, mini-boss 35
+9/18 en 10 s, boss 40 6/6 en 23 s (30 % des parties l'atteignent et le battent) ; forte, boss 40 20/20 en
+8 s, **Thanos 14/18 (70 % des parties)** en 16 s, boss 60 8/12 ; maximale, Thanos 19/19. Monstre commun
+(PV ÷ PV retirés par seconde) aux vagues 29-33 de la collection moyenne : 0,9-1,5 s → 0,75-1,0 s ; durée
+de vie 4-5,6 s → 2,2-3,3 s. Sans étourdissement : Iron Man, Œil de faucon, Falcon, Captain Marvel, Rebelle
+(niveau 6) 30,8 contre 32,8 pour le même deck avec Spider-Man (−6 %) ; départ avec Rebelle à la place de
+Spider-Man 19,3 contre 18,1. La cible du §3 « Thanos battu par moins de 25 % des decks méta niveau 10 »
+est remplacée par ≈ 60-70 %.
