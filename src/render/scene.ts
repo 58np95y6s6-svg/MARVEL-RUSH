@@ -9,7 +9,7 @@ import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance
 import { GRID_SIZE } from '../engine';
 import type { BossId, UnitId } from '../data/types';
 import type { MapDefX } from '../maps/kit';
-import { SCREEN, layoutFor, type PathShape, type SoloLayout } from '../maps/layout';
+import { SCREEN, layoutFor, type CoopLayout, type Lane, type PathShape, type SoloLayout } from '../maps/layout';
 import { arenaForBoss } from '../maps';
 import type { AmbientAnim } from '../maps/kit';
 import { loadTexture } from '../art';
@@ -67,6 +67,9 @@ interface UnitView {
   target: boolean;
   /** Aura de l'Inquisiteur (Thor), créée à la première apparition d'un Thor dans cette vue. */
   aura: ThorAura | null;
+  /** Extension Transformers : mode véhicule affiché, et animation de transformation (s, -1 = aucune). */
+  veh: boolean;
+  morphT: number;
 }
 
 interface EnemyView {
@@ -126,6 +129,14 @@ export class BattleScene {
 
   private lanes = new Map<LaneId, LaneSampler>();
   private units: (UnitView | null)[] = Array.from({ length: GRID_SIZE }, () => null);
+  /** Coop : unités du plateau de la partenaire (en haut, rangées retournées). */
+  private punits: (UnitView | null)[] = Array.from({ length: GRID_SIZE }, () => null);
+  /** Coop : disposition complète (null en Solo). */
+  readonly coop: CoopLayout | null = null;
+  /** Taille des jetons et des ennemis (Coop : cases de 120 px au lieu de 140). */
+  private k = 1;
+  /** Joueur dont les cases servent aux effets en cours (index dans la configuration). */
+  private fxPi = -1;
   private unitPool: UnitView[] = [];
   private enemies = new Map<number, EnemyView>();
   private enemyPool: EnemyView[] = [];
@@ -156,10 +167,34 @@ export class BattleScene {
     this.map = o.map;
     this.player = o.player;
     this.safe = o.safe ?? (() => [0, 0, 0, 0]);
-    this.layout = layoutFor('solo', o.map.shape) as SoloLayout;
-    this.lanes.set('a', new LaneSampler(this.layout.lane));
-    this.geo = boardGeometry('solo', o.map.shape);
+    if (o.engine.config.mode === 'coop') {
+      // Coop : mon plateau en bas, celui de la partenaire en haut. Ma branche longe mon plateau (en bas),
+      // celle de la partenaire le sien (en haut) ; le tronc commun passe entre les deux.
+      const c = layoutFor('coop', o.map.shape) as CoopLayout;
+      this.coop = c;
+      this.k = c.self.cell / 140;
+      this.layout = { mode: 'solo', hud: c.hud, board: c.self, lane: c.branchA, controls: c.controls };
+      const mine: LaneId = this.meIndexOf(o) === 0 ? 'a' : 'b';
+      const other: LaneId = mine === 'a' ? 'b' : 'a';
+      const len = (id: LaneId, l: Lane): Lane => ({ ...l, cells: o.engine.state.lanes.find((x) => x.id === id)?.length || l.cells });
+      this.lanes.set(mine, new LaneSampler(len(mine, c.branchA)));
+      this.lanes.set(other, new LaneSampler(len(other, c.branchB)));
+      this.lanes.set('tronc', new LaneSampler(len('tronc', c.trunk)));
+      this.geo = boardGeometry('coop', o.map.shape);
+    } else {
+      this.layout = layoutFor('solo', o.map.shape) as SoloLayout;
+      this.lanes.set('a', new LaneSampler(this.layout.lane));
+      this.geo = boardGeometry('solo', o.map.shape);
+    }
   }
+
+  private meIndexOf(o: SceneOptions): number {
+    const i = o.engine.state.players.findIndex((p) => p.id === o.player);
+    return i < 0 ? 0 : i;
+  }
+
+  private get modeName(): 'solo' | 'coop' { return this.coop ? 'coop' : 'solo'; }
+  private get myLane(): LaneId { return this.coop && this.meIndex === 1 ? 'b' : 'a'; }
 
   static async create(host: HTMLElement, o: SceneOptions): Promise<BattleScene> {
     const s = new BattleScene(o);
@@ -293,9 +328,9 @@ export class BattleScene {
     const ids: ('fond' | 'decor' | 'chemin')[] = ['fond', 'decor', 'chemin'];
     const texs = await Promise.all(ids.map((id) => {
       const layer = m.layers.find((l) => l.id === id);
-      return layer ? loadLayer(`${m.id}-${shape}-${id}`, () => layer.svg('solo', shape)) : Promise.resolve(null);
+      return layer ? loadLayer(`${m.id}-${this.modeName}-${shape}-${id}`, () => layer.svg(this.modeName, shape)) : Promise.resolve(null);
     }));
-    const list = m.anims('solo', shape);
+    const list = m.anims(this.modeName, shape);
     const loaded = await Promise.all(list.map((a) => loadTexture(a.svg, Math.max(8, a.box.w * this.fit.scale), Math.min(2, window.devicePixelRatio || 1)).catch(() => null)));
     // Les trois couches fixes (fond, décor, chemin et plateau) sont cuites en une seule texture à la
     // taille de l'écran : un seul quad plein écran au lieu de trois (mémoire et remplissage du GPU).
@@ -429,8 +464,30 @@ export class BattleScene {
   }
 
   cellCenter(slot: number): { x: number; y: number } {
+    if (this.fxPi >= 0 && this.fxPi !== this.meIndex) return this.partnerCell(slot);
     const r = this.layout.board.cells[slot]!;
     return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+  }
+
+  /** Coop : centre d'une case du plateau de la partenaire (en haut, rangées retournées). */
+  partnerCell(slot: number): { x: number; y: number } {
+    const b = this.coop?.partner ?? this.layout.board;
+    const row = Math.floor(slot / 5), col = slot % 5;
+    const r = b.cells[(2 - row) * 5 + col]!;
+    return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+  }
+
+  /** Index (dans la configuration) du joueur `id`. */
+  private indexOf(id: PlayerId): number {
+    const i = this.engine.state.players.findIndex((p) => p.id === id);
+    return i < 0 ? 0 : i;
+  }
+
+  /** Joue un effet avec les cases du joueur `pi` (les effets lisent `cellCenter`). */
+  private withCells(pi: number, fn: () => void): void {
+    const prev = this.fxPi;
+    this.fxPi = pi;
+    try { fn(); } finally { this.fxPi = prev; }
   }
 
   // ---------------------------------------------------------------- unités
@@ -463,7 +520,7 @@ export class BattleScene {
     this.unitLayer.addChild(root);
     return {
       uid: 0, unit: 'spiderman', shown: 'spiderman', rank: 1, slot: 0, root, body, sprite, pips, pipsShown: 0, glow, status, statusKind: '',
-      attackT: -1, hopT: -1, flashT: -1, pipT: 0, dragging: false, returnT: -1, rx: 0, ry: 0, dim: false, target: false, aura: null,
+      attackT: -1, hopT: -1, flashT: -1, pipT: 0, dragging: false, returnT: -1, rx: 0, ry: 0, dim: false, target: false, aura: null, veh: false, morphT: -1,
     };
   }
 
@@ -496,13 +553,14 @@ export class BattleScene {
     v.pipsShown = n;
   }
 
-  private setupUnit(v: UnitView, u: UnitInstance, slot: number, appear: 'summon' | 'merge' | 'none'): void {
+  private setupUnit(v: UnitView, u: UnitInstance, slot: number, appear: 'summon' | 'merge' | 'none', partner = false): void {
     v.uid = u.uid;
     v.unit = u.unit;
     v.shown = u.status.transformedInto ?? u.unit;
     v.rank = u.rank;
     v.slot = slot;
-    const c = this.cellCenter(slot);
+    v.root.scale.set(this.k);
+    const c = partner ? this.partnerCell(slot) : this.cellCenter(slot);
     v.root.position.set(c.x, c.y);
     v.rx = c.x; v.ry = c.y;
     v.root.zIndex = slot;
@@ -517,7 +575,9 @@ export class BattleScene {
     v.hopT = appear === 'none' ? -1 : 0;
     v.flashT = appear === 'merge' ? 0 : -1;
     v.pipT = 0;
-    v.sprite.texture = tokenTex(v.shown, 0) ?? Texture.EMPTY;
+    v.veh = !u.status.transformedInto && (u.counters.vehicle ?? 0) > 0;
+    v.morphT = -1;
+    v.sprite.texture = tokenTex(v.shown, 0, v.veh) ?? Texture.EMPTY;
     v.sprite.width = SIZES.token;
     v.sprite.height = SIZES.token;
     this.drawPips(v, appear === 'merge' ? Math.max(0, v.rank - 1) : v.rank);
@@ -525,12 +585,19 @@ export class BattleScene {
 
   /** Met les vues d'unités en accord avec la grille du joueur. */
   private syncUnits(initial = false): void {
-    const grid = this.me.grid;
+    this.syncGrid(this.me.grid, this.units, false, initial);
+    if (this.coop) {
+      const other = this.engine.state.players[this.meIndex === 0 ? 1 : 0];
+      if (other) this.syncGrid(other.grid, this.punits, true, initial);
+    }
+  }
+
+  private syncGrid(grid: (UnitInstance | null)[], views: (UnitView | null)[], partner: boolean, initial: boolean): void {
     for (let i = 0; i < GRID_SIZE; i++) {
       const u = grid[i];
-      let v = this.units[i];
+      let v = views[i];
       if (!u) {
-        if (v) { this.releaseUnit(v); this.units[i] = null; }
+        if (v) { this.releaseUnit(v); views[i] = null; }
         continue;
       }
       if (v && v.uid !== u.uid) {
@@ -539,12 +606,15 @@ export class BattleScene {
       }
       if (!v) {
         v = this.newUnitView();
-        this.setupUnit(v, u, i, initial ? 'none' : 'none');
-        this.units[i] = v;
+        this.setupUnit(v, u, i, initial ? 'none' : 'none', partner);
+        views[i] = v;
       } else {
         const shown = u.status.transformedInto ?? u.unit;
         if (shown !== v.shown) { v.shown = shown; v.flashT = 0; }
         if (u.rank !== v.rank) { v.rank = u.rank; this.drawPips(v, u.rank); v.flashT = 0; }
+        // Transformation robot ↔ véhicule (Autobots) : la figurine pivote et change de forme à mi-course.
+        const veh = !u.status.transformedInto && (u.counters.vehicle ?? 0) > 0;
+        if (veh !== v.veh) { v.veh = veh; v.morphT = 0; }
       }
       const st = u.status;
       const kind = (st.sleepingFor ?? 0) > 0 ? 'zzz' : (st.hypnotizedFor ?? 0) > 0 ? 'hyp' : (st.stunnedFor ?? 0) > 0 ? 'stun' : '';
@@ -594,7 +664,7 @@ export class BattleScene {
     v.lane = e.lane;
     v.prevD = v.curD = e.distance;
     v.kind = e.bossId ? 'boss' : e.giant ? 'giant' : e.kind === 'sbire' ? 'minion' : 'enemy';
-    v.width = v.kind === 'boss' ? SIZES.boss : v.kind === 'giant' ? SIZES.giant : enemyWidth(e.kind);
+    v.width = (v.kind === 'boss' ? SIZES.boss : v.kind === 'giant' ? SIZES.giant : enemyWidth(e.kind)) * this.k;
     v.phase = (e.uid * 0.37) % 1;
     v.hitT = -1;
     v.powerT = -1;
@@ -658,7 +728,7 @@ export class BattleScene {
   }
 
   private placeEnemy(v: EnemyView, d: number): void {
-    const s = this.lanes.get(v.lane) ?? this.lanes.get('a')!;
+    const s = this.lanes.get(v.lane) ?? this.lanes.get(this.myLane)!;
     s.at(Math.max(0, d));
     v.x = s.x; v.y = s.y;
   }
@@ -668,50 +738,66 @@ export class BattleScene {
   private onEvent(ev: EngineEvent): void {
     switch (ev.type) {
       case 'summon': {
-        if (ev.player !== this.player) break;
+        const mine = ev.player === this.player;
+        if (!mine && !this.coop) break;
         this.syncUnits();
-        const v = this.units[ev.slot];
+        const v = (mine ? this.units : this.punits)[ev.slot];
         if (v) { v.hopT = 0; }
-        const c = this.cellCenter(ev.slot);
-        this.shots.ring(c.x, c.y, 0x9fd8ff, 80, 0.45);
-        this.shots.ring(c.x, c.y, 0xffffff, 55, 0.3);
-        this.parts.burst(this.tex.spark, c.x, c.y, 12, 0x9fd8ff, 380, 0.45, 0.7);
-        for (let i = 0; i < 6; i++) this.parts.emit(this.tex.dot, c.x + (Math.random() - 0.5) * 80, c.y + 40, { color: 0x7fc4ff, vy: -220 - Math.random() * 120, life: 0.6, s0: 0.8, s1: 0.1 });
+        const c = mine ? this.cellCenter(ev.slot) : this.partnerCell(ev.slot);
+        this.shots.ring(c.x, c.y, 0x9fd8ff, 80 * this.k, 0.45);
+        this.shots.ring(c.x, c.y, 0xffffff, 55 * this.k, 0.3);
+        this.parts.burst(this.tex.spark, c.x, c.y, mine ? 12 : 6, 0x9fd8ff, 380, 0.45, 0.7);
+        if (mine) for (let i = 0; i < 6; i++) this.parts.emit(this.tex.dot, c.x + (Math.random() - 0.5) * 80, c.y + 40, { color: 0x7fc4ff, vy: -220 - Math.random() * 120, life: 0.6, s0: 0.8, s1: 0.1 });
+        break;
+      }
+      case 'gift': {
+        if (!this.coop) break;
+        this.syncUnits();
+        const toMe = ev.to === this.player;
+        const v = (toMe ? this.units : this.punits)[ev.slot];
+        if (v) { v.hopT = 0; v.flashT = 0; }
+        const c = toMe ? this.cellCenter(ev.slot) : this.partnerCell(ev.slot);
+        this.shots.ring(c.x, c.y, 0xff9ad8, 110 * this.k, 0.5);
+        this.parts.burst(this.tex.star, c.x, c.y, 10, 0xff9ad8, 420, 0.55, 0.6);
         break;
       }
       case 'merge': {
-        if (ev.player !== this.player) break;
+        const mine = ev.player === this.player;
+        if (!mine && !this.coop) break;
         this.syncUnits();
-        const v = this.units[ev.to];
+        const v = (mine ? this.units : this.punits)[ev.to];
         if (v && v.uid) { v.hopT = 0; v.flashT = 0; v.pipT = 0; this.drawPips(v, ev.rank - 1); }
-        const c = this.cellCenter(ev.to);
-        this.shots.ring(c.x, c.y, 0xffe27a, 110, 0.4);
-        this.parts.burst(this.tex.star, c.x, c.y, 10, 0xffe27a, 480, 0.55, 0.6);
-        this.parts.emit(this.tex.dot, c.x, c.y, { color: 0xffffff, life: 0.3, s0: 2.6, s1: 4.5, a0: 0.9 });
+        const c = mine ? this.cellCenter(ev.to) : this.partnerCell(ev.to);
+        this.shots.ring(c.x, c.y, 0xffe27a, 110 * this.k, 0.4);
+        this.parts.burst(this.tex.star, c.x, c.y, mine ? 10 : 6, 0xffe27a, 480, 0.55, 0.6);
+        if (mine) this.parts.emit(this.tex.dot, c.x, c.y, { color: 0xffffff, life: 0.3, s0: 2.6, s1: 4.5, a0: 0.9 });
         break;
       }
       case 'powerup': {
-        if (ev.player !== this.player) break;
-        for (const v of this.units) {
+        const mine = ev.player === this.player;
+        if (!mine && !this.coop) break;
+        for (const v of mine ? this.units : this.punits) {
           if (!v || v.unit !== ev.unit) continue;
           v.flashT = 0;
           this.parts.burst(this.tex.spark, v.rx, v.ry, 8, 0x8dff9a, 300, 0.5, 0.5);
-          for (let i = 0; i < 4; i++) this.parts.emit(this.tex.star, v.rx + (Math.random() - 0.5) * 70, v.ry + 30, { color: 0x8dff9a, vy: -260, life: 0.6, s0: 0.5, s1: 0.1 });
+          if (mine) for (let i = 0; i < 4; i++) this.parts.emit(this.tex.star, v.rx + (Math.random() - 0.5) * 70, v.ry + 30, { color: 0x8dff9a, vy: -260, life: 0.6, s0: 0.5, s1: 0.1 });
         }
         break;
       }
       case 'attack': {
-        if (ev.player !== this.player) break;
-        const v = this.units[ev.slot];
+        const mine = ev.player === this.player;
+        if (!mine && !this.coop) break;
+        const v = (mine ? this.units : this.punits)[ev.slot];
         if (v && (v.attackT < 0 || v.attackT > 0.19)) v.attackT = 0;
-        this.vfx.attack(ev.slot, ev.unit, ev.fx, ev.targets);
+        this.withCells(this.indexOf(ev.player), () => this.vfx.attack(ev.slot, ev.unit, ev.fx, ev.targets));
         break;
       }
       case 'ability': {
-        if (ev.player !== this.player) break;
-        const v = this.units[ev.slot];
+        const mine = ev.player === this.player;
+        if (!mine && !this.coop) break;
+        const v = (mine ? this.units : this.punits)[ev.slot];
         if (v && v.attackT < 0) v.attackT = 0;
-        this.vfx.ability(ev.slot, ev.unit, ev.name, ev.targets);
+        this.withCells(this.indexOf(ev.player), () => this.vfx.ability(ev.slot, ev.unit, ev.name, ev.targets));
         break;
       }
       case 'hit': {
@@ -749,13 +835,13 @@ export class BattleScene {
         break;
       case 'bossPower': {
         for (const v of this.enemies.values()) if (v.kind === 'boss' || v.kind === 'giant') v.powerT = 0;
-        if (ev.player === this.player) this.vfx.bossPower(ev.boss, ev.slots, ev.name);
+        if (ev.player === this.player || this.coop) this.withCells(this.indexOf(ev.player), () => this.vfx.bossPower(ev.boss, ev.slots, ev.name));
         this.shake(6, 0.3);
         break;
       }
       case 'lifeLost': {
         this.shake(12, 0.4);
-        const s = this.lanes.get('a')!;
+        const s = this.lanes.get(this.coop ? 'tronc' : 'a')!;
         s.at(s.cells);
         this.parts.burst(this.tex.spark, s.x, s.y - 40, 14, 0xff4a4a, 420, 0.5, 0.8);
         this.screenFlash(0.25, 0.3, 0xff2a2a);
@@ -854,7 +940,7 @@ export class BattleScene {
     const L = this.layout, g = L.board.grid, half = L.lane.width / 2;
     // Aire de jeu : la grille et la bande du chemin qui l'entoure.
     let x0 = g.x, y0 = g.y, x1 = g.x + g.w, y1 = g.y + g.h;
-    for (const p of L.lane.points) {
+    for (const p of [...L.lane.points, ...(this.coop?.trunk.points ?? [])]) {
       x0 = Math.min(x0, p.x - half); y0 = Math.min(y0, p.y - half);
       x1 = Math.max(x1, p.x + half); y1 = Math.max(y1, p.y + half);
     }
@@ -882,17 +968,21 @@ export class BattleScene {
       d.circle(c.x, c.y, R).stroke({ width: 5, color, alpha: 0.8 });
     }
     // Parties du chemin couvertes, échantillonnées comme le moteur (src/engine/geometry.ts).
-    const spans = coveredSpans(this.geo, 0, 'a', slot, range);
-    const s = this.lanes.get('a')!;
     const passes: [number, number, number][] = [[lane.width * 1.1, color, 0.22], [lane.width * 0.55, color, 0.35], [9, 0xfffbe0, 0.95]];
-    for (const [width, col, alpha] of passes) {
-      for (const [a, b] of spans) {
-        const n = Math.max(2, Math.ceil((b - a) * lane.cells * 6));
-        for (let i = 0; i <= n; i++) {
-          s.at((a + ((b - a) * i) / n) * lane.cells);
-          if (i === 0) p.moveTo(s.x, s.y); else p.lineTo(s.x, s.y);
+    const ids: LaneId[] = this.coop ? ['a', 'b', 'tronc'] : ['a'];
+    for (const id of ids) {
+      const spans = coveredSpans(this.geo, this.meIndex, id, slot, range);
+      const s = this.lanes.get(id);
+      if (!s || !spans.length) continue;
+      for (const [width, col, alpha] of passes) {
+        for (const [a, b] of spans) {
+          const n = Math.max(2, Math.ceil((b - a) * s.cells * 6));
+          for (let i = 0; i <= n; i++) {
+            s.at((a + ((b - a) * i) / n) * s.cells);
+            if (i === 0) p.moveTo(s.x, s.y); else p.lineTo(s.x, s.y);
+          }
+          p.stroke({ width, color: col, alpha, cap: 'round', join: 'round' });
         }
-        p.stroke({ width, color: col, alpha, cap: 'round', join: 'round' });
       }
     }
     this.rangeLayer.visible = true;
@@ -994,6 +1084,17 @@ export class BattleScene {
       if (m && !v.aura) v.aura = new ThorAura(v.body, v.sprite, SIZES.token);
       if (v.aura) { this.sparkView = v; v.aura.update(dt, v.uid, m, this.thorSpark); }
     }
+    if (this.coop) {
+      const pi = me === 0 ? 1 : 0;
+      for (let i = 0; i < GRID_SIZE; i++) {
+        const v = this.punits[i];
+        if (!v) continue;
+        this.renderUnit(v, dt, pulse);
+        const m = thorMode(this.engine.state, this.engine.config, pi, i, this.thorOut);
+        if (m && !v.aura) v.aura = new ThorAura(v.body, v.sprite, SIZES.token);
+        if (v.aura) { this.sparkView = v; v.aura.update(dt, v.uid, m, this.thorSpark); }
+      }
+    }
     for (const r of this.targetRings) if (r.visible) { r.scale.set(1.45 + 0.12 * pulse); r.alpha = 0.6 + 0.4 * pulse; }
     if (this.rangeLayer.visible) {
       this.rangeT += dt;
@@ -1045,7 +1146,19 @@ export class BattleScene {
       else if (t < 0.26) pose = 0;
       else v.attackT = -1;
     }
-    const tex = tokenTex(v.shown, pose) ?? tokenTex(v.shown, 0);
+    // Transformation : 0,32 s, la figurine s'aplatit (pivot), l'ancienne forme puis la nouvelle.
+    let morphSx = 1, morphHop = 0, showVeh = v.veh;
+    if (v.morphT >= 0) {
+      v.morphT += dt;
+      const k = v.morphT / 0.32;
+      if (k >= 1) v.morphT = -1;
+      else {
+        morphSx = Math.max(0.06, Math.abs(Math.cos(k * Math.PI)));
+        morphHop = Math.sin(k * Math.PI) * 26;
+        if (k < 0.5) showVeh = !v.veh;
+      }
+    }
+    const tex = tokenTex(v.shown, pose, showVeh) ?? tokenTex(v.shown, 0, showVeh) ?? tokenTex(v.shown, 0);
     if (tex && v.sprite.texture !== tex) {
       v.sprite.texture = tex;
       v.sprite.width = SIZES.token;
@@ -1063,8 +1176,8 @@ export class BattleScene {
         if (k > 0.75) { sx *= 1 + 0.12 * (1 - k) * 4 * 0.25; sy *= 1 - 0.12 * (1 - k) * 4 * 0.25; }
       }
     }
-    v.body.scale.set(sx * hs, sy * hs);
-    v.body.y = SIZES.token * 0.42 - hop;
+    v.body.scale.set(sx * hs * morphSx, sy * hs);
+    v.body.y = SIZES.token * 0.42 - hop - morphHop;
     // Pastilles qui s'ajoutent une à une après une fusion.
     if (v.pipsShown < v.rank) {
       v.pipT += dt;
@@ -1108,7 +1221,7 @@ export class BattleScene {
       v.sprite.width = w;
       v.sprite.height = (w * tex.height) / tex.width;
     }
-    const sampler = this.lanes.get(v.lane) ?? this.lanes.get('a')!;
+    const sampler = this.lanes.get(v.lane) ?? this.lanes.get(this.myLane)!;
     const dir = sampler.dirX(d);
     // Marche : petit rebond pour les ennemis génériques (une seule image).
     const stunned = (e.effects.stunFor ?? 0) > 0;

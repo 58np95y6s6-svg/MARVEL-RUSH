@@ -1,4 +1,4 @@
-# Campagne Solo — 6 chapitres × 10 niveaux (+ 3 chapitres de l'extension Pixar, numérotés 13 à 15)
+# Campagne Solo — 15 chapitres × 10 niveaux (6 + 3 de l'extension DC, numérotés 7 à 9, + 3 de l'extension Transformers, numérotés 10 à 12, + 3 de l'extension Pixar, numérotés 13 à 15)
 
 > Rédigé par l'agent **Game design et stratégie** (§5.1 du prompt). Lu par l'agent **Campagne et progression** (`src/campaign/`) et l'agent **Interface**.
 > Les chiffres sont un premier jet, à valider avec le simulateur (`docs/equilibrage.md`).
@@ -30,7 +30,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 
 ### Déblocage
 - Les niveaux d'un chapitre s'ouvrent l'un après l'autre (victoire au niveau précédent).
-- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180). **Extension Pixar** : chaque chapitre 13 à 15 demande le niveau 10 du chapitre installé juste avant et le seuil « 30 × rang du chapitre − 15 » (165, 195, 225 sans les autres extensions).
+- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180). **Extension DC** : ch. 7 = 165 (après Thanos), ch. 8 = 195, ch. 9 = 225 (sur 270). **Extension Transformers** : chaque chapitre 10 à 12 demande les étoiles de tous les chapitres d'avant moins 15 (sans l'extension DC : 165, 195, 225 sur 270 ; avec les chapitres DC 7 à 9 : 255, 285, 315 sur 360), et le niveau 10 du chapitre qui le précède dans l'ordre installé (6, ou 9 avec DC). **Extension Pixar** : chaque chapitre 13 à 15 demande le niveau 10 du chapitre installé juste avant et le seuil « 30 × rang du chapitre − 15 » (165, 195, 225 sans les autres extensions ; 345, 375, 405 sur 450 avec DC et Transformers).
 - Le **Solo Infini** s'ouvre à la fin du chapitre 1.
 - Le chapitre N de la **campagne Coop** s'ouvre quand les deux joueurs ont fini le chapitre N en Solo (`docs/campagne-coop.md`).
 
@@ -41,6 +41,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 - **Gros boss avant le niveau 10** : tirés dans la rotation **sans le boss du chapitre** (`excludeBosses`), pour que celui-ci apparaisse pour la première fois au niveau 10. Le lieutenant d'une vague annonce toujours le gros boss suivant de la partie, même si le niveau finit avant.
 - **Niveau 5** : le **lieutenant du boss du chapitre** est imposé **à la dernière vague** (`script.miniBoss` + `bossAtWave`) ; le niveau est **gagné quand il meurt** (`endOnBossKill`). Les vagues de petit boss d'avant gardent le lieutenant du gros boss suivant (`miniBoss` ne s'applique plus qu'à la vague désignée).
 - **Niveau 10** : le **boss du chapitre** est imposé à la dernière vague, dans son arène (`bossId` + `bossAtWave`, même si cette vague est une vague de lieutenant du rythme, ex. vague 15 au chapitre 1) ; le niveau est **gagné quand il meurt**. Au chapitre 6 : **Maléfique** au niveau 8 (vague 48), **Thanos** au niveau 10 (vague 50).
+- **Chapitres DC (7 à 9)** : les gros boss de la rotation sont tirés dans la rotation complète (11 boss, `bossPool: 'tous'`) sans le boss du chapitre ni le boss intermédiaire du niveau 8. Au chapitre 9, le boss final est **Darkseid** (vague 100).
 - Modificateurs de map : **désactivés** en campagne, pour que la difficulté reste lisible.
 
 ### Sauvegarde et reprise
@@ -50,16 +51,16 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 
 ### Récompenses (§6.1)
 Deux monnaies depuis octobre 2026 : l'**or** paie les montées de niveau, les **gemmes** paient les packs (détail et simulation : `docs/equilibrage.md` §6 bis).
-- **Coffre de victoire** (ouvert avec une animation sur l'écran de résultats, puis récompenses détaillées) : rang selon le chapitre (1-2 **bois**, 3-4 **argent**, 5-6 **or**), **+1** si les 3 étoiles sont gagnées dans ce combat, **+1** au niveau 5, **+2** au niveau du boss (10, et 8 du ch. 6), plafonné à **légendaire**. **Rejouer** donne un coffre plus petit : un rang de moins, contenu × 0,5. Première victoire d'un niveau de boss : +10 ✦ (lieutenant) ou +20 ✦ (boss) dans le coffre. Contenu : beaucoup d'or, quelques gemmes, des cartes des héros possédés (deck actif en priorité), parfois un nouveau héros (`src/meta/chests.ts`).
+- **Coffre de victoire** (ouvert avec une animation sur l'écran de résultats, puis récompenses détaillées) : rang selon le chapitre (1-2 **bois**, 3-4 **argent**, 5-6 **or**, 7-9 **héroïque**), **+1** si les 3 étoiles sont gagnées dans ce combat, **+1** au niveau 5, **+2** au niveau du boss (10, et 8 des ch. 6 à 9), plafonné à **légendaire**. **Rejouer** donne un coffre plus petit : un rang de moins, contenu × 0,5. Première victoire d'un niveau de boss : +10 ✦ (lieutenant) ou +20 ✦ (boss) dans le coffre. Contenu : beaucoup d'or, quelques gemmes, des cartes des héros possédés (deck actif en priorité), parfois un nouveau héros (`src/meta/chests.ts`).
 - **Or des étoiles** : +20 par étoile la **première fois**, +8 par étoile en rejouant, **pour 10 vagues** (× vagues / 10, `lengthFactor`). **Gemmes** : +2 par étoile nouvelle. **Premières 3 étoiles** d'un niveau : +150 or et +5 gemmes.
-- **Butin des boss** tués pendant le combat (même en cas de défaite) : +20 or par lieutenant, +60 par gros boss, +300 pour Thanos.
+- **Butin des boss** tués pendant le combat (même en cas de défaite) : +20 or par lieutenant, +60 par gros boss, +300 pour Thanos, +500 pour Darkseid.
 - **Coffres d'étoiles** : 3 par chapitre, à 10, 20 et 30 étoiles du chapitre.
   - 10 ★ : 400 or + 40 gemmes + 5 cartes d'une unité possédée au hasard + **1 parchemin** ;
   - 20 ★ : 800 or + 60 gemmes + 10 cartes + **1 parchemin** ;
   - 30 ★ : 1 200 or + 80 gemmes + 1 tirage gratuit du pack au choix + **2 parchemins**.
 - **Niveau 5** (lieutenant), première victoire : **1 parchemin** + 10 cartes d'une unité du deck.
 - **Niveau 10** (boss), première victoire : **2 parchemins** + 100 gemmes + le **personnage garanti** du chapitre. S'il est déjà possédé : 20 cartes de ce personnage.
-- **Total des parchemins** par chapitre : 1 + 1 + 2 (coffres) + 1 (niv. 5) + 2 (niv. 10) = **7**, soit **42** pour la campagne. Un palier coûte 1 / 2 / 3 parchemins (`TALENT_TIER_SCROLLS`, `src/data/talents.ts`) : la campagne complète ouvre les 3 paliers d'environ **7 unités**, ce qui pousse à choisir. Des parchemins viennent aussi des paliers du Solo Infini et de la Coop Infini (argent : 1, or : 2, héroïque : 3, puis 1 tous les 10).
+- **Total des parchemins** par chapitre : 1 + 1 + 2 (coffres) + 1 (niv. 5) + 2 (niv. 10) = **7**, soit **42** pour la campagne (**63** avec les 3 chapitres DC). Un palier coûte 1 / 2 / 3 parchemins (`TALENT_TIER_SCROLLS`, `src/data/talents.ts`) : la campagne complète ouvre les 3 paliers d'environ **7 unités**, ce qui pousse à choisir. Des parchemins viennent aussi des paliers du Solo Infini et de la Coop Infini (argent : 1, or : 2, héroïque : 3, puis 1 tous les 10).
 - **Cristaux d'éveil** (§6.6) : 3 étoiles sur un niveau de boss (niveaux 5 et 10), la première fois : **25 ✦**.
 - **XP de compte** : (20 par victoire + 10 par étoile nouvelle) × vagues / 10 ; ×2 sur les niveaux 10. Chaque niveau de compte se réclame sur la **Route des récompenses**.
 - **Quêtes du jour** : « Gagne 3 niveaux de campagne », « Gagne 3 étoiles », « Bats 2 boss »… avancent avec chaque combat.
@@ -70,7 +71,7 @@ Retour joueur : « L'évolution de la difficulté, c'est le nombre de sbires (le
 - **Effectif×** (`enemyCountMultiplier`) : nombre d'ennemis par vague (l'intervalle d'apparition est divisé d'autant) ; de ×1,1 (niveau 1-1) à ×1,4 (niveau 6-10), en hausse régulière sur les 60 niveaux.
 - **PV×** (`enemyHpMultiplier`) : PV de tous les ennemis, boss compris ; de ×1,3 à ×1,9.
 - **PV boss×** (`bossHpMultiplier`) : PV des lieutenants et des gros boss, en plus ; de ×1,0 à ×1,3.
-- **Croissance des PV par vague** (`waveHpGrowth`, Solo Infini : ×1,18) : plus douce dans les chapitres longs, pour que la vague 50 reste à la portée d'une collection de fin de campagne (au rythme du Solo Infini, une vague 50 aurait 3 300 fois les PV de la vague 1) : ch. 1 ×1,14, ch. 2 ×1,075, ch. 3 à 5 ×1,07, ch. 6 ×1,0425. Réglée au simulateur.
+- **Croissance des PV par vague** (`waveHpGrowth`, Solo Infini : ×1,18) : plus douce dans les chapitres longs, pour que la vague 50 reste à la portée d'une collection de fin de campagne (au rythme du Solo Infini, une vague 50 aurait 3 300 fois les PV de la vague 1) : ch. 1 ×1,14, ch. 2 ×1,075, ch. 3 à 5 ×1,07, ch. 6 ×1,0425 ; extension DC : ch. 7 ×1,032, ch. 8 ×1,024, ch. 9 ×1,016 (§3 bis). Réglée au simulateur.
 
 Les PV de base des premières vagues ont aussi été relevés (octobre 2026, « on one-shot quasi tous les sbires ») : 100 PV en vague 1 (au lieu de 70), soit 3 à 5 coups pour un héros de départ de rang 1 (moyenne 4), puis +18 % par vague ; en échange, moins d'apparitions au début (≈ 12 en vague 1 au lieu de 17, intervalle 2,6 s → 0,6 s à la vague 21). Voir `docs/equilibrage.md` §2 quater.
 
@@ -82,12 +83,16 @@ Les PV de base des premières vagues ont aussi été relevés (octobre 2026, « 
 | 4 | 25 → 30 | 1,61 → 1,70 | 1,25 → 1,30 | 1,15 → 1,20 | ×1,07 | vague 30 | 4 à 6 | 2 Légendaires, niveau 5, palier 1 |
 | 5 | 30 → 40 | 1,71 → 1,80 | 1,30 → 1,35 | 1,20 → 1,25 | ×1,07 | vague 40 | 6 à 7 | Avengers (5), niveau 6, paliers 1-2 |
 | 6 | 40 → 50 | 1,81 → 1,90 | 1,35 → 1,40 | 1,25 → 1,30 | ×1,0425 | vague 50 (Thanos) | 7 à 9 | Avengers (5), niveau 8, 3 paliers |
+| 7 (DC) | 50 → 60 | 1,91 → 2,00 | 1,41 → 1,45 | 1,31 → 1,35 | ×1,032 | vague 60 (Joker) | 8 à 9 | Iron Man, Thor, Hulk, Cap + Superman, niveau 9, 3 paliers |
+| 8 (DC) | 60 → 75 | 2,01 → 2,10 | 1,46 → 1,50 | 1,36 → 1,40 | ×1,024 | vague 75 (Lex Luthor) | 9 à 10 | Iron Man, Thor, Superman, Wonder Woman, Batman, niveau 10, ★2 |
+| 9 (DC) | 75 → 100 | 2,11 → 2,21 | 1,51 → 1,55 | 1,41 → 1,45 | ×1,016 | vague 100 (Darkseid) | 10 | Iron Man, Thor, Superman, Batman, Green Lantern, niveau 10, ★4 |
 
 Cibles pour le simulateur (`--campagne <c> --attendu`, joueur `--casual`) : chapitre 1 gagné à **≥ 85 %** par le deck de départ niveau 1 ; chaque chapitre gagné à **≥ 70 %** par la collection attendue ; le deck de départ niveau 1 doit **peiner dès le chapitre 3**. Résultats : §4.
 
 ### Identifiants de map
 Les identifiants ci-dessous sont proposés à l'agent Maps (à aligner sur `src/maps/` quand il les aura fixés) :
 `toits-new-york`, `atelier-stark`, `base-avengers`, `asgard-bifrost`, `sanctum`, `temple-dix-anneaux`, `motunui`, `palais-imperial`, `zootopie`, `chambre-andy`, `sugar-rush`, `royaume-des-morts`, et les variantes `foret-pocahontas`, `highlands`, `atlantica`, `bayou`, `recif-nemo`, `tour-raiponce`, `foret-rox-rouky`. Les arènes sont celles de `src/data/bosses.ts` (`arene-bouffon`, etc.).
+Extension DC (identifiants de `src/maps/`) : `gotham-nuit`, `batcave`, `metropolis`, `themyscira`, `atlantis`, `oa`, et les arènes `arene-joker`, `arene-luthor`, `arene-bane`, `arene-sinestro`, `arene-blackadam`, `arene-darkseid` (Apokolips).
 
 ---
 
@@ -197,6 +202,128 @@ Croissance des PV par vague : ×1,0425.
 | 9 | royaume-des-morts | 48 | 1,89 | 1,39 | 1,29 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45) | Deux bonus d’équipe actifs |
 | 10 | royaume-des-morts → arène | 50 | 1,9 | 1,4 | 1,3 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45), **B Thanos** (50) | Thanos tué sans perdre de vie |
 
+## 3 ter. Extension Transformers — chapitres 10 à 12
+
+**Numérotation** : les chapitres DC sont les 7 à 9 sur leur branche ; pour que les deux extensions s'installent l'une sans l'autre ou ensemble sans collision, les chapitres Transformers sont les **10, 11 et 12**. La campagne suit l'ordre des numéros installés (`CHAPTERS` trié par `n`, `prevChapter` / `nextChapter` dans `src/campaign/levels.ts`) : sans DC, le chapitre 10 suit Thanos (6-10) ; avec DC, il suit Darkseid (9-10). L'écran Campagne affiche autant de chapitres qu'il y en a (étoiles totales, carte « chapitre suivant », liste des chapitres).
+
+**Durée** : à la suite des chapitres DC (50 → 100 vagues), **100 → 110** au chapitre 10, **110 → 125** au chapitre 11, **125 → 150** au chapitre 12, dont le niveau 10 finit sur **Megatron à la vague 150**. Mêmes règles qu'aux chapitres DC : lieutenant du boss du chapitre au niveau 5, boss intermédiaire dans son arène au niveau 8, boss du chapitre au niveau 10 ; entre-temps, lieutenants aux vagues 5, 15… et gros boss aux vagues 10, 20… tirés dans la rotation complète (`bossPool: 'tous'`) sans le boss intermédiaire ni le boss du chapitre. Les chapitres 1 à 6 gardent la rotation Marvel et Disney.
+
+**Difficulté** : PV×, effectif× et PV boss× continuent la pente (la pente suit le numéro du chapitre : niveau 12-10 à PV ×2,51, effectif ×1,71, PV boss ×1,61). Croissance des PV par vague : ch. 10 **×1,02**, ch. 11 **×1,017**, ch. 12 **×1,0135** — PV d'un ennemi normal à la dernière vague : 54 000 (10-10), 72 000 (11-10), ≈ 100 000 (12-10), au-dessus des chapitres DC (11 800 à la vague 100). Réglée au simulateur (§4) : à ×1,018, Devastator (11-10) tombait à 63 % ; à ×1,014, Megatron (12-10) à 67 %.
+
+| Chapitre | Vagues | PV× | Effectif× | PV boss× | Croissance | Boss du niveau 10 | Personnage garanti | Collection attendue (simulateur) |
+|---|---|---|---|---|---|---|---|---|
+| 10 (Cybertron) | 100 → 110 | 2,22 → 2,31 | 1,56 → 1,60 | 1,46 → 1,50 | ×1,02 | Soundwave (110) ; Starscream au niveau 8 | Optimus Prime | Iron Man, Thor, Hulk, Cap + Optimus, niveau 10, 3 paliers, ★2 |
+| 11 (la Terre) | 110 → 125 | 2,32 → 2,41 | 1,61 → 1,65 | 1,51 → 1,55 | ×1,017 | Devastator (125) ; Blitzwing au niveau 8 | Grimlock | Iron Man, Thor, Optimus, Cap, Ratchet, niveau 10, ★4 |
+| 12 (le Némésis) | 125 → 150 | 2,42 → 2,51 | 1,66 → 1,71 | 1,56 → 1,61 | ×1,0135 | **Megatron** (150) ; Shockwave au niveau 8 | Ultra Magnus | Iron Man, Thor, Optimus, Grimlock, Cap, niveau 10, ★6 |
+
+Récompenses : coffre de victoire de base **héroïque** (comme les chapitres DC), Megatron donne en plus 100 ✦ et le cadre « Vainqueur de Megatron » quand le chapitre 12 est le dernier installé. Maps : `cybertron`, `base-autobot`, `mission-city` ; arènes `arene-starscream` (le ciel), `arene-soundwave` (la station radar), `arene-shockwave` (le labo de Kaon), `arene-devastator` (la carrière), `arene-blitzwing` (la toundra), `arene-megatron` (le Némésis) et `arene-unicron` (l'espace d'Unicron, modes infinis).
+
+### Chapitre 10 — Cybertron
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | cybertron | 100 | 2,22 | 1,56 | 1,46 | — | Avec au moins 2 Autobots |
+| 2 | cybertron | 101 | 2,23 | 1,56 | 1,46 | — | Sans perdre de vie |
+| 3 | cybertron | 102 | 2,24 | 1,57 | 1,47 | — | Une unité de rang 6 |
+| 4 | base-autobot | 104 | 2,25 | 1,57 | 1,47 | — | Aucun bouclier ne passe |
+| 5 | cybertron | 105 | 2,26 | 1,58 | 1,48 | **L Insecticon géant** (105) | Insecticon tué en moins de 25 s |
+| 6 | base-autobot | 104 | 2,27 | 1,58 | 1,48 | — | Moins de 170 invocations |
+| 7 | cybertron | 106 | 2,28 | 1,59 | 1,49 | — | Bonus d’équipe Autobots actif |
+| 8 | cybertron → arène | 108 | 2,29 | 1,59 | 1,49 | **B Starscream** (108) | Boss tué en moins de 40 s |
+| 9 | base-autobot | 108 | 2,3 | 1,6 | 1,5 | — | Aucune unité ne perd de rang |
+| 10 | cybertron → arène | 110 | 2,31 | 1,6 | 1,5 | **B Soundwave** (110) | Boss tué en moins de 40 s |
+
+### Chapitre 11 — La Terre
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | base-autobot | 110 | 2,32 | 1,61 | 1,51 | — | Sans perdre de vie |
+| 2 | base-autobot | 112 | 2,33 | 1,61 | 1,51 | — | Aucun blindé ne passe |
+| 3 | mission-city | 114 | 2,34 | 1,62 | 1,52 | — | Avec Grimlock dans le deck |
+| 4 | mission-city | 117 | 2,35 | 1,62 | 1,52 | — | Une unité de rang 7 |
+| 5 | base-autobot | 120 | 2,36 | 1,63 | 1,53 | **L Constructicon géant** (120) | Constructicon tué en moins de 25 s |
+| 6 | mission-city | 117 | 2,37 | 1,63 | 1,53 | — | Moins de 190 invocations |
+| 7 | base-autobot | 119 | 2,38 | 1,64 | 1,54 | — | Sans perdre de vie |
+| 8 | mission-city → arène | 122 | 2,39 | 1,64 | 1,54 | **B Blitzwing** (122) | Boss tué en moins de 40 s |
+| 9 | base-autobot | 123 | 2,4 | 1,65 | 1,55 | — | Bonus d’équipe Dinobots ou Autobots actif |
+| 10 | base-autobot → arène | 125 | 2,41 | 1,65 | 1,55 | **B Devastator** (125) | Boss tué en moins de 45 s |
+
+### Chapitre 12 — Le Némésis
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | mission-city | 125 | 2,42 | 1,66 | 1,56 | — | Sans perdre de vie |
+| 2 | mission-city | 130 | 2,43 | 1,66 | 1,56 | — | Une unité de rang 7 |
+| 3 | cybertron | 135 | 2,44 | 1,67 | 1,57 | — | Aucun bouclier ne passe |
+| 4 | base-autobot | 140 | 2,45 | 1,67 | 1,57 | — | Deux bonus d’équipe actifs |
+| 5 | mission-city | 145 | 2,46 | 1,68 | 1,58 | **L Drone Vehicon géant** (145) | Lieutenant tué en moins de 25 s |
+| 6 | cybertron | 135 | 2,47 | 1,68 | 1,58 | — | Moins de 220 invocations |
+| 7 | base-autobot | 140 | 2,48 | 1,69 | 1,59 | — | Sans perdre de vie |
+| 8 | mission-city → arène | 144 | 2,49 | 1,69 | 1,59 | **B Shockwave** (144) | Boss tué en moins de 40 s |
+| 9 | cybertron | 147 | 2,5 | 1,7 | 1,6 | — | Avec au moins 1 héros de chaque pack (Marvel, Disney, Transformers) |
+| 10 | mission-city → arène | 150 | 2,51 | 1,71 | 1,61 | **B Megatron** (150) | Megatron tué sans perdre de vie |
+
+
+---
+
+## 3 bis. Extension DC Comics — chapitres 7 à 9
+
+Les trois chapitres s'ouvrent après le chapitre 6 (Thanos vaincu) et les seuils d'étoiles du §2. Refonte d'octobre 2026 sur la structure longue (même règles que les chapitres 1 à 6) : **50 → 60 vagues** au chapitre 7, **60 → 75** au chapitre 8, **75 → 100** au chapitre 9, dont le niveau 10 finit sur **Darkseid à la vague 100**. Dans un chapitre, les vagues montent de niveau en niveau (les niveaux 5 et 10 en haut de la fourchette). Mêmes règles de boss : lieutenant du boss du chapitre imposé à la dernière vague du niveau 5, boss intermédiaire dans son arène à la dernière vague du niveau 8, boss du chapitre à la dernière vague du niveau 10 ; lieutenants aux vagues 5, 15, 25… et gros boss aux vagues 10, 20, 30… entre-temps (B rot. : rotation complète, 11 boss, sans le boss intermédiaire ni le boss du chapitre). Les lieutenants sont décrits dans `design/game-design.md` (§ Extension DC).
+
+**Difficulté** : PV×, effectif× et PV boss× continuent la pente des 60 premiers niveaux (interpolation prolongée : niveau 9-10 à PV ×2,21, effectif ×1,55, PV boss ×1,45). Croissance des PV par vague : ch. 7 **×1,032**, ch. 8 **×1,024**, ch. 9 **×1,016** — chaque chapitre repart un peu en dessous de la fin du précédent puis le dépasse (PV d'un ennemi normal à la dernière vague : 7 700 au ch. 6, 7 800 au ch. 7, 9 700 au ch. 8, 11 800 au ch. 9). La croissance du ch. 9 est réglée pour que **Darkseid** (PV ×2, Rayons Oméga, Boom Tube et Équation d'Anti-Vie) soit battu par la collection attendue : à ×1,025, ses PV (5,2 M) le rendaient imbattable (0 %), le plafond de dégâts d'un plateau plein étant atteint vers la vague 80.
+
+**Récompenses** : comme les chapitres 1 à 6 (§2), avec un **coffre de victoire héroïque** de base (légendaire sur les niveaux de boss) ; niveau 10 : 2 parchemins, 100 gemmes et le personnage garanti ; Darkseid vaincu (niveau 9-10) : **100 ✦** et le cadre de profil « Vainqueur de Darkseid ». Butin de boss en combat : Darkseid 500 or.
+
+### Chapitre 7 — Gotham
+Boss intermédiaire : **Bane** (niveau 8, `arene-bane`), lieutenant **Mercenaire géant**. Boss : **le Joker** (`arene-joker`), lieutenant **Clown géant**. Personnage garanti : **Batman** (s'il est déjà possédé : 20 cartes de Batman). Croissance des PV par vague : ×1,032.
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | gotham-nuit | 50 | 1,91 | 1,41 | 1,31 | L tous les 5, B rot. tous les 10 ; B rot. (50) | Avec au moins 2 héros DC |
+| 2 | gotham-nuit | 51 | 1,92 | 1,41 | 1,31 | L tous les 5, B rot. tous les 10 | Sans perdre de vie |
+| 3 | batcave | 52 | 1,93 | 1,42 | 1,32 | L tous les 5, B rot. tous les 10 | Aucun bouclier ne passe |
+| 4 | batcave | 54 | 1,94 | 1,42 | 1,32 | L tous les 5, B rot. tous les 10 | Une unité de rang 6 |
+| 5 | gotham-nuit | 55 | 1,95 | 1,43 | 1,33 | L tous les 5, B rot. tous les 10 ; **L Clown géant** (55) | Clown tué en moins de 25 s |
+| 6 | batcave | 54 | 1,96 | 1,43 | 1,33 | L tous les 5, B rot. tous les 10 | Moins de 100 invocations |
+| 7 | gotham-nuit | 56 | 1,97 | 1,44 | 1,34 | L tous les 5, B rot. tous les 10 | Bonus d’équipe Bat-famille actif |
+| 8 | batcave → arène | 58 | 1,98 | 1,44 | 1,34 | L tous les 5, B rot. tous les 10 ; **B Bane** (58) | Boss tué en moins de 40 s |
+| 9 | gotham-nuit | 58 | 1,99 | 1,45 | 1,35 | L tous les 5, B rot. tous les 10 | Aucune unité ne perd de rang |
+| 10 | gotham-nuit → arène | 60 | 2 | 1,45 | 1,35 | L tous les 5, B rot. tous les 10 ; **B Le Joker** (60) | Boss tué en moins de 40 s |
+
+### Chapitre 8 — Metropolis et Themyscira
+Boss intermédiaire : **Black Adam** (niveau 8, `arene-blackadam`), lieutenant **Soldat de Kahndaq géant**. Boss : **Lex Luthor** (`arene-luthor`), lieutenant **Robot LexCorp géant**. Personnage garanti : **Superman**. Croissance des PV par vague : ×1,024.
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | metropolis | 60 | 2,01 | 1,46 | 1,36 | L tous les 5, B rot. tous les 10 ; B rot. (60) | Sans perdre de vie |
+| 2 | metropolis | 62 | 2,02 | 1,46 | 1,36 | L tous les 5, B rot. tous les 10 | Aucun blindé ne passe |
+| 3 | themyscira | 64 | 2,03 | 1,47 | 1,37 | L tous les 5, B rot. tous les 10 | Avec Wonder Woman dans le deck |
+| 4 | atlantis | 67 | 2,04 | 1,47 | 1,37 | L tous les 5, B rot. tous les 10 | Une unité de rang 7 |
+| 5 | metropolis | 70 | 2,05 | 1,48 | 1,38 | L tous les 5, B rot. tous les 10 ; **L Robot LexCorp géant** (70) | Robot tué en moins de 25 s |
+| 6 | themyscira | 67 | 2,06 | 1,48 | 1,38 | L tous les 5, B rot. tous les 10 | Moins de 120 invocations |
+| 7 | atlantis | 69 | 2,07 | 1,49 | 1,39 | L tous les 5, B rot. tous les 10 | Sans perdre de vie |
+| 8 | themyscira → arène | 72 | 2,08 | 1,49 | 1,39 | L tous les 5, B rot. tous les 10 ; **B Black Adam** (72) | Boss tué en moins de 40 s |
+| 9 | metropolis | 73 | 2,09 | 1,5 | 1,4 | L tous les 5, B rot. tous les 10 | Bonus d’équipe Justice League actif |
+| 10 | metropolis → arène | 75 | 2,1 | 1,5 | 1,4 | L tous les 5, B rot. tous les 10 ; **B Lex Luthor** (75) | Boss tué en moins de 45 s |
+
+### Chapitre 9 — Apokolips
+Boss intermédiaire : **Sinestro** (niveau 8, `arene-sinestro`), lieutenant **Soldat Sinestro géant**. Boss final : **Darkseid** (`arene-darkseid`, Apokolips), lieutenant **Parademon géant**. Personnage garanti : **Green Lantern**, plus le cadre de profil « Vainqueur de Darkseid » et 100 ✦. Croissance des PV par vague : ×1,016.
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | oa | 75 | 2,11 | 1,51 | 1,41 | L tous les 5, B rot. tous les 10 ; L (75) | Sans perdre de vie |
+| 2 | oa | 80 | 2,12 | 1,51 | 1,41 | L tous les 5, B rot. tous les 10 ; B rot. (80) | Une unité de rang 7 |
+| 3 | gotham-nuit | 85 | 2,13 | 1,52 | 1,42 | L tous les 5, B rot. tous les 10 ; L (85) | Aucun bouclier ne passe |
+| 4 | metropolis | 90 | 2,14 | 1,52 | 1,42 | L tous les 5, B rot. tous les 10 ; B rot. (90) | Deux bonus d’équipe actifs |
+| 5 | oa | 95 | 2,15 | 1,53 | 1,43 | L tous les 5, B rot. tous les 10 ; **L Soldat Sinestro géant** (95) | Soldat tué en moins de 25 s |
+| 6 | themyscira | 85 | 2,16 | 1,53 | 1,43 | L tous les 5, B rot. tous les 10 ; L (85) | Moins de 150 invocations |
+| 7 | atlantis | 90 | 2,17 | 1,54 | 1,44 | L tous les 5, B rot. tous les 10 ; B rot. (90) | Sans perdre de vie |
+| 8 | oa → arène | 94 | 2,18 | 1,54 | 1,44 | L tous les 5, B rot. tous les 10 ; **B Sinestro** (94) | Boss tué en moins de 40 s |
+| 9 | batcave | 97 | 2,19 | 1,55 | 1,45 | L tous les 5, B rot. tous les 10 | Avec au moins 1 héros de chaque pack (Marvel, Disney, DC) |
+| 10 | oa → arène | 100 | 2,21 | 1,55 | 1,45 | L tous les 5, B rot. tous les 10 ; **B Darkseid** (100) | Darkseid tué sans perdre de vie |
+
+Données : `src/campaign/levels.ts` (chapitres 7 à 9, `midBoss`, `bossPool: 'tous'` ; les chapitres 1 à 6 jouent la rotation `marvel-disney`). Configuration moteur d'un niveau 10 DC : `script: { enemyHpMultiplier, enemyCountMultiplier, bossHpMultiplier, waveHpGrowth, bossId, bossAtWave, endOnBossKill: true, excludeBosses: [boss du niveau 8, boss du chapitre] }` ; au chapitre 9, `bossId: 'darkseid'`, `bossAtWave: 100`.
+
 ---
 
 ## 3 quater. Extension Pixar — chapitres 13 à 15
@@ -269,7 +396,7 @@ Commande : `npx vite-node scripts/simulate.ts -- 20 --campagne c3 --casual --att
 
 Cibles : chapitre 1 gagné à ≥ 85 % par le deck de départ niveau 1 (`--casual`) ; chaque chapitre gagné à ≥ 70 % (`--casual`) avec la collection attendue ; le deck de départ niveau 1 doit peiner dès le chapitre 3.
 
-Résultats (octobre 2026, refonte « parties longues ») — victoire moyenne du chapitre / pire niveau :
+Résultats (octobre 2026, refonte « parties longues » ; chapitres DC : profils Rush Royale, voir `docs/equilibrage.md` §2 sexies) — victoire moyenne du chapitre / pire niveau :
 
 | Chapitre | Collection attendue | `--casual` (20 parties par niveau) | Joueur de référence (12 parties) | Deck de départ niveau 1, `--casual` (12 parties) |
 |---|---|---|---|---|
@@ -279,5 +406,11 @@ Résultats (octobre 2026, refonte « parties longues ») — victoire moyenne du
 | 4 (25-30) | 2 Légendaires, niv. 5, palier 1 | **94 % / 80 %** (c4-n9) | 97 % / 83 % | — |
 | 5 (30-40) | Avengers, niv. 6, paliers 1-2 | **97 % / 70 %** (c5-n10, Cruella) | 100 % / 100 % | — |
 | 6 (40-50) | Avengers, niv. 8, 3 paliers | **99 % / 85 %** (c6-n10, Thanos) | 100 % / 100 % | — |
+| 7 (50-60, DC) | méta + Superman, niv. 9, 3 paliers | **100 % / 100 %** (12 parties) | — | — |
+| 8 (60-75, DC) | Iron Man, Thor, Superman, Wonder Woman, Batman, niv. 10, ★2 | **100 % / 100 %** (12 parties) | — | — |
+| 9 (75-100, DC) | Iron Man, Thor, Superman, Batman, Green Lantern, niv. 10, ★4 | **99 % / 92 %** (c9-n10, Darkseid ; 12 parties) | — | — |
+| 10 (100-110, Transformers) | méta + Optimus, niv. 10, ★2 | **100 % / 100 %** (8 parties) | — | — |
+| 11 (110-125, Transformers) | Iron Man, Thor, Optimus, Cap, Ratchet, niv. 10, ★4 | **100 % / 100 %** (8 parties) | — | — |
+| 12 (125-150, Transformers) | Iron Man, Thor, Optimus, Grimlock, Cap, niv. 10, ★6 | **96 % / 75 %** (c12-n10, Megatron ; 8 parties) | — | — |
 
 Lecture : les niveaux les plus durs d'un chapitre sont les niveaux 8-9 (dernière vague = gros boss tiré au hasard dans la rotation, à abattre avec tous les ennemis restants) et le niveau 10 (boss du chapitre ; Cruella et Thanos sont les plus solides). La ★★★ tombe à 0 % pour le joueur automatique sur les contraintes de deck (Doctor Strange ou Loki, unités Disney, bonus d'équipe, un de chaque pack) et de rang 6-7 (le joueur `--casual` fusionne au hasard) : c'est attendu.

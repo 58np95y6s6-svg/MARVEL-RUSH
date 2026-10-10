@@ -68,7 +68,7 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 - Les **petits et gros boss** arrivent **par le tronc commun** ; leurs pouvoirs visent un plateau au hasard.
 - Tout en haut : la rangée des 5 cartes du deck de la partenaire avec leurs badges, son avatar et son pseudo.
 - Le bandeau « N vague(s) avant le boss X » se place **entre les deux plateaux**, sur le tronc.
-- Vies **partagées** (3 cœurs communs en haut), mana individuel (le coup final rapporte le mana).
+- Vies **partagées** : **3 vies** pour les deux joueurs. **[ÉCART]** La Coop de Rush Royale n'en a qu'une ; mana individuel (le coup final rapporte le mana).
 - Bouton **« Offrir »** à côté des emotes, actif une fois par vague.
 
 ### 1.4 Style des éléments (captures)
@@ -104,20 +104,21 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 | Grille | 3 × 5 = 15 cases par joueur. | Identique (§4.1). |
 | Portée | Globale : toute unité touche tout ennemi, selon son ciblage. | Identique. |
 | Ciblage | Premier (le plus avancé), aléatoire, le plus fort (PV max) selon l'unité. | Identique (premier, aléatoire, fort). |
-| Mana de départ | 100 *(à confirmer, varie selon le mode)*. | 100. |
-| Mana par élimination | Fixe par ennemi, plus élevé pour les gros et les boss ; augmente avec les vagues *(à confirmer)*. | 10 normal, 30 gros, 100 boss (§4.2). |
+| Mana de départ | 100 (guides). | 100 (octobre 2026, copie de l'équilibrage ; avant : 150). |
+| Mana par élimination | Coop : +10 toutes les 10 vagues, 50 au plus ; gros monstre et mini-boss ×5 ; « tuer un boss ou un mini-boss rapporte plus ». | 10 (+10 toutes les 10 vagues, 50 au plus) × 1 normal, × 5 gros et mini-boss ; 100 pour un gros boss, plus la récompense de boss (docs/rush-royale-donnees.md §2). |
 | Coût d'invocation | **10**, puis **+10** à chaque invocation (10, 20, 30…). Le coût ne redescend pas. | Identique. |
 | Fusion | Deux unités **identiques de même rang** → une unité **aléatoire du deck** au **rang +1**, sur la case de destination. Rang max **7**, affiché en pastilles. Certaines unités ont des fusions spéciales (Mime, Arlequin…) — **hors périmètre** chez nous. | Identique (§4.2). |
-| Effet du rang | Multiplie les dégâts et parfois la compétence. | Dégâts × rang ; compétences selon le tableau §4.5. |
-| Améliorations en partie | Bouton par carte du deck, coûts **100 / 200 / 400 / 700**, niveaux 1 à 5 ; bonus propre à chaque unité. | Identique, mais bonus uniforme : **+15 % de dégâts** par niveau (§4.2). **[ÉCART]** |
-| Vagues | Minuteur par vague ; à la fin du minuteur, les monstres restants disparaissent et le boss arrive. | Vagues de **30 s**. Pendant un boss, les apparitions s'arrêtent ; la vague suivante commence quand le boss est vaincu (§4.3), comme dans Rush Royale. **[ÉCART]** Les ennemis restants **ne disparaissent pas** à l'arrivée du boss (ils continuent leur chemin). |
-| Cadence des boss | PvP : un boss à la fin de chaque vague. Coop : **un boss toutes les 10 vagues** (10, 20, 30…), plus fort à chaque fois, avec des vagues denses entre-temps. | Calé sur la Coop de Rush Royale, partout (Solo, Coop, campagnes) : **petit boss « lieutenant » toutes les 5 vagues** (5, 15, 25…, PV ×12, pouvoir affaibli toutes les 10 s) ; **gros boss toutes les 10 vagues** (10, 20, 30…, PV ×25, pouvoir toutes les 6 s), rotation des 6 sans répétition ; **Thanos à la vague 50** puis toutes les 50 en mode infini, et au dernier niveau de la campagne (§4.3, §4.4). Le petit boss est un **[ÉCART]** (ajout). |
+| Effet du rang | Unités de dégâts : intervalle ÷ rang (« au rang 2, deux fois plus fortes ») ; soutiens : effet × rang. | Identique depuis octobre 2026. |
+| Niveau de carte | Tableau propre à chaque unité (les Légendaires gagnent 40 à 70 % de leurs dégâts du niveau 7 par niveau, les Communes 8 à 11 %). | Tableau Rush Royale pour les 9 héros dont il est publié (`UnitDef.damagePerLevel`), +10 % par niveau pour les autres. |
+| Améliorations en partie | Bouton par carte du deck, coûts **100 / 200 / 400 / 800**, niveaux 1 à 5 ; bonus propre à chaque unité. | Identique, mais bonus uniforme : **+15 % de dégâts et +6 % de cadence** par niveau. **[ÉCART]** |
+| Vagues | PvP : minuteur par vague, puis boss. Coop : **10 monstres par vague**, la suivante commence quand le terrain est nettoyé ; vague de mini-boss = **un mini-boss et des rapides** ; vague de boss = le boss ; **les autres vagues ne contiennent que des monstres communs** (textes du jeu). | Règles de la Coop partout : 10 monstres (× effectif de la campagne), vague de mini-boss = lieutenant + 9 rapides, vagues normales de monstres communs. La campagne y mêle gros, blindés et boucliers (ses contraintes en ont besoin). **[ÉCART]** |
+| Cadence des boss | PvP : un boss à la fin de chaque vague. Coop : **un boss toutes les 10 vagues** (10, 20, 30…), plus fort à chaque fois, avec des vagues denses entre-temps. | Calé sur la Coop de Rush Royale, partout (Solo, Coop, campagnes) : **petit boss « lieutenant » toutes les 5 vagues** (5, 15, 25…, PV ×5 et vitesse ×0,8 d'un monstre commun comme le mini-boss de Rush Royale, pouvoir affaibli toutes les 10 s) ; **gros boss toutes les 10 vagues** (10, 20, 30…, PV ×25, pouvoir toutes les 6 s), rotation des 6 sans répétition ; **Thanos à la vague 50** puis toutes les 50 en mode infini, et au dernier niveau de la campagne (§4.3, §4.4). Le petit boss est un **[ÉCART]** (ajout). |
 | Sbires | Les monstres de la vague portent les traits du boss à venir *(à confirmer)*. | Les sbires du prochain gros boss se mêlent aux 2 vagues qui le précèdent. |
 | Rage du boss | Le boss accélère s'il traîne *(à confirmer)*. | Rage à 45 s : vitesse ×2. |
-| Vies | 3 vies (cœurs) par joueur ; un monstre qui passe la porte en retire une, un boss en retire plusieurs. | 3 vies ; ennemi normal −1, boss −toutes (§4.1). |
+| Vies | PvP : 3 vies par joueur. Coop : **une seule vie** pour la porte commune. Un monstre commun retire 1 vie, **un mini-boss ou un boss 2** (textes du jeu). | Solo et campagne : 3 vies ; Coop : 3 vies partagées (écart voulu). Normal −1, gros, lieutenant et boss −2 ; dans un niveau de boss, laisser passer le boss imposé fait perdre. |
 | PvP (fin de partie, envoi des monstres tués, mort subite) | Premier à 0 vie perd ; les monstres tués partent chez l'adversaire. | **Hors périmètre, par choix de l'utilisateur** : pas de Duel (§5.2). |
 | Héros | Un héros par joueur avec une compétence active (Trainer au départ). | **Hors périmètre** (pas de héros). |
-| Coup critique | Chance de critique (5 % de base, plus pour certaines unités) × **dégâts critiques** du compte. | Pas de stat de compte ; les critiques viennent des compétences (Soldat de l'hiver, Rebelle) et des équipes (Les Agents). |
+| Coup critique | Chance de critique (5 % de base, plus pour certaines unités) × **dégâts critiques** du compte. | **5 % de base** pour toutes les unités (octobre 2026), dégâts ×2 ; pas de stat de compte (les dégâts critiques de départ d'un compte ne sont pas publiés). |
 
 ---
 
@@ -131,7 +132,7 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 | **Cartes et niveaux** | Doublons → cartes de niveau ; or pour monter ; niveaux 1 à 15. | **Adapté** : niveaux 1 à 10, 1, 1, 2, 2, 2, 3, 3, 3, 4 cartes + or (§6.2) ; packs payés en gemmes (deux monnaies, comme Rush Royale). |
 | **Raretés** | Commun, rare, épique, légendaire (+ ascension). | **Adapté** : rare, épique, légendaire. |
 | **Talents** | À certains niveaux de carte (9, 11, 13, 15 dans les versions récentes), on **choisit 1 talent parmi 2** ; le choix se change librement hors combat. | **Adapté** : paliers aux niveaux **5, 7, 9**, 1 parmi 2, ouverts par des **parchemins de talent** gagnés en campagne ; le choix reste modifiable gratuitement hors combat, comme dans Rush Royale. Données : `src/data/talents.ts`. |
-| **Dégâts critiques (stat de compte)** | Chaque montée de niveau d'une carte augmente les dégâts critiques de tout le compte. | **Hors périmètre** (remplacé par +10 % de dégâts par niveau de collection, §4.5). |
+| **Dégâts critiques (stat de compte)** | Chaque montée de niveau d'une carte augmente les dégâts critiques de tout le compte. | **Hors périmètre** (remplacé par le gain de dégâts par niveau de collection : tableau Rush Royale de l'unité, sinon +10 %). |
 | **Decks** | 5 unités, plusieurs emplacements de deck. | **À reproduire** : 5 unités, jusqu'à 3 decks (§6.4). |
 | **Factions** | 5 factions, bonus hebdomadaire. | **Adapté** : bonus d'équipe (§4.6). |
 | **PvP** | Mode principal de Rush Royale. | **Hors périmètre, par choix de l'utilisateur** : seulement Solo et Coop (§5.2). |

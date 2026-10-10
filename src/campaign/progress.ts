@@ -155,12 +155,12 @@ export function chestReward(threshold: number, cardUnit: UnitId | null): Reward 
 
 export const chestKey = (chapter: number, threshold: number): string => `c${chapter}-${threshold}`;
 
-/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or ; chapitres d'extension : héroïque). */
-const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent', 'or', 'or'];
+/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or ; chapitres d'extension, DC 7-9 et suivants : héroïque). */
+const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent', 'or', 'or', 'heroique', 'heroique', 'heroique'];
 
 /**
  * Coffre de victoire d'un niveau : rang du chapitre, +1 pour 3 étoiles dans ce combat, +1 au niveau 5
- * (lieutenant), +2 au niveau du boss (10, et 8 du chapitre 6). Rejouer : un rang de moins, contenu × 0,5.
+ * (lieutenant), +2 au niveau du boss (10, et 8 des chapitres 6 à 9). Rejouer : un rang de moins, contenu × 0,5.
  * Cristaux dans le coffre à la première victoire d'un niveau de boss (lieutenant 10 ✦, boss 20 ✦).
  */
 export function victoryChest(level: CampaignLevel, earned: Stars, firstWin: boolean): VictoryChest {
@@ -267,7 +267,7 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
     const hero = guaranteedHero(ch, (profile as Profile | null) ?? null);
     lines.push({
       kind: 'boss', label: `${level.boss?.name ?? 'Boss'} vaincu`,
-      reward: { scrolls: 2, shards: BOSS_FIRST_GEMS, heroes: [hero], ...(ch.boss === 'thanos' || ch.boss === 'zurg' ? { crystals: THANOS_CRYSTALS } : {}) },
+      reward: { scrolls: 2, shards: BOSS_FIRST_GEMS, heroes: [hero], ...(['thanos', 'darkseid', 'megatron', 'zurg'].includes(ch.boss) ? { crystals: THANOS_CRYSTALS } : {}) },
     });
   }
   if (firstWin && level.chapter === 6 && level.n === 8 && C6N8_SCROLLS) {

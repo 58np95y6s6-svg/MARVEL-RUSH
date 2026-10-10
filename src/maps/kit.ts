@@ -81,9 +81,11 @@ export interface Palette {
 
 export type PathKind =
   | 'slabs' | 'roof' | 'planks' | 'belt' | 'rainbow' | 'parquet' | 'track' | 'stone' | 'sand' | 'cobble'
-  | 'petals' | 'asphalt' | 'toytrack' | 'candy' | 'dirt' | 'rubble' | 'checker' | 'thorns' | 'reef' | 'cosmic';
+  | 'petals' | 'asphalt' | 'toytrack' | 'candy' | 'dirt' | 'rubble' | 'checker' | 'thorns' | 'reef' | 'cosmic'
+  // Extension DC
+  | 'wetcobble' | 'marble' | 'grating' | 'energy' | 'basalt';
 
-export type FrameKind = 'stone' | 'concrete' | 'metal' | 'gold' | 'wood' | 'jade' | 'candy' | 'toy' | 'bone' | 'obsidian' | 'coral' | 'cosmic';
+export type FrameKind = 'stone' | 'concrete' | 'metal' | 'gold' | 'wood' | 'jade' | 'candy' | 'toy' | 'bone' | 'obsidian' | 'coral' | 'cosmic' | 'marble';
 
 export interface Ctx {
   mode: LayoutMode;
@@ -349,9 +351,9 @@ function frameTexture(k: FrameKind, x: number, y: number, w: number, h: number, 
   s += `<rect x="${x + r * 0.5}" y="${y + t * 0.18}" width="${w - r}" height="${t * 0.22}" rx="${t * 0.11}" fill="${fc.light}" opacity=".85"/>`;
   const seam = (x1: number, y1: number, x2: number, y2: number, op = 0.45, wdt = c * 0.022) =>
     `<line x1="${n1(x1)}" y1="${n1(y1)}" x2="${n1(x2)}" y2="${n1(y2)}" stroke="${INK}" stroke-width="${n1(wdt)}" stroke-linecap="round" opacity="${op}"/>`;
-  if (k === 'stone' || k === 'concrete' || k === 'jade' || k === 'obsidian' || k === 'bone') {
+  if (k === 'stone' || k === 'concrete' || k === 'jade' || k === 'obsidian' || k === 'bone' || k === 'marble') {
     // joints de blocs sur les quatre côtés
-    const step = c * (k === 'concrete' ? 0.62 : 0.42);
+    const step = c * (k === 'concrete' ? 0.62 : k === 'marble' ? 0.8 : 0.42);
     for (let xx = x + r + step * 0.5; xx < x + w - r; xx += step) {
       s += seam(xx, y + 2, xx, y + t - 2) + seam(xx + step / 2, y + h - t + 2, xx + step / 2, y + h - 2);
     }
@@ -526,6 +528,52 @@ export function laneSvg(lane: Lane, pal: Palette, kind: PathKind, seed: string):
       s += st(pal.pathDeco, inner * 0.4, 'opacity=".4"');
       s += dash(INK, inner, c * 0.025, c * 0.45, 'opacity=".4"');
       s += along(Math.round(lane.cells * 3), (p) => `<circle cx="${n1(p.x + (rr() - 0.5) * w * 0.6)}" cy="${n1(p.y + (rr() - 0.5) * w * 0.6)}" r="${n1(c * 0.015)}" fill="#fff" opacity=".7"/>`);
+      break;
+    case 'wetcobble': {
+      // pavés mouillés : joints serrés et flaques qui reflètent la lumière
+      const step = c * 0.24;
+      s += dash(INK, inner, c * 0.022, step, 'opacity=".3"');
+      s += st(pal.pathDeco, inner * 0.5, `opacity=".3" stroke-dasharray="${n1(step * 0.5)} ${n1(step * 1.5)}"`, 'butt');
+      s += along(Math.round(lane.cells * 1.2), (p) => {
+        const off = (rr() - 0.5) * w * 0.45;
+        const x = p.x - Math.sin(p.angle) * off, y = p.y + Math.cos(p.angle) * off, rx = c * (0.1 + rr() * 0.08);
+        return `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(rx)}" ry="${n1(rx * 0.42)}" fill="${light(pal.pathDeco, 0.25)}" opacity=".55"/>` +
+          `<ellipse cx="${n1(x - rx * 0.3)}" cy="${n1(y - rx * 0.12)}" rx="${n1(rx * 0.35)}" ry="${n1(rx * 0.1)}" fill="#fff" opacity=".55"/>`;
+      });
+      break;
+    }
+    case 'marble': {
+      // dalles de marbre : grands joints, veines grises, frise dorée au centre
+      s += dash(INK, inner, c * 0.022, c * 0.5, 'opacity=".28"');
+      s += along(Math.round(lane.cells * 1.6), (p) => {
+        const off = (rr() - 0.5) * w * 0.55, x = p.x - Math.sin(p.angle) * off, y = p.y + Math.cos(p.angle) * off, k = c * 0.12;
+        return `<path d="M${n1(x - k)} ${n1(y - k * 0.4)} q${n1(k * 0.5)} ${n1(-k * 0.5)} ${n1(k)} 0 t${n1(k)} ${n1(k * 0.2)}" stroke="${shade(pal.path, 0.35)}" stroke-width="${n1(c * 0.012)}" fill="none" opacity=".6"/>`;
+      });
+      s += dash(pal.pathDeco, c * 0.03, c * 0.12, c * 0.08, 'opacity=".75"');
+      break;
+    }
+    case 'grating':
+      // caillebotis métallique : lattes serrées, bordures rivetées
+      s += st(shade(pal.path, 0.18), inner * 0.86);
+      s += dash(INK, inner * 0.86, c * 0.02, c * 0.1, 'opacity=".38"');
+      s += dash(pal.pathDeco, inner, c * 0.04, c * 0.36, 'opacity=".8"');
+      s += st(INK, c * 0.016, 'opacity=".25"');
+      break;
+    case 'energy':
+      // énergie construite : bande lumineuse, cœur blanc, chevrons
+      s += st(pal.pathDeco, inner * 0.5, 'opacity=".38"');
+      s += st('#ffffff', inner * 0.12, 'opacity=".45"');
+      s += dash(INK, inner, c * 0.02, c * 0.48, 'opacity=".25"');
+      s += along(Math.round(lane.cells * 2.5), (p) => `<circle cx="${n1(p.x + (rr() - 0.5) * w * 0.6)}" cy="${n1(p.y + (rr() - 0.5) * w * 0.6)}" r="${n1(c * 0.014)}" fill="#fff" opacity=".8"/>`);
+      break;
+    case 'basalt':
+      // basalte sombre fendu de lave
+      s += dash(INK, inner, c * 0.025, c * 0.34, 'opacity=".38"');
+      s += along(Math.round(lane.cells * 1.8), (p) => {
+        const off = (rr() - 0.5) * w * 0.5, x = p.x - Math.sin(p.angle) * off, y = p.y + Math.cos(p.angle) * off, k = c * 0.09;
+        const d = `M${n1(x - k)} ${n1(y - k * 0.3)} L${n1(x - k * 0.3)} ${n1(y + k * 0.25)} L${n1(x + k * 0.2)} ${n1(y - k * 0.2)} L${n1(x + k)} ${n1(y + k * 0.3)}`;
+        return `<path d="${d}" stroke="${pal.pathDeco}" stroke-width="${n1(c * 0.05)}" fill="none" stroke-linejoin="round" opacity=".35"/><path d="${d}" stroke="${light(pal.pathDeco, 0.4)}" stroke-width="${n1(c * 0.018)}" fill="none" stroke-linejoin="round"/>`;
+      });
       break;
   }
   // reflet doux en haut à gauche de la bande

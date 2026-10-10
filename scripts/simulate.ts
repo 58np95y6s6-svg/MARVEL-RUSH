@@ -196,6 +196,14 @@ const EXPECTED: Record<number, { deck: UnitId[]; level: number; tiers: number; s
   4: { deck: ['thor', 'ironman', 'spiderman', 'bucky', 'widow'], level: 5, tiers: 1 },       // 2 Légendaires, palier 1
   5: { deck: ['ironman', 'thor', 'hulk', 'cap', 'widow'], level: 6, tiers: 2 },              // équipe complète, palier 2
   6: { deck: ['ironman', 'thor', 'hulk', 'cap', 'widow'], level: 8, tiers: 3 },              // deck « méta », palier 3
+  // Extension DC : premiers héros DC, puis éveils.
+  7: { deck: ['ironman', 'thor', 'hulk', 'cap', 'superman'], level: 9, tiers: 3 },           // méta + 1 héros DC
+  8: { deck: ['ironman', 'thor', 'superman', 'wonderwoman', 'batman'], level: 10, tiers: 3, stars: 2 }, // inter-univers, ★2
+  9: { deck: ['ironman', 'thor', 'superman', 'batman', 'greenlantern'], level: 10, tiers: 3, stars: 4 }, // deck complet, ★4
+  // Extension Transformers (chapitres 10 à 12, après Thanos — ou Darkseid avec l'extension DC) : premiers Autobots, éveils.
+  10: { deck: ['ironman', 'thor', 'hulk', 'cap', 'optimus'], level: 10, tiers: 3, stars: 2 },      // méta + 1 Autobot (Pack Transformers), ★2
+  11: { deck: ['ironman', 'thor', 'optimus', 'cap', 'ratchet'], level: 10, tiers: 3, stars: 4 },   // + Optimus (10-10), Ratchet
+  12: { deck: ['ironman', 'thor', 'optimus', 'grimlock', 'cap'], level: 10, tiers: 3, stars: 6 },  // + Grimlock (11-10), ★6
   // Extension Pixar (chapitres 13 à 15, après le dernier chapitre installé) : premiers héros Pixar, éveils.
   13: { deck: ['ironman', 'thor', 'hulk', 'cap', 'walleeve'], level: 10, tiers: 3, stars: 2 },          // méta + 1 Légendaire Pixar, ★2
   14: { deck: ['ironman', 'thor', 'mrincredible', 'cap', 'mcqueen'], level: 10, tiers: 3, stars: 4 },   // + M. Indestructible (13-10), McQueen

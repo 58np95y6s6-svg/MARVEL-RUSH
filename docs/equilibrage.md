@@ -54,6 +54,43 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 | Raiponce & Pascal | Épique | Anti-contrôle de boss | 12 | 1,03 – 1,08 | Valeur contre Jafar, Maléfique, Bouffon Vert, Thanos. |
 | Vanellope & Ralph | Légendaire | Anti-blindés/boucliers + soutien mobile | 32 | 1,08 – 1,14 | Téléportation aléatoire : écart-type élevé accepté. |
 
+### 2 bis. Extension DC : bandes de puissance
+
+Mêmes bandes que ci-dessus (Rare 0,95 – 1,05, Épique 1,03 – 1,12, Légendaire 1,08 – 1,18). IP mesuré le 9 octobre 2026 avec `scripts/simulate.ts` (80 parties, niveau 1, témoin `depart-marvel` = 10,24 vagues, Falcon remplacé par l'unité testée), **avec la portée globale** (le moteur de la branche DC n'applique pas encore les portées du §4.1). La colonne « Dégâts » donne la valeur actuelle, **compensation de portée comprise** (courte +20 %, courte-moyenne +15 %, moyenne +10 %) : à remesurer après la fusion de `main` qui applique les portées (fait : voir §2 quater).
+
+| Unité | Rareté | Rôle | Portée | Dégâts / cadence | IP mesuré | Bande | Vigilance |
+|---|---|---|---|---|---|---|---|
+| Batman | Légendaire | Gadgets / malus (fumée, exposition) | moyenne 2,4 | 29 / 0,9 s | 1,09 | 1,08 – 1,14 | La fumée expose aussi les boss : mesurer le gain des alliés. |
+| Superman | Légendaire | Dégâts + gel de masse | globale | 48 / 1,2 s | 1,06 (après +20 % de dégâts ; 1,03 avant) | 1,08 – 1,14 | Le gel de 4 ennemis toutes les 12 s sauve des vies ; à surveiller avec Lanternes et cosmiques. |
+| Wonder Woman | Légendaire | Zone + anti-boss (exposition) | moyenne 2,4 | 44 / 1,1 s | 1,09 (après +18 % ; 1,05 avant) | 1,08 – 1,14 | — |
+| Green Lantern | Légendaire | Constructions (mur, marteau, mitrailleuse) | longue 3,4 | 24 / 0,8 s | 1,05 (après +20 % et recharge 8 s ; 1,02 avant) | 1,08 – 1,14 | Encore un peu bas : prochain réglage `abilityCooldown` 7. |
+| Flash | Épique | Multi-coups (anti-boucliers) | courte 1,6 | 6 × 3 / 0,5 s | 1,05 | 1,03 – 1,10 | Très fort contre les clowns à ballons et le Corps Sinestro. |
+| Aquaman | Épique | Perçant + contrôle | courte-moyenne 2,0 | 32 / 1,1 s | 1,07 | 1,03 – 1,10 | — |
+| Cyborg | Épique | Soutien (vitesse de tout le plateau) | globale | 21 / 0,8 s | 1,04 (après +17 % et +25 % de surcharge ; 1,01 avant) | 1,03 – 1,08 | Sa valeur grandit avec les dégâts du deck. |
+| Supergirl | Épique | Montée en puissance (charges) | longue 3,4 | 28 / 1,0 s | 1,00 (après réglage ; 0,98 avant) | 1,03 – 1,10 | Encore basse : elle cible « fort » et élimine peu ; prochain réglage `maxCharges` 6. |
+| Shazam | Épique | Transformation | moyenne 2,4 | 20 / 1,0 s | 1,08 | 1,03 – 1,10 | — |
+| Martian Manhunter | Épique | Anti-boss (intangible) + contrôle | longue 3,4 | 24 / 1,0 s | 1,00 (après réglage ; 0,99 avant) | 1,03 – 1,08 | Sa valeur est surtout contre les boss qui rétrogradent ou détruisent : rapporter l'IP par boss. |
+| Robin | Rare | Acrobate (balayage, Disciple) | courte 1,6 | 18 / 0,7 s | 1,00 | 0,95 – 1,05 | Avec Batman ou Batgirl à côté : +20 %. |
+| Batgirl | Rare | Anti-armure / anti-bouclier | courte 1,6 | 20 / 0,75 s | 0,98 | 0,95 – 1,02 | Valeur contre robots LexCorp et mercenaires. |
+| Catwoman | Rare | Économie + ralentissement | courte 1,6 | 17 / 0,6 s | 1,01 | 0,95 – 1,02 | Mesurer le mana volé (≈ +10 % visé). |
+| Harley Quinn | Rare | Chaos | courte 1,6 | 17 / 0,8 s | 1,00 | 0,95 – 1,02 | Écart-type élevé accepté. |
+| Green Arrow | Rare | Salves | globale | 16 / 0,8 s | 1,07 (salve à 80 % puis à 70 %) | 0,97 – 1,05 | Un peu haute : prochain réglage `abilityCooldown` 9. Avec Les Archers : vérifier ≤ +10 %. |
+
+**Équipes DC** (cible inchangée : +5 à +10 %) : Justice League (4 sur 8, +15 % / +10 % de vitesse), Trinité (+30 % contre les boss), Bat-famille (2 sur 3, +20 % de critiques), Lanternes et cosmiques (3 sur 5, recharges −20 %, contrôles +20 %), Sirènes de Gotham (+15 de mana par vague) ; inter-univers : Les Riches (Iron Man + Batman, +20 de mana par vague et +10 %), Les Archers (2 sur 3 parmi Œil de faucon, Green Arrow, Rebelle : +15 % de vitesse et +15 % de critiques).
+
+**Résultats du simulateur** (Solo Infini, niveau 1, joueur automatique de `scripts/simulate.ts`, 9 octobre 2026) :
+
+| Deck | Vague moyenne | Commentaire |
+|---|---|---|
+| `depart-marvel` (200 parties) | 10,34 | Témoin |
+| `depart-disney` (100 parties) | 10,23 | — |
+| `dc-rares` : Robin, Batgirl, Catwoman, Harley, Green Arrow (200 parties) | **10,54** | +2 % sur le témoin : dans les ±5 % des decks de départ |
+| `bat-famille` : Batman, Robin, Batgirl, Catwoman, Harley | 12,06 | Bat-famille + Sirènes |
+| `cosmiques` : Green Lantern, Martian, Superman, Supergirl, Shazam | 11,73 | Le plus faible des decks DC à Légendaires : contrôle et anti-boss, peu de zone |
+| `meta-dc` : Superman, Batman, Wonder Woman, Green Lantern, Flash | **14,83** | Justice League + Trinité |
+| `meta-marvel` : Iron Man, Thor, Hulk, Captain America, Black Widow | 16,39 | Écart avec `meta-dc` : 9,5 % (< 20 %) |
+| Mixte : Batman, Œil de faucon, Green Arrow, Iron Man, Robin | **14,02** | Les Riches + Les Archers |
+
 **Talents** : chaque option d'un palier doit donner un IP **dans ±3 %** de l'autre option du même palier (sinon le choix n'en est pas un). Gain cible par palier par rapport à l'unité sans talent : palier 1 ≈ +3 %, palier 2 ≈ +4 %, palier 3 ≈ +6 %.
 
 **Équipes** : un bonus d'équipe actif doit valoir **+5 à +10 %** de vague moyenne par rapport au même deck sans bonus (mesuré en neutralisant le bonus). Avengers (5) reste ≤ +12 %.
@@ -133,6 +170,134 @@ Aucun emballement économique : les decks « mana » restent sous le témoin (le
 - Solo Infini, niveau 1, 60 parties : départ Marvel **16,0** (`--casual`) / 16,9 (référence) ; départ Disney **16,2** / 17,6 (avant : 15,4 / 16,6 et 15,9 / 17,7). Cible ≈ 14-16 pour le joueur occasionnel tenue.
 
 **Campagne longue** (« des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum ») : 10 → 50 vagues (`docs/campagne.md`). La difficulté d'un niveau = **effectif** (`script.enemyCountMultiplier`, divise l'intervalle d'apparition) et **PV** (`script.enemyHpMultiplier`, `script.bossHpMultiplier` pour les lieutenants et gros boss), en hausse régulière sur les 60 niveaux. Avec la rampe du Solo Infini (×1,18 par vague), aucune collection ne tiendrait 50 vagues (le deck méta niveau 9 meurt vers la vague 28) : la campagne adoucit la croissance par vague (`script.waveHpGrowth` : ×1,14 au chapitre 1, ×1,075 au 2, ×1,07 aux 3-5, ×1,0425 au 6). Repères mesurés (`--casual`, PV× et effectif× à 1) : le deck de départ niveau 1 tient ≈ 20 vagues à ×1,10, 26 à ×1,08, 40 à ×1,06 ; le deck Avengers niveau 8 (3 paliers) ≈ 42 à ×1,10, 53 à ×1,08, 69 à ×1,06. Taux de victoire par chapitre : `docs/campagne.md` §4.
+
+## 2 quinquies. Extension DC : portées, archétypes et rééquilibrage (octobre 2026, remplacé par le §2 sexies)
+
+Après la fusion de `main` (portées, cadence par rang, archétypes, économie), les valeurs du §2 bis (mesurées en portée globale) sont remplacées par celles-ci.
+
+**Portées** : globale Superman, Cyborg, Green Arrow ; longue (3,4) Green Lantern, Supergirl, Martian Manhunter ; moyenne (2,4) Batman, Wonder Woman, Shazam, Aquaman (2,0 auparavant, seules quatre valeurs sont permises) ; courte (1,6) Flash, Robin, Batgirl, Catwoman, Harley Quinn.
+
+**Dégâts** : même mise à l'échelle que Marvel et Disney, appliquée aux dégâts DC sans leur ancienne compensation de portée (÷1,2 courte, ÷1,15 Aquaman, ÷1,1 moyenne) : globale ×1,22, longue ×1,22 × 1,4, moyenne ×1,22 × 1,7, courte ×1,22 × 3. Puis, les quatre Rares de courte portée étant trop faibles ensemble (deck `dc-rares` à 13,65 contre 16,72 pour le départ Marvel, mur au premier gros boss), +75 % pour elles et +20 % pour Flash : leur DPS (≈ 135-145/s) reste sous Rox & Rouky (≈ 210/s).
+
+| Héros | Portée | Dégâts / cadence | Archétype |
+|---|---|---|---|
+| Batman | moyenne | 55 / 0,9 s | — |
+| Superman | globale | 59 / 1,2 s | — |
+| Wonder Woman | moyenne | 83 / 1,1 s | — |
+| Green Lantern | longue | 41 / 0,8 s | Formation (+15 % par Lantern aligné, zone 40 % à 3) |
+| Flash | courte | 22 × 3 / 0,5 s | Échangeur (+20 % de cadence 5 s aux nouvelles voisines) |
+| Aquaman | moyenne | 58 / 1,1 s | — |
+| Cyborg | globale | 26 / 0,8 s | Boost de vitesse (+15 % aux voisines ; surcharge ramenée à +20 %) |
+| Supergirl | longue | 48 / 1,0 s | Croissance (+0,004/s, +0,03 par élimination, 0,28 × points^0,75, moitié gardée en fusion ; l'Éruption à 8 éliminations reste) |
+| Shazam | moyenne | 38 / 1,0 s | — |
+| Martian Manhunter | longue | 41 / 1,0 s | Copieur (−25 %) |
+| Robin | courte | 96 / 0,7 s | Booster de fusion (talent/éveil : +25 / +10 de mana par promotion, clé générique `promoteMana`) |
+| Batgirl | courte | 100 / 0,75 s | — |
+| Catwoman | courte | 86 / 0,6 s | Mana par élimination (remplace le vol de mana) |
+| Harley Quinn | courte | 90 / 0,8 s | Sacrifice → mana |
+| Green Arrow | globale | 20 / 0,8 s | — |
+
+**Indice de puissance** (deck témoin Spider-Man, Œil de faucon, Captain Marvel, Black Widow + le héros testé, 100 parties ; Falcon = 16,72) : Robin 17,32, Batgirl 17,07, Catwoman 17,23, Harley 17,34, Green Arrow 17,38, Flash 17,14, Aquaman 17,17, Cyborg 17,46, Supergirl 16,94, Shazam 17,41, Martian 16,92, Batman 17,30, Superman 17,07, Wonder Woman 17,31, Green Lantern 17,15 (Batman à Green Lantern mesurés avant le dernier réglage des Rares). Tous entre 1,01 et 1,04 : dans les bandes (le témoin écrase les écarts entre raretés).
+
+**Résultats** (Solo Infini, niveau 1, toits de New York, graines 1..100, rotation « tous les univers ») :
+
+| Deck | Bot de référence | `--casual` |
+|---|---|---|
+| Départ Marvel | 16,72 | 15,53 |
+| Départ Disney | 17,41 | 16,03 |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | **20,22** | **19,65** |
+| Méta Disney | 17,19 | — |
+| `dc-rares` (Robin, Batgirl, Catwoman, Harley, Green Arrow) | 17,23 (avant réglage : 13,65) | 12,43 (avant : 10,01) |
+| `meta-dc` (Superman, Batman, Wonder Woman, Green Lantern, Flash) | **19,11** (−5,5 % du méta Marvel) | **17,89** (−9,0 %) |
+| `bat-famille` | 19,09 | 14,09 |
+| `cosmiques` | 17,88 | — |
+| `riches-archers` | 18,98 | — |
+| Archétypes DC (Harley, Martian, Robin, Supergirl, Catwoman) | 17,84 | — |
+| Coop (50 parties) : départ Marvel / méta Marvel / méta DC / `dc-rares` | 15,24 / 15,16 / 18,86 / 9,60 | — |
+
+**À surveiller** :
+- `dc-rares` avec le joueur occasionnel (12,43, vague 10 passée à 37 %) : quatre corps à corps placés au hasard tapent peu le gros boss. Un débutant qui ne joue que des Rares DC bute sur la vague 10 ; les decks de départ restent Marvel et Disney.
+- Coop et corps à corps : `dc-rares` (9,60) et un deck de corps à corps de la version 1 (Rox & Rouky, Shang-Chi, Venom, Mulan, Œil de faucon : 9,67) ne passent jamais la vague 10 en Coop avec le bot. Problème des portées courtes en Coop, pas propre à DC : à traiter sur `main` (portée courte 1,8 ou placement du bot).
+- Le bot n'exploite ni l'échange (Flash) ni la formation (Green Lantern) : leur valeur réelle est sous-estimée.
+
+## 2 sexies. Extension DC : profils Rush Royale et chapitres longs (octobre 2026)
+
+Après la « copie Rush Royale » de `main`, les 15 héros DC reprennent chacun une unité Rush Royale non utilisée par Marvel et Disney (`docs/rush-royale-mapping.md`, « Extension DC »). Règle de fusion de Rush Royale (intervalle ÷ rang, dégâts inchangés), portées inchangées. Les dégâts des unités dont Rush Royale ne publie pas les chiffres (C) ont été réglés au simulateur ; les mêlées (portée 1,6) gardent des dégâts plus hauts, comme Hulk et Shang-Chi.
+
+| Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée |
+|---|---|---|---|
+| Batman | Bourreau | 200 / 1,0 s | moyenne |
+| Superman | Givre | 150 / 1,0 s | globale |
+| Wonder Woman | Moine | 170 / 1,0 s | moyenne |
+| Green Lantern | Cultiste | 132 / 0,8 s | longue |
+| Flash | Cogneur | 135 / 0,6 s | courte |
+| Aquaman | Faucheuse | 140 / 1,0 s | moyenne |
+| Cyborg | Génie | 90 / 0,8 s | globale |
+| Supergirl | Barde | 100 / 1,0 s | longue |
+| Shazam | Météore | 90 / 1,0 s | moyenne |
+| Martian Manhunter | Mime | 30 / 1,0 s | longue |
+| Robin | Ferrailleur | 140 / 0,8 s | courte |
+| Batgirl | Bombardier | 130 / 0,8 s | courte |
+| Catwoman | Démonologue | 140 / 0,7 s | courte |
+| Harley Quinn | Clown | 150 / 0,8 s | courte |
+| Green Arrow | Mage de glace | 82 / 0,5 s | globale |
+
+**Solo Infini**, niveau 1, toits de New York, graines 1..60, rotation « tous les univers » (vague moyenne) :
+
+| Deck | Référence | `--casual` | Écart au deck Marvel comparable |
+|---|---|---|---|
+| Départ Marvel | 19,27 | 17,38 | — |
+| Départ Disney | 15,77 | 13,98 | — |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 25,27 | 21,52 | — |
+| `meta-dc` (Superman, Batman, Wonder Woman, Green Lantern, Flash) | **23,25** | **20,17** | −8,0 % / −6,3 % (méta Marvel) |
+| `dc-rares` (Robin, Batgirl, Catwoman, Harley, Green Arrow) | **17,60** | **15,77** | −8,7 % / −9,3 % (départ Marvel) ; au-dessus du départ Disney |
+| `dc-epics` (Aquaman, Cyborg, Supergirl, Shazam, Flash) | 18,30 | 15,18 | — |
+| `cosmiques` | 18,60 | 16,87 | — |
+| `bat-famille` (Batman + 4 Rares de mêlée) | 13,85 | 9,78 | à surveiller (4 corps à corps) |
+
+**Campagne, chapitres 7 à 9** (`--campagne c7|c8|c9 --attendu --casual`, 12 parties par niveau) : 100 % sur tous les niveaux des chapitres 7 et 8, 100 % sur les niveaux 9-1 à 9-9, **92 % sur Darkseid** (9-10). Collection attendue : ch. 7 Iron Man, Thor, Hulk, Cap, Superman niveau 9 (3 paliers) ; ch. 8 Iron Man, Thor, Superman, Wonder Woman, Batman niveau 10, ★2 ; ch. 9 Iron Man, Thor, Superman, Batman, Green Lantern niveau 10, ★4. Croissance des PV par vague réglée pour Darkseid (PV ×2) : ch. 7 ×1,032, ch. 8 ×1,024, ch. 9 ×1,016 (à ×1,025, Darkseid 0 %).
+
+**À surveiller** :
+- Darkseid avec un deck **100 % DC** (Superman, Batman, Wonder Woman, Green Lantern, Flash, même collection) : 42 % (8 % avant le relèvement de Flash à 135) contre 83 % pour le méta Marvel ; avec Cyborg à la place de Flash 67 %, avec Aquaman et Cyborg 75 %. Le Cogneur (Flash) n'entre en rage qu'avec plus de 7 ennemis sur le chemin, jamais seul face à un boss.
+- Sans talents ni éveils, au niveau 10, Darkseid tient (méta Marvel 17 %, méta DC 0 %) : le boss final demande les paliers de talents et quelques éveils, comme prévu.
+- `bat-famille` (quatre Rares de mêlée) reste faible pour le joueur occasionnel.
+
+## 2 septies. Extension Transformers : profils Rush Royale, transformation et chapitres longs (octobre 2026)
+
+Les 15 Autobots reprennent chacun une unité Rush Royale libre (ni Marvel, ni Disney, ni DC : `docs/rush-royale-mapping.md`, « Extension Transformers »). Règle de fusion de Rush Royale (intervalle ÷ rang), portées de notre système. **Transformation** : robot ×1,45 dégâts et ×0,75 cadence (≈ ×1,09 de DPS, vise le plus de PV), véhicule ×0,7 dégâts et ×1,6 cadence (≈ ×1,12, vise le plus avancé), toutes les 8 s ou d'un appui. Les dégâts des unités sans chiffres publiés (C) sont réglés au simulateur : au premier jet (Optimus 210, Grimlock 180, Ultra Magnus 160), le méta Transformers plafonnait à la vague 20 (18,6, −30 % du méta Marvel) ; les Légendaires et Épiques ont été relevés en quatre passes.
+
+| Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée |
+|---|---|---|---|
+| Optimus Prime | Banshee | 570 / 1,0 s | moyenne |
+| Grimlock | Chaperon rouge | 490 / 1,0 s | courte |
+| Ultra Magnus | Épées enchantées | 450 / 1,0 s | moyenne |
+| Ironhide | Chasseur de démons | 270 / 1,0 s | moyenne |
+| Arcee | Cristallomancien | 150 / 0,8 s | courte |
+| Wheeljack | Corsaire | 130 / 1,0 s | moyenne |
+| Hot Rod | Blazey | 120 / 0,8 s | moyenne |
+| Mirage | Wukong | 95 / 0,9 s | moyenne |
+| Bumblebee | Mage de foudre | 70 / 0,8 s | longue |
+| Ratchet | Sorcière | 60 / 1,0 s (ambulance : +30 % de cadence aux voisines) | longue |
+| Jazz | Loup de mer | 60 / 0,9 s | longue |
+| Elita-1 | Sentinelle | 85 / 0,9 s | toute la map |
+| Bulkhead | Gargouille | 130 / 1,0 s | courte |
+| Sideswipe | Lanceur | 75 / 0,8 s | moyenne |
+| Prowl | Maléfice | 55 / 1,0 s | toute la map |
+
+**Solo Infini**, niveau 1, toits de New York, graines 1..60, rotation « tous les univers » (vague moyenne) :
+
+| Deck | Référence | `--casual` | Écart au deck Marvel comparable |
+|---|---|---|---|
+| Départ Marvel | 19,42 | 17,22 | — |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 26,58 | 24,20 | — |
+| `meta-tf` (Optimus, Grimlock, Ultra Magnus, Ironhide, Ratchet) | **25,05** | **21,57** | −5,8 % / −10,9 % (méta Marvel) |
+| `tf-rares` (Bumblebee, Jazz, Elita-1, Bulkhead, Sideswipe) | **18,97** | **16,95** | −2,3 % / −1,6 % (départ Marvel) |
+| `autobots` (Optimus, Bumblebee, Ironhide, Ratchet, Jazz), avant le dernier réglage | 19,15 | 18,77 | — |
+| `tf-epics` (Arcee, Wheeljack, Hot Rod, Mirage, Ironhide), avant le dernier réglage | 19,75 | 18,42 | — |
+
+**Campagne, chapitres 10 à 12** (`--campagne c10|c11|c12 --attendu --casual`, 8 parties par niveau) : chapitre 10 **100 %** (pire niveau 100 %), chapitre 11 **100 %** (100 %), chapitre 12 **96 %** (pire : **Megatron, 12-10, 75 %** ; 12-9 à 88 %). Collection attendue : ch. 10 Iron Man, Thor, Hulk, Cap, Optimus niveau 10 (3 paliers, ★2) ; ch. 11 Iron Man, Thor, Optimus, Cap, Ratchet (★4) ; ch. 12 Iron Man, Thor, Optimus, Grimlock, Cap (★6). Croissance des PV par vague réglée par paliers : ch. 10 ×1,02, ch. 11 ×1,017 (à ×1,018, Devastator 63 %), ch. 12 ×1,0135 (à ×1,014, Megatron 67 % ; à ×1,009, tout à 100 %).
+
+**À surveiller** : le joueur `--casual` perd 15 % de vagues avec le méta Transformers contre 9 % avec le méta Marvel (il ne profite pas des appuis de transformation) ; Unicron (vague 150, PV ×3) n'a été testé qu'en unitaire, aucun deck simulé n'atteint la vague 150 en Solo Infini.
 
 ## 2 octies. Extension Pixar : profils Rush Royale, coup de duo et chapitres 13 à 15 (novembre 2026)
 
@@ -249,6 +414,11 @@ Contraintes :
 | `anti-boss` | Black Widow, Rebelle, Soldat de l'hiver, Raiponce, Coco | Monocible : doit tomber sur les vagues denses |
 | `chaos` | Vanellope & Ralph, Loki, Nemo & Dory, Thor, Captain America | Aléatoire : écart-type maximal toléré |
 | `mixte-legendaires` | Iron Man, Mulan, Maui, Buzz & Woody, Vanellope & Ralph | 5 Légendaires sans équipe : ne doit pas battre `meta-marvel` de plus de 5 % |
+| `dc-rares` | Robin, Batgirl, Catwoman, Harley Quinn, Green Arrow | Témoin « deck de départ » DC (`DC_REFERENCE_DECKS`, `src/data/units.ts`) |
+| `meta-dc` | Superman, Batman, Wonder Woman, Green Lantern, Flash | « Méta » DC : Justice League + Trinité |
+| `bat-famille` | Batman, Robin, Batgirl, Catwoman, Harley Quinn | Bat-famille + Sirènes de Gotham |
+| `cosmiques` | Green Lantern, Martian Manhunter, Superman, Supergirl, Shazam | Lanternes et cosmiques |
+| `riches-archers` | Batman, Iron Man, Œil de faucon, Green Arrow, Robin | Équipes inter-univers |
 
 Ces decks sont à mettre dans un fichier de données du simulateur (par exemple `scripts/decks-reference.json`, à créer par l'agent Moteur).
 
@@ -264,6 +434,12 @@ Coffres du prompt §5.2, donnés **à chacun** à la fin de la partie, selon le 
 | Vague 40 | coffre héroïque, 3 parchemins, 1 skin au hasard |
 | Vague 50 (Thanos vaincu) | coffre légendaire, 1 Légendaire garanti, cadre « Vainqueur de Thanos » |
 | Ensuite, tous les 10 | coffre d'or et 1 parchemin |
+| Vague 75 (extension DC) | coffre légendaire, 4 parchemins, 1 Légendaire garanti |
+| Vague 100 (Darkseid vaincu, extension DC) | coffre légendaire, 5 parchemins, 1 Légendaire garanti, cadre « Vainqueur de Darkseid » |
+
+Les paliers sont des données (`src/data/milestones.ts`, `INFINITE_MILESTONES`) ; le moteur émet `milestone` tous les 10 et à la 75 (avec `chest`).
+
+**Extension DC — boss des modes infinis** : les 5 gros boss DC rejoignent la rotation (11 boss sans répétition). **Thanos** reste à la vague 50 (puis 150, 250…), **Darkseid** arrive à la vague **100** (puis toutes les 100) et a la priorité. Option de rotation (`GameConfig.bossPool`) : « Tous les univers » (`tous`, par défaut), « Marvel et Disney » (`marvel-disney` : 6 boss, Thanos à chaque palier final, pas de Darkseid) ou « DC seul » (`dc` : 5 boss, Darkseid à chaque palier final, 50 comprise). Cible : Darkseid (PV ×2 à la vague 100, soit ≈ 37 fois les PV de Thanos à la 50) n'est battu que par des decks méta niveau 10 avec éveils ★4 et plus : **< 10 %** en Solo, **15 – 30 %** en Coop.
 
 À cela s'ajoutent +15 or par vague pour chacun et le butin d'or des boss (§6.1 du prompt). Les coffres se cumulent (atteindre la vague 30 donne bronze + argent + or).
 
@@ -319,7 +495,7 @@ Revenu obtenu avec les règles du prompt : ≈ **1 150 éclats / jour** en semai
 2. **Copies d'éveil** (§6.6) : 2, 3, 5, 6, 8, 10, 13, 18, 25, 40 (**130 copies**, au lieu de 450), toujours identiques pour toutes les raretés.
 3. **Coût en cristaux** : 50, 300, 600, 1 000, 2 000, 2 500, 3 000, 4 000, 5 000, 6 500 (**24 950 ✦**, au lieu de 18 900). Le ★1 devient presque gratuit, le ★5 coûte 3 950 ✦ en cumulé.
 4. **Gains de cristaux** (divisés par 4 à 8) :
-   - Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10 ;
+   - Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10 ; **extension DC** : 80 ✦ au palier 75 (coffre cosmique) et 150 ✦ au palier 100 (coffre cosmique suprême), en plus des +10 des vagues 60, 70, 80 et 90 ; Darkseid vaincu : 75 ✦ (comme Thanos : 50 ✦) ;
    - premier gros boss du jour : 5 ✦ ; Thanos vaincu : 50 ✦ ;
    - campagne (3 étoiles sur un niveau de boss) : 25 ✦, inchangé ; coffre quotidien : 5 ✦, inchangé ;
    - doublons d'une unité à ★10 : 5 ✦, inchangé.
@@ -333,6 +509,11 @@ Résultats avec ces valeurs (même joueur) :
 | ★10 sur un Légendaire | > 240 jours | **jour 262** (≈ 8,7 mois ; bloqué par les copies : ≈ 0,3 à 0,6 copie par jour) |
 
 Sensibilité (vague atteinte en Infini multipliée par k) : k = 0,8 → ★5 au jour 94, ★10 Légendaire au jour 396 ; k = 0,7 → jours 110 et 530 ; k = 1,15 → jours 65 et 248. Le ★1 reste au jour 8 dans tous les cas.
+
+### Extension DC : effet sur le rythme des éveils
+- Les paliers 75 et 100 ne sont atteints qu'en fin de partie longue : le joueur type du modèle n'atteint la vague 50 qu'au mois 8. Avec 80 + 150 ✦ (+ 75 ✦ pour Darkseid) et l'hypothèse « vague 75 au mois 10, vague 100 au mois 12 », le ★10 Légendaire reste vers le **jour 255** (≈ 8,5 mois, toujours bloqué par les copies), au-dessus de la cible de 8 mois.
+- Le pack DC ajoute 4 Légendaires DC : un Légendaire donné reste à 1,24 % par tirage dans son pack ; le revenu étant partagé entre trois packs, le ★10 d'un Légendaire donné ne s'accélère pas.
+- 3 chapitres de plus = 21 parchemins, 9 niveaux de boss à 3 étoiles (225 ✦) et ≈ 6 000 éclats : un coup de pouce ponctuel, absorbé en 2 à 3 semaines.
 
 ### Points de vigilance
 - **Inflation d'éclats** : avec les coffres de palier du §5.2, un joueur qui atteint la vague 50 chaque jour gagne ≈ 5 500 éclats par jour (≈ 60 tirages). Si la collection se remplit trop vite, réduire de moitié les éclats des coffres héroïque et légendaire, ou ne donner les coffres de palier qu'**une fois par jour et par mode** (hypothèse du modèle ; à écrire dans les règles).
@@ -428,7 +609,7 @@ Points de vigilance :
   monstres communs ; après la vague 60 (modes infinis), boss aux vagues paires et mini-boss aux impaires.
 - **Valeurs Marvel Rush** (Rush Royale ne les publie pas) : PV de base 200 en vague 1, croissance ×1,17 par
   vague au 1er bloc (`WAVE_RULES.hpGrowth`, remplacée par `script.waveHpGrowth` en campagne) ; PV des boss
-  inchangés (×12 lieutenant, ×25 gros boss, × PV d'un normal au début de la vague).
+  inchangés (×12 lieutenant, ×25 gros boss, × PV d'un normal au début de la vague ; lieutenant ×5 depuis le §9).
 - Économie : améliorations 100/200/400/**800** (Rush Royale) ; mana de départ gardé à 150 (Rush Royale :
   100 ; à 100, le deck Disney de départ perdait parfois dès la vague 1).
 
@@ -445,3 +626,54 @@ Réglage de campagne (`src/campaign/levels.ts`, `DIFFICULTY.growth`) : ×1,14 / 
 1,07 / 1,0425 (avant : 1,075 / 1,07 / 1,07 aux chapitres 2 à 4) pour que le deck de départ peine dès le
 chapitre 3. Le deck Disney de départ est plus faible que le Marvel (deux soutiens qui n'attaquent pas ou peu :
 Bannière, Chaudron) : c'est le profil Rush Royale.
+
+## 9. Copie de l'équilibrage Rush Royale (octobre 2026)
+
+> Agent Équilibrage. Demande : « On copie l'équilibrage de Rush Royale : vitesse des sbires, PV, etc. »
+> Recherche, sources et niveaux de confiance (A : chiffre lu dans le wiki, une note officielle ou les
+> **textes du jeu** ; B : guide tiers ou déduction directe ; C : valeur Marvel Rush) :
+> `docs/rush-royale-donnees.md` (§1, §2 et §2.4 « introuvable »).
+
+**Valeurs reprises de Rush Royale**
+
+| Règle | Avant | Après | Conf. |
+|---|---|---|---|
+| Composition des vagues (modes infinis) | normaux, rapides dès la vague 2, gros dès 4, blindés dès 6, boucliers dès 8 | **monstres communs seulement** ; la vague du mini-boss (5, 15, 25…) = mini-boss + **9 rapides** (10 monstres) | A (9 : B) |
+| Composition (campagne) | idem | communs, plus gros / blindés / boucliers (ennemis propres à Marvel Rush, les contraintes « aucun blindé ne passe » en ont besoin) ; vague du lieutenant = 9 rapides | A + C |
+| PV du mini-boss (lieutenant) | ×12 d'un normal | **×5** | B |
+| Vitesse du mini-boss | 0,5 case/s (comme un gros boss) | **×0,8 d'un normal** (1,6 case/s, « un peu plus lent ») | B |
+| Mana du mini-boss | ×1 | **×5** du mana d'élimination | A/B |
+| Vies retirées à la porte | normal 1, gros 2, boss et lieutenant : toutes | normal 1, **gros, lieutenant et boss 2** ; niveau de boss : laisser passer le boss imposé = défaite | A |
+| Vies en Coop | 3 | **3 partagées** (Rush Royale : 1 seule ; écart voulu par la joueuse, octobre 2026) | — |
+| Vies en Solo | 3 | 3 (PvP de Rush Royale) | B |
+| Chance de critique de base | 0 % | **5 %** (dégâts ×2, valeur Marvel Rush) | A (5 %) / C (×2) |
+| Mana de départ | 150 | **100** | B |
+| Dégâts par niveau de collection | +10 % pour tous | tableau de l'unité Rush Royale (notre niveau 1 = niveau de carte 7) pour 9 héros : Iron Man +107,25, Thor +129, Shang-Chi +98,25, Mulan +61,7, Vanellope +32,2, Black Widow +16,6, Vaïana +12,2, Captain Marvel +6,2, Œil de faucon +5 par niveau ; +10 % pour les autres | A |
+| Inchangé, déjà Rush Royale | — | 10 monstres par vague, vague suivante au nettoyage, rapide PV ×0,5 vitesse ×2, gros PV ×5 mana ×5, mana d'élimination 10 → 50, invocation 10 +10, améliorations 100/200/400/800, rang = cadence, alternance boss / mini-boss après la vague 60 | A/B |
+
+**Gardé faute de chiffre Rush Royale** (aucune source accessible, voir `docs/rush-royale-donnees.md` §2.4) :
+vitesses absolues (normal 2 cases/s, gros boss 0,5), longueur du chemin, rythme d'apparition (2,6 s → 0,6 s),
+PV absolus et croissance (`baseHp` 200 → **220**, seul réglage hors campagne, pour garder le Solo Infini
+dans la cible ; croissance ×1,17 par vague et +25 % par bloc de 10), PV des gros boss (×25), rage (45 s),
+pouvoirs des boss, dégâts critiques (×2), effet des améliorations (+15 % de dégâts, +6 % de cadence).
+
+**Mesures** (`scripts/simulate.ts`, joueur `--casual` sauf mention ; avant = commit 4135a21)
+
+| Mesure | Avant | Après | Cible |
+|---|---|---|---|
+| Solo Infini, départ Marvel niveau 1 (40 parties) | 17,63 | **18,32** | ≈ 14-18 |
+| Solo Infini, départ Disney niveau 1 (40 parties) | 13,20 | **14,97** | ≈ 14-18 |
+| Solo Infini, départ Marvel, bot de référence | 19,80 | 19,85 | — |
+| Solo Infini, méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) niveau 1 / niveau 8 (10 parties) | 25,1 / 27,7 | 24,3 / **32,6** | — |
+| Coop Infini, départ Marvel × 2, bot de référence (20 parties) | 18,55 | 15,75 (mesuré avec 1 seule vie, avant le retour à 3 vies partagées) | — |
+| Campagne, collection attendue : victoire moyenne (pire niveau), 10 parties par niveau | c1 99 % (90) · c2-c5 100 % · c6 99 % (90) | c1 97 % (80) — 96 % (80) sur 30 parties par niveau, avant 98 % (87) · c2 100 % · c3 99 % (90) · c4-c6 100 % | ≥ 85 % au ch. 1, ≥ 70 % ensuite |
+| Deck de départ niveau 1 : ch. 1 / ch. 2 / ch. 3 | 99 % / 96 % / 40 % (pire 0) | 97 % / 89 % / **27 %** (pire 0) | peine dès le ch. 3 |
+
+Le Disney de départ perd encore 5 % de ses parties dès la vague 1 en `--casual` (déjà le cas avant, à 150 de
+mana : quatre premières invocations tombées sur Pocahontas, Nemo ou Rox hors de portée).
+
+**Campagne** : les cibles tiennent sans retoucher les multiplicateurs (`DIFFICULTY` inchangé : PV× 1,3 → 1,9,
+effectif× 1,1 → 1,4, boss× 1,0 → 1,3, croissance 1,14 / 1,10 / 1,10 / 1,09 / 1,07 / 1,0425). Les tableaux de
+niveau rendent les Légendaires bien plus forts aux niveaux 6 à 8 (méta niveau 8 : +18 % de vagues en Solo) ;
+les chapitres 4 à 6 restent à 100 % avec la collection attendue. Si les joueurs les trouvent trop faciles,
+relever d'abord `DIFFICULTY.hp[1]` (fin de campagne).

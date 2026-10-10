@@ -93,6 +93,76 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 - **Pas de critique de compte** : la chance de critique de base de Rush Royale (5 %) n'est pas reprise ;
   les critiques viennent des compétences (Statue, Borée, Voleur) et des équipes.
 
+## Extension DC (15 héros)
+
+> Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et
+> Disney. Les archétypes DC sont gardés (clés génériques du moteur) et posés sur l'unité Rush Royale qui leur
+> ressemble le plus. Portées inchangées. Sources : recherche web (extraits des guides alucare.fr, touchtapplay,
+> wiki Fandom, tier lists 2024-2026) ; le wiki ne s'ouvre pas depuis l'environnement, d'où beaucoup de
+> chiffres **(C)** (approximation) : ils ont été réglés au simulateur pour que les decks DC restent à ~10 % des
+> decks Marvel (`docs/equilibrage.md` §2 sexies).
+
+| Héros | Unité Rush Royale | Profil repris | Conf. |
+|---|---|---|---|
+| **Batman** | **Bourreau** (Executioner) | Achève tout ennemi sous un seuil de PV : **17,5 % (niv. 5) → 29,5 % (niv. 13)**, soit 20,5 % à notre niveau 1, +1,5 point par niveau ; seuil réduit de moitié contre boss et mini-boss. Le justicier qui met hors d'état de nuire. | A (seuils) / C (dégâts) |
+| **Superman** | **Givre** (Frost) | Blizzard périodique sur tout le chemin, ralentissement qui monte avec le rang, cumulable 3 fois (souffle glacial). | A (mécanique) / C (chiffres : 4 % par rang, 6 s, 7 s) |
+| **Wonder Woman** | **Moine** (Monk) | Renforcement **sans mana**, limité dans le temps, avec recharge ; plus fort avec d'autres Moines reliés (Fureur amazone partagée). | A (mécanique) / C (+60 % de cadence, zone 50 %, 5 s / 12 s) |
+| **Green Lantern** | **Cultiste** (Cultist) | 132 dégâts / 0,8 s au niv. 7 ; chaque Cultiste voisin ajoute une cible (1 à 3), à 4 voisins les dégâts doublent → **archétype Formation** (groupe relié). | B |
+| **Flash** | **Cogneur** (Bruiser) | Rage : au-delà de 7 monstres, 10 % de chance par monstre en plus d'entrer en furie (vitesse, dégâts, zone), sans recharge en PvE. **Archétype Échangeur** gardé (aucune unité d'échange libre : le Gardien du portail est pris). | B / C (×2 vitesse, +50 %, 5 s) |
+| **Aquaman** | **Faucheuse** (Reaper) | Cible au hasard, chance d'**exécution instantanée** (5,4 % au niv. 7, +0,2 point par niveau), jamais sur les boss : le kraken qui engloutit. | A |
+| **Cyborg** | **Génie** (Genie) | Les fusions chargent son « Vortex » : vitesse et dégâts en plus (vortex technologique). **Archétype Boost de vitesse** gardé (Bannière et Statue sont prises). | B (mécanique) / C (5 % par charge, 10 au plus) |
+| **Supergirl** | **Barde** (Bard) | Accumule l'inspiration (dégâts proportionnels) → **archétype Croissance** (énergie solaire) ; à la fin du mode Musique, **+20 % de vitesse d'attaque pendant 10 s**. | B |
+| **Shazam** | **Météore** (Meteor) | Frappe venue du ciel : zone et étourdissement périodiques (la foudre de SHAZAM !). | C |
+| **Martian Manhunter** | **Mime** | Fusionne avec n'importe quelle unité de même rang « comme une copie » ; dégâts 30, 1 s → **archétype Copieur** (−25 %), Intangible gardé. | B |
+| **Robin** | **Ferrailleur** (Scrapper) | Fait monter le rang d'une alliée, **20 % de chance de double montée au niv. 7, +2,5 %/niv.** → **archétype Booster de fusion**. | A |
+| **Batgirl** | **Bombardier** | Commune, explosion de zone sur la cible (batarangs explosifs). | C |
+| **Catwoman** | **Démonologue** (Demonologist) | Mana en plus sur les éliminations (doublé en Coop dans Rush Royale) → **archétype Mana par élimination** (barème ×2). | B |
+| **Harley Quinn** | **Clown** | Fusion : chance de copie, sinon **mana** et perte de rang → **archétype Sacrifice → mana** (barème standard). | B |
+| **Green Arrow** | **Mage de glace** (Cold Mage) | Chaque tir ralentit un peu plus la cible (6 % par flèche, 30 % au plus) : flèches cryogéniques. | C |
+
+Talents DC : Rush Royale ne publie pas les talents de ces unités dans les extraits trouvés ; chaque héros a
+3 paliers de talents **de même famille** que son unité (seuil, cumuls, rage, charges, chance de double
+montée…), marqués *(C)* dans `src/data/talents.ts`.
+
+## Extension Transformers (15 Autobots)
+
+> Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et Disney
+> **ni des 15 héros DC** (Bourreau, Givre, Moine, Cultiste, Cogneur, Faucheuse, Génie, Barde, Météore, Mime, Ferrailleur,
+> Bombardier, Démonologue, Clown, Mage de glace). Le wiki et les guides ne s'ouvrent pas depuis l'environnement : les
+> descriptions viennent des extraits du **moteur de recherche** (table *Units* du wiki Fandom, tier lists 2023-2026,
+> notes de mise à jour 34.0 à 38.0). Conf. **B** = mécanique lue dans un extrait, **C** = unité dont la mécanique n'a pas
+> été trouvée (adaptation). Les dégâts sont réglés au simulateur (`docs/equilibrage.md` §2 septies).
+>
+> **Mécanique propre** (par-dessus le profil) : la **transformation**. Toutes les 8 s ou d'un appui, mode **robot**
+> (×1,45 dégâts, ×0,75 cadence, vise le plus de PV) ↔ mode **véhicule** (×0,7 dégâts, ×1,6 cadence, vise le plus
+> avancé) ; chaque héros a un effet propre à chaque mode (src/engine/transformers.ts).
+
+| Héros | Unité Rush Royale | Profil repris | Archétype | Conf. |
+|---|---|---|---|---|
+| **Optimus Prime** | **Banshee** | « Attaque périodiquement les ennemis proches » → **Cri de ralliement** toutes les 6 s sur tous les ennemis à portée (150 %). Robot : hache, onde de choc 60 % ; camion : charge qui fait reculer. | — | B (mécanique) / C (chiffres) |
+| **Bumblebee** | **Mage de foudre** (Lightning Mage) | Éclair sur les 3 premières cibles à 100 / 70 / 30 % → la rafale de la voiture jaune. | Échangeur | B |
+| **Ironhide** | **Chasseur de démons** (Demon Hunter) | « Attaque autant de premières cibles que son rang » → double canon lourd (robot) ; fourgon : zone 50 %. | — | B |
+| **Ratchet** | **Sorcière** (Witch) | En Coop, la fusion « enchante » une unité alliée → fusionné, +25 % de dégâts à une alliée 10 s ; robot : répare (retire les malus de boss) ; ambulance : vitesse aux voisines. | Boost de vitesse | B / C |
+| **Jazz** | **Loup de mer** (Sea Dog) | Déterre des trésors et se renforce à chaque coffre → chaque ennemi touché rapporte du mana à sa mort, deux fois plus en voiture. | Mana par élimination | B (mécanique) / C (adaptation) |
+| **Arcee** | **Cristallomancien** (Crystalmancer) | Dégâts qui montent à chaque coup sur la même cible (+12 %, +120 % au plus) ; lames à 20 % de critique ; moto : vise le plus rapide. | — | B |
+| **Grimlock** | **Chaperon rouge** (Riding Hood) | Deux formes (la fillette et le loup) → robot / Dinobot T-rex (souffle de feu) ; croissance sans plafond. | Croissance | C |
+| **Wheeljack** | **Corsaire** (Corsair) | « Pose des pièges explosifs, deux sortes de bombes » → grenades à effet aléatoire (robot), mine sous l'ennemi de tête (voiture de course). | Booster de fusion | B |
+| **Hot Rod** | **Blazey** (légendaire de feu, mise à jour 37.0) | Tir double (robot), traînée de flammes qui brûle (bolide). | — | C |
+| **Elita-1** | **Sentinelle** (Sentry) | « Premier ennemi, dégâts qui montent par paliers de 10 % » → +10 % par tir sur la même cible (+100 %) ; voiture : marque le plus fort (+15 % de dégâts subis). | — | B |
+| **Bulkhead** | **Gargouille** (Gargoyle) | Gardien de pierre (unité citée dans les notes de mise à jour, mécanique introuvable) → boulet de démolition, écrasement. | Sacrifice → mana | C |
+| **Sideswipe** | **Lanceur** (Thrower) | « Attaque une cible au hasard » → lames tournoyantes (robot) ; voiture : traverse la cible et 2 ennemis derrière. | — | B |
+| **Prowl** | **Maléfice** (Hex) | « Renforce les 4 unités voisines (chance d'exécution) » → analyse : +12 % de dégâts aux voisines (robot) ; voiture de police : ralentit. | — | B (mécanique) / C (bonus) |
+| **Mirage** | **Wukong** (mise à jour 35.0) | Le Roi singe et ses clones → hologramme d'une alliée (−25 %) ; robot invisible : un coup sur trois critique ×2,5 ; voiture : leurres. | Copieur | C |
+| **Ultra Magnus** | **Épées enchantées** (Enchanted Sword) | « Les épées bleues augmentent les dégâts des unités » → Ultra Magnus alignés (+15 % chacun, zone à 3), bouclier d'équipe, porte-voitures : +10 % à toute la ligne. | Formation | B |
+
+Talents : trois paliers de même famille que l'unité Rush Royale (rampe, cibles, bombes, aura, croissance…), marqués
+*(C)* dans `src/data/talents.ts` ; Rush Royale ne publie pas les talents de ces unités dans les extraits trouvés.
+
+Unités Rush Royale encore libres après l'extension Transformers (pour l'extension Pixar) : Valkyrie, Rôdeur du
+crépuscule (Twilight Ranger), Alchimiste, Maître des esprits, Chaman, Dryade des montagnes (Mountain Avens),
+Invocateur, Empoisonneur, Médecin de peste, Robot, Tréant, Élémentaire de terre, Lierre, Archimage, Nécromancien,
+Thunderer.
+
 ## Extension Pixar (15 héros, surtout des duos)
 
 > Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et Disney,

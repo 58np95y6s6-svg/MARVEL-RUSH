@@ -7,11 +7,13 @@ import type { Targeting, UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { GRID_COLS, GRID_ROWS, GRID_SIZE, type LaneId } from './types';
 import {
-  DT, EPS, LEVEL_DAMAGE, MANA_UPGRADE_BONUS, NO_TEAM, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, emit, pick, rand,
+  BASE_CRIT_CHANCE, DT, EPS, MANA_UPGRADE_BONUS, levelDamageMul, NO_TEAM, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, emit, pick, rand,
   type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
 } from './internal';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitParams } from './talents';
 import { bossReward, formationBonus, growOnKill, growthBonus, growthPointsOf, tagForMana } from './archetypes';
+import { auraActive, enchantBonus, jammed, rowBonus, tfDamageMul, tfSpeedMul } from './transformers';
+import { BOSSES, REFORM_NAME } from '../data/bosses';
 import { pxDamageBonus } from './pixar';
 
 // ───────────── Ennemis du chemin ─────────────
@@ -177,8 +179,18 @@ export function dealDamage(ctx: Ctx, e: SimEnemy, amount: number, player: number
   }
   e.hp -= dmg;
   emit(ctx, { type: 'hit', enemy: e.uid, damage: dmg, crit: !!opts.crit });
+  if (e.hp <= EPS && reform(ctx, e)) return dmg;
   if (e.hp <= EPS) killEnemy(ctx, e, player, opts.unit);
   return dmg;
+}
+
+/** Devastator (extension Transformers) : formé de 6 Constructicons, il se reforme une fois. */
+function reform(ctx: Ctx, e: SimEnemy): boolean {
+  if (e.bossId !== 'devastator' || e.x.reformed) return false;
+  e.x.reformed = 1;
+  e.hp = e.maxHp * (BOSSES.devastator.power.params.reformHp ?? 0.4);
+  emit(ctx, { type: 'bossPower', boss: 'devastator', player: ctx.st.players[0]!.id, slots: [], name: REFORM_NAME });
+  return true;
 }
 
 /** Dégâts subis en plus : fiche du Chimiste (Nick & Judy) et toiles du Trappeur (Spider-Man). */
@@ -195,7 +207,9 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
   const p = ctx.st.players[player];
   if (!p) return;
   // Rush Royale (Coop) : mana d'élimination de la vague (10, +10 toutes les 10 vagues, 50 au plus) × type.
-  let mana = e.bossId ? BOSS_STATS.mana : ENEMIES[e.kind].mana * killMana(Math.max(1, ctx.st.wave));
+  // Mini-boss : ×5 (Rush Royale).
+  const kindMana = e.x.mini ? BOSS_STATS.smallMana : ENEMIES[e.kind].mana;
+  let mana = e.bossId ? BOSS_STATS.mana : kindMana * killMana(Math.max(1, ctx.st.wave));
   // Potion de Nemo (Chaudron magique) : mana des éliminations augmenté pendant quelques secondes.
   let potion = 0;
   for (const u of p.grid) if (u && (u.counters.killManaFor ?? 0) > EPS) potion = Math.max(potion, u.counters.killMana ?? 0);
@@ -290,6 +304,7 @@ export function aurasAt(ctx: Ctx, player: number, slot: number): Auras {
     const [c1, r1] = slotXY(slot), [c2, r2] = slotXY(j);
     const diag = c1 !== c2 && r1 !== r2;
     if (diag && !prm.auraDiagonal) continue;
+    if (!auraActive(prm, n)) continue; // Autobots : aura du mode robot ou du mode véhicule seulement
     out.attackSpeed += (prm.auraAttackSpeed ?? 0) + (prm.auraAttackSpeedPerRank ?? 0) * n.rank;
     out.damage += (prm.auraDamage ?? 0) + (prm.auraDamagePerRank ?? 0) * n.rank;
     if (prm.evenCritChancePerRank && countOnBoard(ctx, player, id) % 2 === 0) {
@@ -360,7 +375,8 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   const puSpeed = prm.powerUpAttackSpeed ?? POWERUP_ATTACK_SPEED;
   let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id))
     * (1 + RANK_ATTACK_SPEED * (u.rank - 1))
-    * (1 + puSpeed * Math.max(0, (ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
+    * (1 + puSpeed * Math.max(0, (jammed(u) ? 1 : ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
+  mul *= tfSpeedMul(prm, u);                                                                              // Transformation (Autobots)
   // Compétences de cadence des profils Rush Royale.
   if (prm.hawkSpeed !== undefined) mul *= 1 + (u.counters.form ? prm.sharkSpeed ?? 0 : prm.hawkSpeed);   // Borée (Maui)
   if ((u.counters.hurricaneFor ?? 0) > EPS) mul *= prm.hurricaneSpeedMul ?? 1;                           // Archer du vent (Vaïana)
@@ -368,6 +384,10 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Shang-Chi)
   if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (Mulan)
   if (prm.bossWaveAttackSpeedMul && ctx.st.phase === 'boss') mul *= prm.bossWaveAttackSpeedMul;          // Tireur d'élite (Falcon)
+  // Extension DC.
+  if (prm.vortexSpeed) mul *= 1 + prm.vortexSpeed * (u.counters.vortex ?? 0);                            // Génie (Cyborg)
+  if (prm.rageSpeed && (u.counters.rageFor ?? 0) > EPS) mul *= 1 + prm.rageSpeed;                        // Cogneur (Flash)
+  if (prm.powerSpeed && (u.counters.powerFor ?? 0) > EPS) mul *= 1 + prm.powerSpeed;                     // Moine (Wonder Woman)
   return mul;
 }
 
@@ -379,14 +399,18 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   const p = ctx.st.players[player]!;
   const info = ctx.info[player]!;
   const level = info.levels[id] ?? 1;
-  const pu = p.powerUps[id] ?? 1;
+  const pu = jammed(u) ? 1 : p.powerUps[id] ?? 1; // Brouillage de Soundwave : améliorations en partie perdues
   const flat = (prm.rankDamageFlat ?? 0) * (u.rank - 1); // Archer du vent (Vaïana) : +30 dégâts par rang
-  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * levelDamageMul(def, level) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
   dmg *= 1 + teamFor(ctx, player, id).damage;
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
   if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
+  // Rayon de kryptonite (Lex Luthor) : dégâts réduits pendant la durée.
+  if ((u.counters.weakenFor ?? 0) > EPS) dmg *= 1 - Math.min(1, u.counters.weaken ?? 0);
   dmg *= prm.damageMul ?? 1;
+  // Extension Transformers : mode robot / véhicule, enchantement de Ratchet, porte-voitures d'Ultra Magnus.
+  dmg *= tfDamageMul(prm, u) * (1 + enchantBonus(u) + rowBonus(ctx, player, slot, GRID_COLS));
   dmg *= 1 + pxDamageBonus(u); // extension Pixar : souvenir doré (Joie), sort de croissance (Ian & Barley)
   dmg *= 1 + AWAKENING_DAMAGE * awakeningOf(ctx, player, id);
   // Archétypes : croissance sans plafond (Venom : mana en réserve, ou héritée d'une fusion) et malus de la copie (Loki).
@@ -402,6 +426,8 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   if (prm.bossKillDamage) dmg *= 1 + prm.bossKillDamage * (p.bossKills?.[id] ?? 0);                      // Chevalier de lumière (Thor)
   if (prm.unityDamage && countOnBoard(ctx, player, id) >= (prm.unityAt ?? 4)) dmg *= 1 + prm.unityDamage;  // Unité (Thor)
   if (prm.evenDamageMul && countOnBoard(ctx, player, id) % 2 === 0) dmg *= prm.evenDamageMul;             // Pyrotechnicien
+  if (prm.vortexDamage) dmg *= 1 + prm.vortexDamage * (u.counters.vortex ?? 0);                          // Génie (Cyborg)
+  if (prm.rageDamage && (u.counters.rageFor ?? 0) > EPS) dmg *= 1 + prm.rageDamage;                       // Cogneur (Flash)
   if (prm.chargeDamage) {                                                                                  // Tesla
     const max = Math.max(1, (prm.chargeMax ?? 1) * u.rank);
     dmg *= 1 + prm.chargeDamage * Math.min(1, (u.counters.charges ?? 0) / max);
@@ -439,7 +465,10 @@ export function unitHit(
     e.x.biteBy = player;
   }
   const team = teamFor(ctx, player, id);
-  if (!crit && team.critChance > 0 && rand(ctx) < team.critChance) {
+  if ((e.bossId || e.x.mini) && team.bossDamage) dmg *= 1 + team.bossDamage;
+  // Critique : 5 % de chance par défaut (Rush Royale), plus les bonus d'équipe.
+  const critChance = (ctx.debugNoCrit ? 0 : BASE_CRIT_CHANCE) + team.critChance;
+  if (!crit && critChance > 0 && rand(ctx) < critChance) {
     crit = true;
     dmg *= team.critMul;
   }

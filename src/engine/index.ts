@@ -1,5 +1,6 @@
 // Point d'entrée du moteur de simulation (contrat : src/engine/types.ts).
 export { createEngine, bossWaveKind, finalBossAt, type BossWaveKind } from './engine';
+export { TRANSFORM_ROBOT, TRANSFORM_VEHICLE, inVehicle, isTransformer } from './transformers';
 export { registerMaps, MAP_MODIFIER_KEYS, type MapLengths } from './maps';
 export { setTalentCatalog, setAwakeningCatalog, resolveUnitParams } from './talents';
 export { mulberry32 } from './rng';
@@ -13,5 +14,5 @@ export {
 } from './geometry';
 export { BOSS_KILL_REWARD, dropAction, formationLength, formationPartners, growthBonus, growthPointsOf, KILL_MANA, SACRIFICE_MANA, type DropAction } from './archetypes';
 export {
-  MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, POWERUP_ATTACK_SPEED, POWERUP_COSTS, POWERUP_DAMAGE, POWERUP_MAX, START_MANA,
+  MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, POWERUP_ATTACK_SPEED, POWERUP_COSTS, POWERUP_DAMAGE, POWERUP_MAX, START_MANA, START_LIVES, COOP_LIVES,
 } from './internal';

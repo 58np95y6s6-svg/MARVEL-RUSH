@@ -5,7 +5,7 @@
 import type { UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, resolveUnitParams } from '../engine/talents';
-import { LEVEL_DAMAGE, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE } from '../engine/internal';
+import { POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, levelDamageMul } from '../engine/internal';
 import { growthBonus, KILL_MANA, SACRIFICE_MANA } from '../engine/archetypes';
 
 export interface StatCtx {
@@ -89,13 +89,78 @@ const ABILITY_ROWS: Record<string, Row> = {
   formationDamagePerAlly: { label: 'Dégâts par allié relié', icon: 'aura', fmt: P, delta: dP },
   formationMax: { label: 'Alliés comptés au plus', icon: 'aura', fmt: N },
   swapSleep: { label: 'Bug après échange', icon: 'temps', fmt: S },
-  // ——— Extension Pixar : archétypes et profils Rush Royale ———
+  // ——— Extension DC ———
+  executeThreshold: { label: 'Seuil d’exécution', icon: 'epee', fmt: P, delta: dP },                                    // Bourreau (Batman)
+  executeBossFactor: { label: 'Seuil contre les boss', icon: 'max', fmt: (v, _u, _c, prm) => pct(v * (prm.executeThreshold ?? 0)) },
+  blizzardSlowPerRank: { label: 'Ralenti par givre', icon: 'controle', fmt: (v, _u, c) => pct(v * c.rank) },                // Givre (Superman)
+  blizzardStacks: { label: 'Givre cumulé au plus', icon: 'max', fmt: N },
+  blizzardDuration: { label: 'Durée du givre', icon: 'temps', fmt: S },
+  powerSpeed: { label: 'Vitesse en Fureur', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },                                           // Moine (Wonder Woman)
+  powerSplash: { label: 'Dégâts de zone en Fureur', icon: 'zone', fmt: P },
+  powerDuration: { label: 'Durée de la Fureur', icon: 'temps', fmt: S },
+  formationTargetsPerAlly: { label: 'Cibles en plus par allié relié', icon: 'zone', fmt: N },                                        // Cultiste (Green Lantern)
+  formationTargetsMax: { label: 'Cibles en plus au plus', icon: 'max', fmt: N },
+  formationDoubleAt: { label: 'Dégâts doublés à partir de', icon: 'aura', fmt: (v) => `${nf(v, 0)} reliés` },
+  rageChancePerEnemy: { label: 'Chance de rage par ennemi', icon: 'crit', fmt: P },                                                  // Cogneur (Flash)
+  rageSpeed: { label: 'Vitesse en rage', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },
+  rageDamage: { label: 'Dégâts en rage', icon: 'epee', fmt: (v) => `+${pct(v)}` },
+  rageDuration: { label: 'Durée de la rage', icon: 'temps', fmt: S },
+  reapChance: { label: 'Chance de faucher', icon: 'crit', fmt: P, delta: dP },                                                      // Faucheuse (Aquaman)
+  vortexSpeed: { label: 'Vitesse par charge', icon: 'vitesse', fmt: P },                                                             // Génie (Cyborg)
+  vortexDamage: { label: 'Dégâts par charge', icon: 'epee', fmt: P },
+  vortexMax: { label: 'Charges au plus', icon: 'max', fmt: N },
   auraAttackSpeed: { label: 'Vitesse aux voisines', icon: 'aura', fmt: P },
-  manaPerKill: { label: 'Mana par ennemi marqué', icon: 'mana', fmt: (v, _u, c) => nf(Math.round((KILL_MANA[c.rank - 1] ?? 1) * v), 0) },
-  growthPerKill: { label: 'Croissance par élimination', icon: 'epee', fmt: N },
+  growthPerKill: { label: 'Croissance par élimination', icon: 'epee', fmt: N },                                                      // Barde (Supergirl)
   growthKeepOnMerge: { label: 'Croissance gardée à la fusion', icon: 'aura', fmt: P },
-  sacrificeMana: { label: 'Mana du sacrifice', icon: 'mana', fmt: (v, _u, c, prm) => prm.sacrificeManaPerRank ? '' : nf(Math.round((SACRIFICE_MANA[c.rank - 1] ?? 10) * v), 0) },
-  auraDamage: { label: 'Dégâts aux voisines', icon: 'aura', fmt: P },
+  haste: { label: 'Accélération (compétence)', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },
+  hasteDuration: { label: 'Durée de l’accélération', icon: 'temps', fmt: S },
+  meteorDamage: { label: 'Dégâts du Météore', icon: 'zone', fmt: P },                                                                // Météore (Shazam)
+  meteorStun: { label: 'Étourdissement', icon: 'controle', fmt: S },
+  promoteDoubleChance: { label: 'Chance de monter de 2 rangs', icon: 'crit', fmt: P, delta: dP },                                   // Ferrailleur (Robin)
+  manaPerKill: { label: 'Mana par ennemi marqué', icon: 'mana', fmt: (v, _u, c) => nf(Math.round((KILL_MANA[c.rank - 1] ?? 1) * v), 0) }, // Démonologue (Catwoman)
+  sacrificeMana: { label: 'Mana du sacrifice', icon: 'mana', fmt: (v, _u, c, prm) => prm.sacrificeManaPerRank ? '' : nf(Math.round((SACRIFICE_MANA[c.rank - 1] ?? 10) * v), 0) }, // Clown (Harley Quinn)
+  coldSlowPerHit: { label: 'Ralentissement par flèche', icon: 'controle', fmt: P },                                                  // Flèches cryogéniques (Green Arrow)
+  coldMaxSlow: { label: 'Ralentissement au plus', icon: 'max', fmt: P },
+  coldDuration: { label: 'Durée du froid', icon: 'temps', fmt: S },
+  // ——— Extension Transformers : transformation (mécanique propre) et profils des Autobots ———
+  transformEvery: { label: 'Transformation toutes les', icon: 'temps', fmt: S, delta: dS },
+  robotDamage: { label: 'Dégâts en robot', icon: 'epee', fmt: (v) => mul(v) },
+  robotSpeed: { label: 'Cadence en robot', icon: 'vitesse', fmt: (v) => mul(v) },
+  vehicleDamage: { label: 'Dégâts en véhicule', icon: 'epee', fmt: (v) => mul(v) },
+  vehicleSpeed: { label: 'Cadence en véhicule', icon: 'vitesse', fmt: (v) => mul(v) },
+  shockSplash: { label: 'Onde de choc', icon: 'zone', fmt: P },                                          // Banshee (Optimus)
+  rallyDamage: { label: 'Cri de ralliement', icon: 'zone', fmt: P },
+  chargePush: { label: 'Recul de la charge', icon: 'controle', fmt: (v) => `${nf(v, 1)} case` },
+  burstShares: { label: 'Cibles de la rafale', icon: 'zone', fmt: N },                                   // Mage de foudre (Bumblebee)
+  targetsMax: { label: 'Cibles au plus (robot)', icon: 'zone', fmt: (v, _u, c, prm) => nf(Math.min(v, Math.max(1, (prm.targetsPerRank ?? 1) * c.rank)), 0) }, // Chasseur de démons (Ironhide)
+  vanSplash: { label: 'Zone du fourgon', icon: 'zone', fmt: P },
+  // Sorcière (Ratchet) — auraAttackSpeed : ligne commune (section DC)
+  mergeEnchant: { label: 'Enchantement de fusion', icon: 'epee', fmt: (v) => `+${pct(v)}` },
+  // Loup de mer (Jazz) — manaPerKill : ligne commune (section DC)
+  blindChance: { label: 'Chance d’aveugler', icon: 'controle', fmt: P },
+  bladeCritChance: { label: 'Critique des lames', icon: 'crit', fmt: P },                               // Cristallomancien (Arcee)
+  // Chaperon rouge (Grimlock) — growthPerKill : ligne commune (section DC)
+  breathSplash: { label: 'Souffle de feu', icon: 'zone', fmt: P },
+  mineDamage: { label: 'Dégâts de la mine', icon: 'zone', fmt: P },                                     // Corsaire (Wheeljack)
+  trailBurn: { label: 'Brûlure par seconde', icon: 'epee', fmt: P },                                    // Blazey (Hot Rod)
+  markValue: { label: 'Dégâts subis (marque)', icon: 'epee', fmt: (v) => `+${pct(v)}` },               // Sentinelle (Elita-1)
+  // Gargouille (Bulkhead) — sacrificeMana : ligne commune (section DC)
+  wreckStunChance: { label: 'Chance d’étourdir', icon: 'controle', fmt: P },
+  bladeSplash: { label: 'Zone des lames', icon: 'zone', fmt: P },                                       // Lanceur (Sideswipe)
+  pierceTargets: { label: 'Ennemis traversés', icon: 'zone', fmt: N },
+  auraDamage: { label: 'Dégâts aux voisines', icon: 'aura', fmt: P },                                   // Maléfice (Prowl)
+  sirenSlow: { label: 'Ralentissement', icon: 'controle', fmt: P },
+  stealthCritMul: { label: 'Critique invisible', icon: 'crit', fmt: (v) => mul(v) },                    // Wukong (Mirage)
+  decoyChance: { label: 'Chance de leurre', icon: 'controle', fmt: P },
+  teamShield: { label: 'Bouclier d’équipe', icon: 'temps', fmt: S },                                     // Épées enchantées (Ultra Magnus)
+  rowDamage: { label: 'Dégâts à la ligne', icon: 'aura', fmt: (v) => `+${pct(v)}` },
+  // ——— Extension Pixar : archétypes et profils Rush Royale ———
+  // auraAttackSpeed : ligne commune (section DC ou Transformers)
+  // manaPerKill : ligne commune (section DC ou Transformers)
+  // growthPerKill : ligne commune (section DC ou Transformers)
+  // growthKeepOnMerge : ligne commune (section DC ou Transformers)
+  // sacrificeMana : ligne commune (section DC ou Transformers)
+  // auraDamage : ligne commune (section DC ou Transformers)
   duoEvery: { label: 'Coup de duo toutes les', icon: 'temps', fmt: (v) => `${nf(v, 0)} attaques` },                // mécanique Pixar
   lineDamage: { label: 'Coup de poing sismique', icon: 'zone', fmt: P },                                  // Valkyrie (M. Indestructible)
   lineStun: { label: 'Étourdissement', icon: 'controle', fmt: S },
@@ -118,7 +183,7 @@ const ABILITY_ROWS: Record<string, Row> = {
 
 /** Dégâts d'un coup (sans compétence) au niveau, à l'amélioration en partie et à l'éveil donnés. */
 export function offense(u: UnitDef, c: StatCtx, prm: Record<string, number>): number {
-  return u.damage * (1 + LEVEL_DAMAGE * (c.level - 1)) * (1 + POWERUP_DAMAGE * (c.powerUp - 1))
+  return u.damage * levelDamageMul(u, c.level) * (1 + POWERUP_DAMAGE * (c.powerUp - 1))
     * (1 + AWAKENING_DAMAGE * c.stars) * (prm.damageMul ?? 1);
 }
 

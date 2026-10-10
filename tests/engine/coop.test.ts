@@ -20,7 +20,8 @@ describe('Coop : deux branches qui se rejoignent', () => {
     expect(e.state.lanes.map((l) => l.length)).toEqual([15, 16, 12]);
   });
 
-  it('un ennemi en fin de branche rejoint le tronc, puis coûte une vie commune au château', () => {
+  it('un ennemi en fin de branche rejoint le tronc, puis coûte 1 des 3 vies partagées du château', () => {
+    expect(quiet(MARVEL, { mode: 'coop' }).state.lives).toBe(3);
     const e = quiet(MARVEL, { mode: 'coop' });
     const en = debugSpawn(e, { lane: 'b', distance: 17.95, speed: 2, hp: 1e9 });
     step(e, 1);
@@ -30,6 +31,7 @@ describe('Coop : deux branches qui se rejoignent', () => {
     const ev = step(e, 1);
     expect(ofType(ev, 'lifeLost')[0]!.lives).toBe(2);
     expect(e.state.lives).toBe(2);
+    expect(e.state.result).toBeUndefined();
   });
 
   it('toutes les unités touchent tous les ennemis, sur les deux branches et le tronc', () => {
@@ -54,8 +56,8 @@ describe('Coop : deux branches qui se rejoignent', () => {
     debugSpawn(e, { lane: 'a', distance: 3, hp: 10 });
     const k = ofType(step(e, 1), 'kill')[0]!;
     expect(k.player).toBe('p2');
-    expect(e.state.players[1]!.mana).toBe(160);
-    expect(e.state.players[0]!.mana).toBe(150);
+    expect(e.state.players[1]!.mana).toBe(110);
+    expect(e.state.players[0]!.mana).toBe(100);
   });
 
   it('Offrir : une unité vers une case vide du partenaire, une fois par vague', () => {
@@ -93,8 +95,12 @@ describe('Coop : deux branches qui se rejoignent', () => {
     expect([...targets].sort()).toEqual(['p1', 'p2']);
   });
 
-  it('défaite commune quand les vies partagées tombent à 0', () => {
+  it('un boss qui passe coûte 2 vies ; défaite commune quand les vies partagées tombent à 0', () => {
     const e = quiet(MARVEL, { mode: 'coop' });
+    debugSpawn(e, { lane: 'tronc', bossId: 'jafar', distance: 13.99, speed: 1, hp: 1e15 });
+    step(e, 2);
+    expect(e.state.lives).toBe(1);
+    expect(e.state.result).toBeUndefined();
     debugSpawn(e, { lane: 'tronc', bossId: 'jafar', distance: 13.99, speed: 1, hp: 1e15 });
     const ev = step(e, 2);
     expect(ofType(ev, 'gameOver')[0]).toMatchObject({ outcome: 'defaite' });

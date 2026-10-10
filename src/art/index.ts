@@ -4,7 +4,7 @@
 // sont préfixés par le personnage, la pose et le skin : deux SVG différents n'ont jamais d'id commun.
 import type { BossId, Rarity, UnitId } from '../data/types';
 import { O, f, ctx, gloss, uid, withIds, type CharDef, type PoseIdx } from './primitives';
-import { unitEntry, bossEntry, minionEntry, UNIT_IDS, BOSS_IDS, type Entry } from './registry';
+import { unitEntry, bossEntry, minionEntry, vehicleEntry, UNIT_IDS, BOSS_IDS, type Entry } from './registry';
 import { drawEnemy, type EnemyLook } from './enemies';
 import { neonSkin, winterSkin, snowDecor, type Skin } from './skins';
 
@@ -141,11 +141,19 @@ export function rankShapePath(rank: number): string {
  */
 export const TOKEN_COLORS: Record<string, string> = {
   ironman: '#3fc9e8', spiderman: '#ffd23f', hulk: '#d94fd0', thor: '#22b5a0', strange: '#5fd068',
-  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#e8414b', bucky: '#f2b632',
+  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#f4f4f8', bucky: '#f2b632',
   hawkeye: '#46d6a8', falcon: '#59b8ff', widow: '#3ee0e0', shangchi: '#3b62e0',
   moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
-  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
+  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#a6ef9a',
   nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
+  // Extension DC : couleurs contrastées avec le costume de chaque héros, distinctes de toutes les autres.
+  batman: '#f7e27a', superman: '#ff4a3d', wonderwoman: '#a8f0ff', greenlantern: '#e6e6f2', flash: '#8ff7e0',
+  aquaman: '#c48bff', cyborg: '#ff3d6e', supergirl: '#ffe9b0', shazam: '#2f6bff', martian: '#ff8fd1',
+  robin: '#fff36b', batgirl: '#ffab6b', catwoman: '#d8ff8a', harley: '#7df0b0', greenarrow: '#ffc2f0',
+  // Extension Transformers : couleurs contrastées avec le métal de chaque Autobot, distinctes des autres.
+  optimus: '#ffb03a', bumblebee: '#4a5aa8', ironhide: '#9ad0e8', ratchet: '#ff8a8a', jazz: '#c8f04a',
+  arcee: '#5ae0c8', grimlock: '#e05a3a', wheeljack: '#ff6ad0', hotrod: '#6ac8ff', elita: '#9af0a0',
+  bulkhead: '#ffd84a', sideswipe: '#8a9ad8', prowl: '#e8c0ff', mirage: '#ffcf8a', ultramagnus: '#ff6a6a',
   // Extension Pixar : couleurs contrastées avec chaque duo, distinctes des autres.
   mrincredible: '#ffc83a', elastigirl: '#3a8ad8', frozone: '#e85aa8', violetflash: '#7ae8a0', sullimike: '#c86af0',
   mcqueen: '#4ad8f0', carlrussell: '#ff8a5a', joysadness: '#6a7af0', remy: '#e8d84a', walleeve: '#5ac8ff',
@@ -164,9 +172,27 @@ export function tokenPortraitSvg(id: UnitId, pose: PoseIdx = 0, skin: Skin = 'cl
   return cached(`tp-${id}-${pose}-${skin}`, () => wrap(TOKEN_FRAME, figureBody(id, pose, skin), `${unitEntry(id).def.name}`));
 }
 
-function figureBody(id: UnitId, pose: PoseIdx, skin: Skin): string {
-  const fig = applySkin(drawPose(unitEntry(id), pose), skin, 'unit');
+function figureBody(id: UnitId, pose: PoseIdx, skin: Skin, vehicle = false): string {
+  const e = vehicle ? vehicleEntry(id) ?? unitEntry(id) : unitEntry(id);
+  const fig = applySkin(drawPose(e, pose), skin, 'unit');
   return `<g transform="translate(${RANK_PLATE.cx} ${RANK_PLATE.cy + 22}) scale(.74) translate(-100 -118)">${fig}</g>`;
+}
+
+/* ---------- extension Transformers : mode véhicule ---------- */
+/** Le héros a-t-il un mode véhicule (Autobots) ? */
+export function hasVehicle(id: UnitId): boolean {
+  return !!vehicleEntry(id);
+}
+/** Une pose du mode véhicule d'un Autobot (repli : le robot). */
+export function vehicleSvg(id: UnitId, pose: PoseIdx, skin: Skin = 'classique'): string {
+  return cached(`v-${id}-${pose}-${skin}`, () => {
+    const e = vehicleEntry(id) ?? unitEntry(id);
+    return wrap(UNIT_FRAME, applySkin(drawPose(e, pose), skin, 'unit'), `${unitEntry(id).def.name} (véhicule), pose ${pose}`);
+  });
+}
+/** Figure seule du jeton en mode véhicule (même cadrage que tokenPortraitSvg). */
+export function tokenVehicleSvg(id: UnitId, pose: PoseIdx = 0, skin: Skin = 'classique'): string {
+  return cached(`tv-${id}-${pose}-${skin}`, () => wrap(TOKEN_FRAME, figureBody(id, pose, skin, true), `${unitEntry(id).def.name} (véhicule)`));
 }
 
 /**
@@ -217,6 +243,8 @@ export function bossTint(id: BossId): readonly [string, string] {
 /* ---------- sbires ---------- */
 const MOTION: Record<BossId, 'walk' | 'float'> = {
   jafar: 'walk', cruella: 'walk', ursula: 'float', malefique: 'walk', galactus: 'float', bouffon: 'float', thanos: 'walk',
+  joker: 'walk', luthor: 'walk', bane: 'walk', sinestro: 'float', blackadam: 'walk', darkseid: 'float',
+  starscream: 'float', soundwave: 'float', shockwave: 'walk', devastator: 'walk', blitzwing: 'float', megatron: 'walk', unicron: 'walk',
   syndrome: 'walk', randall: 'walk', lotso: 'walk', hopper: 'float', muntz: 'walk', zurg: 'walk',
 };
 /** Pas de marche : jambes « legA » / « legB » inclinées, pivot en haut de la jambe. */

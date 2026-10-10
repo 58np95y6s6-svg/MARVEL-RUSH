@@ -5,7 +5,7 @@
 
 import type { Profile } from './profile';
 
-/** Gemmes de la première victoire d'un niveau, par chapitre (chapitres 4 à 6 : rien). */
+/** Gemmes de la première victoire d'un niveau, par chapitre (chapitres 4 à 9 : rien). */
 export const FIRST_CLEAR_GEMS: readonly number[] = [400, 300, 150];
 
 export function firstClearGems(chapter: number): number {

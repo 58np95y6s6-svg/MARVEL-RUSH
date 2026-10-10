@@ -71,6 +71,7 @@
 .cx-gi { font-size: 20px; -webkit-text-stroke: 0; }
 .cx-gh.pack-marvel { background: linear-gradient(#ff7a6e, #d8322c); box-shadow: 0 3px 0 #7e1620, inset 0 2px 0 rgba(255,255,255,.3); letter-spacing: 1px; }
 .cx-gh.pack-disney { background: linear-gradient(#5ab4ff, #2b74de); }
+.cx-gh.pack-dc { background: linear-gradient(#5b82ff, #2342b8); box-shadow: 0 3px 0 #10215e, inset 0 2px 0 rgba(255,255,255,.3); }
 .cx-gh.r-legendaire { background: linear-gradient(#ffc84a, #f59a1f); box-shadow: 0 3px 0 #a8461b, inset 0 2px 0 rgba(255,255,255,.3); }
 .cx-gh.r-epique { background: linear-gradient(#d39bff, #8a4fe0); box-shadow: 0 3px 0 #4a2590, inset 0 2px 0 rgba(255,255,255,.3); }
 .cx-gh.r-rare { background: linear-gradient(#5ab4ff, #2b74de); }

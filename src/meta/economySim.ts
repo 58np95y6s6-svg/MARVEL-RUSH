@@ -66,6 +66,8 @@ function bossesIn(waves: number): { boss: BossId; small: boolean }[] {
 }
 
 const rarityOf = (u: UnitId) => UNITS[u].rarity;
+/** Campagne de base (chapitres 1 à 6), sans les chapitres des extensions. */
+const BASE_LEVELS = LEVELS.filter((l) => l.chapter <= 6);
 
 export function simulateEconomy(o: SimOptions): SimResult {
   const rng = seededRng(o.seed);
@@ -158,10 +160,13 @@ export function simulateEconomy(o: SimOptions): SimResult {
     ensureQuests(p, ds);
     src('coffre quotidien', () => claimDailyChest(p, rng, ds));
     src('calendrier de bienvenue', () => claimWelcome(p, ds));
-    // Campagne : 3 niveaux gagnés à 3 étoiles par jour, puis 2 niveaux rejoués.
-    const plays = campaignIdx < LEVELS.length ? perDay : 2;
+    // Campagne : 3 niveaux gagnés à 3 étoiles par jour, puis 2 niveaux rejoués. Seule la campagne de base
+    // (chapitres 1 à 6) est jouée : les chapitres des extensions (50 à 200 vagues) demandent une collection
+    // de fin de campagne, hors du rythme d'un joueur régulier sur 4 mois (sinon les garde-fous de
+    // docs/equilibrage.md §6 dépendraient du nombre d'extensions installées).
+    const plays = campaignIdx < BASE_LEVELS.length ? perDay : 2;
     for (let i = 0; i < plays; i++) {
-      const level = campaignIdx < LEVELS.length ? LEVELS[campaignIdx++]! : getLevel(`c6-n${1 + ((day + i) % 9)}`)!;
+      const level = campaignIdx < BASE_LEVELS.length ? BASE_LEVELS[campaignIdx++]! : getLevel(`c6-n${1 + ((day + i) % 9)}`)!;
       const now: Stars = [true, true, true];
       const rw = levelRewards(level, now, p, p.decks[0]!, hash32(`${o.seed}:${day}:${i}`));
       recordLevel(p, level, rw, level.waves);

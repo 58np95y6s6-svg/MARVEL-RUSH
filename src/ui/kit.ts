@@ -28,7 +28,7 @@ export const PACK_COLORS: Record<string, [string, string]> = {
   pixar: ['#2fb4f0', '#0f3a6a'],
 };
 export const packColors = (id: Pack | string): [string, string] => PACK_COLORS[id] ?? ['#7b6be0', '#2c2458'];
-export const packLabel = (id: Pack | string): string => id === 'complet' ? 'Tous univers' : id.charAt(0).toUpperCase() + id.slice(1);
+export const packLabel = (id: Pack | string): string => id === 'complet' ? 'Tous univers' : id === 'dc' ? 'DC' : id.charAt(0).toUpperCase() + id.slice(1);
 
 // ------------------------------------------------------------------ images (URL d'objet en cache)
 const urlCache = new Map<string, string>();

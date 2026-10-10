@@ -1,7 +1,7 @@
 // Contrat partagé : description d'une map (§7 bis du prompt).
 // Le moteur ne lit que `pathLength` et `modifiers` ; le reste sert au rendu.
 
-export type Universe = 'marvel' | 'disney' | 'pixar' | 'boss';
+export type Universe = 'marvel' | 'disney' | 'dc' | 'transformers' | 'pixar' | 'boss';
 
 export interface Point { x: number; y: number }
 

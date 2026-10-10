@@ -1,7 +1,7 @@
 // Contrat partagé : définitions statiques du contenu (unités, boss, ennemis, équipes, packs).
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-export type Pack = 'marvel' | 'disney' | 'pixar';
+export type Pack = 'marvel' | 'disney' | 'dc' | 'transformers' | 'pixar';
 export type Rarity = 'rare' | 'epique' | 'legendaire';
 /** premier = le plus avancé sur le chemin, aleatoire = au hasard, fort = le plus de PV. */
 export type Targeting = 'premier' | 'aleatoire' | 'fort';
@@ -11,19 +11,30 @@ export type UnitId =
   | 'cap' | 'loki' | 'bucky' | 'hawkeye' | 'falcon' | 'widow' | 'shangchi'
   | 'moana' | 'maui' | 'pocahontas' | 'mulan' | 'merida' | 'ariel' | 'foxhound'
   | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph'
+  // Extension DC Comics
+  | 'batman' | 'superman' | 'wonderwoman' | 'flash' | 'aquaman' | 'greenlantern' | 'cyborg'
+  | 'supergirl' | 'shazam' | 'robin' | 'batgirl' | 'catwoman' | 'harley' | 'martian' | 'greenarrow'
+  // Extension Transformers (Autobots)
+  | 'optimus' | 'bumblebee' | 'ironhide' | 'ratchet' | 'jazz' | 'arcee' | 'grimlock' | 'wheeljack'
+  | 'hotrod' | 'elita' | 'bulkhead' | 'sideswipe' | 'prowl' | 'mirage' | 'ultramagnus'
   // Extension Pixar (beaucoup de duos)
   | 'mrincredible' | 'elastigirl' | 'frozone' | 'violetflash' | 'sullimike' | 'mcqueen' | 'carlrussell' | 'joysadness'
   | 'remy' | 'walleeve' | 'lucaalberto' | 'mei' | 'jessie' | 'ianbarley' | 'joe';
 
 export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos'
+  // Extension DC Comics (Darkseid : boss final de l'extension)
+  | 'joker' | 'luthor' | 'bane' | 'sinestro' | 'blackadam' | 'darkseid'
+  // Extension Transformers (Decepticons ; Megatron : boss final, Unicron : boss cosmique des modes infinis)
+  | 'starscream' | 'soundwave' | 'shockwave' | 'devastator' | 'blitzwing' | 'megatron' | 'unicron'
   // Extension Pixar (l'Empereur Zurg : boss final de l'extension)
   | 'syndrome' | 'randall' | 'lotso' | 'hopper' | 'muntz' | 'zurg';
 
 /**
- * Rotation des gros boss en mode infini et en campagne : tous les univers (par défaut), Marvel et Disney
- * seulement (chapitres 1 à 6), ou Pixar seul.
+ * Rotation des gros boss en mode infini (option du joueur) et en campagne : tous les univers (par défaut),
+ * Marvel et Disney seulement (chapitres 1 à 6, Thanos à chaque palier final), DC seul (Darkseid à chaque
+ * palier final), Transformers seul (Unicron) ou Pixar seul (pas de boss final : Zurg est dans la rotation).
  */
-export type BossPool = 'tous' | 'marvel-disney' | 'pixar';
+export type BossPool = 'tous' | 'marvel-disney' | 'dc' | 'transformers' | 'pixar';
 
 export type EnemyKind = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier' | 'sbire';
 
@@ -35,6 +46,11 @@ export interface UnitDef {
   role: string;            // ex. « Dégâts de zone »
   targeting: Targeting;
   damage: number;          // dégâts de base au rang 1, niveau 1
+  /**
+   * Dégâts ajoutés par niveau de collection au-dessus de 1 (tableau par niveau de carte de Rush Royale,
+   * notre niveau 1 = niveau de carte 7). Absent : +10 % des dégâts de base par niveau (LEVEL_DAMAGE).
+   */
+  damagePerLevel?: number;
   attackInterval: number;  // secondes entre deux attaques
   /**
    * Portée d'attaque (§4.1 bis) : 'globale' = tout le chemin, sinon un rayon en cases mesuré depuis le

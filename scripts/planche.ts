@@ -1,16 +1,20 @@
 // Planches des extensions (design/planches/*.html) générées à partir des dessins du jeu (src/art) :
 // une carte par personnage avec ses 3 poses (et, pour les Autobots, les 3 poses du mode véhicule),
 // son jeton de plateau et sa fiche (rareté, rôle, attaque, compétence).
-// Usage : npx vite-node scripts/planche.ts -- <pixar-heros|pixar-mechants|…> [fichier.html]
+// Usage : npx vite-node scripts/planche.ts -- <transformers-heros|transformers-mechants|pixar-heros|pixar-mechants> [fichier.html]
 import { writeFileSync } from 'node:fs';
-import { bossSvg, minionSvg, tokenSvg, unitSvg, uniqueSvg, bossName, minionName, unitTint, bossTint } from '../src/art/index';
+import { bossSvg, hasVehicle, minionSvg, tokenSvg, unitSvg, vehicleSvg, uniqueSvg, bossName, minionName, unitTint, bossTint } from '../src/art/index';
 import { BOSSES, LIEUTENANTS } from '../src/data/bosses';
 import { UNITS, UNIT_LIST } from '../src/data/units';
 import type { BossId, Pack, UnitId } from '../src/data/types';
 
 const argv = process.argv.slice(2).filter((a) => a !== '--');
-const kind = argv[0] ?? 'pixar-heros';
-const out = argv[1] ?? `design/planches/${kind === 'pixar-heros' ? '10-pixar-heros' : kind === 'pixar-mechants' ? '11-pixar-mechants' : kind}.html`;
+const kind = argv[0] ?? 'transformers-heros';
+const FILES: Record<string, string> = {
+  'transformers-heros': '8-transformers-heros', 'transformers-mechants': '9-transformers-mechants',
+  'pixar-heros': '10-pixar-heros', 'pixar-mechants': '11-pixar-mechants',
+};
+const out = argv[1] ?? `design/planches/${FILES[kind] ?? kind}.html`;
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const RAR: Record<string, string> = { rare: 'var(--rare)', epique: 'var(--epi)', legendaire: 'var(--leg)' };
@@ -22,7 +26,7 @@ function heroCards(pack: Pack): string {
     const [t1, t2] = unitTint(u.id as UnitId);
     const bg = `radial-gradient(circle at 50% 36%,#fff 0,${t1} 58%,${t2} 100%)`;
     const poses = ([0, 1, 2] as const).map((p) => tile(unitSvg(u.id, p), ['Repos', 'Préparation', 'Frappe'][p]!, bg)).join('');
-    const veh = '';
+    const veh = hasVehicle(u.id) ? ([0, 1, 2] as const).map((p) => tile(vehicleSvg(u.id, p), ['Véhicule', 'Démarrage', 'Attaque'][p]!, bg)).join('') : '';
     const toks = [1, 3, 5, 7].map((r) => `<div class="tok">${uniqueSvg(tokenSvg(u.id, r))}</div>`).join('');
     return `<article class="card" style="--rar:${RAR[u.rarity]}"><div class="top"><span class="num">${String(i + 1).padStart(2, '0')}</span><h2>${esc(u.name)}</h2><span class="chip r">${RLAB[u.rarity]}</span><span class="chip">${esc(u.role)}</span></div>
 <p class="txt"><b>${esc(u.ability.name)}.</b> ${esc(u.ability.description)}</p>
@@ -45,11 +49,15 @@ function bossCards(ids: BossId[]): string {
 }
 
 const TITLES: Record<string, [string, string]> = {
+  'transformers-heros': ['Autobots', 'Extension Transformers · 15 héros · mode robot et mode véhicule'],
+  'transformers-mechants': ['Decepticons', 'Extension Transformers · 5 gros boss, Megatron, Unicron et leurs sbires'],
   'pixar-heros': ['Pixar', 'Extension Pixar · 15 héros (beaucoup de duos)'],
   'pixar-mechants': ['Méchants Pixar', 'Extension Pixar · 5 gros boss, l’Empereur Zurg et leurs sbires'],
 };
 const [title, sub] = TITLES[kind] ?? [kind, ''];
-const body = kind === 'pixar-heros' ? heroCards('pixar')
+const body = kind === 'transformers-heros' ? heroCards('transformers')
+  : kind === 'transformers-mechants' ? bossCards(['starscream', 'soundwave', 'shockwave', 'devastator', 'blitzwing', 'megatron', 'unicron'])
+  : kind === 'pixar-heros' ? heroCards('pixar')
   : kind === 'pixar-mechants' ? bossCards(['syndrome', 'randall', 'lotso', 'hopper', 'muntz', 'zurg'])
   : '';
 

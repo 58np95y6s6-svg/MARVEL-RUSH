@@ -2,7 +2,7 @@
 // Tout passe par l'API de src/art (chaînes SVG → loadTexture), avec un cache local par clé
 // pour pouvoir lire une texture de façon synchrone dans la boucle de rendu.
 import { Texture } from 'pixi.js';
-import { bossSvg, enemySvg, loadTexture, minionSvg, tokenPortraitSvg, type EnemyLook } from '../art';
+import { bossSvg, enemySvg, hasVehicle, loadTexture, minionSvg, tokenPortraitSvg, tokenVehicleSvg, type EnemyLook } from '../art';
 import type { BossId, EnemyKind, Rarity, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 
@@ -52,7 +52,8 @@ export function tokenPoseSvg(id: UnitId, pose: Pose): string {
   return tokenPortraitSvg(id, pose, 'classique', { rarity });
 }
 
-export function tokenTex(id: UnitId, pose: Pose): Texture | null {
+export function tokenTex(id: UnitId, pose: Pose, vehicle = false): Texture | null {
+  if (vehicle) return get(`tokv-${id}-${pose}`, () => tokenVehicleSvg(id, pose), SIZES.token);
   return get(`tok-${id}-${pose}`, () => tokenPoseSvg(id, pose), SIZES.token);
 }
 export function loadToken(id: UnitId, pose: Pose): Promise<Texture | null> {
@@ -84,7 +85,11 @@ export function loadLayer(key: string, svg: () => string, logicalW = 1000): Prom
 /** Précharge ce qu'il faut pour démarrer un combat sans à-coups. */
 export async function preloadBattle(deck: UnitId[]): Promise<void> {
   const jobs: Promise<unknown>[] = [];
-  for (const id of deck) for (const p of [0, 1, 2] as Pose[]) jobs.push(loadToken(id, p));
+  for (const id of deck) for (const p of [0, 1, 2] as Pose[]) {
+    jobs.push(loadToken(id, p));
+    // Extension Transformers : mode véhicule des Autobots.
+    if (hasVehicle(id)) jobs.push(load(`tokv-${id}-${p}`, () => tokenVehicleSvg(id, p), SIZES.token));
+  }
   for (const k of ['normal', 'rapide', 'gros', 'blinde', 'bouclier'] as const)
     for (const v of [0, 1, 2]) jobs.push(load(`en-${k}-${v}`, () => enemySvg(LOOK[k], v), enemyWidth(k)));
   await Promise.all(jobs);

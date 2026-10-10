@@ -2,6 +2,7 @@
 // Aucune dépendance au DOM, à l'heure ou à Math.random.
 
 import { BOSSES, BOSS_POOLS, BOSS_STATS, LIEUTENANTS } from '../data/bosses';
+import { EXTRA_MILESTONE_WAVES, milestoneAt } from '../data/milestones';
 import { ENEMIES, WAVE_RULES, monsterHp, monstersInWave, spawnWeights, waveHp } from '../data/enemies';
 import { activeTeams } from '../data/teams';
 import { UNITS } from '../data/units';
@@ -11,8 +12,8 @@ import {
   type LaneId, type PlayerId,
 } from './types';
 import {
-  DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
-  SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, spawnRand,
+  COOP_LIVES, DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
+  SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, rand, spawnRand,
   type Ctx, type PlayerInfo, type SimEnemy, type SimPlayer, type SimState, type SimUnit, type TeamAgg,
 } from './internal';
 import { deriveSeed } from './rng';
@@ -23,6 +24,7 @@ import { mapLengths } from './maps';
 import { boardGeometry } from './geometry';
 import { inheritedGrowth, makeCopy, sacrifice, swapCells } from './archetypes';
 import { pxAfterSwap } from './pixar';
+import { canTransform, tfOnMerge, transformUnit } from './transformers';
 
 const SAVE_VERSION = 1;
 
@@ -44,6 +46,7 @@ function buildInfo(cfg: GameConfig): PlayerInfo[] {
         a.cooldownReduction += prm.cooldownReduction ?? 0;
         a.controlDuration += prm.controlDuration ?? 0;
         a.doubleAttackChance += prm.doubleAttackChance ?? 0;
+        a.bossDamage += prm.bossDamage ?? 0;
       }
       markSlow = Math.max(markSlow, prm.markSlow ?? 0);
       if (prm.chainIllusionChance) {
@@ -85,7 +88,7 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
 
 // ───────────── État initial ─────────────
 
-/** Gros boss de la rotation selon l'option choisie ('tous' par défaut). */
+/** Gros boss de la rotation selon l'option choisie (extension DC : 'tous' par défaut). */
 function rotationPool(cfg: GameConfig): BossId[] {
   return BOSS_POOLS[cfg.bossPool ?? 'tous'] ?? BOSS_POOLS.tous;
 }
@@ -119,7 +122,7 @@ function initState(cfg: GameConfig): SimState {
     })),
     lanes: (cfg.mode === 'coop' ? (['a', 'b', 'tronc'] as LaneId[]) : (['a'] as LaneId[]))
       .map((id) => ({ id, length: DEFAULT_PATH_LENGTH })),
-    lives: START_LIVES,
+    lives: cfg.mode === 'coop' ? COOP_LIVES : START_LIVES,
     enemies: [],
     rng: deriveSeed(cfg.seed, 1),
     spawnRng: deriveSeed(cfg.seed, 2),
@@ -135,17 +138,36 @@ function initState(cfg: GameConfig): SimState {
 
 // ───────────── Vagues et rythme des boss (§4.3) ─────────────
 
-function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number } {
-  return cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number; darkseid: number; unicron: number } {
+  const r = cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+  return { ...r, darkseid: r.darkseid ?? WAVE_RULES.darkseidEvery, unicron: r.unicron ?? WAVE_RULES.unicronEvery };
 }
 
 const infinite = (cfg: GameConfig) => !cfg.targetWaves && cfg.mode !== 'tutoriel';
 
-/** Boss final d'une vague en mode infini : Thanos (vagues 50, 100…), sauf en rotation « Pixar seul ». */
+/**
+ * Boss final d'une vague en mode infini, selon l'option de rotation. Ordre de priorité quand plusieurs
+ * paliers tombent sur la même vague : Unicron (boss cosmique Transformers, 150, 300…) > Darkseid (DC,
+ * 100, 200…) > Thanos (50, 150…).
+ * - 'tous' : les trois (50 Thanos, 100 Darkseid, 150 Unicron, 200 Darkseid, 250 Thanos, 300 Unicron…) ;
+ * - 'marvel-disney' : Thanos seul ; 'dc' : Darkseid à chaque palier de Thanos ou de Darkseid ;
+ * - 'transformers' : Unicron seul (pas de Thanos) ; 'pixar' : aucun boss final (Zurg, boss final de
+ *   l'extension Pixar, est dans la rotation ; en campagne, il arrive à la vague 200 du chapitre 15).
+ */
 export function finalBossAt(cfg: GameConfig, wave: number): BossId | null {
   if (!infinite(cfg)) return null;
   const r = rhythm(cfg);
-  return r.thanos > 0 && wave % r.thanos === 0 && cfg.bossPool !== 'pixar' ? 'thanos' : null;
+  const thanosWave = r.thanos > 0 && wave % r.thanos === 0;
+  const darkseidWave = r.darkseid > 0 && wave % r.darkseid === 0;
+  const unicronWave = r.unicron > 0 && wave % r.unicron === 0;
+  const pool = cfg.bossPool ?? 'tous';
+  if (pool === 'marvel-disney') return thanosWave ? 'thanos' : null;
+  if (pool === 'dc') return thanosWave || darkseidWave ? 'darkseid' : null;
+  if (pool === 'transformers') return unicronWave ? 'unicron' : null;
+  if (pool === 'pixar') return null;
+  if (unicronWave) return 'unicron';
+  if (darkseidWave) return 'darkseid';
+  return thanosWave ? 'thanos' : null;
 }
 
 export type BossWaveKind = 'petit' | 'gros' | null;
@@ -220,7 +242,7 @@ function startWave(ctx: Ctx, wave: number): void {
   // Rush Royale (Coop) : 10 monstres par vague ; une vague de mini-boss en a aussi, une vague de boss non.
   // Après la vague 60 (alternance boss / mini-boss), plus de monstres communs.
   const late = infinite(cfg) && !cfg.bossRhythm && wave > WAVE_RULES.alternateAfter;
-  st.waveMonsters = kind === 'gros' || late ? 0 : monstersInWave(cfg.script?.enemyCountMultiplier);
+  st.waveMonsters = kind === 'gros' || late ? 0 : monstersInWave(cfg.script?.enemyCountMultiplier, kind === 'petit');
   st.pendingBoss = kind === 'gros' ? bigBossFor(ctx, wave, true) : null;
   const nb = nextBigWave(cfg, kind === 'gros' ? wave + 1 : wave);
   st.nextBigBoss = bigBossFor(ctx, nb, false);
@@ -246,7 +268,10 @@ function startWave(ctx: Ctx, wave: number): void {
 
 function waveFinished(ctx: Ctx): void {
   const st = ctx.st;
-  if (st.wave > 0 && st.wave % WAVE_RULES.milestoneEvery === 0) emit(ctx, { type: 'milestone', wave: st.wave });
+  if (st.wave > 0 && (st.wave % WAVE_RULES.milestoneEvery === 0 || EXTRA_MILESTONE_WAVES.includes(st.wave))) {
+    const chest = milestoneAt(st.wave)?.chest;
+    emit(ctx, chest ? { type: 'milestone', wave: st.wave, chest } : { type: 'milestone', wave: st.wave });
+  }
   if (ctx.cfg.targetWaves && st.wave >= ctx.cfg.targetWaves) {
     st.awaitingVictory = true;
     return;
@@ -327,7 +352,8 @@ function spawnOne(ctx: Ctx): void {
   if (st.minionMaster && st.spawnCount % WAVE_RULES.minionEvery === WAVE_RULES.minionEvery - 1) {
     spawnMinions(ctx, st.minionMaster);
   } else {
-    const weights = spawnWeights(st.wave);
+    const miniWave = bossWaveKind(ctx.cfg, st.wave) === 'petit';
+    const weights = spawnWeights(st.wave, { miniWave, campaign: !infinite(ctx.cfg) });
     const total = weights.reduce((sum, [, w]) => sum + w, 0);
     let r = spawnRand(ctx) * total;
     let kind: EnemyKind = 'normal';
@@ -352,7 +378,7 @@ function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
   const prm = BOSSES[master].minion.params;
   const hp = bossHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul);
   const e = addEnemy(ctx, {
-    kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: BOSS_STATS.speed, armor: prm.armor ?? 0,
+    kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: WAVE_RULES.baseSpeed * BOSS_STATS.smallSpeedMul, armor: prm.armor ?? 0,
     shieldHits: prm.shieldHits ?? 0, minionOf: master, giant: true,
     x: {
       mini: 1, rageIn: BOSS_STATS.rageAfter, flying: prm.flying ? 1 : undefined,
@@ -500,8 +526,12 @@ function reachEnd(ctx: Ctx, e: SimEnemy): void {
   e.x.gone = 1;
   const st = ctx.st;
   if (!ctx.cfg.script?.noLifeLoss && st.lives > 0) {
-    // Rush Royale : un gros monstre retire 2 vies, un boss toutes.
-    st.lives = e.bossId || e.x.mini ? 0 : Math.max(0, st.lives - ENEMIES[e.kind].lives);
+    // Rush Royale : un monstre commun retire 1 vie, un gros monstre, un mini-boss ou un boss 2.
+    // Niveau de boss (script.endOnBossKill) : laisser passer le boss imposé, c'est perdre.
+    const boss = !!(e.bossId || e.x.mini);
+    const lost = boss ? BOSS_STATS.gateLives : ENEMIES[e.kind].lives;
+    const imposed = boss && !!ctx.cfg.script?.endOnBossKill && imposedBossDefeated(ctx);
+    st.lives = imposed ? 0 : Math.max(0, st.lives - lost);
     emit(ctx, { type: 'lifeLost', lives: st.lives });
   }
   pumpkinExplosion(ctx, e);
@@ -584,6 +614,8 @@ function applyCommand(ctx: Ctx, c: Command): void {
       p.grid[c.to] = merged;
       // Profils Rush Royale : Éboulement du Minotaure (Hulk), charges de la Tesla (Iron Man) voisine.
       if (a.unit === 'hulk') startRockfall(ctx, pi, merged);
+      // Ratchet (Sorcière, extension Transformers) : la fusion enchante une alliée.
+      tfOnMerge(ctx, pi, a.unit, merged);
       // Talent Chevalier de lumière (Thor) : fusionner un exemplaire met tous les exemplaires en mode actif.
       const fused = unitParams(ctx, pi, a.unit);
       if (fused.mergeActiveDuration) {
@@ -629,10 +661,25 @@ function applyCommand(ctx: Ctx, c: Command): void {
       sacrifice(ctx, pi, c.from, a);
       p.grid[c.from] = null;
       b.rank += 1;
-      if (prm.promoteMana) p.mana += prm.promoteMana;
+      // Ferrailleur (Robin) : chance de faire monter l'alliée de 2 rangs.
+      if (prm.promoteDoubleChance && b.rank < MAX_RANK && rand(ctx) < prm.promoteDoubleChance) b.rank += 1;
       if (prm.promoteBoost) { b.counters.boost = prm.promoteBoost; b.counters.boostFor = 10; }
       onRankUp(ctx, pi, c.to);
       emit(ctx, { type: 'promote', player: p.id, from: c.from, to: c.to, unit: b.unit, rank: b.rank });
+      if (prm.promoteMana) {
+        p.mana += prm.promoteMana;
+        emit(ctx, { type: 'mana', player: p.id, slot: c.to, amount: prm.promoteMana, reason: 'promotion' });
+      }
+      return;
+    }
+    case 'transform': {
+      // Extension Transformers : appui sur un Autobot.
+      if (!validSlot(c.slot)) return reject(ctx, c.type, 'Case invalide.');
+      const u = p.grid[c.slot];
+      if (!u) return reject(ctx, c.type, 'Aucune unité sur cette case.');
+      if (!canTransform(ctx, pi, u)) return reject(ctx, c.type, 'Cette unité ne peut pas se transformer maintenant.');
+      if ((u.counters.transformLock ?? 0) > EPS) return reject(ctx, c.type, 'Transformation en cours.');
+      transformUnit(ctx, pi, c.slot, u);
       return;
     }
     case 'powerup': {

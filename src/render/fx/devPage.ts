@@ -5,7 +5,7 @@
 import { Application, Container, Graphics, Sprite } from 'pixi.js';
 import { loadTexture } from '../../art';
 import { BOSS_IDS } from '../../art';
-import { SNAP_NAME, THANOS_STONES } from '../../data/bosses';
+import { ANTI_LIFE_NAME, BOOM_TUBE_NAME, OMEGA_NAME, SNAP_NAME, THANOS_STONES } from '../../data/bosses';
 import type { BossId, EnemyKind, UnitId } from '../../data/types';
 import { UNIT_LIST } from '../../data/units';
 import type { EnemyInstance } from '../../engine';
@@ -54,6 +54,38 @@ const DEMO: Record<UnitId, Demo> = {
   buzzwoody: { atk: [['buzzwoody:laser', 'line']], ab: { name: 'Lasso de Woody', tgt: 'first' } },
   rapunzel: { atk: [['rapunzel:poele', 'first']], ab: { name: 'Fleur magique', fx: 'rapunzel:poele', tgt: 'first' } },
   vanralph: { atk: [['vanralph:poing', 'first'], ['vanralph:brise-bouclier', 'first']], ab: { name: 'Glitch', tgt: 'first' } },
+  // Extension DC
+  batman: { atk: [['batman:batarang', 'first'], ['batman:batarang', 'first'], ['batman:batarangs', 'chain']], ab: { name: 'Bombe fumigène', fx: 'batman:fumigene', tgt: 'chain', status: { slow: 0.4, slowFor: 3, marked: 0.2, markedFor: 3 } } },
+  superman: { atk: [['superman:vision-thermique', 'first']], ab: { name: 'Souffle glacial', fx: 'superman:souffle', tgt: 'chain', status: { stunFor: 1.5 } }, status: { burn: 1, burnFor: 2 } },
+  wonderwoman: { atk: [['wonderwoman:epee', 'chain']], ab: { name: 'Lasso de vérité', fx: 'wonderwoman:lasso', tgt: 'first', status: { stunFor: 1.5 } } },
+  greenlantern: { atk: [['greenlantern:anneau', 'first'], ['greenlantern:anneau', 'chain']], ab: { name: 'Construction : marteau', fx: 'greenlantern:marteau', tgt: 'first', status: { stunFor: 1 } } },
+  flash: { atk: [['flash:eclair', 'chain']], ab: { name: 'Tour du chemin', fx: 'flash:tour', tgt: 'all' } },
+  aquaman: { atk: [['aquaman:trident', 'chain']], ab: { name: 'Kraken', fx: 'aquaman:kraken', tgt: 'chain', status: { stunFor: 2 } } },
+  cyborg: { atk: [['cyborg:canon-sonique', 'first']], ab: { name: 'Surcharge système', tgt: 'first' }, status: { armorBreak: 0.1 } },
+  supergirl: { atk: [['supergirl:poing', 'first']], ab: { name: 'Éruption solaire', fx: 'supergirl:eruption', tgt: 'line' } },
+  shazam: { atk: [['shazam:coup', 'first']], ab: { name: 'SHAZAM !', fx: 'shazam:foudre', tgt: 'rand' } },
+  martian: { atk: [['martian:rayon', 'first']], ab: { name: 'Télépathie', tgt: 'chain' } },
+  robin: { atk: [['robin:baton', 'first'], ['robin:baton', 'first'], ['robin:balayage', 'chain']], ab: { name: 'Bâton de combat', fx: 'robin:balayage', tgt: 'chain' } },
+  batgirl: { atk: [['batgirl:coup', 'first']], ab: { name: 'Piratage d’Oracle', tgt: 'first', status: { armorBreak: 0.3 } } },
+  catwoman: { atk: [['catwoman:fouet', 'first']], ab: { name: 'Cambriolage', fx: 'catwoman:fouet', tgt: 'first', status: { slow: 0.3, slowFor: 2 } } },
+  harley: { atk: [['harley:maillet', 'first'], ['harley:confettis', 'chain'], ['harley:tarte', 'first'], ['harley:oups', 'first']], ab: { name: 'Maillet chaotique', fx: 'harley:maillet', tgt: 'first', status: { stunFor: 1 } } },
+  greenarrow: { atk: [['greenarrow:fleche', 'first'], ['greenarrow:fleche', 'first'], ['greenarrow:filet', 'first']], ab: { name: 'Salve de flèches', fx: 'greenarrow:salve', tgt: 'line' } },
+  // Extension Transformers (mode robot puis mode véhicule ; compétence = transformation ou pouvoir)
+  optimus: { atk: [['optimus:hache', 'chain'], ['optimus:charge', 'first']], ab: { name: 'Cri de ralliement', fx: 'optimus:ralliement', tgt: 'all' } },
+  bumblebee: { atk: [['bumblebee:canon', 'first'], ['bumblebee:rafale', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first' } },
+  ironhide: { atk: [['ironhide:canons', 'chain'], ['ironhide:fourgon', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first' } },
+  ratchet: { atk: [['ratchet:cle', 'first'], ['ratchet:sirene', 'first']], ab: { name: 'Réparation', tgt: 'first' } },
+  jazz: { atk: [['jazz:tir', 'first'], ['jazz:projecteur', 'first'], ['jazz:notes', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first', status: { stunFor: 0.6 } } },
+  arcee: { atk: [['arcee:lames', 'first'], ['arcee:moto', 'first']], ab: { name: 'Transformation : robot', tgt: 'first' }, crit: true },
+  grimlock: { atk: [['grimlock:epee', 'first'], ['grimlock:feu', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, status: { burn: 1, burnFor: 3 } },
+  wheeljack: { atk: [['wheeljack:grenade', 'first'], ['wheeljack:course', 'first']], ab: { name: 'Mine', fx: 'wheeljack:mine', tgt: 'chain' } },
+  hotrod: { atk: [['hotrod:double', 'first'], ['hotrod:flammes', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, status: { burn: 1, burnFor: 3 } },
+  elita: { atk: [['elita:precision', 'first'], ['elita:marque', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first', status: { marked: 0.15, markedFor: 4 } } },
+  bulkhead: { atk: [['bulkhead:boulet', 'first'], ['bulkhead:ecrasement', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first', status: { stunFor: 0.8 } } },
+  sideswipe: { atk: [['sideswipe:lames', 'chain'], ['sideswipe:traversee', 'line']], ab: { name: 'Transformation : véhicule', tgt: 'first' } },
+  prowl: { atk: [['prowl:analyse', 'first'], ['prowl:sirene', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, status: { slow: 0.25, slowFor: 2 } },
+  mirage: { atk: [['mirage:tir', 'first'], ['mirage:invisible', 'first'], ['mirage:leurre', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, crit: true },
+  ultramagnus: { atk: [['ultramagnus:marteau', 'chain'], ['ultramagnus:porte-voitures', 'first']], ab: { name: 'Bouclier d’équipe', tgt: 'first' } },
   // Extension Pixar (coup normal puis coup de duo ; compétence)
   mrincredible: { atk: [['mrincredible:poing', 'first']], ab: { name: 'Coup de poing sismique', tgt: 'line', status: { stunFor: 1.2 } } },
   elastigirl: { atk: [['elastigirl:bras', 'first']], ab: { name: 'Bras élastiques', tgt: 'first' }, status: { slow: 0.15, slowFor: 1 } },
@@ -227,6 +259,7 @@ export function mountFxPreview(root: HTMLElement): () => void {
     bossIdx++;
     let name = 'Pouvoir';
     if (boss === 'thanos') { const k = bossIdx % 7; name = k === 6 ? SNAP_NAME : THANOS_STONES[k]!.name; }
+    if (boss === 'darkseid') name = [OMEGA_NAME, BOOM_TUBE_NAME, ANTI_LIFE_NAME][bossIdx % 3]!;
     if (![...enemies.values()].some((e) => e.enemy.bossId === boss)) {
       for (const e of [...enemies.values()]) if (e.kind === 'boss') { e.sprite.destroy(); enemies.delete(e.enemy.uid); }
       preloadBoss(boss);

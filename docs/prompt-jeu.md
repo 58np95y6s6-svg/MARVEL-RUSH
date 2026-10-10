@@ -9,7 +9,7 @@
 Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Marvel Rush**, un clone jouable du jeu mobile **Rush Royale** (tower defense avec fusion d'unités), avec :
 
 - les personnages **Marvel** et **Disney** du dépôt, dans le style graphique de ses planches ;
-- un système de **tirages** avec deux packs, **Marvel** et **Disney** (l'extension **Pixar** ajoute un pack, **Pixar**) ;
+- un système de **tirages** avec deux packs, **Marvel** et **Disney** (les extensions ajoutent un pack chacune : **DC**, **Transformers**, puis **Pixar**) ;
 - un **mode Solo central** : une campagne qui fait progresser le compte et débloque des personnages et des talents (§5.1) ;
 - une **Coop à deux** (vos deux chemins se rejoignent en un seul), en **niveaux à gagner** ou en **mode infini** avec des récompenses par palier, pour jouer ensemble quand on le décide. **Pas de mode Duel** : on ne joue jamais l'un contre l'autre ;
 - **deux profils sauvegardés en ligne** (toi et ta partenaire) : chacun progresse de son côté, et les deux se retrouvent dans une partie commune (§5.4) ;
@@ -133,10 +133,10 @@ Règles de travail :
   - Plus la portée est courte, plus l'unité frappe fort : les valeurs sont équilibrées au simulateur.
   - **Garder le doigt appuyé sur une unité** affiche sa zone de touche, en surlignant la partie du chemin couverte. Pendant le glisser d'une fusion, la zone de la case visée s'affiche aussi. Une pression courte ouvre la fiche.
   - Le tutoriel l'explique avec une astuce dès la première unité à courte portée.
-- **3 vies** par joueur. Un ennemi normal qui atteint la fin du chemin retire 1 vie. Un boss qui l'atteint retire toutes les vies.
+- **3 vies** en Solo ; **3 vies partagées** par les deux joueurs en Coop (choix Marvel Rush : Rush Royale n'en donne qu'une). Un ennemi normal qui atteint la fin du chemin retire 1 vie ; un gros, un lieutenant ou un boss en retire 2 (Rush Royale, octobre 2026). Dans un niveau de boss, laisser passer le boss imposé fait perdre.
 
 ### 4.2 Mana, invocation, fusion, amélioration
-- La partie commence avec **150 de mana** (début de partie allégé, octobre 2026). Chaque ennemi tué rapporte du mana : 10 pour un ennemi normal, 30 pour un gros, 100 pour un boss.
+- La partie commence avec **100 de mana** (Rush Royale, octobre 2026). Chaque ennemi tué rapporte du mana : 10 pour un ennemi normal (+10 toutes les 10 vagues, 50 au plus), ×5 pour un gros ou un lieutenant, 100 pour un boss.
 - **Récompense de boss** : vaincre un lieutenant rapporte en plus **2,5 ×** le coût d'invocation actuel du joueur, un gros boss **5,5 ×**, Thanos **8 ×** (× rendement du mana ; en Coop, chaque joueur reçoit la récompense entière). Une grande gerbe « +X » s'affiche.
 - **Mana +** (rendement du mana) : bouton du bas, 5 niveaux à **50 / 100 / 200 / 400 / 800** de mana ; chaque niveau donne **+20 %** de mana par élimination et par vague (+100 % au maximum). Chaque joueur a le sien en Coop.
 - **Invoquer** pose une unité **aléatoire de ton deck**, au **rang 1**, sur une **case vide aléatoire**. Le coût commence à **10** et augmente de **10** à chaque invocation.
@@ -188,6 +188,10 @@ Règles de travail :
 - **Claquement de doigts**, une fois, à 30 % de PV : fond blanc, silence d'une seconde, puis 3 unités au hasard perdent la moitié de leurs rangs (minimum 1).
 - **Sbires** : les Outriders, très rapides, en meute.
 - **Arène** : Titan, planète en ruines au ciel orange, avec les six Pierres qui brillent en fond.
+
+**Extension DC** : les gros boss **Joker, Lex Luthor, Bane, Sinestro et Black Adam** rejoignent la rotation (11 boss), et **Darkseid**, boss final de l'extension, arrive au dernier niveau de la campagne DC (chapitre 9) et à la **vague 100** des modes infinis (Thanos garde la vague 50). Détails : `design/game-design.md` (§ Extension DC).
+
+**Extension Transformers** : les gros boss **Starscream, Soundwave, Shockwave, Devastator, Blitzwing** et **Megatron** (boss final de l'extension, chapitre 12) rejoignent la rotation ; **Unicron**, boss cosmique, arrive à la **vague 150** des modes infinis (prioritaire sur Thanos). Les Autobots ont une mécanique propre, la **transformation** (mode robot ↔ mode véhicule toutes les 8 s ou d'un appui). Détails : `design/game-design.md` (§ Extension Transformers).
 
 **Extension Pixar** : les gros boss **Syndrome, Randall, Lotso, Le Borgne, Charles Muntz** et **l'Empereur Zurg** (boss final de l'extension, chapitre 15, « Je suis ton père » à 30 % de PV) rejoignent la rotation « tous les univers » des modes infinis. Les héros Pixar, presque tous en duo, ont une mécanique propre, le **coup de duo** : toutes les quelques attaques, le partenaire frappe à son tour (`src/engine/pixar.ts`).
 
@@ -251,7 +255,7 @@ Mets ces données dans `src/data/units.ts`, typées. Les valeurs sont un premier
 Le glisser d'une unité sur une alliée suit `dropAction` (moteur) : même héros et même rang = fusion ; copieur, booster ou échangeur sur un autre héros de même rang = copie, promotion ou échange. Les cases compatibles s'illuminent pendant le glisser et l'appui long (qui montre aussi les partenaires de formation).
 
 ### 4.6 Bonus d'équipe
-Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux ; extension Pixar : Les Indestructibles, Monstres & Cie, Émotions et l'équipe inter-univers Toy Story (Buzz & Woody, Jessie & Pile-Poil). Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).
+Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux ; extension DC : Justice League, Trinité, Bat-famille, Lanternes et cosmiques, Sirènes de Gotham, et les équipes inter-univers Les Riches et Les Archers ; extension Transformers : Autobots, Dinobots, Aériens et l'équipe inter-univers Les Machines (Iron Man, Optimus Prime et Cyborg) ; extension Pixar : Les Indestructibles, Monstres & Cie, Émotions et l'équipe inter-univers Toy Story (Buzz & Woody, Jessie & Pile-Poil). Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).
 
 ---
 
@@ -293,7 +297,7 @@ Comme dans Rush Royale, le joueur ne lit rien : il **apprend en jouant**, avec u
 Le Solo est le **mode principal** : c'est là que chaque joueur avance à son rythme, de son côté, et débloque l'essentiel du contenu. Il marche **hors ligne** et se synchronise ensuite.
 
 **Campagne**
-- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts. L'extension Pixar ajoute les chapitres 13 (Metroville), 14 (Paradise Falls) et 15 (la planète Z), ouverts après le dernier chapitre installé (`docs/campagne.md`).
+- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts. L'extension DC ajoute les chapitres 7 (Gotham), 8 (Metropolis et Themyscira) et 9 (Apokolips), ouverts après Thanos ; l'extension Transformers ajoute les chapitres 10 (Cybertron), 11 (la Terre) et 12 (le Némésis) ; l'extension Pixar ajoute les chapitres 13 (Metroville), 14 (Paradise Falls) et 15 (la planète Z), ouverts après le dernier chapitre installé (`docs/campagne.md`).
 - Chaque chapitre compte **10 niveaux** sur les maps de sa zone. Le niveau 5 est un **mini-boss** (un sbire géant), le niveau 10 un **boss** dans son arène.
 - **Objectif de chaque niveau** : tenir un nombre de vagues fixé, plus une **contrainte bonus** pour la 3e étoile (« sans perdre de vie », « avec au moins 2 unités Disney », « boss tué en moins de 30 s »…).
 - **1 à 3 étoiles** par niveau. Les étoiles ouvrent les chapitres suivants et les coffres d'étoiles.
@@ -348,6 +352,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 | Vague 40 | coffre héroïque + 3 parchemins + 1 skin au hasard |
 | Vague 50 (Thanos vaincu) | coffre légendaire + 1 Légendaire garanti + cadre de profil « Vainqueur de Thanos » |
 | Ensuite, tous les 10 | coffre d'or + 1 parchemin |
+| Vagues 75 et 100 (extension DC, Darkseid à la 100) | coffre légendaire + parchemins + 1 Légendaire garanti (voir `docs/equilibrage.md` §5) |
 
 - **Record du duo** affiché sur l'écran Coop, et historique des meilleures parties.
 - Une partie infinie se **met en pause et se reprend** plus tard, à deux (§5.4).
@@ -418,7 +423,7 @@ Une pile vise un héros du deck actif 6 fois sur 10 ; sans héros de la rareté,
 - **Rythme visé** (simulation `docs/equilibrage.md` §6 bis) : **beaucoup de tirages au début** (≈ 22 lots de 10 la 1re semaine, 8 la 2e), puis un lot de 10 acheté avec des gemmes tous les **3 à 4 jours** de jeu régulier, l'or limite les montées de niveau (deck niveau 9 vers la fin de la campagne, 3 semaines).
 
 ### 6.2 Packs
-- Deux packs, **Pack Marvel** et **Pack Disney**, qui ne contiennent que les unités de leur univers.
+- Deux packs, **Pack Marvel** et **Pack Disney**, qui ne contiennent que les unités de leur univers. L'extension DC ajoute le **Pack DC** (15 héros), aux mêmes prix, taux et garantie.
 - Prix : **100** gemmes le tirage, **900** les 10 tirages, avec au moins 1 Épique garanti dans un lot de 10. Les packs se paient **uniquement en gemmes**.
 - Taux du tirage à l'unité : **Rare 72 %**, **Épique 24 %**, **Légendaire 4 %**. **Lot de 10 boosté**, par carte : **Rare 60 %**, **Épique 30 %**, **Légendaire 10 %** (au moins 1 Épique).
 - **Garanties** : un Légendaire au plus tard au **30e** tirage, compteur séparé par pack et affiché ; le **1er lot de 10 payé de chaque pack** contient un Légendaire.

@@ -18,9 +18,9 @@ function withBoss(boss: BossId, units: [number, UnitId, number][], deck: UnitId[
 const grid = (e: Engine) => e.state.players[0]!.grid;
 
 describe('boss', () => {
-  it('13 boss définis (7 + 6 Pixar), intervalle 6 s (Thanos et Zurg 8 s)', () => {
-    expect(BOSS_LIST).toHaveLength(13);
-    for (const b of BOSS_LIST) expect(b.power.interval).toBe(['thanos', 'zurg'].includes(b.id) ? 8 : 6);
+  it('26 boss définis (7 + 6 DC + 7 Transformers + 6 Pixar), intervalle 6 s (Thanos, Darkseid, Megatron, Unicron et Zurg 8 s)', () => {
+    expect(BOSS_LIST).toHaveLength(26);
+    for (const b of BOSS_LIST) expect(b.power.interval).toBe(['thanos', 'darkseid', 'megatron', 'unicron', 'zurg'].includes(b.id) ? 8 : 6);
   });
 
   it('Jafar : Hypnose, 1 à 2 unités cessent d’attaquer 4 s', () => {
@@ -108,7 +108,7 @@ describe('boss', () => {
     it('Âme : vole 20 % du mana', () => {
       const { e, p } = run('ame', []);
       expect(p.name).toBe('Pierre de l’Âme');
-      expect(e.state.players[0]!.mana).toBe(120); // 150 − 20 %
+      expect(e.state.players[0]!.mana).toBe(80); // 100 − 20 %
     });
     it('Temps : soigne Thanos de 5 %', () => {
       const e = quiet(DECK);

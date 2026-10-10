@@ -1,20 +1,22 @@
-// Attaques et compétences des 43 unités (28 + 15 Pixar, src/engine/pixar.ts), sur les profils Rush Royale (docs/rush-royale-mapping.md).
-// Une fonction par tick et par joueur : timers, compétences à recharge, attaques de base (le rang de
-// fusion divise l'intervalle d'attaque, règle de Rush Royale : plusieurs coups par tick si besoin).
+// Attaques et compétences des 73 unités (28 + 15 de l'extension DC + 15 Autobots, src/engine/transformers.ts,
+// + 15 Pixar, src/engine/pixar.ts), sur les profils Rush Royale (docs/rush-royale-mapping.md). Une fonction par
+// tick et par joueur : timers, compétences à recharge, archétypes DC (archetypes.ts), attaques de base (le rang
+// de fusion divise l'intervalle d'attaque, règle de Rush Royale : plusieurs coups par tick si besoin).
 
 import type { UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { GRID_SIZE, MAX_RANK } from './types';
 import {
-  DT, EPS, emit, pick, pickMany, rand, type Ctx, type SimEnemy, type SimUnit,
+  DT, EPS, emit, pick, pickMany, rand, randInt, type Ctx, type SimEnemy, type SimUnit,
 } from './internal';
 import {
   aliveAll, applyBurn, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate, countOnBoard,
-  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors,
-  progress, selectTarget, sendToStart, teamFor, unitActive, unitHit, unitParams, within,
+  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors, pushBack,
+  progress, segmentOf, selectTarget, sendToStart, teamFor, topBy, unitActive, unitHit, unitParams, within,
 } from './combat';
 import { enemyGridPos, inReach, unitRange } from './geometry';
-import { formationSplash, growOverTime } from './archetypes';
+import { formationLength, formationSplash, growOverTime } from './archetypes';
+import { chooseTfTarget, inVehicle, isTransformer, tfAttack, tfInit, tfTick, tfTimedAbility } from './transformers';
 import { pxAttack, pxTick, pxTimedAbility, pxWaveMana } from './pixar';
 
 /** Recharge de la compétence périodique selon le rang (`abilityCooldownPerRank`, Stase). */
@@ -32,6 +34,8 @@ export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
   // Minotaure (Hulk) : mode Berserker à l'apparition (talent).
   if (prm.berserkDuration) u.counters.berserkFor = prm.berserkDuration;
   if (prm.chargeStart) u.counters.charges = prm.chargeStart;
+  // Extension Transformers : un Autobot arrive en mode robot.
+  tfInit(prm, u);
 }
 
 function dec(v: number | undefined, by = DT): number | undefined {
@@ -57,7 +61,7 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
     }
   }
   const c = u.counters;
-  for (const k of ['hasteFor', 'boostFor', 'restoredFor', 'immuneFor', 'hurricaneFor', 'buffFor', 'killManaFor', 'berserkFor', 'rockfallFor', 'activeFor'] as const) {
+  for (const k of ['binaryFor', 'hasteFor', 'boostFor', 'restoredFor', 'immuneFor', 'powerFor', 'weakenFor', 'hurricaneFor', 'buffFor', 'killManaFor', 'berserkFor', 'rockfallFor', 'rageFor', 'activeFor'] as const) {
     if ((c[k] ?? 0) > 0) c[k] = Math.max(0, (c[k] ?? 0) - DT);
   }
   const rate = cooldownRate(ctx, player, effectiveId(u));
@@ -130,6 +134,7 @@ export function updateUnits(ctx: Ctx, player: number): void {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
     tickTimers(ctx, player, u);
+    tfTick(ctx, player, slot, u);
     pxTick(u);
     const id = effectiveId(u);
     const def = effectiveDef(u);
@@ -177,6 +182,12 @@ export function updateUnits(ctx: Ctx, player: number): void {
  */
 export function onRankUp(ctx: Ctx, player: number, slot: number): void {
   const grid = ctx.st.players[player]!.grid;
+  // Génie (Cyborg) : chaque fusion du plateau charge son Boom Tube.
+  for (const n of grid) {
+    if (!n) continue;
+    const max = unitParams(ctx, player, effectiveId(n)).vortexMax;
+    if (max) n.counters.vortex = Math.min(max, (n.counters.vortex ?? 0) + 1);
+  }
   for (const j of neighbors(slot, false)) {
     const n = grid[j];
     if (!n) continue;
@@ -363,9 +374,126 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
       return true;
     }
     default:
-      // Extension Pixar (src/engine/pixar.ts).
-      return pxTimedAbility(ctx, player, slot, u, all, enemies) ?? true;
+      // Extensions : Pixar (src/engine/pixar.ts), Transformers (src/engine/transformers.ts), puis DC.
+      return pxTimedAbility(ctx, player, slot, u, all, enemies) ?? tfTimedAbility(ctx, player, slot, u, all, enemies) ?? dcTimedAbility(ctx, player, slot, u, enemies);
   }
+}
+
+/** Expose un ennemi : +x de dégâts subis (garde la marque la plus forte et la plus longue). */
+function expose(e: SimEnemy, value: number, duration: number): void {
+  const active = (e.effects.markedFor ?? 0) > EPS;
+  e.effects.marked = Math.max(active ? e.effects.marked ?? 0 : 0, value);
+  e.effects.markedFor = Math.max(active ? e.effects.markedFor ?? 0 : 0, duration);
+}
+
+/** Événement d'attaque pour l'effet visuel d'une compétence (comme l'Uni-Beam). */
+function fxEvent(ctx: Ctx, player: number, slot: number, unit: UnitId, targets: SimEnemy[], fx: string): void {
+  emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit, targets: targets.map((e) => e.uid), fx });
+}
+
+const isBossLike = (e: SimEnemy) => !!e.bossId || !!e.x.mini;
+
+/** Compétences à recharge des héros DC, profils Rush Royale (même contrat que timedAbility). */
+function dcTimedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): boolean | number {
+  const id = effectiveId(u);
+  const prm = unitParams(ctx, player, id);
+  const ctrl = controlMul(ctx, player, id);
+  switch (id) {
+    case 'superman': {
+      // Givre : blizzard sur tout le chemin, ralentissement selon le rang, cumulable.
+      const all = aliveAll(ctx);
+      if (all.length === 0) return false;
+      const max = Math.max(1, Math.round(prm.blizzardStacks ?? 3));
+      const dur = (prm.blizzardDuration ?? 4) * ctrl;
+      for (const e of all) {
+        const active = (e.effects.slowFor ?? 0) > EPS && (e.x.frostStacks ?? 0) > 0;
+        e.x.frostStacks = Math.min(max, (active ? e.x.frostStacks ?? 0 : 0) + 1);
+        applySlow(ctx, e, (prm.blizzardSlowPerRank ?? 0.04) * u.rank * e.x.frostStacks, dur);
+        if (prm.blizzardDamage) unitHit(ctx, player, u, e, baseDamage(ctx, player, slot, u) * prm.blizzardDamage, { noOnHit: true });
+      }
+      fxEvent(ctx, player, slot, id, all, 'superman:souffle');
+      abilityEvent(ctx, player, slot, id, 'Souffle glacial', all);
+      return true;
+    }
+    case 'wonderwoman': {
+      // Moine : Fureur sans mana, limitée dans le temps ; les Wonder Woman reliées entrent en Fureur ensemble.
+      if (enemies.length === 0) return false;
+      const grid = ctx.st.players[player]!.grid;
+      const group = prm.powerShared ? [slot, ...formationPartnersOf(ctx, player, slot)] : [slot];
+      for (const j of group) {
+        const w = grid[j];
+        if (!w) continue;
+        w.counters.powerFor = prm.powerDuration ?? 5;
+        if (w !== u) w.counters.cd = Math.max(w.counters.cd ?? 0, abilityCd(prm, w.rank));
+      }
+      abilityEvent(ctx, player, slot, id, 'Fureur amazone', []);
+      return true;
+    }
+    case 'flash': {
+      // Cogneur : rage quand le chemin est encombré (10 % par ennemi au-delà de 7, chaque seconde).
+      if ((u.counters.rageFor ?? 0) > EPS) return true;
+      const n = aliveAll(ctx).length - Math.round(prm.rageFrom ?? 8) + 1;
+      if (n <= 0 || rand(ctx) >= (prm.rageChancePerEnemy ?? 0.1) * n) return true;
+      u.counters.rageFor = prm.rageDuration ?? 5;
+      abilityEvent(ctx, player, slot, id, 'Rage', []);
+      return true;
+    }
+    case 'supergirl': {
+      // Barde : à la fin du mode Musique, +20 % de vitesse d'attaque pendant 10 s.
+      u.counters.haste = Math.max((u.counters.hasteFor ?? 0) > EPS ? u.counters.haste ?? 0 : 0, prm.haste ?? 0.2);
+      u.counters.hasteFor = prm.hasteDuration ?? 10;
+      if (prm.flareDamage) {
+        const lead = bestBy(enemies, (e) => progress(ctx, e));
+        if (lead) {
+          const zone = [lead, ...within(ctx, aliveAll(ctx), lead, 1.5)].filter(isAlive);
+          for (const e of zone) unitHit(ctx, player, u, e, baseDamage(ctx, player, slot, u) * prm.flareDamage, { noOnHit: true });
+          fxEvent(ctx, player, slot, id, zone, 'supergirl:eruption');
+        }
+      }
+      abilityEvent(ctx, player, slot, id, 'Éruption solaire', []);
+      return true;
+    }
+    case 'shazam': {
+      // Météore : la foudre tombe sur un ennemi au hasard, zone et étourdissement (sauf boss).
+      const center = pick(ctx, enemies);
+      if (!center) return false;
+      const all = aliveAll(ctx);
+      const n = Math.max(1, Math.round(prm.meteors ?? 1));
+      const centers = [center, ...pickMany(ctx, enemies.filter((e) => e !== center), n - 1)];
+      const hitSet = new Set<SimEnemy>();
+      for (const c of centers) for (const e of [c, ...within(ctx, all, c, prm.meteorRadius ?? 1)]) hitSet.add(e);
+      const zone = [...hitSet].filter(isAlive);
+      const dmg = baseDamage(ctx, player, slot, u) * (prm.meteorDamage ?? 3);
+      for (const e of zone) {
+        unitHit(ctx, player, u, e, dmg, { noOnHit: true });
+        if (isAlive(e) && notBoss(e)) applyStun(e, (prm.meteorStun ?? 1) * ctrl);
+      }
+      fxEvent(ctx, player, slot, id, zone, 'shazam:foudre');
+      abilityEvent(ctx, player, slot, id, 'SHAZAM !', zone);
+      return true;
+    }
+    default:
+      return true;
+  }
+}
+
+/** Partenaires reliés d'une unité (même unité, cases voisines), pour les compétences partagées. */
+function formationPartnersOf(ctx: Ctx, player: number, slot: number): number[] {
+  const grid = ctx.st.players[player]!.grid;
+  const u = grid[slot];
+  if (!u) return [];
+  const seen = new Set([slot]);
+  const todo = [slot];
+  while (todo.length) {
+    const s = todo.pop()!;
+    for (const j of neighbors(s, false)) {
+      if (seen.has(j) || grid[j]?.unit !== u.unit) continue;
+      seen.add(j);
+      todo.push(j);
+    }
+  }
+  seen.delete(slot);
+  return [...seen];
 }
 
 // ───────────── Attaques de base ─────────────
@@ -389,6 +517,9 @@ export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enem
 function chooseTarget(ctx: Ctx, player: number, u: SimUnit, pool: SimEnemy[]): SimEnemy | undefined {
   const def = effectiveDef(u);
   const prm = unitParams(ctx, player, def.id);
+  // Transformation (Autobots) : robot = le plus de PV, véhicule = le plus avancé.
+  const tf = chooseTfTarget(ctx, prm, u, pool);
+  if (tf !== null) return tf;
   // Pyrotechnicien (Mulan) : en nombre impair, cible au hasard.
   if (prm.oddSplash && countOnBoard(ctx, player, def.id) % 2 === 1) return selectTarget(ctx, pool, 'aleatoire');
   // Chimiste (Nick & Judy) : le premier ennemi qui n'est pas encore fiché.
@@ -424,7 +555,7 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
   const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool, fresh);
   c.lastTarget = target.uid;
   if (prm.growthPerHit) c.growth = (c.growth ?? 0) + prm.growthPerHit;
-  if (prm.rampPerHit) {
+  if (prm.rampPerHit && !(isTransformer(prm) && inVehicle(u))) {
     // Purification (talent de Thor) : la rampe monte plus vite en mode actif.
     const k = prm.activeRampMul && unitActive(ctx, player, u) ? prm.activeRampMul : 1;
     c.ramp = Math.min(prm.rampMax ?? 4, (c.ramp ?? 0) + prm.rampPerHit * k);
@@ -656,11 +787,108 @@ function attackOf(
       hit(target, dmg);
       return { targets: [target], fx: 'nemo:ralenti' };
     }
+    // ───────────── Extension DC (profils Rush Royale) ─────────────
+    case 'batman': {
+      // Bourreau : exécute sous un seuil de PV (moitié contre les boss et les lieutenants).
+      hit(target, dmg);
+      if (isAlive(target)) {
+        const th = (prm.executeThreshold ?? 0.2) * (isBossLike(target) ? prm.executeBossFactor ?? 0.5 : 1);
+        if (target.hp / target.maxHp < th) {
+          killEnemy(ctx, target, player, u);
+          abilityEvent(ctx, player, slot, id, 'Justicier', [target]);
+          return { targets: [target], fx: 'batman:batarangs' };
+        }
+      }
+      return { targets: [target], fx: 'batman:batarang' };
+    }
+    case 'wonderwoman': {
+      // Moine : en Fureur, chaque coup éclabousse.
+      hit(target, dmg);
+      if ((c.powerFor ?? 0) > EPS && prm.powerSplash) {
+        const around = splash(target, dmg * prm.powerSplash, prm.powerSplashRadius ?? 1);
+        return { targets: [target, ...around], fx: 'wonderwoman:epee' };
+      }
+      return { targets: [target], fx: 'wonderwoman:epee' };
+    }
+    case 'greenlantern': {
+      // Cultiste : une cible de plus par Green Lantern relié ; groupe complet : dégâts doublés.
+      const len = formationLength(ctx.st.players[player]!.grid, slot);
+      const d = len >= (prm.formationDoubleAt ?? 5) ? dmg * (prm.formationDoubleMul ?? 2) : dmg;
+      const extra = Math.min(Math.round(prm.formationTargetsMax ?? 3), Math.round((prm.formationTargetsPerAlly ?? 1) * (len - 1)));
+      const more = extra > 0 ? nearest(ctx, enemies.filter(isAlive), target, extra, new Set([target.uid])) : [];
+      hit(target, d);
+      for (const e of more) hit(e, d, { noOnHit: true });
+      return { targets: [target, ...more], fx: 'greenlantern:anneau' };
+    }
+    case 'flash': {
+      // Cogneur : en rage, coups de zone.
+      hit(target, dmg);
+      if ((c.rageFor ?? 0) > EPS && prm.rageSplash) {
+        const around = splash(target, dmg * prm.rageSplash, 1);
+        return { targets: [target, ...around], fx: 'flash:tour' };
+      }
+      return { targets: [target], fx: 'flash:eclair' };
+    }
+    case 'aquaman': {
+      // Faucheuse : chance d'engloutir la cible (sauf boss et lieutenants).
+      hit(target, dmg);
+      if (isAlive(target) && !isBossLike(target) && rand(ctx) < (prm.reapChance ?? 0.054)) {
+        killEnemy(ctx, target, player, u);
+        abilityEvent(ctx, player, slot, id, 'Kraken', [target]);
+        return { targets: [target], fx: 'aquaman:kraken' };
+      }
+      return { targets: [target], fx: 'aquaman:trident' };
+    }
+    case 'batgirl': {
+      // Bombardier : explosion autour de la cible.
+      hit(target, dmg);
+      const around = splash(target, dmg * (prm.splash ?? 0.6), prm.splashRadius ?? 1);
+      return { targets: [target, ...around], fx: 'batgirl:coup' };
+    }
+    case 'greenarrow': {
+      // Mage de glace : chaque flèche ralentit un peu plus la cible.
+      hit(target, dmg);
+      if (isAlive(target)) {
+        const active = (target.effects.slowFor ?? 0) > EPS && (target.x.coldSlow ?? 0) > 0;
+        target.x.coldSlow = Math.min(prm.coldMaxSlow ?? 0.3, (active ? target.x.coldSlow ?? 0 : 0) + (prm.coldSlowPerHit ?? 0.06));
+        applySlow(ctx, target, target.x.coldSlow, (prm.coldDuration ?? 2) * ctrl);
+        return { targets: [target], fx: 'greenarrow:filet' };
+      }
+      return { targets: [target], fx: 'greenarrow:fleche' };
+    }
+    case 'cyborg': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'cyborg:canon-sonique' };
+    }
+    case 'supergirl': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'supergirl:poing' };
+    }
+    case 'shazam': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'shazam:coup' };
+    }
+    case 'robin': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'robin:baton' };
+    }
+    case 'catwoman': {
+      // Mana par élimination (archétype) : la marque est posée par unitHit (tagForMana).
+      hit(target, dmg);
+      return { targets: [target], fx: 'catwoman:fouet' };
+    }
+    case 'harley': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'harley:maillet' };
+    }
     default: {
+      // Extension Transformers : attaques des Autobots selon leur mode.
+      const tf = tfAttack(ctx, player, slot, u, id, target, enemies, pool, dmg, hit, splash);
+      if (tf) return tf;
       // Extension Pixar : attaques et coups de duo.
       const px = pxAttack(ctx, player, slot, u, id, target, enemies, dmg, hit, splash);
       if (px) return px;
-      // falcon, moana, tiana, coco… : coup simple.
+      // falcon, moana, tiana, coco, superman, martian… : coup simple.
       hit(target, dmg);
       return { targets: [target], fx: `${id}:${BASE_FX[id] ?? 'tir'}` };
     }
@@ -675,6 +903,7 @@ function hasNeighborTwin(ctx: Ctx, player: number, slot: number, unit: UnitId): 
 const BASE_FX: Partial<Record<UnitId, string>> = {
   ironman: 'repulseur', strange: 'magie', falcon: 'tir-aerien', moana: 'rame', pocahontas: 'feuilles',
   tiana: 'luciole', coco: 'notes', rapunzel: 'poele', cap: 'bouclier', loki: 'dague',
+  superman: 'vision-thermique', martian: 'rayon',
 };
 
 /** Début de vague : remise à zéro des compétences « une fois par vague ». Renvoie le mana gagné. */
