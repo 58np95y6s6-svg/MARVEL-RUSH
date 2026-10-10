@@ -281,71 +281,71 @@ Thunderer, Bourreau (exécute sous **17,5 % (niv. 5) → 29,5 % (niv. 13)** des 
 
 | Unité Rush Royale | Rareté | Conf. | Héros (univers) |
 |---|---|---|---|
-| Archer | commune | A | Œil de faucon (Marvel) |
-| Bombardier | commune | A | Batgirl (DC) |
-| Mage de glace | commune | A | Green Arrow (DC) |
-| Mage de feu | commune | A | Captain Marvel (Marvel) |
-| Chasseur | commune | A | Rebelle (Disney) |
-| Mage de foudre | commune | A | Bumblebee (Transformers) |
-| Empoisonneur | commune | A | Joie & Tristesse (Pixar) |
-| Voleur | commune | A | **Rox & Rouky** (Disney) |
-| Lanceur | commune | A | Sideswipe (Transformers) |
-| Alchimiste | rare | A | **Rémy & Linguini** (Pixar) |
-| Bannière | rare | A | Pocahontas & Meeko (Disney) |
-| Chaudron magique | rare | A | Nemo & Dory (Disney) |
-| Chimiste | rare | A | Nick & Judy (Disney) |
-| Meule | rare | A | Raiponce & Pascal (Disney) |
-| Prêtresse | rare | A | Black Widow (Marvel) |
-| Sentinelle | rare | A | Elita-1 (Transformers) |
-| Tireur d'élite | rare | A | Falcon (Marvel) |
-| Zélote | rare | A | Venom (Marvel) |
-| Catapulte | épique | A | **Spider-Man** (Marvel) |
-| Cristallomancien | épique | A | Arcee (Transformers) |
-| Ingénieur | épique | A | Buzz & Woody (Disney) |
-| Gargouille | épique | A | Bulkhead (Transformers) |
-| Bourreau | épique | A | **Soldat de l'hiver** (Marvel) |
-| Mime | épique | A | Martian Manhunter (DC) |
-| Médecin de peste | épique | A | **Frozone** (Pixar) |
-| Lierre | épique | A | Jessie & Pile-Poil (Pixar) |
-| Gardien du portail | épique | A | Vanellope & Ralph (Disney) |
-| Pyrotechnicien | épique | A | **Ironhide** (Transformers) |
-| Faucheuse | épique | A | Aquaman (DC) |
-| Mage du portail | épique | A | Doctor Strange (Marvel) |
-| Tonnerre | épique | A | **Shang-Chi** (Marvel) |
-| Vampire | épique | A | Tiana & Naveen (Disney) |
-| Archer du vent | épique | A | Vaïana & Pua (Disney) |
+| Archer | commune | A · icône ✔ | Œil de faucon (Marvel) |
+| Bombardier | commune | A · icône ✔ | Batgirl (DC) |
+| Mage de glace | commune | A · icône ✔ | Green Arrow (DC) |
+| Mage de feu | commune | A · icône ✔ | Captain Marvel (Marvel) |
+| Chasseur | commune | A · icône ✔ | Rebelle (Disney) |
+| Mage de foudre | commune | A · icône ✔ | Bumblebee (Transformers) |
+| Empoisonneur | commune | A · icône ✔ | Joie & Tristesse (Pixar) |
+| Voleur | commune | A · icône ✔ | **Rox & Rouky** (Disney) |
+| Lanceur | commune | A · icône ✔ | Sideswipe (Transformers) |
+| Alchimiste | rare | A · icône (probable) | **Rémy & Linguini** (Pixar) |
+| Bannière | rare | A · icône ✔ | Pocahontas & Meeko (Disney) |
+| Chaudron magique | rare | A · icône ✔ | Nemo & Dory (Disney) |
+| Chimiste | rare | A · icône (probable) | Nick & Judy (Disney) |
+| Meule | rare | A · icône ✔ | Raiponce & Pascal (Disney) |
+| Prêtresse | rare | A · icône ✔ | Black Widow (Marvel) |
+| Sentinelle | rare | A · icône (probable) | Elita-1 (Transformers) |
+| Tireur d'élite | rare | A · icône (probable) | Falcon (Marvel) |
+| Zélote | rare | A · icône (probable) | Venom (Marvel) |
+| Catapulte | épique | A · icône ✔ | **Spider-Man** (Marvel) |
+| Cristallomancien | épique | A · icône ✔ | Arcee (Transformers) |
+| Ingénieur | épique | A · icône ✔ | Buzz & Woody (Disney) |
+| Gargouille | épique | A · icône ✔ | Bulkhead (Transformers) |
+| Bourreau | épique | A · icône ✔ | **Soldat de l'hiver** (Marvel) |
+| Mime | épique | A · icône ✔ | Martian Manhunter (DC) |
+| Médecin de peste | épique | A · icône ✔ | **Frozone** (Pixar) |
+| Lierre | épique | A · icône ✔ | Jessie & Pile-Poil (Pixar) |
+| Gardien du portail | épique | A · icône (probable) | Vanellope & Ralph (Disney) |
+| Pyrotechnicien | épique | A · icône ✔ | **Ironhide** (Transformers) |
+| Faucheuse | épique | A · icône ✔ | Aquaman (DC) |
+| Mage du portail | épique | A · icône (probable) | Doctor Strange (Marvel) |
+| Tonnerre | épique | A · icône ✔ | **Shang-Chi** (Marvel) |
+| Vampire | épique | A · icône ✔ | Tiana & Naveen (Disney) |
+| Archer du vent | épique | A · icône (probable) | Vaïana & Pua (Disney) |
 | Clown | épique | B | Harley Quinn (DC) |
-| Cogneur | légendaire | A | Flash (DC) |
-| Danse-lames | légendaire | A | **Mulan & Mushu** (Disney) |
-| Borée | légendaire | A | Maui (Disney) |
-| Corsaire | légendaire | A | Wheeljack (Transformers) |
-| Cultiste | légendaire | A | Green Lantern (DC) |
-| Chasseur de démons | légendaire | A | **Batman** (DC) |
+| Cogneur | légendaire | A · icône (probable) | Flash (DC) |
+| Danse-lames | légendaire | A · icône (probable) | **Mulan & Mushu** (Disney) |
+| Borée | légendaire | A · icône (probable) | Maui (Disney) |
+| Corsaire | légendaire | A · icône (probable) | Wheeljack (Transformers) |
+| Cultiste | légendaire | A · icône (probable) | Green Lantern (DC) |
+| Chasseur de démons | légendaire | A · icône ✔ | **Batman** (DC) |
 | Démonologue | légendaire | A | Catwoman (DC) |
-| Dryade | légendaire | A | Coco (Disney) |
-| Givre | légendaire | A | Superman (DC) |
-| Arlequin | légendaire | A | Loki (Marvel) |
-| Inquisiteur | légendaire | A | Thor (Marvel) |
+| Dryade | légendaire | A · icône ✔ | Coco (Disney) |
+| Givre | légendaire | A · icône ✔ | Superman (DC) |
+| Arlequin | légendaire | A · icône ✔ | Loki (Marvel) |
+| Inquisiteur | légendaire | A · icône ✔ | Thor (Marvel) |
 | Maléfice (Hex) | légendaire | A | Prowl (Transformers) |
-| Statue de chevalier | légendaire | A | Captain America (Marvel) |
-| Horloge du pouvoir | légendaire | A | libre |
+| Statue de chevalier | légendaire | A · icône ✔ | Captain America (Marvel) |
+| Horloge du pouvoir | légendaire | A · icône ✔ | libre |
 | Météore | légendaire | A | Shazam (DC) |
 | Minotaure | légendaire | A | Hulk (Marvel) |
 | Ferrailleur | légendaire | A | Robin (DC) |
-| Stase | légendaire | A | Ariel & Sébastien (Disney) |
+| Stase | légendaire | A · icône ✔ | Ariel & Sébastien (Disney) |
 | Invocateur | légendaire | A | Carl & Russell (Pixar) |
-| Tesla | légendaire | A | Iron Man (Marvel) |
+| Tesla | légendaire | A · icône ✔ | Iron Man (Marvel) |
 | Trappeur | légendaire | A | libre |
 | Sorcière | légendaire | A | Ratchet (Transformers) |
-| Chaman | légendaire | A | Sulli & Bob (Pixar) |
-| Robot | légendaire | A | WALL-E & EVE (Pixar) |
+| Chaman | légendaire | A · icône ✔ | Sulli & Bob (Pixar) |
+| Robot | légendaire | A · icône ✔ | WALL-E & EVE (Pixar) |
 | Maître des esprits | légendaire | A | Violette & Flèche (Pixar) |
 | Moine | légendaire | B | Wonder Woman (DC) |
 | Barde | légendaire | B | Supergirl (DC) |
 | Banshee | légendaire | B | Optimus Prime (Transformers) |
 | Génie | légendaire | B | Cyborg (DC) |
 | Chaperon rouge (Riding Hood) | légendaire | B | Grimlock (Transformers) |
-| Loup de mer | légendaire | B | Jazz (Transformers) |
+| Loup de mer | légendaire | B · icône (probable) | Jazz (Transformers) |
 | Pistolero (Gunslinger) | légendaire | B | libre |
 | Phénix | légendaire | B | libre |
 | Rôdeur du crépuscule | légendaire | B | Elastigirl (Pixar) |
@@ -363,3 +363,24 @@ Thunderer, Bourreau (exécute sous **17,5 % (niv. 5) → 29,5 % (niv. 13)** des 
 En gras : unité changée par la revue des raretés (les extensions DC, Transformers et Pixar sont revues sur leurs
 branches ; ce tableau donne la répartition finale prévue sur les quatre branches).
 
+
+### 4 bis. Vérification par les icônes (octobre 2026)
+
+Deux listes de classement d'unités fournies par la joueuse (images rangées dans le dépôt privé
+`D-p-t-photo-marvel/rr-sources/`, jamais en clair ici) montrent l'icône de chaque unité dans son **cadre de rareté** :
+or avec couronne = légendaire, violet = épique, bleu = rare, gris = commune. La plus nette (`tierlist-2.jpg`,
+55 icônes) donne **9 communes, 9 rares, 15 épiques** (le Clown n'y est pas) et 22 légendaires : exactement les
+raretés du fichier de données du jeu. Colonne « Conf. » du tableau : **icône ✔** = unité reconnue sur son icône,
+rareté vérifiée par le cadre ; **icône (probable)** = rareté vérifiée par le cadre, nom déduit (plusieurs unités
+possibles de cette rareté : Alchimiste / Chimiste / Sentinelle / Tireur d'élite / Zélote parmi les rares, Mage du
+portail / Gardien du portail / Archer du vent parmi les épiques, Danse-lames, Corsaire, Cultiste, Cogneur, Borée,
+Loup de mer parmi les légendaires).
+
+Icônes légendaires non reconnues (5) : une gelée verte coiffée d'un casque de mineur, un homme au chapeau melon et
+au trèfle (aussi dans `tierlist-1.jpg`, cadre or), un mage encapuchonné aux ailes dorées, une femme aux cheveux
+blancs avec une flamme violette, une dryade verte à bois de cerf avec un petit esprit. Candidats : Météore,
+Sorcière, Banshee, Démonologue, Dryade des montagnes, Élémentaire de terre, Maître des esprits, Pistolero…
+
+Images découpées pour les fiches (50, carrées, cadre gardé) : dépôt privé `D-p-t-photo-marvel/rr/<id>.png`, ids de
+`docs/illustrations-a-fournir.md` (« Unités Rush Royale »), à chiffrer avec
+`node scripts/encrypt-assets.mjs <clé> <dossier rr/> public/rr`.
