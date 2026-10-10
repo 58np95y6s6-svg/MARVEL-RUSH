@@ -132,7 +132,7 @@ export function mountCampaign(host: HTMLElement, o: CampaignOptions): () => void
   const overlay = o.overlay ?? wrap;
   let sheet: HTMLElement | null = null;
   let sheetLevel: string | null = o.openLevel ?? null;
-  const chapterN = Math.min(6, Math.max(1, o.chapter ?? currentChapterOf(getProgress())));
+  const chapterN = Math.min(CHAPTERS.length, Math.max(1, o.chapter ?? currentChapterOf(getProgress())));
 
   function render(): void {
     if (destroyed) return;
