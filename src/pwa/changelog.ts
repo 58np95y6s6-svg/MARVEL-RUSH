@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10s',
+    title: 'Portées revues',
+    date: '10 octobre 2026',
+    items: [
+      'Shang-Chi lance maintenant ses Dix Anneaux au loin (portée longue), comme les lames du Danse-lames : moins de dégâts par coup, mais il touche bien plus souvent.',
+      'Portées revues selon chaque héros : la fusée de Mushu porte loin (Mulan & Mushu : longue) et le Soldat de l’hiver tire en sniper sur toute la map.',
+      'Les dégâts de ces trois héros sont ajustés à leur nouvelle portée pour garder l’équilibre.',
+    ],
+  },
+  {
     id: '2026-10-10r2',
     title: 'Coco booste Coco',
     date: '10 octobre 2026',

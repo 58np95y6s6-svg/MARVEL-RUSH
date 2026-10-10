@@ -87,6 +87,15 @@ Mesures (`scripts/simulate.ts`, Solo Infini, niveau 1, toits de New York) :
 
 À surveiller : les decks riches en corps à corps (méta Disney, `mixte-legendaires`, `arcanes`, `controle`) perdent 10 à 20 % avec le joueur automatique, qui place mal ; un joueur qui fusionne vers les cases du bord doit compenser. Si les journaux réels confirment l'écart, relever d'abord la portée courte (1,8) plutôt que les dégâts (déjà ×3,7).
 
+**Revue des portées par personnage (octobre 2026, `docs/rush-royale-mapping.md` « Portées »)** : portée choisie
+selon le style du personnage et l'attaque de l'unité Rush Royale copiée. Trois changements de catégorie, dégâts
+(et pas par niveau) × facteur nouveau / facteur ancien (globale 1 · longue 1,4 · moyenne 1,7 · courte 3) :
+Shang-Chi courte → longue (215 → 100, +98,25 → +45,85), Mulan & Mushu moyenne → longue (229 → 189, +61,7 →
++50,8), Soldat de l'hiver longue → globale (70 → 50). Mesures (`--casual`, niveau 1, Solo Infini) : départs
+inchangés (Marvel 18,32, Disney 14,97, 40 parties ; référence 19,85 / 17,55) ; méta Disney (Mulan) 17,0 → 19,2,
+Arcanes (Shang-Chi) 21,0 → 22,6, Agents + Ailes (Soldat de l'hiver) 18,25 → 18,20, Légendaires mixtes 20,3 →
+20,3 (20 parties) ; campagne `--attendu` ch. 1 97 % (pire 75 %), ch. 4 100 % (12 / 8 parties par niveau), inchangés.
+
 ## 2 ter. Archétypes de stratégie et début de partie (octobre 2026)
 
 **Archétypes** (`src/engine/archetypes.ts`, docs/roadmap.md) : Black Widow perd son ×2 contre les boss (Sacrifice → mana : 10/25/45/70/100/140/190 une fois par fusion ou à la destruction), Loki sa transformation périodique (Copieur à −25 %, et Formation : +15 % par autre Loki aligné, +30 % max, zone à 40 % à 3 alignés), Venom son plafond de +40 % (Croissance : points +0,5/s et +0,02 par élimination, bonus = 0,28 × points^0,75, soit ≈ +100 % vers la vague 30 et +200 % vers la vague 60, 50 % du bonus gardé en fusion), Tiana son mana de vague (+1/2/3/4/5/6/8 par ennemi touché qui tombe), Vanellope sa téléportation aléatoire (Échangeur manuel, même bonus de cadence) ; Coco gagne le Booster de fusion.
