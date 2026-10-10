@@ -9,7 +9,7 @@
 Tu es un développeur de jeux web senior et le chef de projet. Tu construis **Marvel Rush**, un clone jouable du jeu mobile **Rush Royale** (tower defense avec fusion d'unités), avec :
 
 - les personnages **Marvel** et **Disney** du dépôt, dans le style graphique de ses planches ;
-- un système de **tirages** avec deux packs, **Marvel** et **Disney** ;
+- un système de **tirages** avec deux packs, **Marvel** et **Disney** (l'extension **Transformers** ajoute un pack, **Transformers**) ;
 - un **mode Solo central** : une campagne qui fait progresser le compte et débloque des personnages et des talents (§5.1) ;
 - une **Coop à deux** (vos deux chemins se rejoignent en un seul), en **niveaux à gagner** ou en **mode infini** avec des récompenses par palier, pour jouer ensemble quand on le décide. **Pas de mode Duel** : on ne joue jamais l'un contre l'autre ;
 - **deux profils sauvegardés en ligne** (toi et ta partenaire) : chacun progresse de son côté, et les deux se retrouvent dans une partie commune (§5.4) ;
@@ -189,6 +189,8 @@ Règles de travail :
 - **Sbires** : les Outriders, très rapides, en meute.
 - **Arène** : Titan, planète en ruines au ciel orange, avec les six Pierres qui brillent en fond.
 
+**Extension Transformers** : les gros boss **Starscream, Soundwave, Shockwave, Devastator, Blitzwing** et **Megatron** (boss final de l'extension, chapitre 12) rejoignent la rotation ; **Unicron**, boss cosmique, arrive à la **vague 150** des modes infinis (prioritaire sur Thanos). Les Autobots ont une mécanique propre, la **transformation** (mode robot ↔ mode véhicule toutes les 8 s ou d'un appui). Détails : `design/game-design.md` (§ Extension Transformers).
+
 Si le boss n'est pas tué en **45 s**, il passe en **rage** : vitesse ×2.
 
 ### 4.5 Données des unités
@@ -249,7 +251,7 @@ Mets ces données dans `src/data/units.ts`, typées. Les valeurs sont un premier
 Le glisser d'une unité sur une alliée suit `dropAction` (moteur) : même héros et même rang = fusion ; copieur, booster ou échangeur sur un autre héros de même rang = copie, promotion ou échange. Les cases compatibles s'illuminent pendant le glisser et l'appui long (qui montre aussi les partenaires de formation).
 
 ### 4.6 Bonus d'équipe
-Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux. Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).
+Le bonus s'active si le **deck** contient l'équipe complète. Liste complète dans `design/game-design.md` : Avengers 3 et 5, Asgard, Les Agents, Arcanes, Les Ailes, Océan, Princesses, Duos Pixar, Animaux ; extension Transformers : Autobots, Dinobots, Aériens et l'équipe inter-univers Les Machines (Iron Man et Optimus Prime, Cyborg avec l'extension DC). Affiche les bonus actifs pendant la composition du deck et en partie (petites icônes).
 
 ---
 
@@ -291,7 +293,7 @@ Comme dans Rush Royale, le joueur ne lit rien : il **apprend en jouant**, avec u
 Le Solo est le **mode principal** : c'est là que chaque joueur avance à son rythme, de son côté, et débloque l'essentiel du contenu. Il marche **hors ligne** et se synchronise ensuite.
 
 **Campagne**
-- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts.
+- **6 chapitres**, un par grande zone : New York, Asgard et le Sanctum, l'Océan (Motunui et Atlantica), l'Empire (Palais impérial et Zootopie), le Monde des jouets (Chambre d'Andy et Sugar Rush), le Royaume des morts. L'extension Transformers ajoute les chapitres 10 (Cybertron), 11 (la Terre) et 12 (le Némésis), ouverts après le dernier chapitre installé (`docs/campagne.md`).
 - Chaque chapitre compte **10 niveaux** sur les maps de sa zone. Le niveau 5 est un **mini-boss** (un sbire géant), le niveau 10 un **boss** dans son arène.
 - **Objectif de chaque niveau** : tenir un nombre de vagues fixé, plus une **contrainte bonus** pour la 3e étoile (« sans perdre de vie », « avec au moins 2 unités Disney », « boss tué en moins de 30 s »…).
 - **1 à 3 étoiles** par niveau. Les étoiles ouvrent les chapitres suivants et les coffres d'étoiles.

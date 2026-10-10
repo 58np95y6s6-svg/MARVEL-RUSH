@@ -46,3 +46,13 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 | Dimanche 01/11/2026 | Pixar | `extension/pixar` | en préparation |
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
+
+## Extension Transformers — branche `extension/transformers`
+
+Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-tf`, à partir de `main` (sans l'extension DC). Contenu : la liste définitive de `docs/roadmap.md`.
+- Héros (15) : optimus, bumblebee, ironhide, ratchet, jazz, arcee, grimlock, wheeljack, hotrod, elita, bulkhead, sideswipe, prowl, mirage, ultramagnus. Mécanique propre : transformation robot ↔ véhicule (`src/engine/transformers.ts`, commande `transform`).
+- Gros boss (5) : starscream, soundwave, shockwave, devastator, blitzwing. Boss final : megatron (dans la rotation). Boss cosmique des modes infinis : unicron (vague 150).
+- Chapitres 10 à 12 (numéros libres de toute collision avec DC 7 à 9) ; la campagne suit l'ordre des numéros installés.
+- À la fusion avec DC : ajouter `cyborg` à l'équipe `machines`, la rotation `dc` à `BOSS_POOLS` (`BossPool`), et garder les deux `finalBossAt` (Darkseid 100, Unicron 150).
+
+État : prête à publier (25/10).

@@ -11,6 +11,19 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-25a',
+    title: 'Extension Transformers',
+    date: '25 octobre 2026',
+    items: [
+      'Nouveau Pack Transformers, aux mêmes prix, taux et garantie que les autres packs, avec 15 Autobots : Optimus Prime, Bumblebee, Ironhide, Ratchet, Jazz, Arcee, Grimlock, Wheeljack, Hot Rod, Elita-1, Bulkhead, Sideswipe, Prowl, Mirage et Ultra Magnus.',
+      'Autobots, transformation ! Chaque Autobot passe toutes les 8 s du mode robot (frappe lente et forte sur l’ennemi le plus résistant) au mode véhicule (rapide, sur l’ennemi le plus avancé). Touche-le pour le transformer tout de suite.',
+      'Copie Rush Royale ici aussi : Optimus la Banshee, Bumblebee le Mage de foudre, Grimlock le Chaperon rouge… et toutes les stratégies : Bulkhead se sacrifie pour du mana, Mirage copie, Wheeljack fait monter un allié, Grimlock grandit, Jazz rapporte du mana, Ratchet accélère, Bumblebee échange sa place, les Ultra Magnus alignés frappent plus fort.',
+      'Les Decepticons attaquent : Starscream, Soundwave, Shockwave, Devastator (qui se reforme une fois) et Blitzwing, puis Megatron, boss final de l’extension ; nouvelles équipes Autobots, Dinobots, Aériens et Les Machines (Iron Man et Optimus).',
+      '30 nouveaux niveaux longs, chapitres 10 à 12 (Cybertron, la Terre, le Némésis), de 100 à 150 vagues, avec Megatron à la vague 150 ; nouvelles maps Cybertron, base Autobot et Mission City, et 7 arènes.',
+      'Modes infinis : Unicron, le dévoreur de mondes, arrive à la vague 150, avec un nouveau palier légendaire.',
+    ],
+  },
+  {
     id: '2026-10-10o',
     title: 'Nouveau style façon Rush Royale',
     date: '10 octobre 2026',

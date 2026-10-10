@@ -105,3 +105,41 @@ Paramètres pour `src/data/bosses.ts` (à reprendre par l'agent qui tient ce fic
 | Princesses (3-5) | Mulan, Rebelle, Tiana, Raiponce, Pocahontas | +mana par vague |
 | Duos Pixar (3) | Buzz & Woody, Nemo & Dory, Coco | Chance de double attaque |
 | Animaux (3) | Rox & Rouky, Nick & Judy, Nemo & Dory | +vitesse d'attaque |
+
+## Extension Transformers
+
+Pack Transformers : 15 Autobots (3 Légendaires, 5 Épiques, 7 Rares). Profils Rush Royale dans `docs/rush-royale-mapping.md`.
+
+**Transformation** (mécanique propre, `src/engine/transformers.ts`) : chaque Autobot arrive en **mode robot** (×1,45 dégâts, ×0,75 cadence, vise l'ennemi qui a le plus de PV) et passe en **mode véhicule** (×0,7 dégâts, ×1,6 cadence, vise le plus avancé) toutes les 8 s ; un **appui** sur l'Autobot le transforme tout de suite (commande `transform`, 0,5 s entre deux appuis). Le plateau montre la figurine du mode (robot ou véhicule) et une petite animation de pivot à chaque transformation. Brouillé (Soundwave) ou sous la Tyrannie (Megatron), un Autobot ne se transforme plus.
+
+| Héros | Rareté | Mode robot | Mode véhicule | Archétype |
+|---|---|---|---|---|
+| Optimus Prime | L | Hache d'énergie + onde de choc 60 % ; cri de ralliement (6 s) | Camion : charge, recul d'une demi-case | — |
+| Grimlock | L | Épée et bouclier | T-rex : souffle de feu (zone 60 %, brûlure) | Croissance |
+| Ultra Magnus | L | Marteau ; bouclier d'équipe (12 s) | Porte-voitures : +10 % de dégâts à la ligne | Formation |
+| Ironhide | É | Double canon : autant de cibles que le rang | Fourgon : zone 50 % | — |
+| Arcee | É | Lames : +12 % par coup, critiques | Moto : vise le plus rapide | — |
+| Wheeljack | É | Grenades à effet aléatoire | Voiture de course : mine (5 s) | Booster de fusion |
+| Hot Rod | É | Tir double | Bolide : traînée de flammes | — |
+| Mirage | É | Invisible : 1 coup sur 3 critique ×2,5 | Leurres : recul 1 s | Copieur |
+| Bumblebee | R | Canon du bras | Voiture jaune : 3 cibles 100/70/30 % | Échangeur |
+| Ratchet | R | Réparation des voisines (4 s) | Ambulance : +30 % de cadence aux voisines | Boost de vitesse |
+| Jazz | R | Projecteur aveuglant | Voiture de sport : mana des éliminations ×2 | Mana par élimination |
+| Elita-1 | R | Tir de précision (+10 % par tir) | Marque le plus fort (+15 % subis) | — |
+| Bulkhead | R | Boulet de démolition (étourdit) | Tout-terrain : écrasement | Sacrifice → mana |
+| Sideswipe | R | Lames tournoyantes (zone 40 %) | Traverse 3 ennemis | — |
+| Prowl | R | Analyse : +12 % de dégâts aux voisines | Voiture de police : ralentit | — |
+
+**Decepticons** (gros boss dans la rotation « tous les univers ») :
+
+| Boss | Pouvoir (toutes les 6 s, Megatron et Unicron 8 s) | Sbires | Lieutenant (10 s) |
+|---|---|---|---|
+| Starscream | Missiles en piqué : 2 unités étourdies 2,5 s | Seekers (volent, duo) | Seeker géant : 1 unité 1,5 s |
+| Soundwave | Brouillage : 3 unités sans améliorations en partie ni transformation 5 s | Insecticons (essaim de 4) | Insecticon géant : 1 unité 3 s |
+| Shockwave | Rayon de Kaon : une unité devient une autre du deck 6 s | Drones Vehicons (blindés) | Drone géant : 4 s |
+| Devastator | Poing : une colonne étourdie 2 s ; se reforme une fois à 40 % | Constructicons (lents, blindés) | Constructicon géant : 2 unités d'une colonne 1,5 s |
+| Blitzwing | Alterne Blizzard (une ligne gelée 2 s) et Canon de feu (2 unités −40 % 5 s) | Sweeps (volent, bouclier) | Sweep géant : version 1 unité |
+| **Megatron** (boss final, PV ×2) | Alterne Canon à fusion (2 unités −1 rang, étourdies) et « Decepticons, attaquez ! » (3 Vehicons) ; à 30 % : **Tyrannie** | Vehicons (trio, bouclier) | Vehicon d'élite géant |
+| **Unicron** (boss cosmique, vague 150, PV ×3) | Alterne Dévoreur (détruit une unité de rang ≤ 4) et Chaos (2 échanges) ; à 50 % : **Faim cosmique** | Fragments d'Unicron | Fragment géant : 1 échange |
+
+**Équipes** : Autobots (4 ou plus : +12 % de dégâts, +10 % de cadence), Dinobots (Grimlock, Bulkhead, Ironhide, 2 ou plus : +25 % de dégâts), Aériens (Hot Rod, Arcee, Elita-1, Jazz, 2 ou plus : +15 % de cadence, 10 % de double attaque), inter-univers **Les Machines** (Iron Man et Optimus ; Cyborg s'y ajoute avec l'extension DC : +15 % de dégâts, recharges −15 %).
