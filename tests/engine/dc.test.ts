@@ -98,7 +98,7 @@ describe('extension DC : profils Rush Royale des 15 héros', () => {
   it('Batman (Bourreau) : exécute sous 20,5 % des PV, seuil réduit de moitié contre les boss', () => {
     const e = arena('batman');
     const t = debugSpawn(e, { hp: 1000 });
-    t.hp = 300; // 300 − 141 = 159 < 205
+    t.hp = 300; // 300 − 200 = 100 < 205
     const ev = step(e, 20);
     expect(t.hp).toBe(0);
     expect(abilityNames(ev)).toContain('Justicier');
@@ -112,9 +112,14 @@ describe('extension DC : profils Rush Royale des 15 héros', () => {
     step(b, 20);
     expect(boss.hp).toBe(0);
     // Le seuil monte avec le niveau (+1,5 point par niveau).
+    const l1 = arena('batman');
+    const y = debugSpawn(l1, { hp: 1000 });
+    y.hp = 500; // 500 − 200 = 300 > 205
+    step(l1, 20);
+    expect(y.hp).toBeGreaterThan(0);
     const lv = arena('batman', 1, { levels: { batman: 5 } });
     const x = debugSpawn(lv, { hp: 1000 });
-    x.hp = 400; // 400 − 141 × 1,4 = 202,6 < 265
+    x.hp = 500; // 500 − 200 × 1,4 = 220 < 265
     step(lv, 20);
     expect(x.hp).toBe(0);
   });

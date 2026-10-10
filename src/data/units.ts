@@ -326,7 +326,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Bourreau.
     id: 'batman', name: 'Batman', pack: 'dc', rarity: 'legendaire', role: 'Exécution',
-    targeting: 'premier', damage: 141, attackInterval: 1.0, range: 2.4,
+    targeting: 'premier', damage: 200, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Justicier',
       description: 'Batman met hors d’état de nuire tout ennemi touché sous 20,5 % de ses PV (+1,5 point par niveau). Contre les boss et les lieutenants, le seuil est réduit de moitié.',
@@ -336,7 +336,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Givre.
     id: 'superman', name: 'Superman', pack: 'dc', rarity: 'legendaire', role: 'Dégâts / ralentissement',
-    targeting: 'fort', damage: 120, attackInterval: 1.0, range: 'globale',
+    targeting: 'fort', damage: 150, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Souffle glacial',
       description: 'Toutes les 6 s, le souffle glacial balaie tout le chemin : les ennemis ralentissent de 4 % par rang de Superman pendant 7 s, et le souffle se cumule 3 fois (boss compris).',
@@ -346,7 +346,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Moine.
     id: 'wonderwoman', name: 'Wonder Woman', pack: 'dc', rarity: 'legendaire', role: 'Dégâts / zone',
-    targeting: 'premier', damage: 150, attackInterval: 1.0, range: 2.4,
+    targeting: 'premier', damage: 170, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Fureur amazone',
       description: 'Sans mana : toutes les 12 s, Wonder Woman entre en Fureur pendant 5 s (+60 % de vitesse d’attaque, chaque coup éclabousse à 50 % autour de la cible). Plusieurs Wonder Woman reliées entrent en Fureur ensemble.',
@@ -366,7 +366,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Cogneur.
     id: 'flash', name: 'Flash', pack: 'dc', rarity: 'epique', role: 'Échangeur / rage',
-    targeting: 'premier', damage: 70, attackInterval: 0.6, range: 1.6,
+    targeting: 'premier', damage: 100, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Force véloce',
       description: 'Rage : quand plus de 7 ennemis sont sur le chemin, chaque seconde 10 % de chance par ennemi en plus d’entrer en rage 5 s (vitesse d’attaque ×2, +50 % de dégâts, coups de zone à 50 %). Échangeur : glisse Flash sur une alliée de même rang, ils échangent leurs cases ; ses nouvelles voisines gagnent +20 % de cadence 5 s.',
@@ -376,7 +376,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Faucheuse.
     id: 'aquaman', name: 'Aquaman', pack: 'dc', rarity: 'epique', role: 'Élimination',
-    targeting: 'aleatoire', damage: 110, attackInterval: 1.0, range: 2.4,
+    targeting: 'aleatoire', damage: 140, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Kraken',
       description: 'Chaque coup a 5,4 % de chance (+0,2 point par niveau) que le kraken engloutisse la cible (sauf boss et lieutenants).',
@@ -386,7 +386,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Génie.
     id: 'cyborg', name: 'Cyborg', pack: 'dc', rarity: 'epique', role: 'Soutien / vitesse',
-    targeting: 'fort', damage: 80, attackInterval: 0.8, range: 'globale',
+    targeting: 'fort', damage: 90, attackInterval: 0.8, range: 'globale',
     ability: {
       name: 'Boom Tube',
       description: 'Chaque fusion sur ton plateau charge le Boom Tube (10 charges au plus) : +5 % de vitesse d’attaque et de dégâts par charge pour Cyborg. Réseau : ses voisines tirent 15 % plus vite.',
@@ -396,7 +396,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Barde.
     id: 'supergirl', name: 'Supergirl', pack: 'dc', rarity: 'epique', role: 'Croissance',
-    targeting: 'fort', damage: 70, attackInterval: 1.0, range: 3.4,
+    targeting: 'fort', damage: 100, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Énergie solaire',
       description: 'Croissance : elle accumule l’énergie du soleil jaune (avec le temps et à chaque élimination), ses dégâts grandissent sans plafond, de plus en plus lentement ; fusionnée, elle transmet la moitié de son bonus. Toutes les 20 s, l’énergie déborde : +20 % de vitesse d’attaque pendant 10 s.',
@@ -406,7 +406,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Météore.
     id: 'shazam', name: 'Shazam', pack: 'dc', rarity: 'epique', role: 'Zone / contrôle',
-    targeting: 'aleatoire', damage: 60, attackInterval: 1.0, range: 2.4,
+    targeting: 'aleatoire', damage: 90, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'SHAZAM !',
       description: 'Toutes les 8 s (−0,6 s par rang), la foudre tombe sur un ennemi au hasard : 300 % des dégâts dans un rayon de 1 case, et les ennemis touchés sont étourdis 1 s (sauf boss).',
@@ -426,7 +426,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Ferrailleur.
     id: 'robin', name: 'Robin', pack: 'dc', rarity: 'rare', role: 'Booster de fusion',
-    targeting: 'premier', damage: 50, attackInterval: 1.0, range: 1.6,
+    targeting: 'premier', damage: 140, attackInterval: 0.8, range: 1.6,
     ability: {
       name: 'Passer le relais',
       description: 'Booster de fusion : glisse Robin sur une alliée de même rang (autre héros) ; il disparaît et l’alliée gagne 1 rang, avec 20 % de chance (+2,5 points par niveau) d’en gagner 2.',
@@ -436,7 +436,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Bombardier.
     id: 'batgirl', name: 'Batgirl', pack: 'dc', rarity: 'rare', role: 'Zone',
-    targeting: 'premier', damage: 60, attackInterval: 0.9, range: 1.6,
+    targeting: 'premier', damage: 130, attackInterval: 0.8, range: 1.6,
     ability: {
       name: 'Batarangs explosifs',
       description: 'Chaque batarang explose : 60 % des dégâts aux ennemis autour de la cible.',
@@ -446,7 +446,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Démonologue.
     id: 'catwoman', name: 'Catwoman', pack: 'dc', rarity: 'rare', role: 'Mana',
-    targeting: 'aleatoire', damage: 50, attackInterval: 1.0, range: 1.6,
+    targeting: 'aleatoire', damage: 140, attackInterval: 0.7, range: 1.6,
     ability: {
       name: 'Cambriolage',
       description: 'Mana par élimination : chaque ennemi touché par Catwoman rapporte du mana en plus à sa mort, selon son rang (+2 au rang 1, jusqu’à +16 au rang 7), qui que soit le tueur.',
@@ -456,7 +456,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Clown.
     id: 'harley', name: 'Harley Quinn', pack: 'dc', rarity: 'rare', role: 'Sacrifice',
-    targeting: 'aleatoire', damage: 70, attackInterval: 1.0, range: 1.6,
+    targeting: 'aleatoire', damage: 150, attackInterval: 0.8, range: 1.6,
     ability: {
       name: 'Grand final',
       description: 'Sacrifice : fusionnée ou détruite, elle tire sa révérence et rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190).',
@@ -466,7 +466,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Mage de glace.
     id: 'greenarrow', name: 'Green Arrow', pack: 'dc', rarity: 'rare', role: 'Ralentissement',
-    targeting: 'premier', damage: 45, attackInterval: 0.8, range: 'globale',
+    targeting: 'premier', damage: 82, attackInterval: 0.5, range: 'globale',
     ability: {
       name: 'Flèches cryogéniques',
       description: 'Chaque flèche ralentit la cible de 6 % de plus pendant 2 s (30 % au plus).',
