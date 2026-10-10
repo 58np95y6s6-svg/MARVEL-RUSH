@@ -11,6 +11,14 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10n',
+    title: 'Thor s’illumine',
+    date: '10 octobre 2026',
+    items: [
+      'Thor s’illumine en mode actif (1, 3, 5 ou 7 Thor) : halo pulsant, liseré lumineux sur la plaque de rang et petits arcs électriques ; en Chevalier de lumière, aura dorée et rayons sacrés, en Chevalier des ténèbres, aura violet-cramoisi et fumée sombre, plus intenses en mode actif.',
+    ],
+  },
+  {
     id: '2026-10-10m',
     title: 'Coffre de la semaine',
     date: '10 octobre 2026',

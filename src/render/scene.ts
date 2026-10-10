@@ -2,7 +2,7 @@
 // Le moteur avance à pas fixe (20 ticks/s) ; la scène dessine à la fréquence de l'écran et interpole
 // la position des ennemis entre deux ticks. Coordonnées : écran logique 1000 × 1600 (src/maps/layout.ts),
 // mis à l'échelle et centré dans les zones sûres de l'écran.
-import { dropAction, formationPartners } from '../engine';
+import { dropAction, formationPartners, thorMode, type ThorMode } from '../engine';
 import { rankShape, tokenColor } from '../art';
 import { Application, BitmapText, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance } from '../engine';
@@ -21,6 +21,7 @@ import {
 } from './fx';
 // --- effets de combat (agent VFX) : signatures par unité, états, pouvoirs de boss
 import { CombatFx } from './fx/director';
+import { ThorAura, type SparkFn } from './fx/thorAura';
 import {
   SIZES, bossTex, enemyTex, enemyWidth, loadLayer, minionTex, preloadBattle, preloadBoss, setRasterScale, tokenTex, type Pose,
 } from './textures';
@@ -64,6 +65,8 @@ interface UnitView {
   rx: number; ry: number; // position de retour
   dim: boolean;
   target: boolean;
+  /** Aura de l'Inquisiteur (Thor), créée à la première apparition d'un Thor dans cette vue. */
+  aura: ThorAura | null;
 }
 
 interface EnemyView {
@@ -162,6 +165,24 @@ export class BattleScene {
     const s = new BattleScene(o);
     await s.init(host);
     return s;
+  }
+
+  private thorOut: ThorMode = { active: false, knight: null };
+  private sparkView: UnitView | null = null;
+  private readonly thorSpark: SparkFn = (x, y, color) => {
+    const v = this.sparkView;
+    if (!v) return;
+    const b = v.body;
+    const a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 110;
+    this.parts.emit(this.tex.spark, v.root.x + x * b.scale.x, v.root.y + b.y + y * b.scale.y, {
+      color, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, drag: 3, life: 0.28 + Math.random() * 0.15, s0: 0.42, s1: 0, blend: 'normal',
+    });
+  };
+
+  private get meIndex(): number {
+    const ps = this.engine.state.players;
+    for (let i = 0; i < ps.length; i++) if (ps[i]!.id === this.player) return i;
+    return 0;
   }
 
   private get me() {
@@ -442,7 +463,7 @@ export class BattleScene {
     this.unitLayer.addChild(root);
     return {
       uid: 0, unit: 'spiderman', shown: 'spiderman', rank: 1, slot: 0, root, body, sprite, pips, pipsShown: 0, glow, status, statusKind: '',
-      attackT: -1, hopT: -1, flashT: -1, pipT: 0, dragging: false, returnT: -1, rx: 0, ry: 0, dim: false, target: false,
+      attackT: -1, hopT: -1, flashT: -1, pipT: 0, dragging: false, returnT: -1, rx: 0, ry: 0, dim: false, target: false, aura: null,
     };
   }
 
@@ -963,10 +984,15 @@ export class BattleScene {
 
     // Unités.
     const pulse = 0.5 + 0.5 * Math.sin(t * 9);
+    const me = this.meIndex;
     for (let i = 0; i < GRID_SIZE; i++) {
       const v = this.units[i];
       if (!v) continue;
       this.renderUnit(v, dt, pulse);
+      // Thor (Inquisiteur) : aura du mode actif et des formes de chevalier.
+      const m = thorMode(this.engine.state, this.engine.config, me, i, this.thorOut);
+      if (m && !v.aura) v.aura = new ThorAura(v.body, v.sprite, v.pips, SIZES.token);
+      if (v.aura) { this.sparkView = v; v.aura.update(dt, v.uid, m, v.pipsShown, this.thorSpark); }
     }
     for (const r of this.targetRings) if (r.visible) { r.scale.set(1.45 + 0.12 * pulse); r.alpha = 0.6 + 0.4 * pulse; }
     if (this.rangeLayer.visible) {
