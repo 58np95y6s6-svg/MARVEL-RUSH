@@ -1,4 +1,4 @@
-// Données des 28 unités. Octobre 2026 : chaque héros reprend le profil d'une unité Rush Royale
+// Données des 43 unités (28 Marvel et Disney, 15 Transformers). Octobre 2026 : chaque héros reprend le profil d'une unité Rush Royale
 // (docs/rush-royale-mapping.md, données et sources dans docs/rush-royale-donnees.md). Tout est lu par le moteur.
 //
 // Conversion Rush Royale → Marvel Rush :
@@ -320,7 +320,211 @@ export const UNIT_LIST: UnitDef[] = [
       params: { swapAlly: 1, swapSleep: 2, swapCleanse: 1 },
     },
   },
+  // ───────────── Pack Transformers (extension, publication le 25/10) ─────────────
+  // 3 Légendaires, 5 Épiques, 7 Rares (liste définitive de docs/roadmap.md). Profils Rush Royale non utilisés
+  // par Marvel, Disney et DC (docs/rush-royale-mapping.md, « Extension Transformers »).
+  // Mécanique propre : la transformation (src/engine/transformers.ts). Chaque Autobot alterne toutes les
+  // `transformEvery` s (ou d'un appui) entre le mode robot (lent et fort, vise le plus de PV : `robotSpeed`,
+  // `robotDamage`) et le mode véhicule (rapide, vise le plus avancé : `vehicleSpeed`, `vehicleDamage`).
+  {
+    // Rush Royale : Banshee (attaque périodique de tous les ennemis proches).
+    id: 'optimus', name: 'Optimus Prime', pack: 'transformers', rarity: 'legendaire', role: 'Dégâts de zone / transformation',
+    targeting: 'fort', damage: 210, attackInterval: 1.0, range: 2.4,
+    ability: {
+      name: 'Plus qu’il n’y paraît',
+      description: 'Robot : la hache d’énergie frappe l’ennemi le plus fort et libère une onde de choc (60 % autour). Camion : charge sur l’ennemi de tête, qui recule d’une demi-case (sauf boss). Toutes les 6 s, cri de ralliement : 150 % des dégâts à tous les ennemis à portée.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        shockSplash: 0.6, shockRadius: 1.2, chargePush: 0.5, abilityCooldown: 6, rallyDamage: 1.5,
+      },
+    },
+  },
+  {
+    // Rush Royale : Mage de foudre (3 premières cibles à 100, 70 et 30 %).
+    id: 'bumblebee', name: 'Bumblebee', pack: 'transformers', rarity: 'rare', role: 'Échangeur / transformation',
+    targeting: 'fort', damage: 70, attackInterval: 0.8, range: 3.4,
+    ability: {
+      name: 'Éclaireur',
+      description: 'Robot : canon du bras. Voiture jaune : rafale sur les 3 premiers ennemis (100, 70 et 30 %). Échangeur : glisse-le sur une alliée de même rang, ils échangent leurs cases ; ses nouvelles voisines gagnent +20 % de vitesse d’attaque 5 s.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        burstShares: 3, swapAlly: 1, boost: 0.2, boostDuration: 5,
+      },
+    },
+  },
+  {
+    // Rush Royale : Chasseur de démons (frappe autant de premières cibles que son rang).
+    id: 'ironhide', name: 'Ironhide', pack: 'transformers', rarity: 'epique', role: 'Multi-cibles / transformation',
+    targeting: 'fort', damage: 120, attackInterval: 1.0, range: 2.4,
+    ability: {
+      name: 'Double canon',
+      description: 'Robot : le double canon lourd frappe autant d’ennemis que son rang (les plus forts). Fourgon : 50 % des dégâts autour de la cible.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        targetsPerRank: 1, targetsMax: 4, vanSplash: 0.5, vanRadius: 1.1,
+      },
+    },
+  },
+  {
+    // Rush Royale : Sorcière (en Coop, la fusion enchante une alliée).
+    id: 'ratchet', name: 'Ratchet', pack: 'transformers', rarity: 'rare', role: 'Soutien / vitesse',
+    targeting: 'fort', damage: 45, attackInterval: 1.0, range: 3.4,
+    ability: {
+      name: 'Médecin des Autobots',
+      description: 'Robot : toutes les 4 s, répare ses voisines (elles se libèrent des effets de boss). Ambulance : ses 4 voisines tirent 22 % plus vite. Fusionné, il enchante une alliée au hasard : +25 % de dégâts pendant 10 s.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        abilityCooldown: 4, auraAttackSpeed: 0.22, auraVehicleOnly: 1, mergeEnchant: 0.25, mergeEnchantDuration: 10,
+      },
+    },
+  },
+  {
+    // Rush Royale : Loup de mer (déterre des trésors et s'en renforce).
+    id: 'jazz', name: 'Jazz', pack: 'transformers', rarity: 'rare', role: 'Mana / transformation',
+    targeting: 'fort', damage: 60, attackInterval: 0.9, range: 3.4,
+    ability: {
+      name: 'Rythme et trésors',
+      description: 'Mana par élimination : chaque ennemi touché par Jazz rapporte du mana à sa mort (+1 au rang 1 jusqu’à +8 au rang 7), deux fois plus en voiture de sport. Robot : le projecteur a 15 % de chance d’aveugler la cible (étourdie 0,6 s).',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        manaPerKill: 1, vehicleManaMul: 2, blindChance: 0.15, blindDuration: 0.6,
+      },
+    },
+  },
+  {
+    // Rush Royale : Cristallomancien (dégâts qui montent à chaque coup sur la même cible).
+    id: 'arcee', name: 'Arcee', pack: 'transformers', rarity: 'epique', role: 'Critique / transformation',
+    targeting: 'fort', damage: 110, attackInterval: 0.8, range: 1.6,
+    ability: {
+      name: 'Lames d’Arcee',
+      description: 'Robot : chaque coup sur la même cible +12 % de dégâts (+120 % au plus) et 20 % de chance de critique ×2. Moto : vise l’ennemi le plus rapide.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        rampPerHit: 0.12, rampMax: 1.2, bladeCritChance: 0.2, bladeCritMul: 2,
+      },
+    },
+  },
+  {
+    // Rush Royale : Chaperon rouge (deux formes, la fillette et le loup).
+    id: 'grimlock', name: 'Grimlock', pack: 'transformers', rarity: 'legendaire', role: 'Croissance / transformation',
+    targeting: 'fort', damage: 180, attackInterval: 1.0, range: 1.6,
+    ability: {
+      name: 'Moi, Grimlock !',
+      description: 'Croissance : chaque élimination et chaque seconde le rendent plus fort, sans plafond (de plus en plus lentement) ; fusionné, il garde la moitié de son bonus. Robot : épée et bouclier. Dinobot T-rex : souffle de feu, 60 % autour de la cible et brûlure.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        growthPerSecond: 0.004, growthPerKill: 0.03, growthScale: 0.28, growthExponent: 0.75, growthKeepOnMerge: 0.5,
+        breathSplash: 0.6, breathRadius: 1.2, breathBurn: 0.2,
+      },
+    },
+  },
+  {
+    // Rush Royale : Corsaire (pièges explosifs, deux sortes de bombes).
+    id: 'wheeljack', name: 'Wheeljack', pack: 'transformers', rarity: 'epique', role: 'Booster de fusion',
+    targeting: 'fort', damage: 95, attackInterval: 1.0, range: 2.4,
+    ability: {
+      name: 'Inventions',
+      description: 'Booster de fusion : glisse-le sur une alliée de même rang, il disparaît et l’alliée gagne 1 rang. Robot : grenade expérimentale à effet aléatoire (étourdit, ralentit, brûle ou double dégâts). Voiture de course : toutes les 5 s, une mine explose sous l’ennemi de tête (200 % autour).',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        promoteAlly: 1, abilityCooldown: 5, mineDamage: 2, mineRadius: 1,
+      },
+    },
+  },
+  {
+    // Rush Royale : Blazey (unité de feu).
+    id: 'hotrod', name: 'Hot Rod', pack: 'transformers', rarity: 'epique', role: 'Dégâts / brûlure',
+    targeting: 'fort', damage: 85, attackInterval: 0.8, range: 2.4,
+    ability: {
+      name: 'Flamme de Rodimus',
+      description: 'Robot : tir double (deux coups). Bolide : traînée de flammes, la cible et les ennemis proches brûlent (30 % des dégâts par seconde, 3 s).',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        doubleShot: 1, trailBurn: 0.3, trailRadius: 1, trailDuration: 3,
+      },
+    },
+  },
+  {
+    // Rush Royale : Sentinelle (dégâts qui montent par paliers de 10 %).
+    id: 'elita', name: 'Elita-1', pack: 'transformers', rarity: 'rare', role: 'Précision / malus',
+    targeting: 'fort', damage: 85, attackInterval: 0.9, range: 'globale',
+    ability: {
+      name: 'Tir de précision',
+      description: 'Robot : chaque tir sur la même cible +10 % de dégâts (+100 % au plus). Voiture : marque l’ennemi le plus fort, qui subit +15 % de dégâts pendant 4 s.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        rampPerHit: 0.1, rampMax: 1, markValue: 0.15, markDuration: 4,
+      },
+    },
+  },
+  {
+    // Rush Royale : Gargouille (adaptation C).
+    id: 'bulkhead', name: 'Bulkhead', pack: 'transformers', rarity: 'rare', role: 'Sacrifice',
+    targeting: 'fort', damage: 130, attackInterval: 1.0, range: 1.6,
+    ability: {
+      name: 'Démolition',
+      description: 'Sacrifice : fusionné ou détruit, il rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190). Robot : boulet de démolition, 15 % de chance d’étourdir 0,8 s. Tout-terrain : écrase la cible et les ennemis proches (40 %).',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        sacrificeMana: 1, wreckStunChance: 0.15, wreckStun: 0.8, crushSplash: 0.4,
+      },
+    },
+  },
+  {
+    // Rush Royale : Lanceur (cible au hasard).
+    id: 'sideswipe', name: 'Sideswipe', pack: 'transformers', rarity: 'rare', role: 'Zone / transformation',
+    targeting: 'aleatoire', damage: 75, attackInterval: 0.8, range: 2.4,
+    ability: {
+      name: 'Lames tournoyantes',
+      description: 'Robot : les lames frappent la cible et 40 % autour. Voiture : traverse la cible et les 2 ennemis derrière elle (60 %).',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        bladeSplash: 0.4, pierceTargets: 2, pierceShare: 0.6,
+      },
+    },
+  },
+  {
+    // Rush Royale : Maléfice (Hex : renforce les 4 voisines).
+    id: 'prowl', name: 'Prowl', pack: 'transformers', rarity: 'rare', role: 'Soutien / ralentissement',
+    targeting: 'fort', damage: 55, attackInterval: 1.0, range: 'globale',
+    ability: {
+      name: 'Analyse tactique',
+      description: 'Robot : ses 4 voisines font +12 % de dégâts. Voiture de police : chaque tir ralentit la cible de 25 % pendant 2 s.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        auraDamage: 0.12, auraRobotOnly: 1, sirenSlow: 0.25, sirenDuration: 2,
+      },
+    },
+  },
+  {
+    // Rush Royale : Wukong (clones, adaptation C).
+    id: 'mirage', name: 'Mirage', pack: 'transformers', rarity: 'epique', role: 'Copieur',
+    targeting: 'fort', damage: 70, attackInterval: 0.9, range: 2.4,
+    ability: {
+      name: 'Hologrammes',
+      description: 'Copieur : glisse Mirage sur une alliée de même rang (autre héros) ; il devient son hologramme, avec sa compétence, à −25 % de dégâts. Robot : invisible, un coup sur trois est un critique ×2,5. Voiture : ses leurres font reculer la cible 1 s (10 % de chance, sauf boss).',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        copyDamageMul: 0.75, stealthEvery: 3, stealthCritMul: 2.5, decoyChance: 0.1, decoyDuration: 1,
+      },
+    },
+  },
+  {
+    // Rush Royale : Épées enchantées (épées bleues : bonus de dégâts aux unités).
+    id: 'ultramagnus', name: 'Ultra Magnus', pack: 'transformers', rarity: 'legendaire', role: 'Formation / soutien',
+    targeting: 'fort', damage: 160, attackInterval: 1.0, range: 2.4,
+    ability: {
+      name: 'Commandant de la ville',
+      description: 'Formation : chaque autre Ultra Magnus relié (cases voisines) lui donne +15 % de dégâts (3 au plus) ; à 3, ses coups touchent aussi autour (50 %). Robot : marteau ; toutes les 12 s, bouclier d’équipe (ses voisines ignorent les pouvoirs de boss 4 s). Porte-voitures : toute sa ligne fait +10 % de dégâts.',
+      params: {
+        transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
+        formationDamagePerAlly: 0.15, formationMax: 3, formationSplashAt: 3, formationSplash: 0.5,
+        abilityCooldown: 12, teamShield: 4, rowDamage: 0.1,
+      },
+    },
+  },
 ];
+
 
 export const UNITS: Record<UnitId, UnitDef> = Object.fromEntries(UNIT_LIST.map((u) => [u.id, u])) as Record<UnitId, UnitDef>;
 
@@ -330,4 +534,15 @@ export const UNIT_IDS: UnitId[] = UNIT_LIST.map((u) => u.id);
 export const STARTER_DECKS: Record<'marvel' | 'disney', UnitId[]> = {
   marvel: ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow'],
   disney: ['pocahontas', 'merida', 'tiana', 'nemo', 'foxhound'],
+};
+
+/**
+ * Decks de référence de l'extension Transformers (simulateur, docs/equilibrage.md). Le deck de départ
+ * reste Marvel ou Disney : `tf-rares` sert de témoin « deck de départ » pour les Autobots.
+ */
+export const TF_REFERENCE_DECKS: Record<'tf-rares' | 'meta-tf' | 'autobots' | 'machines', UnitId[]> = {
+  'tf-rares': ['bumblebee', 'jazz', 'elita', 'bulkhead', 'sideswipe'],
+  'meta-tf': ['optimus', 'grimlock', 'ultramagnus', 'ironhide', 'ratchet'],
+  autobots: ['optimus', 'bumblebee', 'ironhide', 'ratchet', 'jazz'],
+  machines: ['ironman', 'optimus', 'grimlock', 'thor', 'ratchet'],
 };

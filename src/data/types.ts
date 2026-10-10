@@ -1,7 +1,7 @@
 // Contrat partagé : définitions statiques du contenu (unités, boss, ennemis, équipes, packs).
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-export type Pack = 'marvel' | 'disney';
+export type Pack = 'marvel' | 'disney' | 'transformers';
 export type Rarity = 'rare' | 'epique' | 'legendaire';
 /** premier = le plus avancé sur le chemin, aleatoire = au hasard, fort = le plus de PV. */
 export type Targeting = 'premier' | 'aleatoire' | 'fort';
@@ -10,9 +10,20 @@ export type UnitId =
   | 'ironman' | 'spiderman' | 'hulk' | 'thor' | 'strange' | 'venom' | 'cmarvel'
   | 'cap' | 'loki' | 'bucky' | 'hawkeye' | 'falcon' | 'widow' | 'shangchi'
   | 'moana' | 'maui' | 'pocahontas' | 'mulan' | 'merida' | 'ariel' | 'foxhound'
-  | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph';
+  | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph'
+  // Extension Transformers (Autobots)
+  | 'optimus' | 'bumblebee' | 'ironhide' | 'ratchet' | 'jazz' | 'arcee' | 'grimlock' | 'wheeljack'
+  | 'hotrod' | 'elita' | 'bulkhead' | 'sideswipe' | 'prowl' | 'mirage' | 'ultramagnus';
 
-export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos';
+export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos'
+  // Extension Transformers (Decepticons ; Megatron : boss final, Unicron : boss cosmique des modes infinis)
+  | 'starscream' | 'soundwave' | 'shockwave' | 'devastator' | 'blitzwing' | 'megatron' | 'unicron';
+
+/**
+ * Rotation des gros boss en mode infini et en campagne : tous les univers (par défaut), Marvel et Disney
+ * seulement (chapitres 1 à 6), ou Transformers seul.
+ */
+export type BossPool = 'tous' | 'marvel-disney' | 'transformers';
 
 export type EnemyKind = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier' | 'sbire';
 

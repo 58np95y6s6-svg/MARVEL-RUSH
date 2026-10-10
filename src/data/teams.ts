@@ -57,6 +57,26 @@ export const TEAM_LIST: TeamBonusDef[] = [
     id: 'animaux', name: 'Animaux', units: ['foxhound', 'nickjudy', 'nemo'],
     description: '+15 % de vitesse d’attaque.', params: { attackSpeed: 0.15 },
   },
+
+  // ───────────── Extension Transformers ─────────────
+  {
+    id: 'autobots', name: 'Autobots',
+    units: ['optimus', 'bumblebee', 'ironhide', 'ratchet', 'jazz', 'arcee', 'wheeljack', 'hotrod', 'elita', 'bulkhead', 'sideswipe', 'prowl', 'mirage', 'ultramagnus'],
+    description: '« Autobots, transformation ! » : +12 % de dégâts et +10 % de vitesse d’attaque pour les Autobots (4 ou plus).', params: { minCount: 4, damage: 0.12, attackSpeed: 0.1 },
+  },
+  {
+    id: 'dinobots', name: 'Dinobots', units: ['grimlock', 'bulkhead', 'ironhide'],
+    description: 'Moi Grimlock, eux gros bras : +25 % de dégâts pour les cogneurs (2 ou plus).', params: { minCount: 2, damage: 0.25 },
+  },
+  {
+    id: 'aeriens', name: 'Aériens', units: ['hotrod', 'arcee', 'elita', 'jazz'],
+    description: 'Sauts propulsés : +15 % de vitesse d’attaque et 10 % de chance d’attaquer deux fois (2 ou plus).', params: { minCount: 2, attackSpeed: 0.15, doubleAttackChance: 0.1 },
+  },
+  // Équipe inter-univers (Cyborg, de l'extension DC, la rejoindra : il suffit de l'ajouter à `units`).
+  {
+    id: 'machines', name: 'Les Machines', units: ['ironman', 'optimus'],
+    description: 'Les plus belles machines de l’univers : +15 % de dégâts et compétences rechargées 15 % plus vite (2 ou plus).', params: { minCount: 2, damage: 0.15, cooldownReduction: 0.15 },
+  },
 ];
 
 export const TEAMS: Record<string, TeamBonusDef> = Object.fromEntries(TEAM_LIST.map((t) => [t.id, t]));

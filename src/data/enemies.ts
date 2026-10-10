@@ -59,6 +59,7 @@ export const WAVE_RULES = {
   smallBossEvery: 5,     // mini-boss (lieutenant) : vagues 5, 15, 25…
   bigBossEvery: 10,      // gros boss : vagues 10, 20, 30…
   thanosEvery: 50,       // modes infinis : Thanos à la 50, puis toutes les 50
+  unicronEvery: 150,     // extension Transformers, modes infinis : Unicron à la 150, puis toutes les 150 (prioritaire sur Thanos)
   /** Modes infinis, Rush Royale : après cette vague, boss aux vagues paires et mini-boss aux impaires. */
   alternateAfter: 60,
   minionWavesBefore: 2,  // les sbires du prochain gros boss arrivent dans les 2 vagues d'avant

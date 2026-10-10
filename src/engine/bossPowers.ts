@@ -1,7 +1,11 @@
 // Pouvoirs des boss (§4.4) : 6 boss en rotation (toutes les 6 s) et Thanos (Gant de l'infini
 // toutes les 8 s, Claquement de doigts à 30 % de PV). Remember Me (Coco) réagit ici.
 
-import { BOSSES, BOSS_STATS, LIEUTENANTS, SNAP_NAME, THANOS_STONES } from '../data/bosses';
+import {
+  BLIZZARD_NAME, BOSSES, BOSS_STATS, CHAOS_NAME, DECEPTICON_CALL_NAME, DEVOUR_NAME, FIRE_CANNON_NAME, HUNGER_NAME,
+  LIEUTENANTS, SNAP_NAME, THANOS_STONES, TYRANNY_NAME,
+} from '../data/bosses';
+import { waveHp } from '../data/enemies';
 import type { BossId } from '../data/types';
 import { GRID_COLS, GRID_SIZE } from './types';
 import {
@@ -9,6 +13,7 @@ import {
 } from './internal';
 import { effectiveId, unitParams } from './combat';
 import { initUnitCounters } from './abilities';
+import { forceRobot } from './transformers';
 import { sacrifice } from './archetypes';
 
 /** Joueur visé par le pouvoir d'un boss : au hasard en Coop (les boss arrivent par le tronc). */
@@ -177,7 +182,148 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
       powerEvent(ctx, id, player, slots, stone.name);
       break;
     }
+    // ───────────── Extension Transformers (Decepticons) ─────────────
+    case 'starscream': {
+      const slots = pickMany(ctx, candidates(ctx, player), prm.units ?? 2);
+      disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 2.5);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'soundwave': {
+      // Brouillage : ni améliorations en partie ni transformation pendant la durée.
+      const slots = pickMany(ctx, candidates(ctx, player), prm.units ?? 3);
+      const d = effectDuration(ctx, player, prm.duration ?? 5);
+      for (const s of slots) { const u = p.grid[s]!; u.counters.jamFor = Math.max(u.counters.jamFor ?? 0, d); }
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'shockwave': {
+      // Rayon de Kaon : l'unité devient une autre unité du deck un moment (même rang).
+      const slots = pickMany(ctx, candidates(ctx, player, (u) => !u.status.transformedInto && p.deck.some((d) => d !== u.unit)), prm.units ?? 1);
+      for (const s of slots) {
+        const u = p.grid[s]!;
+        const into = pick(ctx, p.deck.filter((d) => d !== u.unit));
+        if (!into) continue;
+        u.status.transformedInto = into;
+        u.status.transformFor = effectDuration(ctx, player, prm.duration ?? 6);
+      }
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'devastator': {
+      // Poing : une colonne entière (lieutenant : `units` unités d'une même colonne).
+      const all = candidates(ctx, player);
+      const cols = [...new Set(all.map((s) => s % GRID_COLS))].sort((a, b) => a - b);
+      const col = pick(ctx, cols);
+      let slots = col === undefined ? [] : all.filter((s) => s % GRID_COLS === col);
+      if (prm.units) slots = slots.slice(0, prm.units);
+      disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 2);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'blitzwing': {
+      // Glace et feu, en alternance.
+      const fire = (boss.x.powerUses ?? 0) % 2 === 1;
+      boss.x.powerUses = (boss.x.powerUses ?? 0) + 1;
+      const all = candidates(ctx, player);
+      if (!fire) {
+        let slots: number[];
+        if (prm.units) slots = pickMany(ctx, all, prm.units);
+        else {
+          const rows = [...new Set(all.map((s) => Math.floor(s / GRID_COLS)))].sort((a, b) => a - b);
+          const row = pick(ctx, rows);
+          slots = row === undefined ? [] : all.filter((s) => Math.floor(s / GRID_COLS) === row);
+        }
+        disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 2);
+        powerEvent(ctx, id, player, slots, BLIZZARD_NAME);
+      } else {
+        const slots = pickMany(ctx, all, prm.fireUnits ?? 2);
+        const d = effectDuration(ctx, player, prm.scorchDuration ?? 5);
+        for (const s of slots) { const u = p.grid[s]!; u.counters.scorch = prm.scorch ?? 0.4; u.counters.scorchFor = d; }
+        powerEvent(ctx, id, player, slots, FIRE_CANNON_NAME);
+      }
+      break;
+    }
+    case 'megatron': {
+      const call = (boss.x.powerUses ?? 0) % 2 === 1;
+      boss.x.powerUses = (boss.x.powerUses ?? 0) + 1;
+      if (!call) {
+        const slots = pickMany(ctx, candidates(ctx, player), prm.cannonUnits ?? 2);
+        for (const s of slots) if (prm.cannonRankLoss) downgrade(ctx, player, s, p.grid[s]!.rank - prm.cannonRankLoss, lost);
+        disable(ctx, player, slots, 'stunnedFor', prm.cannonStun ?? 1.5);
+        powerEvent(ctx, id, player, slots, def.power.name);
+      } else {
+        callMinions(ctx, boss, 'megatron', prm.callCount ?? 3);
+        powerEvent(ctx, id, player, [], DECEPTICON_CALL_NAME);
+      }
+      break;
+    }
+    case 'unicron': {
+      const chaos = (boss.x.powerUses ?? 0) % 2 === 1 || !prm.devourMaxRank;
+      boss.x.powerUses = (boss.x.powerUses ?? 0) + 1;
+      if (!chaos) {
+        const slots = pickMany(ctx, candidates(ctx, player, (u) => u.rank <= (prm.devourMaxRank ?? 4)), 1);
+        for (const s of slots) {
+          const u = p.grid[s]!;
+          lost.push({ slot: s, uid: u.uid, unit: u.unit, rank: u.rank, destroyed: true });
+          sacrifice(ctx, player, s, u);
+          p.grid[s] = null;
+        }
+        powerEvent(ctx, id, player, slots, DEVOUR_NAME);
+      } else {
+        const all = pickMany(ctx, candidates(ctx, player, () => true), 2 * Math.max(1, Math.round(prm.chaosPairs ?? 2)));
+        for (let i = 0; i + 1 < all.length; i += 2) swap(ctx, player, [all[i]!, all[i + 1]!]);
+        powerEvent(ctx, id, player, all.length >= 2 ? all.slice(0, all.length - (all.length % 2)) : [], CHAOS_NAME);
+      }
+      break;
+    }
   }
+  if (lost.length) rememberMe(ctx, player, lost);
+}
+
+/** Megatron (« Decepticons, attaquez ! ») : des sbires surgissent juste derrière le boss sur le chemin. */
+function callMinions(ctx: Ctx, boss: SimEnemy, master: BossId, count: number): void {
+  const prm = BOSSES[master].minion.params;
+  const s = ctx.cfg.script;
+  const hp = waveHp(Math.max(1, ctx.st.wave), s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1) * (prm.hpMul ?? 1);
+  for (let k = 0; k < Math.max(0, Math.round(count)); k++) {
+    const e: SimEnemy = {
+      uid: ctx.st.nextUid++, kind: 'sbire', lane: boss.lane, distance: Math.max(0, boss.distance - 0.4 * (k + 1)),
+      speed: 2 * (prm.speedMul ?? 1), hp, maxHp: hp, armor: prm.armor ?? 0, shieldHits: prm.shieldHits ?? 0,
+      effects: {}, minionOf: master, x: { flying: prm.flying ? 1 : undefined },
+    };
+    if (boss.x.from) e.x.from = boss.x.from;
+    if (boss.x.owner !== undefined) e.x.owner = boss.x.owner;
+    ctx.st.enemies.push(e);
+    emit(ctx, { type: 'enemySpawn', enemy: e.uid, kind: 'sbire', lane: e.lane });
+  }
+}
+
+/** Tyrannie (Megatron, 30 % de PV) : tous les Autobots repassent en robot, étourdis, et 2 unités perdent 1 rang. */
+function tyranny(ctx: Ctx): void {
+  const prm = BOSSES.megatron.power.params;
+  const player = targetPlayer(ctx);
+  const grid = ctx.st.players[player]!.grid;
+  const autobots = forceRobot(ctx, player, 6);
+  const slots = candidates(ctx, player).filter((s) => autobots.includes(s));
+  disable(ctx, player, slots, 'stunnedFor', prm.tyrannyStun ?? 2);
+  const lost: LostUnit[] = [];
+  const top = candidates(ctx, player, () => true).sort((a, b) => grid[b]!.rank - grid[a]!.rank || a - b).slice(0, prm.tyrannyUnits ?? 2);
+  for (const s of top) downgrade(ctx, player, s, grid[s]!.rank - (prm.tyrannyRankLoss ?? 1), lost);
+  powerEvent(ctx, 'megatron', player, [...new Set([...slots, ...top])], TYRANNY_NAME);
+  if (lost.length) rememberMe(ctx, player, lost);
+}
+
+/** Faim cosmique (Unicron, 50 % de PV) : il se soigne et 3 unités perdent 1 rang. */
+function hunger(ctx: Ctx, boss: SimEnemy): void {
+  const prm = BOSSES.unicron.power.params;
+  const player = targetPlayer(ctx);
+  const grid = ctx.st.players[player]!.grid;
+  boss.hp = Math.min(boss.maxHp, boss.hp + boss.maxHp * (prm.hungerHeal ?? 0.1));
+  const lost: LostUnit[] = [];
+  const slots = pickMany(ctx, candidates(ctx, player, (u) => u.rank >= 2), prm.hungerUnits ?? 3);
+  for (const s of slots) downgrade(ctx, player, s, grid[s]!.rank - 1, lost);
+  powerEvent(ctx, 'unicron', player, slots, HUNGER_NAME);
   if (lost.length) rememberMe(ctx, player, lost);
 }
 
@@ -270,6 +416,15 @@ export function updateBosses(ctx: Ctx): void {
         }
         continue; // le gant se tait pendant le claquement
       }
+    }
+    // Extension Transformers : Tyrannie de Megatron (30 %) et Faim cosmique d'Unicron (50 %), une fois.
+    if (e.bossId === 'megatron' && !e.x.tyranny && e.hp <= e.maxHp * (BOSSES.megatron.power.params.tyrannyThreshold ?? 0.3)) {
+      e.x.tyranny = 1;
+      tyranny(ctx);
+    }
+    if (e.bossId === 'unicron' && !e.x.hunger && e.hp <= e.maxHp * (BOSSES.unicron.power.params.hungerThreshold ?? 0.5)) {
+      e.x.hunger = 1;
+      hunger(ctx, e);
     }
     e.x.powerIn = (e.x.powerIn ?? interval) - DT;
     if (e.x.powerIn <= EPS) {

@@ -1,7 +1,7 @@
 // Moteur de simulation pur à pas fixe (20 ticks/s), déterministe (graine mulberry32).
 // Aucune dépendance au DOM, à l'heure ou à Math.random.
 
-import { BOSSES, BOSS_STATS, LIEUTENANTS, ROTATING_BOSSES } from '../data/bosses';
+import { BOSSES, BOSS_POOLS, BOSS_STATS, LIEUTENANTS } from '../data/bosses';
 import { ENEMIES, WAVE_RULES, monsterHp, monstersInWave, spawnWeights, waveHp } from '../data/enemies';
 import { activeTeams } from '../data/teams';
 import { UNITS } from '../data/units';
@@ -22,6 +22,7 @@ import { pumpkinExplosion, updateBosses } from './bossPowers';
 import { mapLengths } from './maps';
 import { boardGeometry } from './geometry';
 import { inheritedGrowth, makeCopy, sacrifice, swapCells } from './archetypes';
+import { canTransform, tfOnMerge, transformUnit } from './transformers';
 
 const SAVE_VERSION = 1;
 
@@ -84,10 +85,16 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
 
 // ───────────── État initial ─────────────
 
+/** Gros boss de la rotation selon l'option choisie ('tous' par défaut). */
+function rotationPool(cfg: GameConfig): BossId[] {
+  return BOSS_POOLS[cfg.bossPool ?? 'tous'] ?? BOSS_POOLS.tous;
+}
+
 function shuffledBosses(ctx: Ctx): BossId[] {
   const excluded = ctx.cfg.script?.excludeBosses ?? [];
-  let arr = ROTATING_BOSSES.filter((b) => !excluded.includes(b));
-  if (arr.length === 0) arr = ROTATING_BOSSES.slice();
+  const pool = rotationPool(ctx.cfg);
+  let arr = pool.filter((b) => !excluded.includes(b));
+  if (arr.length === 0) arr = pool.slice();
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.min(i, Math.floor(spawnRand(ctx) * (i + 1)));
     [arr[i], arr[j]] = [arr[j]!, arr[i]!];
@@ -128,11 +135,24 @@ function initState(cfg: GameConfig): SimState {
 
 // ───────────── Vagues et rythme des boss (§4.3) ─────────────
 
-function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number } {
-  return cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number; unicron: number } {
+  const r = cfg.bossRhythm ?? { small: WAVE_RULES.smallBossEvery, big: WAVE_RULES.bigBossEvery, thanos: WAVE_RULES.thanosEvery };
+  return { ...r, unicron: r.unicron ?? WAVE_RULES.unicronEvery };
 }
 
 const infinite = (cfg: GameConfig) => !cfg.targetWaves && cfg.mode !== 'tutoriel';
+
+/**
+ * Boss final d'une vague en mode infini : Unicron (boss cosmique de l'extension Transformers, vagues 150,
+ * 300…) est prioritaire sur Thanos (vagues 50, 100…) ; la rotation « Transformers seul » n'a pas Thanos.
+ */
+export function finalBossAt(cfg: GameConfig, wave: number): BossId | null {
+  if (!infinite(cfg)) return null;
+  const r = rhythm(cfg);
+  if (r.unicron > 0 && wave % r.unicron === 0 && cfg.bossPool !== 'marvel-disney') return 'unicron';
+  if (r.thanos > 0 && wave % r.thanos === 0 && cfg.bossPool !== 'transformers') return 'thanos';
+  return null;
+}
 
 export type BossWaveKind = 'petit' | 'gros' | null;
 
@@ -148,7 +168,7 @@ export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
   // Rush Royale (Coop) : après la vague 60, boss aux vagues paires et mini-boss aux vagues impaires.
   if (infinite(cfg) && !cfg.bossRhythm && wave > WAVE_RULES.alternateAfter) return wave % 2 === 0 ? 'gros' : 'petit';
   if (r.big > 0 && wave % r.big === 0) return 'gros';
-  if (infinite(cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'gros';
+  if (finalBossAt(cfg, wave)) return 'gros';
   if (r.small > 0 && wave % r.small === 0) return 'petit';
   return null;
 }
@@ -175,7 +195,6 @@ function shuffleBag(ctx: Ctx): void {
 /** Gros boss d'une vague ; `consume` avance la rotation (sans répétition avant que les 6 soient passés). */
 function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
   const s = ctx.cfg.script;
-  const r = rhythm(ctx.cfg);
   if (s?.bossId && (s.bossAtWave === undefined || s.bossAtWave === wave || s.miniBoss)) return s.bossId;
   const order = s?.bossOrder;
   if (order && ctx.st.scriptedBossIdx < order.length) {
@@ -183,7 +202,8 @@ function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
     if (consume) ctx.st.scriptedBossIdx++;
     return id;
   }
-  if (infinite(ctx.cfg) && r.thanos > 0 && wave % r.thanos === 0 && !s?.excludeBosses?.includes('thanos')) return 'thanos';
+  const final = finalBossAt(ctx.cfg, wave);
+  if (final && !s?.excludeBosses?.includes(final)) return final;
   shuffleBag(ctx);
   const id = ctx.st.bossOrder[ctx.st.bossIdx]!;
   if (consume) ctx.st.bossIdx++;
@@ -570,6 +590,8 @@ function applyCommand(ctx: Ctx, c: Command): void {
       p.grid[c.to] = merged;
       // Profils Rush Royale : Éboulement du Minotaure (Hulk), charges de la Tesla (Iron Man) voisine.
       if (a.unit === 'hulk') startRockfall(ctx, pi, merged);
+      // Ratchet (Sorcière, extension Transformers) : la fusion enchante une alliée.
+      tfOnMerge(ctx, pi, a.unit, merged);
       // Talent Chevalier de lumière (Thor) : fusionner un exemplaire met tous les exemplaires en mode actif.
       const fused = unitParams(ctx, pi, a.unit);
       if (fused.mergeActiveDuration) {
@@ -618,6 +640,16 @@ function applyCommand(ctx: Ctx, c: Command): void {
       if (prm.promoteBoost) { b.counters.boost = prm.promoteBoost; b.counters.boostFor = 10; }
       onRankUp(ctx, pi, c.to);
       emit(ctx, { type: 'promote', player: p.id, from: c.from, to: c.to, unit: b.unit, rank: b.rank });
+      return;
+    }
+    case 'transform': {
+      // Extension Transformers : appui sur un Autobot.
+      if (!validSlot(c.slot)) return reject(ctx, c.type, 'Case invalide.');
+      const u = p.grid[c.slot];
+      if (!u) return reject(ctx, c.type, 'Aucune unité sur cette case.');
+      if (!canTransform(ctx, pi, u)) return reject(ctx, c.type, 'Cette unité ne peut pas se transformer maintenant.');
+      if ((u.counters.transformLock ?? 0) > EPS) return reject(ctx, c.type, 'Transformation en cours.');
+      transformUnit(ctx, pi, c.slot, u);
       return;
     }
     case 'powerup': {

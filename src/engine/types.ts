@@ -2,7 +2,7 @@
 // (rendu, réseau, tutoriel, campagne). Le moteur ne touche jamais au DOM.
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-import type { BossId, EnemyKind, UnitId } from '../data/types';
+import type { BossId, BossPool, EnemyKind, UnitId } from '../data/types';
 
 export const TICKS_PER_SECOND = 20;
 export const GRID_COLS = 5;
@@ -37,7 +37,13 @@ export interface GameConfig {
   /** Niveaux (Solo ou Coop) : nombre de vagues à tenir pour gagner. Absent = mode infini. */
   targetWaves?: number;
   /** Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3). */
-  bossRhythm?: { small: number; big: number; thanos: number };
+  bossRhythm?: { small: number; big: number; thanos: number; unicron?: number };
+  /**
+   * Rotation des gros boss (extension Transformers) : 'tous' (par défaut), 'marvel-disney' (campagne,
+   * chapitres 1 à 6) ou 'transformers'. Modes infinis : Unicron aux vagues 150, 300… (rythme `unicron`,
+   * absent = 150, 0 = jamais), prioritaire sur Thanos.
+   */
+  bossPool?: BossPool;
   /** Compte à rebours avant la 1re vague (s) : on peut déjà invoquer et fusionner. Absent = 0. */
   prepTime?: number;
   /** Modificateurs de map actifs (§7 bis), lus par le moteur. */
@@ -145,6 +151,8 @@ export type Command =
   | { type: 'promote'; player: PlayerId; from: number; to: number }
   /** Archétype Échangeur (ex. Vanellope) : l'unité `from` et l'alliée `to` (même rang) échangent leurs cases. */
   | { type: 'swap'; player: PlayerId; from: number; to: number }
+  /** Extension Transformers : un appui sur un Autobot le fait passer du mode robot au mode véhicule (ou l'inverse). */
+  | { type: 'transform'; player: PlayerId; slot: number }
   | { type: 'powerup'; player: PlayerId; unit: UnitId }
   /** Rendement du mana : +1 niveau (coûts MANA_UPGRADE_COSTS). */
   | { type: 'manaUpgrade'; player: PlayerId }

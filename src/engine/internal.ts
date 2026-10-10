@@ -61,6 +61,11 @@ export interface EnemyExtra {
   lieutenant?: number;    // petit boss : sbire géant du prochain gros boss
   mini?: number;          // petit boss (sbire géant) : compte comme un boss pour les vies, la rage et la fin de vague
   master?: BossId;        // petit boss : boss dont il utilise une version affaiblie du pouvoir
+  // Extension Transformers
+  reformed?: number;      // Devastator : déjà reformé
+  powerUses?: number;     // Blitzwing, Megatron, Unicron (et lieutenants) : alternance des pouvoirs
+  tyranny?: number;       // Megatron : Tyrannie déjà lancée
+  hunger?: number;        // Unicron : Faim cosmique déjà lancée
 }
 
 export interface SimEnemy extends EnemyInstance {

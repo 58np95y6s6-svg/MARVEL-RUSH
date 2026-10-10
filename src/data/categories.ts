@@ -80,6 +80,22 @@ export const UNIT_CATEGORIES: Partial<Record<string, HeroCategory[]>> = {
   catwoman: ['mana'],
   harley: ['mana'],
   greenarrow: ['tireur', 'critique'],
+  // ───────────── Transformers (extension) ─────────────
+  optimus: ['zone', 'antiboss'],
+  bumblebee: ['manipulation', 'zone'],
+  ironhide: ['zone', 'antiboss'],
+  ratchet: ['soutien'],
+  jazz: ['mana', 'controle'],
+  arcee: ['melee', 'critique'],
+  grimlock: ['melee', 'croissance', 'zone'],
+  wheeljack: ['manipulation', 'zone'],
+  hotrod: ['zone'],
+  elita: ['tireur', 'antiboss'],
+  bulkhead: ['melee', 'mana'],
+  sideswipe: ['zone'],
+  prowl: ['tireur', 'soutien', 'controle'],
+  mirage: ['manipulation', 'critique'],
+  ultramagnus: ['soutien', 'zone'],
 };
 
 type CategorySource = Pick<UnitDef, 'role' | 'range'> & { id: string; ability: { params: Record<string, number> } };

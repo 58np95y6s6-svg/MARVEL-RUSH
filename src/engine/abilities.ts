@@ -1,4 +1,4 @@
-// Attaques et compétences des 28 unités, sur les profils Rush Royale (docs/rush-royale-mapping.md).
+// Attaques et compétences des 43 unités (28 + 15 Autobots, src/engine/transformers.ts), sur les profils Rush Royale (docs/rush-royale-mapping.md).
 // Une fonction par tick et par joueur : timers, compétences à recharge, attaques de base (le rang de
 // fusion divise l'intervalle d'attaque, règle de Rush Royale : plusieurs coups par tick si besoin).
 
@@ -15,6 +15,7 @@ import {
 } from './combat';
 import { enemyGridPos, inReach, unitRange } from './geometry';
 import { formationSplash, growOverTime } from './archetypes';
+import { chooseTfTarget, inVehicle, isTransformer, tfAttack, tfInit, tfTick, tfTimedAbility } from './transformers';
 
 /** Recharge de la compétence périodique selon le rang (`abilityCooldownPerRank`, Stase). */
 export function abilityCd(prm: Record<string, number>, rank: number): number {
@@ -31,6 +32,8 @@ export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
   // Minotaure (Hulk) : mode Berserker à l'apparition (talent).
   if (prm.berserkDuration) u.counters.berserkFor = prm.berserkDuration;
   if (prm.chargeStart) u.counters.charges = prm.chargeStart;
+  // Extension Transformers : un Autobot arrive en mode robot.
+  tfInit(prm, u);
 }
 
 function dec(v: number | undefined, by = DT): number | undefined {
@@ -129,6 +132,7 @@ export function updateUnits(ctx: Ctx, player: number): void {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
     tickTimers(ctx, player, u);
+    tfTick(ctx, player, slot, u);
     const id = effectiveId(u);
     const def = effectiveDef(u);
     if ((u.counters.rockfallFor ?? 0) > EPS) rockfall(ctx, player, slot, u);
@@ -361,7 +365,8 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
       return true;
     }
     default:
-      return true;
+      // Extension Transformers (src/engine/transformers.ts).
+      return tfTimedAbility(ctx, player, slot, u, all, enemies) ?? true;
   }
 }
 
@@ -386,6 +391,9 @@ export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enem
 function chooseTarget(ctx: Ctx, player: number, u: SimUnit, pool: SimEnemy[]): SimEnemy | undefined {
   const def = effectiveDef(u);
   const prm = unitParams(ctx, player, def.id);
+  // Transformation (Autobots) : robot = le plus de PV, véhicule = le plus avancé.
+  const tf = chooseTfTarget(ctx, prm, u, pool);
+  if (tf !== null) return tf;
   // Pyrotechnicien (Mulan) : en nombre impair, cible au hasard.
   if (prm.oddSplash && countOnBoard(ctx, player, def.id) % 2 === 1) return selectTarget(ctx, pool, 'aleatoire');
   // Chimiste (Nick & Judy) : le premier ennemi qui n'est pas encore fiché.
@@ -421,7 +429,7 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
   const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool, fresh);
   c.lastTarget = target.uid;
   if (prm.growthPerHit) c.growth = (c.growth ?? 0) + prm.growthPerHit;
-  if (prm.rampPerHit) {
+  if (prm.rampPerHit && !(isTransformer(prm) && inVehicle(u))) {
     // Purification (talent de Thor) : la rampe monte plus vite en mode actif.
     const k = prm.activeRampMul && unitActive(ctx, player, u) ? prm.activeRampMul : 1;
     c.ramp = Math.min(prm.rampMax ?? 4, (c.ramp ?? 0) + prm.rampPerHit * k);
@@ -654,6 +662,9 @@ function attackOf(
       return { targets: [target], fx: 'nemo:ralenti' };
     }
     default: {
+      // Extension Transformers : attaques des Autobots selon leur mode.
+      const tf = tfAttack(ctx, player, slot, u, id, target, enemies, pool, dmg, hit, splash);
+      if (tf) return tf;
       // falcon, moana, tiana, coco… : coup simple.
       hit(target, dmg);
       return { targets: [target], fx: `${id}:${BASE_FX[id] ?? 'tir'}` };

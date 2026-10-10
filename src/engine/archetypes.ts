@@ -132,6 +132,8 @@ export function tagForMana(ctx: Ctx, player: number, u: SimUnit, e: SimEnemy): v
   const prm = unitParams(ctx, player, effectiveId(u));
   if (!prm.manaPerKill) return;
   let amount = byRank(KILL_MANA, u.rank) * prm.manaPerKill;
+  // Jazz (extension Transformers) : deux fois plus en mode véhicule.
+  if (prm.vehicleManaMul && (u.counters.vehicle ?? 0) > 0) amount *= prm.vehicleManaMul;
   if (e.bossId || e.x.mini) amount += prm.bossKillMana ?? 0;
   amount = Math.round(amount);
   if (amount > (e.x.manaTag ?? 0)) {
@@ -186,7 +188,7 @@ export function swapCells(ctx: Ctx, player: number, from: number, to: number): v
 /** Victoire sur un boss : grosse récompense de mana pour chaque joueur (Coop : chacun la reçoit en entier). */
 export function bossReward(ctx: Ctx, e: SimEnemy): void {
   if (!e.bossId && !e.x.mini) return;
-  const factor = e.bossId === 'thanos' ? BOSS_KILL_REWARD.thanos : e.bossId ? BOSS_KILL_REWARD.boss : BOSS_KILL_REWARD.lieutenant;
+  const factor = e.bossId === 'thanos' || e.bossId === 'unicron' ? BOSS_KILL_REWARD.thanos : e.bossId ? BOSS_KILL_REWARD.boss : BOSS_KILL_REWARD.lieutenant;
   ctx.st.players.forEach((p, pi) => {
     // Talent Chevalier de lumière (Thor) : +x % de dégâts par boss éliminé, une chance sur un petit boss.
     for (const id of new Set(p.deck)) {
