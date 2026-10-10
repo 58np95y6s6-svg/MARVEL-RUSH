@@ -6,7 +6,7 @@ import {
   chooseTalent, claimDailyChest, deckSlotsUnlocked, infiniteUnlocked, levelUp, levelUpCost,
 } from '../../src/meta/economy';
 import {
-  COMPLETE_PACK, buyPulls, freePullsFor, openFreePulls, packPool, pullPacks, rollPulls, rollRarity,
+  COMPLETE_PACK, buyPulls, firstTenPending, freePullsFor, openFreePulls, packPool, pullPacks, ratesFor, rollPulls, rollRarity,
 } from '../../src/meta/pulls';
 import { applyStarter, deckError, playerSetupFor, setDeckSlot, swapDeckSlots, teamHints } from '../../src/meta/decks';
 import { AWAKENING_COPY_COSTS, LEVEL_COPY_COSTS, getHeroProgress } from '../../src/meta/collection';
@@ -47,12 +47,56 @@ describe('packs', () => {
     expect(c.legendaire / n).toBeCloseTo(0.04, 2);
   });
 
-  it('Légendaire garanti au 40e tirage, compteur séparé par pack', () => {
+  it('lot de 10 : taux boostés 60 / 30 / 10 par carte', () => {
+    expect(COMPLETE_PACK.rates10).toEqual({ rare: 0.6, epique: 0.3, legendaire: 0.1 });
+    expect(pullPacks().every((pk) => pk.rates10.legendaire === 0.1 && pk.rates.legendaire === 0.04)).toBe(true);
+    expect(ratesFor(COMPLETE_PACK, 1)).toBe(COMPLETE_PACK.rates);
+    expect(ratesFor(COMPLETE_PACK, 10)).toBe(COMPLETE_PACK.rates10);
+    // Mesure sur des lots de 10 tirés à graine (le compteur remis à zéro pour ne pas compter la garantie).
+    const rng = seeded(11);
+    const c = { rare: 0, epique: 0, legendaire: 0 };
+    let n = 0;
+    for (let i = 0; i < 6000; i++) {
+      const p = fresh();
+      for (const r of rollPulls(p, 'complet', 10, rng)) { if (!r.guaranteed) { c[r.rarity]++; n++; } }
+    }
+    expect(c.legendaire / n).toBeCloseTo(0.1, 2);
+    expect(c.epique / n).toBeGreaterThan(0.28);
+    expect(c.epique / n).toBeLessThan(0.31);
+    // Le tirage à l'unité garde 72 / 24 / 4 : un tirage à 0,05 est Épique à l'unité, Légendaire dans un lot.
+    expect(rollPulls(fresh(), 'complet', 1, () => 0.05)[0]!.rarity).toBe('epique');
+    expect(rollPulls(fresh(), 'complet', 10, () => 0.05)[0]!.rarity).toBe('legendaire');
+  });
+
+  it('premier lot de 10 payé de chaque pack : un Légendaire garanti, une seule fois par pack', () => {
+    const p = fresh();
+    p.shards = 10_000;
+    const always = () => 0.99; // toujours Rare sans garantie
+    expect(firstTenPending(p, 'marvel')).toBe(true);
+    const a = buyPulls(p, 'marvel', 10, always)!;
+    expect(a.filter((r) => r.rarity === 'legendaire')).toHaveLength(1);
+    expect(a[9]!.guaranteed).toBe('premier');
+    expect(p.pity['marvel']).toBe(0); // le Légendaire remet le compteur à zéro
+    expect(firstTenPending(p, 'marvel')).toBe(false);
+    const b = buyPulls(p, 'marvel', 10, always)!;
+    expect(b.some((r) => r.rarity === 'legendaire')).toBe(false);
+    // Les autres packs ont aussi leur premier lot garanti ; un tirage à l'unité ne le consomme pas.
+    buyPulls(p, 'disney', 1, always);
+    expect(firstTenPending(p, 'disney')).toBe(true);
+    expect(buyPulls(p, 'disney', 10, always)!.some((r) => r.rarity === 'legendaire')).toBe(true);
+    // Les tirages offerts ne le consomment pas.
+    p.pendingPulls = [{ pack: 'choix', count: 10 }];
+    openFreePulls(p, 'complet', always);
+    expect(firstTenPending(p, 'complet')).toBe(true);
+  });
+
+  it('Légendaire garanti au 30e tirage, compteur séparé par pack', () => {
     const p = fresh();
     const noLeg = () => 0.99; // toujours Rare sans garantie
-    const first = rollPulls(p, 'marvel', 39, noLeg);
+    expect(COMPLETE_PACK.pityLegendary).toBe(30);
+    const first = rollPulls(p, 'marvel', 29, noLeg);
     expect(first.every((r) => r.rarity !== 'legendaire')).toBe(true);
-    expect(p.pity['marvel']).toBe(39);
+    expect(p.pity['marvel']).toBe(29);
     expect(p.pity['disney'] ?? 0).toBe(0);
     const [r40] = rollPulls(p, 'marvel', 1, noLeg);
     expect(r40!.rarity).toBe('legendaire');

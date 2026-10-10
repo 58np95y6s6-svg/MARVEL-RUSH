@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10k',
+    title: 'Pluie de gemmes',
+    date: '10 octobre 2026',
+    items: [
+      '💎 Pluie de gemmes pour bien démarrer : chaque première victoire des chapitres 1 à 3 rapporte 400 / 300 / 150 gemmes, la Route des récompenses est très généreuse jusqu’au niveau 15 (3 lots de 10 offerts) et un calendrier de bienvenue de 7 jours offre 3 300 gemmes et 3 lots de 10. Tu reçois aussi les gemmes des niveaux déjà gagnés !',
+      '🎉 Le lot de 10 devient excitant : 10 % de Légendaire par carte (60 % Rare, 30 % Épique), Légendaire garanti au 30e tirage au lieu du 40e, et ton premier lot de 10 de chaque pack contient un Légendaire.',
+      '❓ Nouveau « Comment gagner des gemmes ? » sur l’écran Tirages : toutes les sources avec leurs montants et ce qu’il te reste à prendre. Les taux ×1 et ×10 sont affichés sur chaque pack.',
+    ],
+  },
+  {
     id: '2026-10-10j',
     title: 'Copie Rush Royale, or et gemmes, coffres',
     date: '10 octobre 2026',

@@ -1,0 +1,67 @@
+/* Tirages : taux ×1 / ×10, 1er lot garanti, calendrier de bienvenue, « Comment gagner des gemmes ? » */
+.pl-rates i { font: 900 11px var(--body); font-style: normal; align-self: center; margin-right: 2px; min-width: 22px; text-align: right; }
+.pl-rates.boost span { box-shadow: 0 0 0 1px #fff inset; }
+.pl-rates.boost i { color: #ffe46a; }
+.pl-rates.boost .r-legendaire { animation: mk-glow 1.2s ease-in-out infinite alternate; }
+.pl-row .pl-rates { flex-wrap: nowrap; gap: 2px; }
+.pl-row .pl-rates i { min-width: 0; font-size: 10px; margin-right: 0; }
+.pl-row .pl-rates span { padding: 0 3px; font-size: 9.5px; border-width: 1.5px; white-space: nowrap; }
+.pl-first { margin: 0; padding: 2px 8px; border-radius: 10px; border: 2px solid var(--ink); background: linear-gradient(#ffe46a, #f29a1c); color: #2a1600; font: 800 11.5px var(--body); }
+.pl-row .pl-first { font-size: 10.5px; padding: 2px 4px; }
+
+.pl-gems { display: flex; gap: 6px; align-items: stretch; margin: 0 0 8px; }
+.pl-gems-how { flex: 1; padding: 6px 8px; border-radius: 12px; border: 2.5px solid var(--ink); background: linear-gradient(#5ad0ff, #2a7fd0); color: #fff; font: 900 13px var(--body); text-shadow: 0 1px 0 rgba(0,0,0,.4); cursor: pointer; }
+.pl-gems-go { padding: 4px 10px 5px; font-size: 14px; border-radius: 12px; line-height: 1.05; }
+.pl-gems-go small { display: block; font: 900 10.5px var(--body); text-shadow: none; }
+
+.pl-welcome { margin: 0 0 10px; padding: 6px 8px 8px; border-radius: 16px; border: 3px solid var(--ink); background: linear-gradient(#6a3fd0, #3a1f8a); }
+.pl-welcome header { display: flex; align-items: baseline; gap: 8px; margin: 0 2px 5px; }
+.pl-welcome header b { white-space: nowrap; font: 400 17px var(--display); paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); }
+.pl-welcome header small { margin-left: auto; font: 800 11px var(--body); opacity: .9; text-align: right; white-space: nowrap; }
+.pl-wdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.pl-wday { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 1px 4px; border-radius: 10px; border: 2px solid var(--ink); background: rgba(0,0,0,.3); color: #fff; font: 800 10px var(--body); min-width: 0; }
+.pl-wday small { font: 800 9.5px var(--body); opacity: .85; }
+.pl-wday b { font: 900 11px var(--body); white-space: nowrap; }
+.pl-wday em { font: 900 9px var(--body); font-style: normal; color: #ffe46a; white-space: nowrap; }
+.pl-wday.done { opacity: .6; }
+.pl-wday.done b, .pl-wday.done em { visibility: hidden; }
+.pl-wday.done i { position: absolute; inset: 0; display: grid; place-items: center; font: 900 22px var(--body); font-style: normal; color: #8de86a; text-shadow: 0 2px 0 var(--ink); }
+.pl-wday.next { background: linear-gradient(#ffe46a, #f29a1c); color: #2a1600; cursor: pointer; animation: mk-glow 1s ease-in-out infinite alternate; }
+.pl-wday.next em { color: #6a1f00; }
+.pl-wday:disabled { cursor: default; }
+
+/* Contenu et probabilités */
+.pc-odds { width: 100%; border-collapse: separate; border-spacing: 0 3px; margin: 0 0 8px; font: 800 13px var(--body); text-align: center; }
+.pc-odds th { font: 900 11px var(--body); padding: 2px; border-radius: 6px; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.5); }
+.pc-odds th.r-rare { background: var(--rare); } .pc-odds th.r-epique { background: var(--epique); } .pc-odds th.r-legendaire { background: var(--legendaire); }
+.pc-odds td { padding: 4px 2px; background: rgba(0,0,0,.25); }
+.pc-odds td:first-child { text-align: left; padding-left: 8px; border-radius: 8px 0 0 8px; }
+.pc-odds td:last-child { border-radius: 0 8px 8px 0; }
+.pc-odds tr.boost td { background: rgba(255,214,90,.22); color: #ffe46a; }
+.pc-odds small { font: 800 10px var(--body); opacity: .85; }
+.pc-first { background: linear-gradient(90deg, rgba(255,214,90,.35), rgba(0,0,0,.25)) !important; }
+.pc-group h4 b.pc-10 { font-size: 14px; -webkit-text-stroke: 3px var(--ink); color: #ffe46a; }
+.pc-each { margin: -4px 4px 8px; font: 700 12px var(--body); opacity: .9; }
+
+/* Feuille « Comment gagner des gemmes ? » */
+.gs-intro { margin: 0 0 6px; font: 700 13px/1.35 var(--body); }
+.gs-h { margin: 10px 0 5px; font: 400 16px var(--display); paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); }
+.gs-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.gs-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 12px; background: rgba(0,0,0,.25); }
+.gs-row.hot { background: linear-gradient(90deg, rgba(90,208,255,.35), rgba(0,0,0,.25)); box-shadow: 0 0 0 2px rgba(90,208,255,.6) inset; }
+.gs-row .ic { width: 26px; height: 26px; flex: none; }
+.gs-row div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gs-row b { font: 900 13px var(--body); }
+.gs-row small { font: 700 11.5px/1.3 var(--body); opacity: .9; }
+.gs-amt { flex: none; padding: 2px 7px; border-radius: 9px; border: 2px solid var(--ink); background: linear-gradient(#5ad0ff, #2a7fd0); font: 900 12px var(--body); white-space: nowrap; }
+.gs-amt::after { content: ' 💎'; }
+.gs-calrow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.gs-cal { display: flex; flex-direction: column; align-items: center; padding: 2px 0; border-radius: 8px; background: rgba(0,0,0,.3); font: 800 10px var(--body); }
+.gs-cal b { font: 900 10.5px var(--body); }
+.gs-cal em { font: 900 9px var(--body); font-style: normal; color: #ffe46a; }
+.gs-cal.done { opacity: .45; }
+.gs-go { display: flex; gap: 6px; margin: 12px 0 4px; }
+.gs-go .mr-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px 7px; font-size: 14px; border-radius: 12px; }
+.gs-go .ic { width: 20px; height: 20px; }
+
+.pl-row .pl-pity span { font-size: 10px; }

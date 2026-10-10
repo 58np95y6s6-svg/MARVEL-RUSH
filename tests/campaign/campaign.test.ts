@@ -236,18 +236,22 @@ describe('récompenses', () => {
   it('or : 20 par étoile nouvelle, 8 par étoile refaite, pour 10 vagues (× vagues / 10) ; 2 gemmes par étoile nouvelle ; XP', () => {
     const first = levelRewards(l('c1-n1'), [true, true, false], progress([]), DECK); // 10 vagues
     expect(first.total.gold).toBe(40);
-    expect(first.total.shards).toBe(4);
+    expect(first.total.shards).toBe(4 + 400); // + première victoire du chapitre 1 (400 gemmes)
+    expect(first.lines.find((x) => x.kind === 'gemmes')?.reward.shards).toBe(400);
     expect(first.total.xp).toBe(20 + 20);
     expect(first.firstWin).toBe(true);
     expect(first.chest).toEqual({ tier: 'bois', scale: 1, crystals: 0 });
     const replay = levelRewards(l('c1-n1'), [true, true, true], progress([['c1-n1', [true, true, false]]]), DECK);
-    // 8 + 8 (refaites) + 20 (nouvelle) ; 2 gemmes ; bonus premières 3 étoiles : +150 or, +5 gemmes
+    // 8 + 8 (refaites) + 20 (nouvelle) ; 2 gemmes ; bonus premières 3 étoiles : +150 or, +30 gemmes (ch. 1-2)
     expect(replay.total.gold).toBe(8 + 8 + 20 + 150);
-    expect(replay.total.shards).toBe(2 + 5);
+    expect(replay.total.shards).toBe(2 + 30);
     expect(replay.total.xp).toBe(20 + 10);
     expect(replay.chest).toEqual({ tier: 'bois', scale: 0.5, crystals: 0 }); // 3 ★ (+1) mais rejoué (−1)
     const long = levelRewards(l('c6-n9'), [true, false, false], progress([]), DECK); // 48 vagues
     expect(long.total.gold).toBe(Math.round(20 * 4.8));
+    expect(long.total.shards).toBe(2); // pas de bonus de première victoire après le chapitre 3
+    expect(levelRewards(l('c2-n1'), [true, false, false], progress([]), DECK).total.shards).toBe(2 + 300);
+    expect(levelRewards(l('c3-n1'), [true, false, false], progress([]), DECK).total.shards).toBe(2 + 150);
     expect(long.total.xp).toBe(Math.round(30 * 4.8));
     expect(replay.firstWin).toBe(false);
     expect(levelRewards(l('c1-n1'), [false, false, false], progress([]), DECK).total).toEqual({});
@@ -258,7 +262,7 @@ describe('récompenses', () => {
     expect(r5.total.cards?.[0]?.count).toBe(10);
     expect(DECK).toContain(r5.total.cards?.[0]?.unit);
     const r10 = levelRewards(l('c1-n10'), [true, false, false], progress([]), DECK);
-    expect(r10.total).toMatchObject({ scrolls: 2, shards: 100 + 2, gold: 30, heroes: ['spiderman'], xp: 45 * 2 }); // 15 vagues
+    expect(r10.total).toMatchObject({ scrolls: 2, shards: 100 + 2 + 400, gold: 30, heroes: ['spiderman'], xp: 45 * 2 }); // 15 vagues
     expect(r10.chest).toEqual({ tier: 'or', scale: 1, crystals: 20 }); // bois + 2 (boss)
     const owner = { ...progress([]), heroes: { spiderman: { level: 1, cards: 0, awakening: 0, talents: [null, null, null] } } } as Progress;
     expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
@@ -293,8 +297,9 @@ describe('récompenses', () => {
     // Or : 3 × 20 × (vagues / 10) par niveau + 60 × 150 (3 étoiles) + 6 × (400 + 800 + 1 200)
     const stars = LEVELS.reduce((n, lv) => n + Math.round(60 * lv.waves / 10), 0);
     expect(t.gold).toBe(stars + 60 * 150 + 6 * 2400);
-    // Gemmes : 180 × 2 + 60 × 5 + 6 × 100 (boss) + 6 × (40 + 60 + 80)
-    expect(t.shards).toBe(360 + 300 + 600 + 1080);
+    // Gemmes : 180 × 2 + 3 ★ (20 × 30 + 10 × 15 + 30 × 5) + 6 × 100 (boss) + 6 × (40 + 60 + 80)
+    // + premières victoires des chapitres 1 à 3 (10 × 400 + 10 × 300 + 10 × 150)
+    expect(t.shards).toBe(360 + 900 + 600 + 1080 + 8500);
     expect(t.xp).toBe(LEVELS.reduce((n, lv) => n + Math.round(50 * lv.waves / 10) * (lv.n === 10 ? 2 : 1), 0));
   });
 });

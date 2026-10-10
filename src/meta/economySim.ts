@@ -11,7 +11,8 @@ import { bossKillGold, openChest, seededRng } from './chests';
 import { applyStarter } from './decks';
 import { accountLevel, applyInfiniteGame, awaken, awakeningCost, canAfford, claimDailyChest, levelUp, levelUpCost } from './economy';
 import { applyReward, blankProfile, type Profile } from './profile';
-import { buyPulls, openFreePulls } from './pulls';
+import { claimWelcome } from './gems';
+import { buyPulls, firstTenPending, openFreePulls, pullPacks } from './pulls';
 import { claimQuest, claimWeekly, ensureQuests } from './quests';
 import { claimRoad, roadClaimable } from './road';
 
@@ -105,7 +106,11 @@ export function simulateEconomy(o: SimOptions): SimResult {
       const f = p.pendingPulls![0]!;
       openFreePulls(p, f.pack === 'choix' ? 'complet' : f.pack, rng);
     }
-    while (p.shards >= 900) { buyPulls(p, 'complet', 10, rng); res.tenPulls.push(day); }
+    // Le premier lot de 10 de chaque pack garantit un Légendaire : le joueur les prend d'abord.
+    while (p.shards >= 900) {
+      const pack = pullPacks().find((pk) => firstTenPending(p, pk.id))?.id ?? 'complet';
+      buyPulls(p, pack, 10, rng); res.tenPulls.push(day);
+    }
     refreshDeck();
     // Or : le héros visé, puis le deck (niveau le plus bas d'abord), puis le reste si l'or déborde.
     const deck = p.decks[0]!;
@@ -143,7 +148,7 @@ export function simulateEconomy(o: SimOptions): SimResult {
   const track = (before: { gold: number; gems: number; crystals: number }) => {
     earned.gold += p.gold - before.gold; earned.gems += p.shards - before.gems; earned.crystals += p.crystals - before.crystals;
   };
-  const periods: [number, number][] = [[1, 30], [31, 90], [91, 240], [241, o.days]];
+  const periods: [number, number][] = [[1, 7], [8, 14], [15, 30], [31, 90], [91, 240], [241, o.days]];
   let pStart = { ...earned };
 
   for (let day = 1; day <= o.days; day++) {
@@ -152,6 +157,7 @@ export function simulateEconomy(o: SimOptions): SimResult {
     const before = { gold: p.gold, gems: p.shards, crystals: p.crystals };
     ensureQuests(p, ds);
     src('coffre quotidien', () => claimDailyChest(p, rng, ds));
+    src('calendrier de bienvenue', () => claimWelcome(p, ds));
     // Campagne : 3 niveaux gagnés à 3 étoiles par jour, puis 2 niveaux rejoués.
     const plays = campaignIdx < LEVELS.length ? perDay : 2;
     for (let i = 0; i < plays; i++) {

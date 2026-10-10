@@ -364,7 +364,7 @@ export function playPackOpening(host: HTMLElement, pack: PullPack, results: Pull
     function gridCardHtml(r: PullResult, i: number): string {
       const u = UNITS[r.unit];
       const [u1, u2] = packColors(u.pack);
-      const gar = r.guaranteed ? `<span class="gc-gar">${r.guaranteed === 'pity' ? 'Garanti' : 'Garantie'}</span>` : '';
+      const gar = r.guaranteed ? `<span class="gc-gar">${r.guaranteed === 'lot' ? 'Garantie' : 'Garanti'}</span>` : '';
       return `<button class="gc r-${r.rarity}${r.guaranteed ? ' gar' : ''}" data-i="${i}" style="--i:${i};--u1:${u1};--u2:${u2};--rl:${LIGHT[r.rarity]}" aria-label="Carte ${i + 1}">
         <span class="gc-in">
           ${backHtml().replace('class="cb"', 'class="cb gc-back"')}

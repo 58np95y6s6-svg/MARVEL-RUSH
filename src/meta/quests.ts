@@ -6,6 +6,7 @@
 
 import { hash32 } from '../campaign/levels';
 import { openChest, seededRng, type ChestContent, type Rng } from './chests';
+import { questRookieGems } from './gems';
 import { today, type Profile, type QuestState, type Reward } from './profile';
 
 export type QuestId = 'fusions' | 'boss' | 'niveaux' | 'vagues' | 'invocations' | 'ameliorer' | 'etoiles' | 'infini';
@@ -113,9 +114,11 @@ export function claimQuest(p: Profile, index: number, day = today()): Reward | n
   if (!it || !def || it.claimed || it.progress < it.target) return null;
   it.claimed = true;
   q.weekDone += 1;
+  // Débutant (compte sous le niveau 15) : +20 gemmes par quête.
+  const gems = def.reward.gems + questRookieGems(p.xp);
   p.gold = (p.gold ?? 0) + def.reward.gold;
-  p.shards += def.reward.gems;
-  return { gold: def.reward.gold, shards: def.reward.gems };
+  p.shards += gems;
+  return { gold: def.reward.gold, shards: gems };
 }
 
 export function weeklyReady(p: Profile, day = today()): boolean {

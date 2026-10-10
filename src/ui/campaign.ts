@@ -7,6 +7,7 @@ import { BOSSES, LIEUTENANTS } from '../data/bosses';
 import type { BossId, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { getMap } from '../maps';
+import { firstClearGems } from '../meta/gems';
 import { getProfile, loadActiveProfile, onProfileChange, updateProfile, type Reward } from '../meta/profile';
 import {
   CHAPTERS, STAR_CHEST_THRESHOLDS, chapterLevels, constraintIcon, constraintLabel, getChapter, getLevel, guaranteedHero,
@@ -419,6 +420,7 @@ function levelSheet(l: CampaignLevel, h: { onClose: () => void; onPlay: () => vo
     <h4>${l.boss ? (l.boss.kind === 'boss' ? 'Boss du niveau' : 'Lieutenant du niveau') : 'Boss'}</h4>
     ${bossBlock}
     <h4>Récompenses ${won ? '(en rejouant, 3 étoiles)' : '(première victoire, 3 étoiles)'}</h4>
+    ${firstClearGems(l.chapter) ? `<p class="cp-firstgems${won ? ' done' : ''}">💎 Première victoire : +${firstClearGems(l.chapter)} gemmes${won ? ' (déjà gagnées)' : ''}</p>` : ''}
     <div class="cp-chips">${preview.chest ? `<span class="cp-chip chest">${chestMiniSvg(preview.chest.tier)}<b>${esc(CHEST_NAMES[preview.chest.tier])}</b></span>` : ''}${rewardChips(preview.total)}</div>
     <h4>Ton deck${deckTabs ? '' : ' actif'}</h4>${deckTabs}
     <div class="cp-deck">${deck.map((u) => `<span><img alt="" src="${tokenUrl(u)}"><small>${esc(UNITS[u].name)}</small></span>`).join('')}</div>`;

@@ -405,20 +405,22 @@ Deux monnaies séparées, comme dans Rush Royale (retour joueur d'octobre 2026 :
 Une pile vise un héros du deck actif 6 fois sur 10 ; sans héros de la rareté, elle descend d'une rareté (deux fois plus de cartes).
 
 **Sources**
-- **Campagne** (détail : `docs/campagne.md` §2) : à chaque victoire un **coffre** dont le rang dépend du chapitre (1-2 bois, 3-4 argent, 5-6 or), +1 pour 3 étoiles dans le combat, +1 au niveau 5, +2 au niveau du boss ; rejouer donne un coffre plus petit (un rang de moins, contenu × 0,5). Plus : +20 or par étoile nouvelle (+8 en rejouant) pour 10 vagues, +2 gemmes par étoile nouvelle, premières 3 étoiles d'un niveau +150 or et +5 gemmes, coffres d'étoiles du chapitre, premier boss de chapitre +100 gemmes.
+- **Campagne** (détail : `docs/campagne.md` §2) : à chaque victoire un **coffre** dont le rang dépend du chapitre (1-2 bois, 3-4 argent, 5-6 or), +1 pour 3 étoiles dans le combat, +1 au niveau 5, +2 au niveau du boss ; rejouer donne un coffre plus petit (un rang de moins, contenu × 0,5). Plus : +20 or par étoile nouvelle (+8 en rejouant) pour 10 vagues, +2 gemmes par étoile nouvelle, **première victoire d'un niveau +400 / 300 / 150 gemmes aux chapitres 1 / 2 / 3** (affiché sur la fiche du niveau), premières 3 étoiles d'un niveau +150 or et +30 gemmes (chapitres 1-2), +15 (3), +5 (4-6), coffres d'étoiles du chapitre, premier boss de chapitre +100 gemmes.
 - **Solo Infini** : +15 or par vague, coffres de palier (§5.1), bonus de record.
 - **Butin des boss** en combat : +20 or par lieutenant, +60 par gros boss, +300 pour Thanos (écran de fin).
 - **Coffre quotidien** (minuit, heure locale) : coffre d'argent + 40 gemmes + 10 ✦.
-- **Quêtes du jour** (3 par jour, minuit) : « Fusionne 30 fois », « Bats 2 boss », « Gagne 3 niveaux de campagne », « Tiens 40 vagues », « Invoque 80 héros », « Améliore un héros », « Gagne 3 étoiles », « Atteins la vague 15 en Solo Infini » ; 250 à 500 or et 25 à 35 gemmes chacune. **Coffre de la semaine** : 12 quêtes réclamées du lundi au dimanche → coffre légendaire + 150 gemmes + 40 ✦.
-- **Route des récompenses** (niveau de compte) : chaque niveau donne 100 + 40 × niveau en or, plus 40 gemmes (niveaux pairs) ou 30 ✦ (impairs) ; tous les 5 niveaux un coffre (or, puis héroïque dès 20, légendaire dès 40) ; tous les 10 niveaux un **lot de 10 tirages offert** ; cadres d'avatar aux niveaux 5, 10, 20, 30 et 50.
-- **Rythme visé** (simulation `docs/equilibrage.md` §6) : un lot de 10 acheté avec des gemmes tous les **3 à 4 jours** de jeu régulier, l'or limite les montées de niveau (deck niveau 9 vers la fin de la campagne, 3 semaines).
+- **Quêtes du jour** (3 par jour, minuit) : « Fusionne 30 fois », « Bats 2 boss », « Gagne 3 niveaux de campagne », « Tiens 40 vagues », « Invoque 80 héros », « Améliore un héros », « Gagne 3 étoiles », « Atteins la vague 15 en Solo Infini » ; 250 à 500 or et 25 à 35 gemmes chacune (+20 gemmes tant que le compte est sous le niveau 15). **Coffre de la semaine** : 12 quêtes réclamées du lundi au dimanche → coffre légendaire + 150 gemmes + 40 ✦.
+- **Calendrier de bienvenue** (7 jours, un jour réclamé par jour de connexion, sur l'écran Tirages) : 300 gemmes + lot de 10, 400, 500, 300 + lot de 10, 600, 700, 500 + lot de 10. Les profils existants le reçoivent à la mise à jour, ainsi que les gemmes de première victoire des niveaux déjà gagnés (une fois).
+- **Route des récompenses** (niveau de compte) : chaque niveau donne 100 + 40 × niveau en or ; **niveaux 2 à 15** : 200 gemmes (pairs) ou 150 gemmes + 30 ✦ (impairs) et un lot de 10 offert aux niveaux 5, 10 (+300 gemmes) et 15 ; ensuite 40 gemmes (niveaux pairs) ou 30 ✦ (impairs) ; tous les 5 niveaux un coffre (or, puis héroïque dès 20, légendaire dès 40) ; tous les 10 niveaux un **lot de 10 tirages offert** ; cadres d'avatar aux niveaux 5, 10, 20, 30 et 50.
+- **Écran Tirages** : bouton « 💎 Comment gagner des gemmes ? » (toutes les sources avec leurs montants et ce qu'il reste à prendre) et raccourci « Gagner des gemmes » (campagne, sinon quêtes).
+- **Rythme visé** (simulation `docs/equilibrage.md` §6 bis) : **beaucoup de tirages au début** (≈ 22 lots de 10 la 1re semaine, 8 la 2e), puis un lot de 10 acheté avec des gemmes tous les **3 à 4 jours** de jeu régulier, l'or limite les montées de niveau (deck niveau 9 vers la fin de la campagne, 3 semaines).
 
 ### 6.2 Packs
 - Deux packs, **Pack Marvel** et **Pack Disney**, qui ne contiennent que les unités de leur univers.
 - Prix : **100** gemmes le tirage, **900** les 10 tirages, avec au moins 1 Épique garanti dans un lot de 10. Les packs se paient **uniquement en gemmes**.
-- Taux : **Rare 72 %**, **Épique 24 %**, **Légendaire 4 %**.
-- **Garantie** : un Légendaire au plus tard au 40e tirage, compteur séparé par pack et affiché.
-- Affiche les taux exacts sur l'écran du pack.
+- Taux du tirage à l'unité : **Rare 72 %**, **Épique 24 %**, **Légendaire 4 %**. **Lot de 10 boosté**, par carte : **Rare 60 %**, **Épique 30 %**, **Légendaire 10 %** (au moins 1 Épique).
+- **Garanties** : un Légendaire au plus tard au **30e** tirage, compteur séparé par pack et affiché ; le **1er lot de 10 payé de chaque pack** contient un Légendaire.
+- Affiche les taux exacts (×1 et ×10) sur l'écran du pack, et dans « Contenu et probabilités » le pourcentage de chaque héros à l'unité et dans un lot de 10.
 - **Animation d'ouverture** soignée :
   1. la carte tombe et tremble ;
   2. la lueur prend la couleur de la rareté (bleu Rare, violet Épique, or Légendaire avec des rayons) ;

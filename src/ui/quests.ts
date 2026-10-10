@@ -4,6 +4,7 @@ import './quests.css';
 import type { ChestContent } from '../meta/chests';
 import { getProfile, onProfileChange, today, updateProfile, type Profile } from '../meta/profile';
 import { QUEST_DEFS, WEEKLY_BONUS_GEMS, WEEKLY_GOAL, claimQuest, claimWeekly, ensureQuests, questDef, type QuestId } from '../meta/quests';
+import { questRookieGems } from '../meta/gems';
 import { balanceOf, chestMiniSvg, flyToHeader, playChests } from './chestOpening';
 import { esc, fmt, icon, toast, type IconName } from './kit';
 
@@ -42,7 +43,7 @@ export function mountQuests(host: HTMLElement, o: { overlay: HTMLElement; go: (h
           <span class="qs-ic">${icon(QUEST_ICON[def.id as QuestId] ?? 'xp')}</span>
           <div class="qs-mid"><b>${esc(def.label(def.target))}</b>
             <span class="qs-bar"><i style="width:${pct}%"></i><span>${fmt(it.progress)} / ${fmt(it.target)}</span></span>
-            <span class="qs-rw">${icon('or')}${fmt(def.reward.gold)} ${icon('gemmes')}${def.reward.gems}</span></div>
+            <span class="qs-rw">${icon('or')}${fmt(def.reward.gold)} ${icon('gemmes')}${def.reward.gems + questRookieGems(p.xp)}${questRookieGems(p.xp) ? ' <em class="qs-rookie">débutant</em>' : ''}</span></div>
           ${it.claimed ? '<span class="qs-ok">✔</span>'
             : `<button class="mr-btn ${done ? 'green' : ''} qs-claim" data-q="${i}" ${done ? '' : 'disabled'}>${done ? 'Réclamer' : 'En cours'}</button>`}
         </li>`;
@@ -74,10 +75,11 @@ export function mountQuests(host: HTMLElement, o: { overlay: HTMLElement; go: (h
       busy = true;
       b.disabled = true;
       b.classList.add('pop');
-      await flyToHeader(b, { gold: def.reward.gold, shards: def.reward.gems });
+      const gems = def.reward.gems + questRookieGems(p.xp);
+      await flyToHeader(b, { gold: def.reward.gold, shards: gems });
       busy = false;
       await updateProfile((x) => { claimQuest(x, i); });
-      toast(`+${fmt(def.reward.gold)} or et +${def.reward.gems} gemmes !`);
+      toast(`+${fmt(def.reward.gold)} or et +${gems} gemmes !`);
     } else if (b.dataset['a'] === 'week') {
       let got: ChestContent | null = null;
       await updateProfile((x) => { got = claimWeekly(x); });

@@ -365,3 +365,7 @@
 .cp-resume .t { font-size: 22px; line-height: 1; }
 .cp-resume small { font-size: 13px; }
 .cp-obj small { display: block; }
+
+/* Gemmes de première victoire (chapitres 1 à 3, src/meta/gems.ts) */
+.cp-firstgems { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 5px 10px; border-radius: 12px; border: 2.5px solid var(--ink); background: linear-gradient(#5ad0ff, #2a7fd0); font: 900 14px var(--body); color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.cp-firstgems.done { background: rgba(0,0,0,.25); border-color: transparent; font-size: 12px; opacity: .75; }
