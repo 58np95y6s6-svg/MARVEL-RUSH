@@ -17,6 +17,7 @@ import { UNITS, UNIT_LIST } from '../../src/data/units';
 import type { BossId, UnitId } from '../../src/data/types';
 import type { Engine, EngineEvent, GameConfig } from '../../src/engine/types';
 import { RANK_DAMAGE } from '../../src/engine/combat';
+import { resolveUnitParams } from '../../src/engine/talents';
 import { ofType, quiet, setup, step } from './helpers';
 
 const DC_HEROES: UnitId[] = [
@@ -93,251 +94,176 @@ describe('extension DC : données', () => {
   });
 });
 
-describe('extension DC : compétences des 15 héros', () => {
-  it('Batman : batarangs une attaque sur 3 (3 cibles à 80 %), bombe fumigène toutes les 10 s', () => {
+describe('extension DC : profils Rush Royale des 15 héros', () => {
+  it('Batman (Bourreau) : exécute sous 20,5 % des PV, seuil réduit de moitié contre les boss', () => {
     const e = arena('batman');
-    const lead = debugSpawn(e, { hp: BIG, distance: 10 });
-    const near = debugSpawn(e, { hp: BIG, distance: 9 });
-    debugSpawn(e, { hp: BIG, distance: 8.5 });
-    const far = debugSpawn(e, { hp: BIG, distance: 2 });
-    const ev = step(e, 40);
-    const atk = ofType(ev, 'attack').filter((a) => a.unit === 'batman');
-    expect(atk.slice(0, 3).map((a) => a.fx)).toEqual(['batman:batarang', 'batman:batarang', 'batman:batarangs']);
-    expect(atk[2]!.targets).toHaveLength(3);
-    expect(ofType(ev, 'hit').some((h) => Math.abs(h.damage - D('batman') * 0.8) < 1e-6)).toBe(true);
-    const later = step(e, 20 * 8 + 1);
-    const smoke = ofType(later, 'ability').find((a) => a.name === 'Bombe fumigène')!;
-    expect(smoke.targets).toContain(lead.uid);
-    expect(smoke.targets).toContain(near.uid);
-    expect(smoke.targets).not.toContain(far.uid);
-    expect(lead.effects.slow).toBeCloseTo(0.4);
-    expect(lead.effects.marked).toBeCloseTo(0.2);
+    const t = debugSpawn(e, { hp: 1000 });
+    t.hp = 300; // 300 − 141 = 159 < 205
+    const ev = step(e, 20);
+    expect(t.hp).toBe(0);
+    expect(abilityNames(ev)).toContain('Justicier');
+    const b = arena('batman');
+    const boss = debugSpawn(b, { hp: BIG, bossId: 'cruella' });
+    boss.x.powerIn = 1e9;
+    boss.hp = boss.maxHp * 0.15;
+    step(b, 20);
+    expect(boss.hp).toBeGreaterThan(0);
+    boss.hp = boss.maxHp * 0.09;
+    step(b, 20);
+    expect(boss.hp).toBe(0);
+    // Le seuil monte avec le niveau (+1,5 point par niveau).
+    const lv = arena('batman', 1, { levels: { batman: 5 } });
+    const x = debugSpawn(lv, { hp: 1000 });
+    x.hp = 400; // 400 − 141 × 1,4 = 202,6 < 265
+    step(lv, 20);
+    expect(x.hp).toBe(0);
   });
 
-  it('Superman : vision thermique qui brûle, souffle glacial (gèle 4 ennemis, ralentit les boss)', () => {
-    const e = arena('superman');
+  it('Superman (Givre) : souffle glacial sur tout le chemin toutes les 6 s, 4 % par rang, cumulable 3 fois, boss compris', () => {
+    const e = arena('superman', 2);
     const boss = debugSpawn(e, { hp: BIG * 10, distance: 20, bossId: 'cruella' });
     boss.x.powerIn = 1e9;
-    const lead = [19, 18, 17].map((d) => debugSpawn(e, { hp: BIG, distance: d }));
-    const fifth = debugSpawn(e, { hp: BIG, distance: 3 });
-    const first = step(e, 1);
-    expect(ofType(first, 'attack')[0]!.fx).toBe('superman:vision-thermique');
-    expect(ofType(first, 'hit')[0]!.damage).toBeCloseTo(D('superman'));
-    expect(boss.effects.burn).toBeCloseTo(D('superman') * 0.15);
-    const ev = step(e, 20 * 12);
-    expect(ofType(ev, 'ability').find((a) => a.name === 'Souffle glacial')!.targets).toHaveLength(4);
-    for (const x of lead) expect(x.effects.stunFor).toBeGreaterThan(1);
-    expect(fifth.effects.stunFor).toBeUndefined();
-    expect(boss.effects.slow).toBeCloseTo(0.3);
+    const far = debugSpawn(e, { hp: BIG, distance: 1 });
+    step(e, 20 * 6 + 1);
+    expect(far.effects.slow).toBeCloseTo(0.08);
+    expect(boss.effects.slow).toBeCloseTo(0.08);
+    step(e, 20 * 6 * 3);
+    expect(far.effects.slow).toBeCloseTo(0.24);
+    expect(far.x.frostStacks).toBe(3);
   });
 
-  it('Wonder Woman : épée qui éclabousse à 35 %, lasso qui ligote ou expose un boss', () => {
+  it('Wonder Woman (Moine) : Fureur sans mana toutes les 12 s (cadence +60 %, éclaboussure), partagée par les Wonder Woman reliées', () => {
     const e = arena('wonderwoman');
+    const twin = debugPlace(e, 0, 8, 'wonderwoman', 2);
     const t = debugSpawn(e, { hp: BIG, distance: 10 });
-    const n = debugSpawn(e, { hp: BIG, distance: 9.5 });
-    const hits = ofType(step(e, 1), 'hit');
-    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(D('wonderwoman'));
-    expect(hits.find((h) => h.enemy === n.uid)!.damage).toBeCloseTo(D('wonderwoman') * 0.35);
-    const ev = step(e, 20 * 10);
-    expect(ofType(ev, 'ability').find((a) => a.name === 'Lasso de vérité')!.targets).toEqual([t.uid]);
-    expect(t.effects.stunFor).toBeGreaterThan(1);
-    const b = arena('wonderwoman');
-    const boss = debugSpawn(b, { hp: BIG, distance: 10, bossId: 'ursula' });
-    boss.x.powerIn = 1e9;
-    step(b, 20 * 10 + 1);
-    expect(boss.effects.marked).toBeCloseTo(0.3);
+    const n = debugSpawn(e, { hp: BIG, distance: 10.3 });
+    const ev = step(e, 20 * 12 + 1);
+    expect(abilityNames(ev)).toContain('Fureur amazone');
+    expect(grid(e)[7]!.counters.powerFor).toBeGreaterThan(4.5);
+    expect(twin.counters.powerFor).toBeGreaterThan(4.5);
+    const hits = ofType(step(e, 20), 'hit').filter((h) => h.enemy === n.uid || h.enemy === t.uid);
+    expect(hits.some((h) => Math.abs(h.damage - D('wonderwoman') * 0.5) < 1e-6)).toBe(true);
   });
 
-  it('Green Lantern : constructions à tour de rôle (mur, marteau, mitrailleuse)', () => {
-    const e = arena('greenlantern');
-    const strong = debugSpawn(e, { hp: BIG * 2, distance: 5 });
-    for (let i = 0; i < 4; i++) debugSpawn(e, { hp: BIG, distance: 25 + i * 0.5 });
-    const ev = step(e, 20 * 24 + 1);
-    const names = abilityNames(ev).filter((x) => x.startsWith('Construction'));
-    expect(names).toEqual(['Construction : mur', 'Construction : marteau', 'Construction : mitrailleuse']);
-    expect(ofType(ev, 'hit').some((h) => h.enemy === strong.uid && Math.abs(h.damage - D('greenlantern') * 3) < 1e-6)).toBe(true);
-    const gatling = ofType(ev, 'attack').find((a) => a.fx === 'greenlantern:mitrailleuse')!;
-    expect(gatling.targets).toHaveLength(8);
-  });
-
-  it('Flash : 3 coups par attaque, tour du chemin à 300 % toutes les 12 s', () => {
-    const e = arena('flash');
-    const s = debugSpawn(e, { hp: BIG, shieldHits: 3, distance: 10 });
-    const hits = ofType(step(e, 1), 'hit').filter((h) => h.enemy === s.uid);
-    expect(hits).toHaveLength(3);
-    expect(s.shieldHits).toBe(0);
-    const others = [3, 6].map((d) => debugSpawn(e, { hp: BIG, distance: d }));
-    const ev = step(e, 20 * 12);
-    const lap = ofType(ev, 'ability').find((a) => a.name === 'Tour du chemin')!;
-    expect(lap.targets.sort()).toEqual([s.uid, ...others.map((o) => o.uid)].sort());
-    expect(ofType(ev, 'hit').some((h) => h.enemy === others[0]!.uid && Math.abs(h.damage - D('flash') * 3) < 1e-6)).toBe(true);
-  });
-
-  it('Aquaman : le trident transperce à 50 %, le kraken saisit 2 ennemis (150 %, arrêt 2 s)', () => {
-    const e = arena('aquaman');
-    const t = debugSpawn(e, { hp: BIG, distance: 20 });
-    const behind = debugSpawn(e, { hp: BIG, distance: 18 });
-    const third = debugSpawn(e, { hp: BIG, distance: 4 });
-    const hits = ofType(step(e, 1), 'hit');
-    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(D('aquaman'));
-    expect(hits.find((h) => h.enemy === behind.uid)!.damage).toBeCloseTo(D('aquaman') * 0.5);
-    expect(hits.some((h) => h.enemy === third.uid)).toBe(false);
-    const ev = step(e, 20 * 10);
-    expect(ofType(ev, 'ability').find((a) => a.name === 'Kraken')!.targets).toEqual([t.uid, behind.uid]);
-    expect(behind.effects.stunFor).toBeGreaterThan(1.5);
-  });
-
-  it('Cyborg : réseau (+15 % de vitesse aux voisines), surcharge système (+20 % à tout le plateau pendant 4 s), canon qui réduit l’armure', () => {
-    const e = arena('cyborg');
-    const ally = debugPlace(e, 0, 0, 'cmarvel');
-    const t = debugSpawn(e, { hp: BIG, armor: 0.3 });
-    const first = step(e, 1);
-    const idx = first.findIndex((a) => a.type === 'attack' && a.unit === 'cyborg');
-    expect((first[idx + 1] as { damage: number }).damage).toBeCloseTo(D('cyborg') * 0.7);
-    expect(t.effects.armorBreak).toBeCloseTo(0.1);
-    const ev = step(e, 20 * 12);
-    expect(abilityNames(ev)).toContain('Surcharge système');
-    expect(ally.counters.haste).toBeCloseTo(0.2);
-    expect(ally.counters.hasteFor).toBeGreaterThan(3.5);
-    // Boost de vitesse (archétype) : une voisine tire 15 % plus vite (10 s, avant la première surcharge).
-    const shots = (slot: number) => {
-      const x = arena('cyborg');
-      debugPlace(x, 0, slot, 'falcon');
-      debugSpawn(x, { hp: BIG });
-      return ofType(step(x, 20 * 10), 'attack').filter((a) => a.unit === 'falcon').length;
+  it('Green Lantern (Cultiste) : une cible de plus par Lantern relié (3 au plus), dégâts doublés à 5 reliés', () => {
+    const glHit = (slots: number[], at: number) => {
+      const e = quiet(deckWith('greenlantern'));
+      debugNoRange(e);
+      for (const s of slots) { const u = debugPlace(e, 0, s, 'greenlantern', 1); u.cooldown = s === at ? 0 : 99; }
+      for (let i = 0; i < 6; i++) debugSpawn(e, { hp: BIG, distance: 10 + i * 0.3 });
+      const atk = ofType(step(e), 'attack').filter((a) => a.unit === 'greenlantern');
+      const hits = ofType(step(e, 0), 'hit');
+      void hits;
+      return atk[0]!;
     };
-    const r = shots(8) / shots(0);
-    expect(r).toBeGreaterThan(1.1);
-    expect(r).toBeLessThan(1.2);
+    expect(glHit([0], 0).targets).toHaveLength(1);
+    expect(glHit([0, 1], 0).targets).toHaveLength(2);
+    expect(glHit([0, 1, 2, 3], 1).targets).toHaveLength(4);
+    const e = quiet(deckWith('greenlantern'));
+    debugNoRange(e);
+    for (const s of [0, 1, 2, 3, 4]) { const u = debugPlace(e, 0, s, 'greenlantern', 1); u.cooldown = s === 2 ? 0 : 99; }
+    debugSpawn(e, { hp: BIG });
+    const hit = ofType(step(e), 'hit')[0]!;
+    expect(hit.damage).toBeCloseTo(D('greenlantern') * 2);
+    expect(formationLength(grid(e), 2)).toBe(5);
   });
 
-  it('Supergirl : croissance (temps et éliminations), une charge par élimination, Éruption solaire à 8 charges', () => {
+  it('Flash (Cogneur) : rage quand le chemin est encombré (vitesse ×2, +50 % de dégâts, zone)', () => {
+    const e = arena('flash');
+    for (let i = 0; i < 11; i++) debugSpawn(e, { hp: BIG, distance: 10 + i * 0.2 });
+    const ev = step(e, 20 * 30);
+    expect(abilityNames(ev)).toContain('Rage');
+    const calm = arena('flash');
+    debugSpawn(calm, { hp: BIG });
+    expect(abilityNames(step(calm, 20 * 30))).not.toContain('Rage');
+    const f = grid(e)[7]!;
+    f.counters.rageFor = 5;
+    const hits = ofType(step(e, 20), 'hit');
+    expect(hits.some((h) => Math.abs(h.damage - D('flash') * 1.5) < 1e-6)).toBe(true);
+    expect(hits.some((h) => Math.abs(h.damage - D('flash') * 1.5 * 0.5) < 1e-6)).toBe(true);
+  });
+
+  it('Aquaman (Faucheuse) : chance d’engloutir la cible, jamais un boss', () => {
+    const e = arena('aquaman', 7);
+    for (let i = 0; i < 8; i++) debugSpawn(e, { hp: BIG, distance: 5 + i });
+    const ev = step(e, 20 * 60);
+    expect(abilityNames(ev).filter((x) => x === 'Kraken').length).toBeGreaterThan(3);
+    const b = arena('aquaman', 7);
+    const boss = debugSpawn(b, { hp: BIG, bossId: 'cruella' });
+    boss.x.powerIn = 1e9;
+    expect(abilityNames(step(b, 20 * 60))).not.toContain('Kraken');
+  });
+
+  it('Cyborg (Génie) : chaque fusion du plateau charge le Boom Tube (+5 % de vitesse et de dégâts par charge)', () => {
+    const e = arena('cyborg');
+    const cy = grid(e)[7]!;
+    debugPlace(e, 0, 0, 'falcon', 1);
+    debugPlace(e, 0, 1, 'falcon', 1);
+    e.apply({ type: 'merge', player: 'p1', from: 0, to: 1 });
+    step(e);
+    expect(cy.counters.vortex).toBe(1);
+    cy.counters.vortex = 10;
+    debugSpawn(e, { hp: BIG });
+    const hit = ofType(step(e, 20), 'hit').find((h) => h.damage > 0)!;
+    expect(hit.damage).toBeCloseTo(D('cyborg') * 1.5);
+    expect(UNITS.cyborg.ability.params.auraAttackSpeed).toBeCloseTo(0.15);
+  });
+
+  it('Supergirl (Barde) : croissance avec le temps et les éliminations ; toutes les 20 s, +20 % de vitesse pendant 10 s', () => {
     const e = arena('supergirl');
     const sg = grid(e)[7]!;
     debugSpawn(e, { hp: 1, distance: 5 });
     step(e, 1);
-    expect(sg.counters.solar).toBe(1);
     expect(sg.counters.growth).toBeCloseTo(0.03 + 0.004 * 0.05);
-    sg.counters.solar = 8;
-    sg.counters.growth = 16; // bonus = 0,28 × 16^0,75 = +224 %
-    sg.cooldown = 0;
-    const t = debugSpawn(e, { hp: BIG, distance: 25 });
-    const same = debugSpawn(e, { hp: BIG / 2, distance: 24 });
-    const other = debugSpawn(e, { hp: BIG / 2, distance: 2 });
-    const ev = step(e, 1);
-    const grown = D('supergirl') * (1 + 0.28 * Math.pow(16 + 0.004 * 0.05, 0.75));
-    expect(ofType(ev, 'hit').find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(grown, 1);
-    const flare = ofType(ev, 'ability').find((a) => a.name === 'Éruption solaire')!;
-    expect(flare.targets).toContain(same.uid);
-    expect(flare.targets).not.toContain(other.uid);
-    expect(ofType(ev, 'hit').some((h) => h.enemy === same.uid && Math.abs(h.damage - grown * 4) < 0.5)).toBe(true);
-    expect(sg.counters.solar).toBe(0);
+    const ev = step(e, 20 * 20);
+    expect(abilityNames(ev)).toContain('Éruption solaire');
+    expect(sg.counters.haste).toBeCloseTo(0.2);
+    expect(sg.counters.hasteFor).toBeGreaterThan(9);
   });
 
-  it('Shazam : la foudre frappe 3 ennemis à 200 %, puis 6 s de transformation (×2, rebonds à 60 %)', () => {
+  it('Shazam (Météore) : la foudre tombe toutes les 8 s (−0,6 s par rang) : 300 % en zone, étourdit 1 s sauf les boss', () => {
     const e = arena('shazam');
-    for (let i = 0; i < 5; i++) debugSpawn(e, { hp: BIG, distance: 10 + i });
-    const ev = step(e, 20 * 12);
-    const bolt = ofType(ev, 'ability').find((a) => a.name === 'SHAZAM !')!;
-    expect(bolt.targets).toHaveLength(3);
-    expect(ofType(ev, 'hit').filter((h) => Math.abs(h.damage - D('shazam') * 2) < 1e-6).length).toBeGreaterThanOrEqual(3);
-    const sh = grid(e)[7]!;
-    expect(sh.counters.powerFor).toBeGreaterThan(5);
-    sh.cooldown = 0;
-    const atk = step(e, 1);
-    expect(ofType(atk, 'attack')[0]).toMatchObject({ fx: 'shazam:foudre' });
-    const dmg = ofType(atk, 'hit').map((h) => h.damage);
-    expect(dmg[0]).toBeCloseTo(D('shazam') * 2);
-    expect(dmg.slice(1)).toEqual([expect.closeTo(D('shazam') * 1.2), expect.closeTo(D('shazam') * 1.2)]);
+    const a = debugSpawn(e, { hp: BIG, distance: 10 });
+    const ev = step(e, 20 * 8 + 1);
+    const ab = ofType(ev, 'ability').find((x) => x.name === 'SHAZAM !')!;
+    expect(ab.targets).toContain(a.uid);
+    expect(ofType(ev, 'hit').some((h) => Math.abs(h.damage - D('shazam') * 3) < 1e-6)).toBe(true);
+    expect(a.effects.stunFor).toBeGreaterThan(0.5);
+    const r7 = arena('shazam', 7);
+    debugSpawn(r7, { hp: BIG });
+    expect(abilityNames(step(r7, 20 * 5))).toContain('SHAZAM !'); // 8 − 0,6 × 6 = 4,4 s
   });
 
-  it('Martian Manhunter : intangible face aux boss, télépathie qui fait reculer 2 ennemis', () => {
+  it('Martian Manhunter (Mime) : intangible face aux pouvoirs de boss', () => {
     const b = arena('martian');
-    const boss = debugSpawn(b, { hp: BIG, distance: 1, bossId: 'galactus' });
-    void boss;
+    debugSpawn(b, { hp: BIG, distance: 1, bossId: 'galactus' });
     const pw = ofType(step(b, 1), 'bossPower')[0]!;
     expect(pw.slots).toEqual([]);
     expect(grid(b)[7]!.unit).toBe('martian');
-    const e = arena('martian');
-    const lead = [20, 19].map((d) => debugSpawn(e, { hp: BIG, distance: d }));
-    const third = debugSpawn(e, { hp: BIG, distance: 5 });
-    const ev = step(e, 20 * 10);
-    expect(ofType(ev, 'ability').find((a) => a.name === 'Télépathie')!.targets).toEqual(lead.map((x) => x.uid));
-    expect(lead[0]!.x.knockFor).toBeGreaterThan(1.5);
-    expect(third.x.knockFor).toBeUndefined();
   });
 
-  it('Robin : balayage une attaque sur 3, +20 % à côté de Batman', () => {
-    const e = arena('robin');
-    debugSpawn(e, { hp: BIG, distance: 10 });
-    debugSpawn(e, { hp: BIG, distance: 9 });
-    const ev = step(e, 20 * 2);
-    const atk = ofType(ev, 'attack').filter((a) => a.unit === 'robin');
-    expect(atk.slice(0, 3).map((a) => a.fx)).toEqual(['robin:baton', 'robin:baton', 'robin:balayage']);
-    expect(atk[2]!.targets).toHaveLength(2);
-    expect(ofType(ev, 'hit')[0]!.damage).toBeCloseTo(D('robin'));
-    const m = arena('robin');
-    debugPlace(m, 0, 8, 'batman');
-    debugSpawn(m, { hp: BIG });
-    const first = step(m, 1);
-    const idx = first.findIndex((a) => a.type === 'attack' && a.unit === 'robin');
-    expect((first[idx + 1] as { damage: number }).damage).toBeCloseTo(D('robin') * 1.2);
-  });
-
-  it('Batgirl : le piratage d’Oracle fait tomber le bouclier et l’armure du plus fort', () => {
+  it('Batgirl (Bombardier) : chaque coup explose à 60 % autour de la cible', () => {
     const e = arena('batgirl');
-    const strong = debugSpawn(e, { hp: BIG, shieldHits: 50, armor: 0.4, distance: 3 });
-    const weak = debugSpawn(e, { hp: 100, shieldHits: 50, distance: 20 });
-    const ev = step(e, 20 * 8);
-    expect(ofType(ev, 'ability').find((a) => a.name === 'Piratage d’Oracle')!.targets).toEqual([strong.uid]);
-    expect(strong.shieldHits).toBe(0);
-    expect(strong.effects.armorBreak).toBeCloseTo(0.3);
-    expect(weak.shieldHits).toBe(50);
+    const t = debugSpawn(e, { hp: BIG, distance: 10 });
+    const n = debugSpawn(e, { hp: BIG, distance: 10.4 });
+    const hits = ofType(step(e, 20), 'hit');
+    // Ciblage « premier » : l'ennemi le plus avancé (n) prend le coup, t l'explosion.
+    expect(hits.find((h) => h.enemy === n.uid)!.damage).toBeCloseTo(D('batgirl'));
+    expect(hits.find((h) => h.enemy === t.uid)!.damage).toBeCloseTo(D('batgirl') * 0.6);
   });
 
-  it('Catwoman : mana par élimination (ennemi touché, +2 au rang 2), un coup de fouet sur 5 ralentit de 30 %', () => {
-    const e = arena('catwoman', 2);
-    const t = debugSpawn(e, { hp: BIG });
-    step(e, 20 * 4);
-    expect(t.x.manaTag).toBe(2);
-    expect(t.effects.slow).toBeCloseTo(0.3);
-    const p = e.state.players[0]!;
-    const before = p.mana;
-    t.hp = 1;
-    const kill = ofType(step(e, 20), 'kill')[0]!;
-    expect(kill.mana).toBe(ENEMIES[t.kind].mana + 2); // +2 du cambriolage au rang 2
-    expect(p.mana - before).toBe(kill.mana);
-  });
-
-  it('Harley Quinn : maillet, confettis, tarte ou « Oups ! » au hasard', () => {
-    const e = arena('harley');
-    debugSpawn(e, { hp: BIG, distance: 10 });
-    debugSpawn(e, { hp: BIG, distance: 9.5 });
-    const ev = step(e, 20 * 30);
-    const fx = new Set(ofType(ev, 'attack').filter((a) => a.unit === 'harley').map((a) => a.fx));
-    for (const f of ['harley:maillet', 'harley:confettis', 'harley:tarte', 'harley:oups']) expect(fx).toContain(f);
-    const dmg = new Set(ofType(ev, 'hit').map((h) => Math.round(h.damage * 10) / 10));
-    expect(dmg).toContain(Math.round(D('harley') * 2.5 * 10) / 10);
-    expect(dmg).toContain(Math.round(D('harley') * 0.5 * 10) / 10);
-  });
-
-  it('Green Arrow : flèche-filet une sur 4, salve de 5 flèches à 70 % toutes les 8 s', () => {
+  it('Green Arrow (Mage de glace) : chaque flèche ralentit de 6 % de plus, 30 % au plus', () => {
     const e = arena('greenarrow');
-    const t = debugSpawn(e, { hp: BIG, distance: 25 });
-    for (let i = 0; i < 5; i++) debugSpawn(e, { hp: BIG, distance: 5 + i });
-    const ev = step(e, 20 * 3);
-    const atk = ofType(ev, 'attack').filter((a) => a.unit === 'greenarrow');
-    expect(atk[3]!.fx).toBe('greenarrow:filet');
-    expect(t.effects.stunFor).toBeGreaterThan(0);
-    const later = step(e, 20 * 5 + 1);
-    const volley = ofType(later, 'ability').find((a) => a.name === 'Salve de flèches')!;
-    expect(volley.targets).toHaveLength(5);
-    expect(ofType(later, 'hit').filter((h) => Math.abs(h.damage - D('greenarrow') * 0.7) < 1e-6).length).toBeGreaterThanOrEqual(5);
+    const t = debugSpawn(e, { hp: BIG });
+    step(e, 1);
+    expect(t.effects.slow).toBeCloseTo(0.06);
+    step(e, 20 * 10);
+    expect(t.effects.slow).toBeCloseTo(0.3);
   });
 });
 
 describe('extension DC : archétypes de stratégie (docs/roadmap.md)', () => {
-  it('Harley Quinn — Sacrifice → mana : fusionnée, elle rapporte le barème standard', () => {
+  it('Harley Quinn (Clown) — Sacrifice → mana : fusionnée, elle rapporte le barème standard', () => {
     for (const rank of [1, 3, 5]) {
       const e = arena('harley', rank);
       debugPlace(e, 0, 8, 'harley', rank);
@@ -348,7 +274,7 @@ describe('extension DC : archétypes de stratégie (docs/roadmap.md)', () => {
     }
   });
 
-  it('Martian Manhunter — Copieur : prend la forme d’une alliée de même rang à −25 %', () => {
+  it('Martian Manhunter (Mime) — Copieur : prend la forme d’une alliée de même rang à −25 %', () => {
     const e = arena('martian', 2);
     const m = grid(e)[7]!;
     const model = debugPlace(e, 0, 8, 'cmarvel', 2);
@@ -359,20 +285,29 @@ describe('extension DC : archétypes de stratégie (docs/roadmap.md)', () => {
     expect(m.status).toMatchObject({ copyMul: 0.75, copyOf: 'martian' });
   });
 
-  it('Robin — Booster de fusion : passe le relais, l’alliée gagne 1 rang (talent : +25 de mana)', () => {
-    const e = arena('robin', 3, { levels: { robin: 9 }, talents: { robin: ['a', 'a', 'a'] } });
-    const ally = debugPlace(e, 0, 8, 'batgirl', 3);
-    expect(dropAction(grid(e)[7], ally)).toBe('promote');
-    const before = e.state.players[0]!.mana;
-    e.apply({ type: 'promote', player: 'p1', from: 7, to: 8 });
-    const ev = step(e);
-    expect(grid(e)[7]).toBeNull();
-    expect(ally).toMatchObject({ unit: 'batgirl', rank: 4 });
-    expect(ofType(ev, 'mana')).toEqual([expect.objectContaining({ amount: 25, reason: 'promotion' })]);
-    expect(e.state.players[0]!.mana - before).toBe(25);
+  it('Robin (Ferrailleur) — Booster de fusion : l’alliée gagne 1 rang, parfois 2 (talent : +25 de mana)', () => {
+    let doubles = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const e = quiet(deckWith('robin'), { seed }, { levels: { robin: 5 }, talents: { robin: ['a'] } });
+      debugNoRange(e);
+      debugPlace(e, 0, 7, 'robin', 3);
+      const ally = debugPlace(e, 0, 8, 'batgirl', 3);
+      expect(dropAction(grid(e)[7], ally)).toBe('promote');
+      const before = e.state.players[0]!.mana;
+      e.apply({ type: 'promote', player: 'p1', from: 7, to: 8 });
+      const ev = step(e);
+      expect(grid(e)[7]).toBeNull();
+      expect([4, 5]).toContain(ally.rank);
+      if (ally.rank === 5) doubles++;
+      expect(ofType(ev, 'mana')).toEqual([expect.objectContaining({ amount: 25, reason: 'promotion' })]);
+      expect(e.state.players[0]!.mana - before).toBe(25);
+    }
+    // 20 % + 4 × 2,5 % = 30 % au niveau 5.
+    expect(doubles).toBeGreaterThan(4);
+    expect(doubles).toBeLessThan(22);
   });
 
-  it('Supergirl — Croissance : grandit avec le temps, garde la moitié de son bonus en fusion', () => {
+  it('Supergirl (Barde) — Croissance : grandit avec le temps, garde la moitié de son bonus en fusion', () => {
     const e = arena('supergirl');
     const sg = grid(e)[7]!;
     step(e, 20 * 10);
@@ -382,23 +317,37 @@ describe('extension DC : archétypes de stratégie (docs/roadmap.md)', () => {
     e.apply({ type: 'merge', player: 'p1', from: 7, to: 8 });
     step(e);
     const merged = grid(e)[8]!;
-    // La nouvelle unité (héros du deck au hasard) garde 50 % du bonus, converti sur sa propre courbe.
     const bonus = growthBonus(UNITS[merged.unit].ability.params, merged.counters.growth ?? 0);
     expect(bonus).toBeCloseTo(0.28 * Math.pow(16, 0.75) * 0.5, 2);
   });
 
-  it('Catwoman — Mana par élimination : le barème KILL_MANA suit son rang', () => {
+  it('Catwoman (Démonologue) — Mana par élimination : barème KILL_MANA × 2 selon son rang', () => {
     const e = arena('catwoman', 4);
     const t = debugSpawn(e, { hp: BIG });
     step(e, 20);
-    expect(t.x.manaTag).toBe(KILL_MANA[3]);
+    expect(t.x.manaTag).toBe(KILL_MANA[3] * 2);
+    const k = arena('catwoman', 2);
+    const v = debugSpawn(k, { hp: BIG });
+    step(k, 20);
+    v.hp = 1;
+    const kill = ofType(step(k, 20), 'kill')[0]!;
+    expect(kill.mana).toBe(ENEMIES[v.kind].mana * 10 + KILL_MANA[1] * 2);
   });
 
-  it('Cyborg — Boost de vitesse : clé générique auraAttackSpeed', () => {
-    expect(UNITS.cyborg.ability.params.auraAttackSpeed).toBeCloseTo(0.15);
+  it('Cyborg (Génie) — Boost de vitesse : clé générique auraAttackSpeed', () => {
+    const shots = (slot: number) => {
+      const x = arena('cyborg');
+      grid(x)[7]!.cooldown = 1e9;
+      debugPlace(x, 0, slot, 'falcon');
+      debugSpawn(x, { hp: BIG });
+      return ofType(step(x, 20 * 40), 'attack').filter((a) => a.unit === 'falcon').length;
+    };
+    const r = shots(8) / shots(0);
+    expect(r).toBeGreaterThan(1.1);
+    expect(r).toBeLessThan(1.2);
   });
 
-  it('Flash — Échangeur : échange sa case avec une alliée de même rang, Force véloce aux nouvelles voisines', () => {
+  it('Flash (Cogneur) — Échangeur : échange sa case avec une alliée de même rang, bonus aux nouvelles voisines', () => {
     const e = arena('flash', 2);
     const f = grid(e)[7]!;
     const ally = debugPlace(e, 0, 0, 'cmarvel', 2);
@@ -411,54 +360,19 @@ describe('extension DC : archétypes de stratégie (docs/roadmap.md)', () => {
     expect(nb.counters.boost).toBeCloseTo(0.2);
     expect(nb.counters.boostFor).toBeGreaterThan(4.9);
   });
-
-  it('Green Lantern — Formation : +15 % par Lantern aligné, zone à 40 % à 3 alignés', () => {
-    const glHit = (slots: number[], at: number) => {
-      const e = quiet(deckWith('greenlantern'));
-      debugNoRange(e);
-      for (const s of slots) { const u = debugPlace(e, 0, s, 'greenlantern', 1); u.cooldown = s === at ? 0 : 99; }
-      const t = debugSpawn(e, { hp: BIG, distance: 10 });
-      const n = debugSpawn(e, { hp: BIG, distance: 10.4 });
-      const hits = ofType(step(e), 'hit');
-      return { main: hits.find((h) => h.enemy === t.uid || h.enemy === n.uid)!.damage, count: hits.length };
-    };
-    expect(glHit([0], 0).main).toBeCloseTo(D('greenlantern'));
-    expect(glHit([0, 1], 0).main).toBeCloseTo(D('greenlantern') * 1.15);
-    const three = glHit([5, 6, 7], 6);
-    expect(three.main).toBeCloseTo(D('greenlantern') * 1.3);
-    expect(three.count).toBe(2); // la cible et sa voisine (zone)
-    expect(formationLength(grid(quietWithLine()), 6)).toBe(3);
-  });
 });
 
-function quietWithLine(): Engine {
-  const e = quiet(deckWith('greenlantern'));
-  for (const s of [5, 6, 7]) debugPlace(e, 0, s, 'greenlantern', 1);
-  return e;
-}
-
 describe('extension DC : talents et passifs d’éveil lus par le moteur', () => {
-  it('Harley (talent « Pas de Oups ! ») ne fait jamais « Oups ! »', () => {
-    const e = arena('harley', 1, { levels: { harley: 5 }, talents: { harley: ['b'] } });
-    debugSpawn(e, { hp: BIG });
-    const fx = ofType(step(e, 20 * 40), 'attack').map((a) => a.fx);
-    expect(fx).not.toContain('harley:oups');
+  it('Superman, talent « Hiver éternel » : le souffle se cumule 5 fois', () => {
+    const e = arena('superman', 1, { levels: { superman: 9 }, talents: { superman: ['a', 'a', 'a'] } });
+    const t = debugSpawn(e, { hp: BIG });
+    step(e, 20 * 6 * 5 + 1);
+    expect(t.x.frostStacks).toBe(5);
   });
 
-  it('Green Lantern ★10 : les trois constructions à la fois', () => {
-    const e = arena('greenlantern', 1, { awakening: { greenlantern: 10 } });
-    for (let i = 0; i < 4; i++) debugSpawn(e, { hp: BIG, distance: 20 + i });
-    const names = abilityNames(step(e, 20 * 8 + 1)).filter((x) => x.startsWith('Construction'));
-    expect(names).toEqual(['Construction : mur', 'Construction : marteau', 'Construction : mitrailleuse']);
-  });
-
-  it('Batman ★10 : la bombe fumigène couvre tout le chemin', () => {
-    const e = arena('batman', 1, { awakening: { batman: 10 } });
-    const far = debugSpawn(e, { hp: BIG, distance: 1 });
-    debugSpawn(e, { hp: BIG, distance: 25 });
-    step(e, 20 * 10 + 1);
-    expect(far.effects.marked).toBeCloseTo(0.2);
-    expect(far.effects.stunFor).toBeDefined(); // ★8 : gaz incapacitant
+  it('Batman ★10 : seuil d’exécution +7 points (★4 et ★10)', () => {
+    const base = UNITS.batman.ability.params;
+    expect(resolveUnitParams('batman', base, 1, undefined, 10).executeThreshold).toBeCloseTo(0.205 + 0.07);
   });
 });
 

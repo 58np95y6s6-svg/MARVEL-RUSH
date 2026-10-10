@@ -66,6 +66,8 @@ export interface EnemyExtra {
   antiLife?: number;      // Darkseid : Équation d'Anti-Vie déjà annoncée
   antiLifeIn?: number;    // Darkseid : délai avant l'effet de l'Équation
   powerUses?: number;     // Darkseid (et son lieutenant) : alternance Rayons Oméga / Boom Tube
+  frostStacks?: number;   // Superman (Givre) : cumuls du souffle glacial tant que le ralentissement dure
+  coldSlow?: number;      // Green Arrow (Mage de glace) : ralentissement cumulé par ses flèches
 }
 
 export interface SimEnemy extends EnemyInstance {

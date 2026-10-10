@@ -13,7 +13,7 @@ import {
 } from './types';
 import {
   DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
-  SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, spawnRand,
+  SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, rand, spawnRand,
   type Ctx, type PlayerInfo, type SimEnemy, type SimPlayer, type SimState, type SimUnit, type TeamAgg,
 } from './internal';
 import { deriveSeed } from './rng';
@@ -637,7 +637,8 @@ function applyCommand(ctx: Ctx, c: Command): void {
       sacrifice(ctx, pi, c.from, a);
       p.grid[c.from] = null;
       b.rank += 1;
-      if (prm.promoteMana) p.mana += prm.promoteMana;
+      // Ferrailleur (Robin) : chance de faire monter l'alliée de 2 rangs.
+      if (prm.promoteDoubleChance && b.rank < MAX_RANK && rand(ctx) < prm.promoteDoubleChance) b.rank += 1;
       if (prm.promoteBoost) { b.counters.boost = prm.promoteBoost; b.counters.boostFor = 10; }
       onRankUp(ctx, pi, c.to);
       emit(ctx, { type: 'promote', player: p.id, from: c.from, to: c.to, unit: b.unit, rank: b.rank });

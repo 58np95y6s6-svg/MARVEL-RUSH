@@ -199,10 +199,6 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
   let potion = 0;
   for (const u of p.grid) if (u && (u.counters.killManaFor ?? 0) > EPS) potion = Math.max(potion, u.counters.killMana ?? 0);
   mana *= 1 + potion;
-  if (unit && effectiveId(unit) === 'supergirl') {
-    // Supergirl : une charge solaire par élimination (Éruption solaire).
-    unit.counters.solar = (unit.counters.solar ?? 0) + 1;
-  }
   if (unit) growOnKill(ctx, player, unit);
   // Mana par élimination (Tiana) : versé au joueur de l'unité qui a touché l'ennemi.
   const tag = e.x.manaTag ?? 0;
@@ -359,6 +355,10 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Shang-Chi)
   if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (Mulan)
   if (prm.bossWaveAttackSpeedMul && ctx.st.phase === 'boss') mul *= prm.bossWaveAttackSpeedMul;          // Tireur d'élite (Falcon)
+  // Extension DC.
+  if (prm.vortexSpeed) mul *= 1 + prm.vortexSpeed * (u.counters.vortex ?? 0);                            // Génie (Cyborg)
+  if (prm.rageSpeed && (u.counters.rageFor ?? 0) > EPS) mul *= 1 + prm.rageSpeed;                        // Cogneur (Flash)
+  if (prm.powerSpeed && (u.counters.powerFor ?? 0) > EPS) mul *= 1 + prm.powerSpeed;                     // Moine (Wonder Woman)
   return mul;
 }
 
@@ -392,6 +392,8 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
     dmg *= 1 + prm.dancerDamage * Math.max(0, others);
   }
   if (prm.evenDamageMul && countOnBoard(ctx, player, id) % 2 === 0) dmg *= prm.evenDamageMul;             // Pyrotechnicien
+  if (prm.vortexDamage) dmg *= 1 + prm.vortexDamage * (u.counters.vortex ?? 0);                          // Génie (Cyborg)
+  if (prm.rageDamage && (u.counters.rageFor ?? 0) > EPS) dmg *= 1 + prm.rageDamage;                       // Cogneur (Flash)
   if (prm.chargeDamage) {                                                                                  // Tesla
     const max = Math.max(1, (prm.chargeMax ?? 1) * u.rank);
     dmg *= 1 + prm.chargeDamage * Math.min(1, (u.counters.charges ?? 0) / max);
