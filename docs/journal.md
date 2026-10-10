@@ -42,10 +42,12 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 | Date (minuit, Paris) | Extension | Branche | État |
 |---|---|---|---|
 | Dimanche 18/10/2026 | DC Comics | `extension/dc` | prête à publier (vérifiée le 10/10, d36f950) |
-| Dimanche 25/10/2026 | Transformers | `extension/transformers` | en préparation |
+| Dimanche 25/10/2026 | Transformers | `extension/transformers` | prête à publier (vérifiée le 10/10, 737619b) |
 | Dimanche 01/11/2026 | Pixar | `extension/pixar` | en préparation |
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
+
+**Branches empilées (10/10)** : `extension/dc` contient `main` (Jouer à deux, équilibrage Rush Royale) ; `extension/transformers` contient `extension/dc` ; `extension/pixar` contient `extension/transformers`. Chaque publication est donc une fusion simple de la branche du jour dans `main`, à condition de les publier dans l'ordre (DC, puis Transformers, puis Pixar).
 
 ## Extension DC — branche `extension/dc`
 
@@ -53,8 +55,9 @@ Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-dc`. Con
 - Héros (15) : batman, superman, wonderwoman, flash, aquaman, greenlantern, cyborg, supergirl, shazam, robin, batgirl, catwoman, harley, martian, greenarrow.
 - Gros boss (5) : joker, luthor, bane, sinestro, blackadam. Boss final : darkseid.
 - Agents : DC Contenu et moteur, DC Dessins, DC Maps.
+- Fusion de `main` le 10/10 (Coop, présence, équilibrage Rush Royale) : les héros DC jouent en Coop Infini et en Coop Niveaux (chapitres 1 à 6) ; les chapitres Coop DC restent dans `docs/campagne-coop.md` (non codés).
 
-État : en préparation.
+État : prête à publier (18/10).
 
 ## Extension Transformers — branche `extension/transformers`
 
@@ -62,6 +65,7 @@ Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-tf`, à 
 - Héros (15) : optimus, bumblebee, ironhide, ratchet, jazz, arcee, grimlock, wheeljack, hotrod, elita, bulkhead, sideswipe, prowl, mirage, ultramagnus. Mécanique propre : transformation robot ↔ véhicule (`src/engine/transformers.ts`, commande `transform`).
 - Gros boss (5) : starscream, soundwave, shockwave, devastator, blitzwing. Boss final : megatron (dans la rotation). Boss cosmique des modes infinis : unicron (vague 150).
 - Chapitres 10 à 12 (numéros libres de toute collision avec DC 7 à 9) ; la campagne suit l'ordre des numéros installés.
-- À la fusion avec DC : ajouter `cyborg` à l'équipe `machines`, la rotation `dc` à `BOSS_POOLS` (`BossPool`), et garder les deux `finalBossAt` (Darkseid 100, Unicron 150).
+- Fusion avec DC faite le 10/10 (la branche contient `extension/dc`, donc `main`) : `cyborg` dans l'équipe `machines` ; `BossPool` = `tous` | `marvel-disney` | `dc` | `transformers` ; chapitres 7 à 9 (DC) puis 10 à 12 (seuils 255, 285, 315 étoiles).
+- Boss final des modes infinis (`finalBossAt`), par ordre de priorité quand deux paliers tombent sur la même vague : **Unicron (150, 300…) > Darkseid (100, 200…) > Thanos (50, 150…)**. Rotation `tous` : 50 Thanos, 100 Darkseid, 150 Unicron, 200 Darkseid, 250 Thanos, 300 Unicron ; `marvel-disney` : Thanos seul ; `dc` : Darkseid à chaque palier ; `transformers` : Unicron seul. En campagne, les boss finaux sont ceux des niveaux (Thanos 6-10, Darkseid 9-10, Megatron 12-10).
 
 État : prête à publier (25/10).
