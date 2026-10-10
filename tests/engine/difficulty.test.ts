@@ -62,8 +62,9 @@ describe('difficulté de campagne : effectif et PV (script)', () => {
     expect(spawnInterval(1, 2)).toBeCloseTo(WAVE_RULES.spawnIntervalStart / 2);
   });
 
-  it('waveHpGrowth remplace la croissance du 1er bloc de 10 vagues (le taux monte ensuite de 25 % par bloc)', () => {
+  it('waveHpGrowth (campagne) remplace la croissance du 1er bloc de 10 vagues (le taux monte ensuite de 25 % par bloc, sans le frein des modes infinis)', () => {
     expect(waveHp(20, 1.05)).toBeCloseTo(WAVE_RULES.baseHp * Math.pow(1.05, 10) * Math.pow(1 + 0.05 * (1 + WAVE_RULES.hpGrowthStep), 9));
+    expect(waveHp(35, 1.05)).toBeCloseTo(waveHp(20, 1.05) * Math.pow(1 + 0.05 * (1 + WAVE_RULES.hpGrowthStep), 1) * Math.pow(1 + 0.05 * (1 + 2 * WAVE_RULES.hpGrowthStep), 10) * Math.pow(1 + 0.05 * (1 + 3 * WAVE_RULES.hpGrowthStep), 4));
     const e = createEngine({ mode: 'solo', seed: 4, mapId: 'x', players: [setup()], targetWaves: 30, script: { waveHpGrowth: 1.05, enemyHpMultiplier: 2 } });
     reachWave(e, 4);
     stepKilling(e, 1);
