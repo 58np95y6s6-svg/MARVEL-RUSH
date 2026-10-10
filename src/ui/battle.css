@@ -66,6 +66,11 @@
 .mr-bossbar.small .mr-boss-track { border-color: #b8bed0; }
 .mr-boss-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: linear-gradient(#ff6a5a, #c0263a); }
 .mr-bossbar.small .mr-boss-fill { background: linear-gradient(#ffb36a, #e0702a); }
+/* Coop : deux boss, deux segments (le mien à gauche, celui de la partenaire à droite). */
+.mr-bossbar.duo .mr-boss-fill.b { display: none; }
+.mr-bossbar.duo.two .mr-boss-fill { right: calc(50% + 3px); }
+.mr-bossbar.duo.two .mr-boss-fill.b { display: block; left: calc(50% + 3px); right: 0; opacity: .85; }
+.mr-bossbar.duo.two .mr-boss-track::after { content: ''; position: absolute; left: calc(50% - 3px); top: 0; bottom: 0; width: 6px; background: #1d1733; }
 .mr-boss-pct { position: absolute; inset: 0; text-align: center; font-size: 26px; line-height: 24px; }
 .mr-rage { color: #ff5a4a; animation: mr-blink .5s infinite alternate; }
 @keyframes mr-blink { to { opacity: .4; } }

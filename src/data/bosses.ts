@@ -140,6 +140,21 @@ export const BOSS_STATS = {
   gateLives: 2,
 };
 
+/**
+ * Coop (§5.2) : un boss (ou mini-boss) par branche, chacun du côté de son joueur ; il fait tout le chemin (sa
+ * branche puis le tronc commun) et ses pouvoirs visent le plateau de son côté. PV de chaque boss = part `hpShare`
+ * des PV d'un boss Solo de la même vague ; plus lents qu'en Solo pour laisser une vraie fenêtre de tir.
+ */
+export const COOP_BOSS = {
+  hpShare: 0.65,
+  /** Coop Niveaux, boss imposé du niveau (script.endOnBossKill) : part des PV de chaque boss (les deux à abattre). */
+  levelHpShare: 1.4,
+  /** Gros boss : cases par seconde (Solo : 0,5). */
+  speed: 0.35,
+  /** Mini-boss : × vitesse d'un monstre commun (Solo : 0,8). */
+  smallSpeedMul: 0.7,
+};
+
 export type StoneId = 'puissance' | 'espace' | 'realite' | 'ame' | 'temps' | 'esprit';
 
 export interface StoneDef {

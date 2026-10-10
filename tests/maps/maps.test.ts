@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_MAPS, ARENAS, ARENA_OF_BOSS, MAPS, arenaForBoss, getMap, mapForDeck, mapsForUniverse } from '../../src/maps/index';
-import { PATH_CELLS, PATH_SHAPES, coopLayout, lanePoint, polylineLength, rectHitsPlay, soloLayout } from '../../src/maps/layout';
+import { COOP_TRUNK_MIN_CELLS, PATH_CELLS, PATH_SHAPES, coopLayout, lanePoint, polylineLength, rectHitsPlay, soloLayout } from '../../src/maps/layout';
 import type { BossId } from '../../src/data/types';
 
 const within = (v: number, ref: number, tol = 0.1) => Math.abs(v - ref) / ref <= tol;
@@ -11,9 +11,18 @@ describe('géométrie du plateau', () => {
     expect(s.lane.cells).toBe(PATH_CELLS);
     expect(polylineLength(s.lane.points) / s.lane.cell).toBeCloseTo(PATH_CELLS, 1);
     const c = coopLayout(shape);
-    expect(within(c.branchA.cells + c.trunk.cells, PATH_CELLS)).toBe(true);
-    expect(within(c.branchB.cells + c.trunk.cells, PATH_CELLS)).toBe(true);
-    expect(c.trunk.cells).toBeGreaterThanOrEqual(1.5);
+    // Coop : tronc long (il longe les plateaux sur toute leur largeur), chemin complet plus long qu'en Solo.
+    expect(c.trunk.cells).toBeGreaterThanOrEqual(COOP_TRUNK_MIN_CELLS);
+    expect(c.branchA.cells + c.trunk.cells).toBeGreaterThanOrEqual(PATH_CELLS);
+    expect(c.branchB.cells + c.trunk.cells).toBeGreaterThanOrEqual(PATH_CELLS);
+    expect(c.trunk.points[1]!.x).toBeLessThanOrEqual(c.partner.grid.x); // jusqu'au bord gauche des plateaux
+    // Dernière ligne droite de chaque branche avant la jonction (règle de ciblage de la Coop).
+    for (const [lane, cross] of [[c.branchA, c.crossA], [c.branchB, c.crossB]] as const) {
+      expect(cross).toBeGreaterThan(lane.cells * 0.4);
+      expect(lane.cells - cross).toBeGreaterThanOrEqual(2);
+      const p = lanePoint(lane, cross + 0.05), q = lanePoint(lane, lane.cells);
+      expect(Math.abs(p.x - q.x)).toBeLessThan(1); // segment vertical jusqu'à la jonction
+    }
     for (const lane of [s.lane, c.branchA, c.branchB, c.trunk])
       for (const p of lane.points) {
         expect(p.x).toBeGreaterThanOrEqual(0);
@@ -48,8 +57,9 @@ describe('maps', () => {
   it.each(ALL_MAPS.map((m) => [m.id, m] as const))('%s : longueurs, ambiances, couches', (_id, m) => {
     expect(within(m.pathLength, PATH_CELLS)).toBe(true);
     const lc = m.pathLengthCoop!;
-    expect(within(lc.a + lc.tronc, PATH_CELLS)).toBe(true);
-    expect(within(lc.b + lc.tronc, PATH_CELLS)).toBe(true);
+    expect(lc.tronc).toBeGreaterThanOrEqual(COOP_TRUNK_MIN_CELLS);
+    expect(lc.a + lc.tronc).toBeGreaterThanOrEqual(PATH_CELLS);
+    expect(lc.b + lc.tronc).toBeGreaterThanOrEqual(PATH_CELLS);
     const labels = new Set(m.ambience);
     expect(labels.size).toBeGreaterThanOrEqual(2);
     expect(labels.size).toBeLessThanOrEqual(3);

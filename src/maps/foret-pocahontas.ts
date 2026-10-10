@@ -31,7 +31,7 @@ function anims(c: Ctx) {
   const leaves = (x: number, y: number) => leaf(x, y, pal.leaf) + leaf(x + 34, y + 16, pal.leaf2) + leaf(x + 12, y + 30, pal.leaf);
   return [
     across('Feuilles colorées dans le vent', c.mode === 'solo' ? 150 : 56, 11, leaves, { w: 70, h: 50 }),
-    across('Feuilles colorées dans le vent', d.y, 14, leaves, { w: 70, h: 50 }, { phase: 0.5, x0: c.mode === 'solo' ? 150 : 170, x1: c.mode === 'solo' ? 800 : 420 }),
+    across('Feuilles colorées dans le vent', c.mode === 'solo' ? d.y : 90, 14, leaves, { w: 70, h: 50 }, { phase: 0.5, x0: c.mode === 'solo' ? 150 : 170, x1: c.mode === 'solo' ? 800 : 420 }),
     at('Raton laveur curieux', 'bob', a, 34, cel(circleS(a.x, a.y + 6, 20), '#8a8a92') + `<path d="M${a.x - 14} ${a.y} h28" stroke="${INK}" stroke-width="8"/><circle cx="${a.x - 7}" cy="${a.y}" r="3" fill="#fff"/><circle cx="${a.x + 7}" cy="${a.y}" r="3" fill="#fff"/>`, { period: 2.8, amp: 6 }),
     at('Reflets de la rivière', 'blink', b, 34, `<path d="M${b.x - 26} ${b.y} q13 -8 26 0 t26 0" stroke="#e8f8f8" stroke-width="5" fill="none" stroke-linecap="round"/>`, { period: 2, min: 0.2 }),
   ];

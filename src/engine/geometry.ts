@@ -30,6 +30,11 @@ export interface BoardGeometry {
   shape: PathShape;
   /** Index = index du joueur dans la configuration. */
   players: PlayerGeometry[];
+  /**
+   * Coop : début de la dernière ligne droite de chaque branche avant la jonction, en fraction de sa longueur.
+   * Les ennemis de la branche de la partenaire ne sont touchables qu'à partir de là (règle « après le virage »).
+   */
+  cross?: { a: number; b: number };
 }
 
 /** Repères de portée, en cases. */
@@ -94,7 +99,10 @@ export function boardGeometry(mode: GameMode, shape: string | undefined): BoardG
         tronc: toGrid(b, flip, L.trunk.points),
       },
     });
-    geo = { mode: 'coop', shape: s, players: [lanes(L.self, false), lanes(L.partner, true)] };
+    geo = {
+      mode: 'coop', shape: s, players: [lanes(L.self, false), lanes(L.partner, true)],
+      cross: { a: L.crossA / L.branchA.cells, b: L.crossB / L.branchB.cells },
+    };
   }
   cache.set(key, geo);
   return geo;
@@ -127,6 +135,26 @@ export function enemyGridPos(
   return polylineAt(pl, laneLength > 0 ? distance / laneLength : 0);
 }
 
+/** Branche propre d'un joueur en Coop (index 0 : 'a', index 1 : 'b'). */
+export const ownLane = (player: number): LaneId => (player === 1 ? 'b' : 'a');
+
+/**
+ * Règle Coop (§5.2) : mes unités touchent les ennemis de ma branche et du tronc commun ; ceux de la branche de
+ * ma partenaire seulement sur la dernière ligne droite avant la jonction (`cross`). Toujours vrai en Solo.
+ * S'applique aussi aux portées « toute la map ».
+ */
+export function canTarget(geo: BoardGeometry, player: number, lane: LaneId, distance: number, laneLength: number): boolean {
+  if (geo.mode !== 'coop' || lane === 'tronc' || lane === ownLane(player)) return true;
+  const f = lane === 'a' || lane === 'b' ? geo.cross?.[lane] ?? 0 : 0;
+  return laneLength > 0 ? distance / laneLength >= f - 1e-9 : true;
+}
+
+/** Fraction de la branche `lane` à partir de laquelle `player` peut toucher (0 = toute la branche). */
+export function targetableFrom(geo: BoardGeometry, player: number, lane: LaneId): number {
+  if (geo.mode !== 'coop' || lane === 'tronc' || lane === ownLane(player)) return 0;
+  return lane === 'a' || lane === 'b' ? geo.cross?.[lane] ?? 0 : 0;
+}
+
 /** Centre de la case `slot` en coordonnées de grille. */
 export function slotCenter(slot: number): GridPoint {
   return { col: slot % GRID_COLS, row: Math.floor(slot / GRID_COLS) };
@@ -147,12 +175,13 @@ export function inReach(slot: number, range: number, p: GridPoint | null): boole
 export function coveredSpans(geo: BoardGeometry, player: number, lane: LaneId, slot: number, range: number, samples = 240): [number, number][] {
   const pl = (geo.players[player] ?? geo.players[0])!.lanes[lane];
   if (!pl) return [];
-  if (!Number.isFinite(range)) return [[0, 1]];
+  const from = targetableFrom(geo, player, lane);
+  if (!Number.isFinite(range)) return [[from, 1]];
   const out: [number, number][] = [];
   let start = -1;
   for (let i = 0; i <= samples; i++) {
     const t = i / samples;
-    const ok = inReach(slot, range, polylineAt(pl, t));
+    const ok = t >= from - 1e-9 && inReach(slot, range, polylineAt(pl, t));
     if (ok && start < 0) start = t;
     if (!ok && start >= 0) { out.push([start, (i - 1) / samples]); start = -1; }
   }

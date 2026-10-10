@@ -13,7 +13,7 @@ import {
   effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors,
   progress, selectTarget, sendToStart, teamFor, unitActive, unitHit, unitParams, within,
 } from './combat';
-import { enemyGridPos, inReach, unitRange } from './geometry';
+import { canTarget, enemyGridPos, inReach, unitRange } from './geometry';
 import { formationSplash, growOverTime } from './archetypes';
 
 /** Recharge de la compétence périodique selon le rang (`abilityCooldownPerRank`, Stase). */
@@ -134,12 +134,12 @@ export function updateUnits(ctx: Ctx, player: number): void {
     if ((u.counters.rockfallFor ?? 0) > EPS) rockfall(ctx, player, slot, u);
     if (u.counters.potion) { delete u.counters.potion; potion(ctx, player, slot, u); }
     const disabled = isDisabled(u);
-    let enemies = aliveAll(ctx);
+    let enemies = visibleTo(ctx, player);
     if (!disabled && (u.counters.cd ?? 1) <= EPS) {
       const res = timedAbility(ctx, player, slot, u, enemies, inRange(ctx, player, slot, u, enemies));
       if (res !== false) {
         u.counters.cd = abilityCd(unitParams(ctx, player, id), u.rank) + (typeof res === 'number' ? res : 0);
-        enemies = aliveAll(ctx);
+        enemies = visibleTo(ctx, player);
       }
     }
     // Soutiens « sans cible » de Rush Royale (Statue, Bannière, Meule) : pas d'attaque.
@@ -156,12 +156,12 @@ export function updateUnits(ctx: Ctx, player: number): void {
       performAttack(ctx, player, slot, u, enemies, pool);
       const team = teamFor(ctx, player, id);
       if (team.doubleAttackChance > 0 && rand(ctx) < team.doubleAttackChance) {
-        const again = aliveAll(ctx);
+        const again = visibleTo(ctx, player);
         const againPool = inRange(ctx, player, slot, u, again);
         if (againPool.length > 0) performAttack(ctx, player, slot, u, again, againPool);
       }
       u.cooldown += def.attackInterval;
-      enemies = aliveAll(ctx);
+      enemies = visibleTo(ctx, player);
       if (enemies.length === 0) { u.cooldown = Math.max(0, u.cooldown); break; }
     }
   }
@@ -201,7 +201,7 @@ function rockfall(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
   c.rockfallTick -= 1;
   const prm = unitParams(ctx, player, 'hulk');
   const range = unitRange(UNITS.hulk);
-  const zone = aliveAll(ctx).filter((e) => ctx.debugNoRange
+  const zone = visibleTo(ctx, player).filter((e) => ctx.debugNoRange
     || inReach(slot, range, enemyGridPos(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane))));
   for (const e of zone) {
     const lost = e.maxHp - e.hp;
@@ -217,7 +217,7 @@ function potion(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
   const brews = 1 + (rand(ctx) < (prm.potionTwice ?? 0) ? 1 : 0);
   for (let b = 0; b < brews; b++) {
     const kind = Math.min(3, Math.floor(rand(ctx) * 4));
-    const enemies = inRange(ctx, player, slot, u, aliveAll(ctx));
+    const enemies = inRange(ctx, player, slot, u, visibleTo(ctx, player));
     let targets: SimEnemy[] = [];
     if (kind === 0) {
       const allies = p.grid.filter((x): x is SimUnit => !!x && x !== u);
@@ -348,16 +348,27 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
 // ───────────── Attaques de base ─────────────
 
 /**
+ * Ennemis vivants que le joueur peut viser (Coop : branche de la partenaire seulement sur sa dernière ligne
+ * droite avant la jonction ; voir canTarget). Effets secondaires (rebonds, éclaboussures) compris.
+ */
+export function visibleTo(ctx: Ctx, player: number): SimEnemy[] {
+  const all = aliveAll(ctx);
+  if (!ctx.coop) return all;
+  return all.filter((e) => canTarget(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane)));
+}
+
+/**
  * Ennemis dans la zone de touche de l'unité posée sur `slot` (§4.1, « Portées d'attaque »).
  * La cible principale d'une attaque ou d'une compétence est toujours choisie dans cette liste ;
  * les effets secondaires (éclaboussures, rebonds, chaînes) suivent leurs propres règles, sur tout le chemin.
  */
 export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): SimEnemy[] {
   const range = unitRange(effectiveDef(u));
-  if (!Number.isFinite(range) || ctx.debugNoRange) return enemies;
+  if (ctx.debugNoRange) return enemies;
   const out: SimEnemy[] = [];
   for (const e of enemies) {
-    if (inReach(slot, range, enemyGridPos(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane)))) out.push(e);
+    if (!canTarget(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane))) continue;
+    if (!Number.isFinite(range) || inReach(slot, range, enemyGridPos(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane)))) out.push(e);
   }
   return out;
 }

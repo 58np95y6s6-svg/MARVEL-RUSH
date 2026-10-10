@@ -9,12 +9,13 @@ import type { Engine, EngineEvent, EnemyInstance, LaneId, PlayerId, UnitInstance
 import { GRID_SIZE } from '../engine';
 import type { BossId, UnitId } from '../data/types';
 import type { MapDefX } from '../maps/kit';
+import { boardSide, coopCellCenter } from './sides';
 import { SCREEN, layoutFor, type CoopLayout, type Lane, type PathShape, type SoloLayout } from '../maps/layout';
 import { arenaForBoss } from '../maps';
 import type { AmbientAnim } from '../maps/kit';
 import { loadTexture } from '../art';
 import { UNITS } from '../data/units';
-import { boardGeometry, coveredSpans, unitRange, type BoardGeometry } from '../engine/geometry';
+import { boardGeometry, coveredSpans, targetableFrom, unitRange, type BoardGeometry } from '../engine/geometry';
 import { LaneSampler } from './path';
 import {
   DMG_FONT, Numbers, Particles, Shots, formatDamage, installDamageFont, makeFxTextures, type FxTextures,
@@ -270,7 +271,9 @@ export class BattleScene {
     this.numbers = new Numbers(this.numLayer);
     // --- effets de combat (agent VFX)
     this.vfx = new CombatFx(this.app.renderer, { ground: this.boardFx, shots: this.shotLayer, top: this.partLayer }, {
-      cell: (slot) => this.cellCenter(slot),
+      // Clé ≥ 100 : case du plateau de la partenaire (effets différés, hors de withCells).
+      cell: (slot) => (slot >= 100 ? this.partnerCell(slot - 100) : this.cellCenter(slot)),
+      cellKey: (slot) => (this.fxPi >= 0 && this.fxPi !== this.meIndex ? slot + 100 : slot),
       enemy: (uid) => this.enemies.get(uid),
       enemies: () => this.enemies.values(),
       shake: (amp, dur) => this.shake(amp, dur),
@@ -468,9 +471,8 @@ export class BattleScene {
 
   /** Coop : centre d'une case du plateau de la partenaire (en haut, rangées retournées). */
   partnerCell(slot: number): { x: number; y: number } {
-    const b = this.coop?.partner ?? this.layout.board;
-    const row = Math.floor(slot / 5), col = slot % 5;
-    const r = b.cells[(2 - row) * 5 + col]!;
+    if (this.coop) return coopCellCenter(this.coop, 'partner', slot);
+    const r = this.layout.board.cells[slot]!;
     return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
   }
 
@@ -730,7 +732,7 @@ export class BattleScene {
   private onEvent(ev: EngineEvent): void {
     switch (ev.type) {
       case 'summon': {
-        const mine = ev.player === this.player;
+        const mine = boardSide(this.player, ev.player) === 'self';
         if (!mine && !this.coop) break;
         this.syncUnits();
         const v = (mine ? this.units : this.punits)[ev.slot];
@@ -975,6 +977,18 @@ export class BattleScene {
           }
           p.stroke({ width, color: col, alpha, cap: 'round', join: 'round' });
         }
+      }
+    }
+    // Coop : repère de la dernière ligne droite de la branche de la partenaire (avant, ses ennemis sont intouchables).
+    if (this.coop) {
+      const other: LaneId = this.myLane === 'a' ? 'b' : 'a';
+      const s = this.lanes.get(other);
+      const from = targetableFrom(this.geo, this.meIndex, other);
+      if (s && from > 0) {
+        s.at(from * s.cells);
+        const w = lane.width * 0.62;
+        p.moveTo(s.x - w, s.y).lineTo(s.x + w, s.y).stroke({ width: 10, color: 0x1d1733, alpha: 0.9, cap: 'round' });
+        p.moveTo(s.x - w, s.y).lineTo(s.x + w, s.y).stroke({ width: 5, color, alpha: 1, cap: 'round' });
       }
     }
     this.rangeLayer.visible = true;

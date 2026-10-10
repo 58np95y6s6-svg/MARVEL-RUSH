@@ -17,6 +17,12 @@ function targetPlayer(ctx: Ctx): number {
   return 0;
 }
 
+/** Plateau visé par un boss : en Coop, celui de son côté (branche d'entrée) ; sinon au hasard. */
+function bossPlayer(ctx: Ctx, e: SimEnemy | undefined): number {
+  const o = e?.x.owner;
+  return o !== undefined && ctx.st.players[o] ? o : targetPlayer(ctx);
+}
+
 /** Cases des unités qui peuvent subir un pouvoir (talent `immuneBossControl` : elles y échappent). */
 function candidates(ctx: Ctx, player: number, filter?: (u: SimUnit) => boolean): number[] {
   const grid = ctx.st.players[player]!.grid;
@@ -81,7 +87,7 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
   const id = (boss.bossId ?? boss.x.master)!;
   const def = boss.bossId ? BOSSES[id] : LIEUTENANTS[id];
   const prm = def.power.params;
-  const player = targetPlayer(ctx);
+  const player = bossPlayer(ctx, boss);
   const p = ctx.st.players[player]!;
   const lost: LostUnit[] = [];
   switch (id) {
@@ -182,9 +188,9 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
 }
 
 /** Claquement de doigts : 3 unités perdent la moitié de leurs rangs (au moins 1 rang). */
-function snap(ctx: Ctx): void {
+function snap(ctx: Ctx, boss?: SimEnemy): void {
   const prm = BOSSES.thanos.power.params;
-  const player = targetPlayer(ctx);
+  const player = bossPlayer(ctx, boss);
   const grid = ctx.st.players[player]!.grid;
   const slots = pickMany(ctx, candidates(ctx, player, () => true), prm.snapUnits ?? 3);
   const lost: LostUnit[] = [];
@@ -260,13 +266,13 @@ export function updateBosses(ctx: Ctx): void {
         e.x.snapped = 1;
         e.x.snapIn = prm.snapDelay ?? 1;
         // Annonce : fond blanc et silence (aucune case), l'effet suit après le délai.
-        powerEvent(ctx, 'thanos', targetPlayer(ctx), [], SNAP_NAME);
+        powerEvent(ctx, 'thanos', bossPlayer(ctx, e), [], SNAP_NAME);
       }
       if (e.x.snapIn !== undefined && e.x.snapIn > 0) {
         e.x.snapIn = Math.max(0, e.x.snapIn - DT);
         if (e.x.snapIn <= EPS) {
           e.x.snapIn = 0;
-          snap(ctx);
+          snap(ctx, e);
         }
         continue; // le gant se tait pendant le claquement
       }
@@ -283,7 +289,7 @@ export function updateBosses(ctx: Ctx): void {
 /** Citrouilles volantes : explosion à l'arrivée, qui étourdit des unités. */
 export function pumpkinExplosion(ctx: Ctx, e: SimEnemy): void {
   if (!e.x.arrivalStun) return;
-  const player = e.x.owner !== undefined && ctx.st.players[e.x.owner] ? e.x.owner : targetPlayer(ctx);
+  const player = bossPlayer(ctx, e);
   const slots = pickMany(ctx, candidates(ctx, player), e.x.arrivalStunUnits ?? 2);
   disable(ctx, player, slots, 'stunnedFor', e.x.arrivalStun);
   powerEvent(ctx, 'bouffon', player, slots, 'Explosion de citrouille');
