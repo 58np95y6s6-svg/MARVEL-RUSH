@@ -90,9 +90,9 @@ const ABILITY_ROWS: Record<string, Row> = {
   formationMax: { label: 'Alliés comptés au plus', icon: 'aura', fmt: N },
   swapSleep: { label: 'Bug après échange', icon: 'temps', fmt: S },
   // ——— Extension DC ———
-  executeThreshold: { label: 'Exécution sous ce seuil de PV', icon: 'epee', fmt: P, delta: dP },                                    // Bourreau (Batman)
+  executeThreshold: { label: 'Seuil d’exécution', icon: 'epee', fmt: P, delta: dP },                                    // Bourreau (Batman)
   executeBossFactor: { label: 'Seuil contre les boss', icon: 'max', fmt: (v, _u, _c, prm) => pct(v * (prm.executeThreshold ?? 0)) },
-  blizzardSlowPerRank: { label: 'Ralentissement par givre', icon: 'controle', fmt: (v, _u, c) => pct(v * c.rank) },                // Givre (Superman)
+  blizzardSlowPerRank: { label: 'Ralenti par givre', icon: 'controle', fmt: (v, _u, c) => pct(v * c.rank) },                // Givre (Superman)
   blizzardStacks: { label: 'Givre cumulé au plus', icon: 'max', fmt: N },
   blizzardDuration: { label: 'Durée du givre', icon: 'temps', fmt: S },
   powerSpeed: { label: 'Vitesse en Fureur', icon: 'vitesse', fmt: (v) => `+${pct(v)}` },                                           // Moine (Wonder Woman)
