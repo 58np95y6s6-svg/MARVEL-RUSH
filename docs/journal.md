@@ -43,7 +43,7 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 |---|---|---|---|
 | Dimanche 18/10/2026 | DC Comics | `extension/dc` | prête à publier (vérifiée le 10/10, d36f950) |
 | Dimanche 25/10/2026 | Transformers | `extension/transformers` | prête à publier (vérifiée le 10/10, 737619b) |
-| Dimanche 01/11/2026 | Pixar | `extension/pixar` | en préparation |
+| Dimanche 01/11/2026 | Pixar | `extension/pixar` | prête à publier (vérifiée le 10/10, 5df0740) |
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
 
@@ -77,7 +77,9 @@ Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-pixar`, 
 - Gros boss (5) : syndrome, randall, lotso, hopper (Le Borgne), muntz. Boss final : zurg (dans la rotation, « Je suis ton père » à 30 % de PV).
 - Chapitres 13 à 15 (numéros libres de toute collision avec DC 7 à 9 et Transformers 10 à 12) ; la campagne suit l'ordre des numéros installés (écran Campagne générique, repris de la branche Transformers).
 - Rotations de boss : `BossPool` = `tous` | `marvel-disney` | `pixar` ; les chapitres 1 à 6 jouent `marvel-disney`, les chapitres d'extension `tous`.
-- À la fusion avec Transformers et DC : réunir les `BossPool` (`dc`, `transformers`, `pixar`), garder `finalBossAt` (Darkseid 100, Unicron 150 ; Thanos sauf rotation `pixar`), concaténer les tableaux `growth`, `EXT_ROWS` et `EXPECTED`, et les sections de `heroStats`.
+- Fusion avec Transformers et DC faite le 10/10 (la branche contient `extension/transformers`, donc DC et `main`) : `BossPool` = `tous` | `marvel-disney` | `dc` | `transformers` | `pixar` (rotation `tous` : 23 gros boss, Megatron et Zurg compris) ; chapitres 13 à 15 après le 12 (seuils 345, 375, 405 étoiles) ; tableaux `growth`, `EXT_ROWS`, `EXPECTED`, sections de `heroStats`, équipes et planches réunis.
+- Boss finaux : en campagne, Zurg à la vague 200 (15-10). Modes infinis (`finalBossAt`) : Unicron (150) > Darkseid (100) > Thanos (50) en rotation `tous` ; rotation `pixar` : aucun boss final (Zurg est dans la rotation).
+- Simulateur d'économie (`src/meta/economySim.ts`) : joue la campagne de base (chapitres 1 à 6) seulement ; avec les 150 niveaux des trois extensions, le ★5 d'un Rare tombait au jour 50 (garde-fou : 55 à 100), il revient au jour 84.
 
 État : prête à publier (01/11).
 
