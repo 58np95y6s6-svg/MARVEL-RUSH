@@ -173,7 +173,7 @@ Valeurs « niv. N » = niveau de **carte** Rush Royale. « Rang » = rang de fus
 
 - **+vitesse d'attaque des 4 voisines orthogonales** : base **10 % au niv. 3, +0,5 %/niv.** (15 % au niv. 13) ; total = amélioration au mana + base × (rang − 1) — exemple : 21 + 15 × 6 = 111 % (niv. 13, rang 7, amélioration 5). Conf. A.
 
-### Trappeur (légendaire, malus) → Spider-Man
+### Trappeur (légendaire, malus) → libre (Spider-Man jusqu'à la revue des raretés)
 
 - Toutes les **6 s** (7 → 6, −0,3 s par niveau), lance **2 filets** à des points aléatoires du chemin : **ralentit** les monstres et leur fait **subir plus de dégâts** ; les filets se cumulent. Dégâts du piège niv. 7 : **123** → niv. 12 : 217 ; les niveaux ajoutent **3 % de réduction d'armure**. Conf. A.
 
@@ -197,11 +197,11 @@ Valeurs « niv. N » = niveau de **carte** Rush Royale. « Rang » = rang de fus
 
 - Chaque attaque **explose** autour de la cible ; intervalle **0,80 s (niv. 1) → 0,66 s (niv. 15)** ; dégâts directs 36 (niv. 4) → 104 (niv. 15), de zone 27 → 86 (≈ 75-80 % des directs). Conf. A.
 
-### Voleur (Rogue, commun, premier) → Soldat de l'hiver
+### Voleur (Rogue, commun, premier) → Rox & Rouky (Soldat de l'hiver avant la revue des raretés)
 
 - Chaque attaque ajoute un **bonus aléatoire entre 1 et la valeur de dégâts critiques** du compte. Conf. A (dégâts : C).
 
-### Danse-lames (légendaire) → Shang-Chi
+### Danse-lames (légendaire) → Mulan & Mushu (Shang-Chi avant la revue des raretés)
 
 - **Sans Danse-lames adjacente** : gros bonus de **vitesse d'attaque** (mode renforcé) ; avec 2 Danse-lames ou plus non reliées, chacune **augmente les dégâts des autres**. Dégâts niv. 7 : **215** → niv. 15 : 1 001. Talents (alucare) : fleur à chaque déplacement (+2 % de dégâts à toutes, 50 max) ; +30 % contre boss et mini-boss en dansant ; bonus max à 8. Conf. A / B.
 
@@ -213,7 +213,7 @@ Valeurs « niv. N » = niveau de **carte** Rush Royale. « Rang » = rang de fus
 
 - **Alterne deux phases de tir** : phase 1 = cadence augmentée ; phase 2 = cadence **et chance de critique** augmentées ; durées selon le niveau. Talents (alucare) : en phase 2, 20 % de tirer 2 flèches qui ralentissent ; 30 % de pluie de flèches (200 dégâts, toujours critique). Conf. A / B.
 
-### Pyrotechnicien (épique) → Mulan & Mushu
+### Pyrotechnicien (épique) → libre (Mulan avant la revue des raretés)
 
 - **Nombre impair** de Pyrotechniciens sur le terrain : cadence réduite, cible **aléatoire**, dégâts de **zone** (la zone grandit avec le rang) ; nombre pair : dégâts réduits, cible = premier. Dégâts niv. 6 : **167** → niv. 13 : 599. Conf. A / B.
 
@@ -237,10 +237,129 @@ Valeurs « niv. N » = niveau de **carte** Rush Royale. « Rang » = rang de fus
 
 - Augmente les **dégâts des unités adjacentes** selon son rang (16.0 : plus de critique, des dégâts ; effet réduit pour les dégâts de zone). Chiffres du tableau illisibles (176 au niv. 7, 325 au niv. 12, unité inconnue). Conf. A (mécanique) / C (chiffres).
 
-### Jumeaux (légendaire d'événement, Conseil magique, dégâts, premier) → Rox & Rouky
+### Jumeaux (légendaire d'événement, Conseil magique, dégâts, premier) → libre (Rox & Rouky avant la revue des raretés)
 
 - Apparaissent en **Lune** ou en **Soleil** ; leur rang monte par fusion ou par la Dryade. Mécanique chiffrée **introuvable**. Conf. A (forme) / C (reste).
+- Note 32.0 (conf. A) : les Jumeaux de Lune augmentent la vitesse d'attaque de tous les Jumeaux, ceux de Soleil leurs dégâts ; bonus maximal à l'équilibre (4 de chaque) ; fusionner deux formes opposées fait perdre un rang à la cible.
+
+### Catapulte (épique) → Spider-Man
+
+- Textes du jeu (conf. A) : tire sur le **premier** ennemi, l'**étourdit** et fait des **dégâts de zone** ; « la cible pourra être
+  étourdie de nouveau dans 9 secondes » ; le **rang de fusion augmente les dégâts, pas la vitesse d'attaque**.
+  Dégâts, intervalle, durée de l'étourdissement : non publiés (C : 100 dégâts, 2 s, zone 100 % sur 1 case, 1 s).
+
+### Tonnerre (Thunderer, épique, Conseil magique, premier) → Shang-Chi
+
+- Textes du jeu (conf. A) : attaque le **premier** ennemi ; chaque attaque déclenche un **éclair en chaîne** qui fait des dégâts
+  en plus à la cible et aux monstres **derrière elle** ; le nombre de cibles dépend du rang (« au rang 5 : la cible et 4
+  ennemis derrière ») ; l'éclair **étourdit** un instant. Chiffres non publiés (C : 50 % des dégâts, 0,2 s).
+
+### Bourreau (Executioner, épique, premier) → Soldat de l'hiver
+
+- Textes du jeu (conf. A) : achève une cible qui passe sous un pourcentage de ses PV max ; boss et mini-boss moins sensibles.
+  Seuil **17,5 % (niv. 5) → 29,5 % (niv. 13)**, dégâts **104 → 252** (conf. A, wiki) : niv. 7 = 20,5 % et 141 (+18,5/niv.).
 
 ### Autres unités relevées (non utilisées)
 
 Thunderer, Bourreau (exécute sous **17,5 % (niv. 5) → 29,5 % (niv. 13)** des PV, moitié contre les boss, dégâts 104 → 252), Cogneur (rage : 10 % de chance par nouveau monstre au-delà de 7), Barde (mode Musique, talents chiffrés), Démonologue, Banshee, Cultiste, Mime, Ferrailleur.
+
+---
+
+## 4. Raretés des unités Rush Royale et héros qui les reprennent (octobre 2026)
+
+> Demande : « Les persos Légendaires devraient copier des persos Légendaires de Rush Royale ». Sources : **fichier de
+> données du jeu** publié dans le dépôt public Hona/rushroyale.xyz (`wwwroot/data/units.json`, champ `rarity` :
+> 0 commune, 1 rare, 2 épique, 3 légendaire ; 57 unités, version ~2022 ; noms dans `data-mine/localizations.json`) :
+> conf. **A** ; unités sorties depuis (notes de mise à jour 22.0 à 35.0, alucare.fr, guides) : conf. **B** ; unités
+> que Marvel Rush cite sans les avoir trouvées dans une source (« adaptation C » des extensions) : conf. **C**, rareté
+> supposée légendaire (toutes les unités sorties après 2022 le sont, sauf le Clown, épique).
+>
+> **Bilan** : Rush Royale compte 9 communes, 9 rares et 16 épiques, contre 26 Rares et 29 Épiques chez nous (73 héros,
+> 4 univers) : impossible de donner à chaque héros une unité de sa rareté. On a donc **(a)** donné une unité de la
+> bonne rareté quand une unité libre colle au personnage, **(b)** sinon changé la rareté du héros quand l'unité lui va
+> très bien, en gardant chaque univers équilibré ; les écarts qui restent sont listés plus bas.
+
+| Unité Rush Royale | Rareté | Conf. | Héros (univers) |
+|---|---|---|---|
+| Archer | commune | A | Œil de faucon (Marvel) |
+| Bombardier | commune | A | Batgirl (DC) |
+| Mage de glace | commune | A | Green Arrow (DC) |
+| Mage de feu | commune | A | Captain Marvel (Marvel) |
+| Chasseur | commune | A | Rebelle (Disney) |
+| Mage de foudre | commune | A | Bumblebee (Transformers) |
+| Empoisonneur | commune | A | Joie & Tristesse (Pixar) |
+| Voleur | commune | A | **Rox & Rouky** (Disney) |
+| Lanceur | commune | A | Sideswipe (Transformers) |
+| Alchimiste | rare | A | **Rémy & Linguini** (Pixar) |
+| Bannière | rare | A | Pocahontas & Meeko (Disney) |
+| Chaudron magique | rare | A | Nemo & Dory (Disney) |
+| Chimiste | rare | A | Nick & Judy (Disney) |
+| Meule | rare | A | Raiponce & Pascal (Disney) |
+| Prêtresse | rare | A | Black Widow (Marvel) |
+| Sentinelle | rare | A | Elita-1 (Transformers) |
+| Tireur d'élite | rare | A | Falcon (Marvel) |
+| Zélote | rare | A | Venom (Marvel) |
+| Catapulte | épique | A | **Spider-Man** (Marvel) |
+| Cristallomancien | épique | A | Arcee (Transformers) |
+| Ingénieur | épique | A | Buzz & Woody (Disney) |
+| Gargouille | épique | A | Bulkhead (Transformers) |
+| Bourreau | épique | A | **Soldat de l'hiver** (Marvel) |
+| Mime | épique | A | Martian Manhunter (DC) |
+| Médecin de peste | épique | A | **Frozone** (Pixar) |
+| Lierre | épique | A | Jessie & Pile-Poil (Pixar) |
+| Gardien du portail | épique | A | Vanellope & Ralph (Disney) |
+| Pyrotechnicien | épique | A | **Ironhide** (Transformers) |
+| Faucheuse | épique | A | Aquaman (DC) |
+| Mage du portail | épique | A | Doctor Strange (Marvel) |
+| Tonnerre | épique | A | **Shang-Chi** (Marvel) |
+| Vampire | épique | A | Tiana & Naveen (Disney) |
+| Archer du vent | épique | A | Vaïana & Pua (Disney) |
+| Clown | épique | B | Harley Quinn (DC) |
+| Cogneur | légendaire | A | Flash (DC) |
+| Danse-lames | légendaire | A | **Mulan & Mushu** (Disney) |
+| Borée | légendaire | A | Maui (Disney) |
+| Corsaire | légendaire | A | Wheeljack (Transformers) |
+| Cultiste | légendaire | A | Green Lantern (DC) |
+| Chasseur de démons | légendaire | A | **Batman** (DC) |
+| Démonologue | légendaire | A | Catwoman (DC) |
+| Dryade | légendaire | A | Coco (Disney) |
+| Givre | légendaire | A | Superman (DC) |
+| Arlequin | légendaire | A | Loki (Marvel) |
+| Inquisiteur | légendaire | A | Thor (Marvel) |
+| Maléfice (Hex) | légendaire | A | Prowl (Transformers) |
+| Statue de chevalier | légendaire | A | Captain America (Marvel) |
+| Horloge du pouvoir | légendaire | A | libre |
+| Météore | légendaire | A | Shazam (DC) |
+| Minotaure | légendaire | A | Hulk (Marvel) |
+| Ferrailleur | légendaire | A | Robin (DC) |
+| Stase | légendaire | A | Ariel & Sébastien (Disney) |
+| Invocateur | légendaire | A | Carl & Russell (Pixar) |
+| Tesla | légendaire | A | Iron Man (Marvel) |
+| Trappeur | légendaire | A | libre |
+| Sorcière | légendaire | A | Ratchet (Transformers) |
+| Chaman | légendaire | A | Sulli & Bob (Pixar) |
+| Robot | légendaire | A | WALL-E & EVE (Pixar) |
+| Maître des esprits | légendaire | A | Violette & Flèche (Pixar) |
+| Moine | légendaire | B | Wonder Woman (DC) |
+| Barde | légendaire | B | Supergirl (DC) |
+| Banshee | légendaire | B | Optimus Prime (Transformers) |
+| Génie | légendaire | B | Cyborg (DC) |
+| Chaperon rouge (Riding Hood) | légendaire | B | Grimlock (Transformers) |
+| Loup de mer | légendaire | B | Jazz (Transformers) |
+| Pistolero (Gunslinger) | légendaire | B | libre |
+| Phénix | légendaire | B | libre |
+| Rôdeur du crépuscule | légendaire | B | Elastigirl (Pixar) |
+| Jumeaux | légendaire | B | libre |
+| Épées enchantées | légendaire | B | Ultra Magnus (Transformers) |
+| Tréant | légendaire | B | Luca & Alberto (Pixar) |
+| Valkyrie | légendaire | B | M. Indestructible (Pixar) |
+| Wukong | légendaire | B | Mirage (Transformers) |
+| Dryade des montagnes | légendaire | B | Flash McQueen & Martin (Pixar) |
+| Blazey | légendaire ? | C | Hot Rod (Transformers) |
+| Élémentaire de terre | légendaire ? | C | Mei (Pixar) |
+| Archimage | légendaire ? | C | Ian & Barley (Pixar) |
+| Nécromancien | légendaire ? | C | Joe & 22 (Pixar) |
+
+En gras : unité changée par la revue des raretés (les extensions DC, Transformers et Pixar sont revues sur leurs
+branches ; ce tableau donne la répartition finale prévue sur les quatre branches).
+

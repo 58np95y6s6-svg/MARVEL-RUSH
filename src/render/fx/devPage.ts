@@ -27,7 +27,7 @@ interface Demo {
 
 const DEMO: Record<UnitId, Demo> = {
   ironman: { atk: [['ironman:repulseur', 'first']], ab: { name: 'Uni-Beam', fx: 'ironman:unibeam', tgt: 'line' } },
-  spiderman: { atk: [['spiderman:toile', 'first']], ab: { name: 'Toile collante', fx: 'spiderman:toile', tgt: 'first', status: { stunFor: 1 } }, status: { slow: 0.1, slowFor: 2 } },
+  spiderman: { atk: [['spiderman:toile', 'chain']], ab: { name: 'Boule de toile', fx: 'spiderman:toile', tgt: 'chain', status: { stunFor: 1 } } },
   hulk: { atk: [['hulk:coup', 'chain']], ab: { name: 'Hulk Smash', fx: 'hulk:smash', tgt: 'chain', status: { stunFor: 1 } } },
   thor: { atk: [['thor:marteau', 'chain'], ['thor:foudre', 'chain']], ab: { name: 'Marteau de foi', fx: 'thor:marteau-foi', tgt: 'chain', status: { stunFor: 1 } } },
   strange: { atk: [['strange:magie', 'first']], ab: { name: 'Portail', tgt: 'first' } },
@@ -35,18 +35,18 @@ const DEMO: Record<UnitId, Demo> = {
   cmarvel: { atk: [['cmarvel:rafale', 'first'], ['cmarvel:rafale', 'first'], ['cmarvel:binaire', 'first']], ab: { name: 'Mode binaire', tgt: 'first' } },
   cap: { atk: [['cap:bouclier', 'chain']], ab: { name: 'Bouclier', fx: 'cap:bouclier', tgt: 'chain' } },
   loki: { atk: [['loki:dague', 'first']], ab: { name: 'Illusion', fx: 'loki:dague', tgt: 'first' } },
-  bucky: { atk: [['bucky:tir', 'first'], ['bucky:tir', 'first'], ['bucky:tir', 'first'], ['bucky:critique', 'first']], ab: { name: 'Bras bionique', fx: 'bucky:critique', tgt: 'first', status: { stunFor: 0.5 } }, crit: true },
+  bucky: { atk: [['bucky:tir', 'first'], ['bucky:tir', 'first'], ['bucky:tir', 'first'], ['bucky:critique', 'first']], ab: { name: 'Bras bionique', fx: 'bucky:critique', tgt: 'first' } },
   hawkeye: { atk: [['hawkeye:explosive', 'chain'], ['hawkeye:glace', 'first'], ['hawkeye:electrique', 'chain']], ab: { name: 'Flèches', fx: 'hawkeye:explosive', tgt: 'chain' }, status: { slow: 0.25, slowFor: 2 } },
   falcon: { atk: [['falcon:tir-aerien', 'first']], ab: { name: 'Drone Redwing', tgt: 'first', status: { marked: 0.25, markedFor: 4 } } },
   widow: { atk: [['widow:tir', 'first']], ab: { name: 'Morsure de la veuve', fx: 'widow:morsure', tgt: 'first', status: { stunFor: 1 } } },
-  shangchi: { atk: [['shangchi:combo', 'first']], ab: { name: 'Dix Anneaux', fx: 'shangchi:anneaux', tgt: 'rand' } },
+  shangchi: { atk: [['shangchi:anneaux', 'chain']], ab: { name: 'Dix Anneaux', fx: 'shangchi:anneaux', tgt: 'chain', status: { stunFor: 0.2 } } },
   moana: { atk: [['moana:rame', 'first']], ab: { name: 'Appel de l’océan', tgt: 'line' } },
   maui: { atk: [['maui:faucon', 'first'], ['maui:faucon', 'first'], ['maui:requin', 'chain']], ab: { name: 'Métamorphose : requin', tgt: 'first' } },
   pocahontas: { atk: [['pocahontas:feuilles', 'first']], ab: { name: 'Esprit de la forêt', fx: 'pocahontas:feuilles', tgt: 'first' } },
-  mulan: { atk: [['mulan:souffle', 'first']], ab: { name: 'Avalanche', fx: 'mulan:avalanche', tgt: 'all' }, status: { burn: 1, burnFor: 3 } },
+  mulan: { atk: [['mulan:souffle', 'first'], ['mulan:avalanche', 'first']], ab: { name: 'Danse des lames', fx: 'mulan:avalanche', tgt: 'first' } },
   merida: { atk: [['merida:tir-parfait', 'first']], ab: { name: 'Tir parfait', fx: 'merida:tir-parfait', tgt: 'first' }, crit: true },
   ariel: { atk: [['ariel:bulles', 'first']], ab: { name: 'Chant de sirène', tgt: 'line', status: { stunFor: 1.5 } } },
-  foxhound: { atk: [['foxhound:double', 'chain']], ab: { name: 'Double', fx: 'foxhound:double', tgt: 'first' } },
+  foxhound: { atk: [['foxhound:double', 'first']], ab: { name: 'Ruse du renard', fx: 'foxhound:double', tgt: 'first' }, crit: true },
   tiana: { atk: [['tiana:luciole', 'first']], ab: { name: 'Langue de Naveen', tgt: 'first' } },
   nemo: { atk: [['nemo:ralenti', 'first'], ['nemo:double', 'first'], ['nemo:poison', 'first'], ['nemo:cadence', 'first']], ab: { name: 'Hasard', fx: 'nemo:double+poison', tgt: 'first' } },
   coco: { atk: [['coco:notes', 'first']], ab: { name: 'Remember Me', tgt: 'first' } },
@@ -203,7 +203,7 @@ export function mountFxPreview(root: HTMLElement): () => void {
     if (id === 'maui') { fx.ability(slot, id, Math.random() < 0.5 ? 'Métamorphose : requin' : 'Métamorphose : faucon', []); return; }
     fx.ability(slot, id, d.name, id === 'cmarvel' || id === 'coco' ? [] : targets);
     applyStatus(targets, d.status);
-    if (d.fx) queueNums(targets.slice(0, 4), id === 'bucky' || id === 'merida');
+    if (d.fx) queueNums(targets.slice(0, 4), id === 'foxhound' || id === 'merida');
   }
 
   function fireBoss(): void {

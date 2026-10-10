@@ -180,7 +180,7 @@ export function dealDamage(ctx: Ctx, e: SimEnemy, amount: number, player: number
   return dmg;
 }
 
-/** Dégâts subis en plus : fiche du Chimiste (Nick & Judy) et toiles du Trappeur (Spider-Man). */
+/** Dégâts subis en plus : fiche du Chimiste (Nick & Judy) et toiles du Trappeur (clés génériques). */
 export function vulnerability(e: SimEnemy): number {
   let v = e.x.vuln ?? 0;
   if ((e.x.netFor ?? 0) > EPS) v += (e.x.netVuln ?? 0) * (e.x.netStacks ?? 0);
@@ -332,7 +332,7 @@ export function unitActive(ctx: Ctx, player: number, u: SimUnit): boolean {
   return (u.counters.dark ?? 0) > 0 || (u.counters.activeFor ?? 0) > EPS || inquisitorActive(ctx, player, effectiveId(u));
 }
 
-/** Shang-Chi (Danse-lames) : nombre d'exemplaires qui dansent (sans voisin identique). */
+/** Mulan (Danse-lames) : nombre d'exemplaires qui dansent (sans voisin identique). */
 export function dancers(ctx: Ctx, player: number, unit: UnitId): number {
   const grid = ctx.st.players[player]!.grid;
   let n = 0;
@@ -366,8 +366,8 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   if (prm.hawkSpeed !== undefined) mul *= 1 + (u.counters.form ? prm.sharkSpeed ?? 0 : prm.hawkSpeed);   // Borée (Maui)
   if ((u.counters.hurricaneFor ?? 0) > EPS) mul *= prm.hurricaneSpeedMul ?? 1;                           // Archer du vent (Vaïana)
   if (prm.activeCounts && unitActive(ctx, player, u)) mul *= prm.activeAttackSpeed ?? 1;                // Inquisiteur (Thor)
-  if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Shang-Chi)
-  if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (Mulan)
+  if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Mulan)
+  if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (clés génériques)
   if (prm.bossWaveAttackSpeedMul && ctx.st.phase === 'boss') mul *= prm.bossWaveAttackSpeedMul;          // Tireur d'élite (Falcon)
   return mul;
 }

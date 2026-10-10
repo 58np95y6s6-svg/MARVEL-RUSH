@@ -11,6 +11,19 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10u',
+    title: 'Raretés alignées sur Rush Royale',
+    date: '10 octobre 2026',
+    items: [
+      'Chaque héros a maintenant la même rareté que l’unité Rush Royale qu’il reprend : un Légendaire copie un Légendaire.',
+      'Mulan & Mushu (Légendaire) reprend la Danse-lames : plus rapide quand elle danse seule, chaque Mulan qui danse renforce les autres.',
+      'Shang-Chi reprend le Tonnerre : les Dix Anneaux rebondissent en chaîne sur la cible et les ennemis qui la suivent (autant que son rang).',
+      'Spider-Man reprend la Catapulte : sa boule de toile colle tout un groupe d’ennemis ; le rang augmente les dégâts.',
+      'Le Soldat de l’hiver reprend le Bourreau : il achève les ennemis affaiblis. Rox & Rouky reprennent le Voleur : morsures aux dégâts aléatoires.',
+      'Nouvelles raretés : Loki, Ariel & Sébastien et Coco passent Légendaires ; Vanellope & Ralph, Buzz & Woody et Tiana & Naveen passent Épiques ; Venom, Black Widow, Nick & Judy et Raiponce & Pascal passent Rares. Tu gardes tes héros, leurs niveaux et leurs cartes.',
+    ],
+  },
+  {
     id: '2026-10-10t',
     title: 'Fini le mur des modes infinis',
     date: '10 octobre 2026',

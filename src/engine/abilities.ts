@@ -366,7 +366,7 @@ export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enem
 function chooseTarget(ctx: Ctx, player: number, u: SimUnit, pool: SimEnemy[]): SimEnemy | undefined {
   const def = effectiveDef(u);
   const prm = unitParams(ctx, player, def.id);
-  // Pyrotechnicien (Mulan) : en nombre impair, cible au hasard.
+  // Pyrotechnicien (clés génériques) : en nombre impair, cible au hasard.
   if (prm.oddSplash && countOnBoard(ctx, player, def.id) % 2 === 1) return selectTarget(ctx, pool, 'aleatoire');
   // Chimiste (Nick & Judy) : le premier ennemi qui n'est pas encore fiché.
   if (prm.vulnPerRank) {
@@ -582,7 +582,7 @@ function attackOf(
     case 'mulan': {
       // Danse-lames : la cadence (seule) et le bonus des danseuses sont dans attackSpeedOf / baseDamage.
       hit(target, dmg);
-      return { targets: [target], fx: (prm.aloneAttackSpeed && !hasNeighborTwin(ctx, player, slot, id)) ? 'mulan:avalanche' : 'mulan:souffle' };
+      return { targets: [target], fx: 'mulan:souffle' };
     }
     case 'merida': {
       // Chasseur : premier tir renforcé sur chaque nouvelle cible.
