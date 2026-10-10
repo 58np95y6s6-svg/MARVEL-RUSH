@@ -15,7 +15,7 @@ export const CHANGELOG: ReleaseNote[] = [
     title: 'Thor s’illumine',
     date: '10 octobre 2026',
     items: [
-      'Thor s’illumine en mode actif (1, 3, 5 ou 7 Thor) : halo pulsant, liseré lumineux sur la plaque de rang et petits arcs électriques ; en Chevalier de lumière, aura dorée et rayons sacrés, en Chevalier des ténèbres, aura violet-cramoisi et fumée sombre, plus intenses en mode actif.',
+      'Thor s’illumine : en mode actif (1, 3, 5 ou 7 Thor), sa silhouette se nimbe d’une lueur jaune pulsante avec petits éclairs ; en Chevalier de lumière, lueur bleue, en Chevalier des ténèbres, lueur rouge cramoisi et fumée sombre, plus intenses quand le mode actif s’ajoute.',
     ],
   },
   {

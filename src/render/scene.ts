@@ -991,8 +991,8 @@ export class BattleScene {
       this.renderUnit(v, dt, pulse);
       // Thor (Inquisiteur) : aura du mode actif et des formes de chevalier.
       const m = thorMode(this.engine.state, this.engine.config, me, i, this.thorOut);
-      if (m && !v.aura) v.aura = new ThorAura(v.body, v.sprite, v.pips, SIZES.token);
-      if (v.aura) { this.sparkView = v; v.aura.update(dt, v.uid, m, v.pipsShown, this.thorSpark); }
+      if (m && !v.aura) v.aura = new ThorAura(v.body, v.sprite, SIZES.token);
+      if (v.aura) { this.sparkView = v; v.aura.update(dt, v.uid, m, this.thorSpark); }
     }
     for (const r of this.targetRings) if (r.visible) { r.scale.set(1.45 + 0.12 * pulse); r.alpha = 0.6 + 0.4 * pulse; }
     if (this.rangeLayer.visible) {
