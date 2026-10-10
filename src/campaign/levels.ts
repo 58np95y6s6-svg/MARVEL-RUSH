@@ -261,7 +261,7 @@ export const DIFFICULTY = {
   bossHp: [1.0, 1.3] as const,     // PV× des boss et lieutenants, en plus
   /** Croissance des PV par vague, par chapitre (Solo Infini : 1,18), réglée au simulateur. */
   // Chapitres 7 à 9 : extension DC (valeurs de sa branche) ; 10 à 12 : extension Transformers.
-  growth: [1.14, 1.10, 1.10, 1.09, 1.07, 1.0425, 1.032, 1.024, 1.016, 1.02, 1.018, 1.013] as const,
+  growth: [1.14, 1.10, 1.10, 1.09, 1.07, 1.0425, 1.032, 1.024, 1.016, 1.02, 1.017, 1.0135] as const,
 };
 
 const lerp = (a: readonly [number, number], t: number): number => Math.round((a[0] + (a[1] - a[0]) * t) * 100) / 100;

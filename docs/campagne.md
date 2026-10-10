@@ -1,4 +1,4 @@
-# Campagne Solo — 6 chapitres × 10 niveaux
+# Campagne Solo — 6 chapitres × 10 niveaux (+ 3 chapitres de l'extension Transformers, numérotés 10 à 12)
 
 > Rédigé par l'agent **Game design et stratégie** (§5.1 du prompt). Lu par l'agent **Campagne et progression** (`src/campaign/`) et l'agent **Interface**.
 > Les chiffres sont un premier jet, à valider avec le simulateur (`docs/equilibrage.md`).
@@ -30,7 +30,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 
 ### Déblocage
 - Les niveaux d'un chapitre s'ouvrent l'un après l'autre (victoire au niveau précédent).
-- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180).
+- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180). **Extension Transformers** : chaque chapitre 10 à 12 demande les étoiles de tous les chapitres d'avant moins 15 (sans l'extension DC : 165, 195, 225 sur 270 ; avec les chapitres DC 7 à 9 : 255, 285, 315 sur 360), et le niveau 10 du chapitre qui le précède dans l'ordre installé (6, ou 9 avec DC).
 - Le **Solo Infini** s'ouvre à la fin du chapitre 1.
 - Le chapitre N de la **campagne Coop** s'ouvre quand les deux joueurs ont fini le chapitre N en Solo (`docs/campagne-coop.md`).
 
@@ -196,6 +196,68 @@ Croissance des PV par vague : ×1,0425.
 | 8 | royaume-des-morts → arène | 48 | 1,88 | 1,39 | 1,29 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45), **B Maléfique** (48) | Boss tué en moins de 40 s |
 | 9 | royaume-des-morts | 48 | 1,89 | 1,39 | 1,29 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45) | Deux bonus d’équipe actifs |
 | 10 | royaume-des-morts → arène | 50 | 1,9 | 1,4 | 1,3 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45), **B Thanos** (50) | Thanos tué sans perdre de vie |
+
+## 3 ter. Extension Transformers — chapitres 10 à 12
+
+**Numérotation** : les chapitres DC sont les 7 à 9 sur leur branche ; pour que les deux extensions s'installent l'une sans l'autre ou ensemble sans collision, les chapitres Transformers sont les **10, 11 et 12**. La campagne suit l'ordre des numéros installés (`CHAPTERS` trié par `n`, `prevChapter` / `nextChapter` dans `src/campaign/levels.ts`) : sans DC, le chapitre 10 suit Thanos (6-10) ; avec DC, il suit Darkseid (9-10). L'écran Campagne affiche autant de chapitres qu'il y en a (étoiles totales, carte « chapitre suivant », liste des chapitres).
+
+**Durée** : à la suite des chapitres DC (50 → 100 vagues), **100 → 110** au chapitre 10, **110 → 125** au chapitre 11, **125 → 150** au chapitre 12, dont le niveau 10 finit sur **Megatron à la vague 150**. Mêmes règles qu'aux chapitres DC : lieutenant du boss du chapitre au niveau 5, boss intermédiaire dans son arène au niveau 8, boss du chapitre au niveau 10 ; entre-temps, lieutenants aux vagues 5, 15… et gros boss aux vagues 10, 20… tirés dans la rotation complète (`bossPool: 'tous'`) sans le boss intermédiaire ni le boss du chapitre. Les chapitres 1 à 6 gardent la rotation Marvel et Disney.
+
+**Difficulté** : PV×, effectif× et PV boss× continuent la pente (la pente suit le numéro du chapitre : niveau 12-10 à PV ×2,51, effectif ×1,71, PV boss ×1,61). Croissance des PV par vague : ch. 10 **×1,02**, ch. 11 **×1,017**, ch. 12 **×1,0135** — PV d'un ennemi normal à la dernière vague : 54 000 (10-10), 72 000 (11-10), ≈ 100 000 (12-10), au-dessus des chapitres DC (11 800 à la vague 100). Réglée au simulateur (§4) : à ×1,018, Devastator (11-10) tombait à 63 % ; à ×1,014, Megatron (12-10) à 67 %.
+
+| Chapitre | Vagues | PV× | Effectif× | PV boss× | Croissance | Boss du niveau 10 | Personnage garanti | Collection attendue (simulateur) |
+|---|---|---|---|---|---|---|---|---|
+| 10 (Cybertron) | 100 → 110 | 2,22 → 2,31 | 1,56 → 1,60 | 1,46 → 1,50 | ×1,02 | Soundwave (110) ; Starscream au niveau 8 | Optimus Prime | Iron Man, Thor, Hulk, Cap + Optimus, niveau 10, 3 paliers, ★2 |
+| 11 (la Terre) | 110 → 125 | 2,32 → 2,41 | 1,61 → 1,65 | 1,51 → 1,55 | ×1,017 | Devastator (125) ; Blitzwing au niveau 8 | Grimlock | Iron Man, Thor, Optimus, Cap, Ratchet, niveau 10, ★4 |
+| 12 (le Némésis) | 125 → 150 | 2,42 → 2,51 | 1,66 → 1,71 | 1,56 → 1,61 | ×1,0135 | **Megatron** (150) ; Shockwave au niveau 8 | Ultra Magnus | Iron Man, Thor, Optimus, Grimlock, Cap, niveau 10, ★6 |
+
+Récompenses : coffre de victoire de base **héroïque** (comme les chapitres DC), Megatron donne en plus 100 ✦ et le cadre « Vainqueur de Megatron » quand le chapitre 12 est le dernier installé. Maps : `cybertron`, `base-autobot`, `mission-city` ; arènes `arene-starscream` (le ciel), `arene-soundwave` (la station radar), `arene-shockwave` (le labo de Kaon), `arene-devastator` (la carrière), `arene-blitzwing` (la toundra), `arene-megatron` (le Némésis) et `arene-unicron` (l'espace d'Unicron, modes infinis).
+
+### Chapitre 10 — Cybertron
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | cybertron | 100 | 2,22 | 1,56 | 1,46 | — | Avec au moins 2 Autobots |
+| 2 | cybertron | 101 | 2,23 | 1,56 | 1,46 | — | Sans perdre de vie |
+| 3 | cybertron | 102 | 2,24 | 1,57 | 1,47 | — | Une unité de rang 6 |
+| 4 | base-autobot | 104 | 2,25 | 1,57 | 1,47 | — | Aucun bouclier ne passe |
+| 5 | cybertron | 105 | 2,26 | 1,58 | 1,48 | **L Insecticon géant** (105) | Insecticon tué en moins de 25 s |
+| 6 | base-autobot | 104 | 2,27 | 1,58 | 1,48 | — | Moins de 170 invocations |
+| 7 | cybertron | 106 | 2,28 | 1,59 | 1,49 | — | Bonus d’équipe Autobots actif |
+| 8 | cybertron → arène | 108 | 2,29 | 1,59 | 1,49 | **B Starscream** (108) | Boss tué en moins de 40 s |
+| 9 | base-autobot | 108 | 2,3 | 1,6 | 1,5 | — | Aucune unité ne perd de rang |
+| 10 | cybertron → arène | 110 | 2,31 | 1,6 | 1,5 | **B Soundwave** (110) | Boss tué en moins de 40 s |
+
+### Chapitre 11 — La Terre
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | base-autobot | 110 | 2,32 | 1,61 | 1,51 | — | Sans perdre de vie |
+| 2 | base-autobot | 112 | 2,33 | 1,61 | 1,51 | — | Aucun blindé ne passe |
+| 3 | mission-city | 114 | 2,34 | 1,62 | 1,52 | — | Avec Grimlock dans le deck |
+| 4 | mission-city | 117 | 2,35 | 1,62 | 1,52 | — | Une unité de rang 7 |
+| 5 | base-autobot | 120 | 2,36 | 1,63 | 1,53 | **L Constructicon géant** (120) | Constructicon tué en moins de 25 s |
+| 6 | mission-city | 117 | 2,37 | 1,63 | 1,53 | — | Moins de 190 invocations |
+| 7 | base-autobot | 119 | 2,38 | 1,64 | 1,54 | — | Sans perdre de vie |
+| 8 | mission-city → arène | 122 | 2,39 | 1,64 | 1,54 | **B Blitzwing** (122) | Boss tué en moins de 40 s |
+| 9 | base-autobot | 123 | 2,4 | 1,65 | 1,55 | — | Bonus d’équipe Dinobots ou Autobots actif |
+| 10 | base-autobot → arène | 125 | 2,41 | 1,65 | 1,55 | **B Devastator** (125) | Boss tué en moins de 45 s |
+
+### Chapitre 12 — Le Némésis
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | mission-city | 125 | 2,42 | 1,66 | 1,56 | — | Sans perdre de vie |
+| 2 | mission-city | 130 | 2,43 | 1,66 | 1,56 | — | Une unité de rang 7 |
+| 3 | cybertron | 135 | 2,44 | 1,67 | 1,57 | — | Aucun bouclier ne passe |
+| 4 | base-autobot | 140 | 2,45 | 1,67 | 1,57 | — | Deux bonus d’équipe actifs |
+| 5 | mission-city | 145 | 2,46 | 1,68 | 1,58 | **L Drone Vehicon géant** (145) | Lieutenant tué en moins de 25 s |
+| 6 | cybertron | 135 | 2,47 | 1,68 | 1,58 | — | Moins de 220 invocations |
+| 7 | base-autobot | 140 | 2,48 | 1,69 | 1,59 | — | Sans perdre de vie |
+| 8 | mission-city → arène | 144 | 2,49 | 1,69 | 1,59 | **B Shockwave** (144) | Boss tué en moins de 40 s |
+| 9 | cybertron | 147 | 2,5 | 1,7 | 1,6 | — | Avec au moins 1 héros de chaque pack (Marvel, Disney, Transformers) |
+| 10 | mission-city → arène | 150 | 2,51 | 1,71 | 1,61 | **B Megatron** (150) | Megatron tué sans perdre de vie |
+
 
 ---
 
