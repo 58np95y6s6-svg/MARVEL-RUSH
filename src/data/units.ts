@@ -714,9 +714,10 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Alchimiste (flaque périodique sur le chemin).
+    // Rush Royale : Alchimiste (flaque périodique sur le chemin). Portée longue (rafales de glace projetées, fioles
+    // lancées de l'Alchimiste), dégâts ×1,4/1,7 : 130 → 107.
     id: 'frozone', name: 'Frozone', pack: 'pixar', rarity: 'epique', role: 'Ralentissement / zone',
-    targeting: 'premier', damage: 130, attackInterval: 1.0, range: 2.4,
+    targeting: 'premier', damage: 107, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Pont de glace',
       description: 'Toutes les 5 s, un pont de glace gèle le chemin autour de l’ennemi de tête : 120 % des dégâts et 45 % de ralentissement pendant 3 s.',

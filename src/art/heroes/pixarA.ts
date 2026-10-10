@@ -61,7 +61,7 @@ export const PIXAR_A: CharDef[] = [
 },
 {
   id: 'frozone', name: 'Frozone', role: 'Ralentissement / zone', rarity: 'Épique', rar: 'var(--epi)', tint: '#d8f0ff', tint2: '#7ac0f0', stats: [3, 3, 5],
-  atk: 'Rafale de glace qui ralentit.', skill: 'Pont de glace : gèle le chemin autour de l’ennemi de tête.',
+  atk: 'Rafale de glace lancée au loin, qui ralentit.', skill: 'Pont de glace : gèle le chemin autour de l’ennemi de tête.',
   sh: { L: [68, 150], R: [132, 150] },
   poses: POSES,
   draw(this: CharDef, x: Ctx): string {

@@ -21,6 +21,7 @@ export const CHANGELOG: ReleaseNote[] = [
       'Attention à Zurg : à 30 % de ses PV, « Je suis ton père » mélange tes unités et hypnotise tout ton plateau.',
       'Trois nouveaux chapitres de campagne (13 à 15) : Metroville, Paradise Falls et la planète Z, avec trois nouvelles maps.',
       'Nouvelles équipes : Les Indestructibles, Monstres & Cie, Émotions, et Toy Story avec Buzz & Woody et Jessie.',
+      'Chaque héros Pixar a une portée à son image : les rafales de Frozone portent loin, M. Indestructible, Mei et Flèche frappent au contact, Elastigirl étire ses bras sur tout le chemin.',
     ],
   },
   {

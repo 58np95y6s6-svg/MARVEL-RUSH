@@ -290,6 +290,29 @@ Thunderer.
 | **Ian & Barley** | **Archimage** (Archmage) | Sorts au hasard → boule de feu, arrêt du temps, sort de croissance ou rayon, toutes les 6 s. | — | C |
 | **Joe & 22** | **Nécromancien** (Necromancer) | Soutien de fin de partie → musique de l'âme : +25 % de cadence à tout le plateau 5 s toutes les 10 s ; duo 1 sur 5 : l'étincelle de 22 double le coup. | — | C |
 
+### Portées Pixar (revue d'octobre 2026)
+
+Même règle que la section « Portées » (personnage + attaque de l'unité Rush Royale ; dégâts × facteur nouveau /
+facteur ancien en cas de changement de catégorie).
+
+| Héros | Unité Rush Royale | Avant → après | Pourquoi |
+|---|---|---|---|
+| M. Indestructible | Valkyrie | courte → **courte** | Coups de poing qui fendent le sol ; la Valkyrie frappe au contact. |
+| Elastigirl | Rôdeur du crépuscule | globale → **globale** | Bras qui s'étirent sur tout le chemin ; flèches du Rôdeur. |
+| **Frozone** | Alchimiste | moyenne → **longue** (130 → 107) | Rafales de glace projetées et ponts de glace, comme les fioles lancées de l'Alchimiste. |
+| Violette & Flèche | Maître des esprits | courte → **courte** | Flèche cogne en courant, Violette protège de près. |
+| Sulli & Bob | Chaman | moyenne → **moyenne** | Rugissement qui porte à quelques cases. |
+| Flash McQueen & Martin | Dryade des montagnes | moyenne → **moyenne** | Coups de pare-chocs et remorquage. |
+| Carl & Russell | Invocateur | longue → **longue** | Ballons qui s'envolent loin. |
+| Joie & Tristesse | Empoisonneur | longue → **longue** | Souvenirs lancés, larmes de Tristesse. |
+| Rémy & Linguini | Médecin de peste | moyenne → **moyenne** | Cuisine de près, marmite renversée. |
+| WALL-E & EVE | Robot | globale → **globale** | Rayon d'EVE, cubes lancés. |
+| Luca & Alberto | Tréant | moyenne → **moyenne** | Vagues de mer près du bord. |
+| Mei (panda roux) | Élémentaire de terre | courte → **courte** | Panda géant qui écrase. |
+| Jessie & Pile-Poil | Lierre | moyenne → **moyenne** | Lasso : allonge moyenne. |
+| Ian & Barley | Archimage | longue → **longue** | Sorts du bâton magique. |
+| Joe & 22 | Nécromancien | longue → **longue** | La musique du piano porte loin. |
+
 Talents : trois paliers de même famille que l'unité Rush Royale, marqués *(C)* dans `src/data/talents.ts`.
 
 Unité Rush Royale encore libre après les extensions DC, Transformers et Pixar : Thunderer.

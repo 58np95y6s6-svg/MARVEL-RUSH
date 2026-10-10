@@ -335,10 +335,14 @@ Les 15 héros Pixar reprennent chacun une unité Rush Royale libre (ni Marvel, n
 | Rémy & Linguini | Médecin de peste | 135 / 0,9 s | moyenne | 1 sur 4 : marmite 60 % autour |
 | Carl & Russell | Invocateur | 135 / 1,0 s | longue | — (ballons toutes les 6 s) |
 | Jessie & Pile-Poil | Lierre | 135 / 0,8 s | moyenne | 1 sur 4 : recul 1,5 s |
-| Frozone | Alchimiste | 130 / 1,0 s | moyenne | — (pont de glace toutes les 5 s) |
+| Frozone | Alchimiste | 107 / 1,0 s (130 avant la revue des portées) | longue | — (pont de glace toutes les 5 s) |
 | Luca & Alberto | Tréant | 125 / 0,8 s | moyenne | 1 sur 5 : vague, recul ½ case |
 | Violette & Flèche | Maître des esprits | 115 / 0,6 s | courte | 1 sur 3 : deux coups de plus |
 | Joie & Tristesse | Empoisonneur | 110 / 0,9 s | longue | 1 sur 4 : souvenir doré ou bleu |
+
+**Revue des portées Pixar** (`docs/rush-royale-mapping.md` « Portées Pixar ») : Frozone moyenne → longue (130 → 107).
+`--casual`, niveau 1, 20 parties : `pixar-rares` 17,05 inchangé, `meta-pixar` 25,45 → 25,80, `indestructibles` 22,20 →
+22,90, départ Marvel 18,20 inchangé ; chapitre 13 `--attendu` 100 % (pire 100 %).
 
 Réglages : les six Rares ont été relevés de 75–90 à 115–140 de dégâts (premier passage : `pixar-rares` à 14,75, −24 % sous le départ Marvel). Méchants adoucis après la campagne : Syndrome armure 25 % → 15 %, Le Borgne 4 → 3 sauterelles, Muntz 3 → 2 chiens et étourdissement 2 → 1,5 s, Zurg PV ×2 → ×1 (il est dans la rotation de tous les modes infinis), pistolet à ions sur 2 unités dont une seule perd un rang, « Je suis ton père » 2 → 1,5 s.
 
