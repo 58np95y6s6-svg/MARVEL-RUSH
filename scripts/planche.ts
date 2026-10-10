@@ -19,7 +19,6 @@ const tile = (svg: string, label: string, bg: string) => `<figure><div class="ti
 
 function heroCards(pack: Pack): string {
   return UNIT_LIST.filter((u) => u.pack === pack).map((u, i) => {
-    try { unitSvg(u.id, 0); } catch { return `<article class="card"><h2>${esc(u.name)} : dessin manquant</h2></article>`; }
     const [t1, t2] = unitTint(u.id as UnitId);
     const bg = `radial-gradient(circle at 50% 36%,#fff 0,${t1} 58%,${t2} 100%)`;
     const poses = ([0, 1, 2] as const).map((p) => tile(unitSvg(u.id, p), ['Repos', 'Préparation', 'Frappe'][p]!, bg)).join('');
