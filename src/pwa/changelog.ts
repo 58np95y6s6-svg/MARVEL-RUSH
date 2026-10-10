@@ -31,6 +31,16 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-10v',
+    title: 'Coop réparée',
+    date: '10 octobre 2026',
+    items: [
+      'Coop : reconnexion fiable — si tu quittes ou fermes l’appli pendant une partie, tu la retrouves en la rouvrant ; si ton ou ta partenaire ne revient pas, la partie est sauvegardée et vous la reprenez plus tard avec « Reprendre ».',
+      'Coop : vous vous voyez en ligne même quand le salon se bloque (lien direct entre vos deux téléphones), avec un bouton « Actualiser » et une ligne d’état de la présence.',
+      'Coop : long chemin commun entre les plateaux, un boss de chaque côté (plus lents, qui partent du début du chemin), ennemis de l’autre touchables sur leur dernière ligne droite, et « Offrir » qui ne part plus par erreur.',
+    ],
+  },
+  {
     id: '2026-10-10u',
     title: 'Raretés alignées sur Rush Royale',
     date: '10 octobre 2026',

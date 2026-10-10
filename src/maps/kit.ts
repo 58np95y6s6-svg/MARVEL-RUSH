@@ -807,7 +807,7 @@ export type Spots = [Point, Point, Point, Point, Point, Point];
 export function spots(c: Ctx): Spots {
   return c.mode === 'solo'
     ? [{ x: 230, y: 1065 }, { x: 770, y: 1065 }, { x: 500, y: 1090 }, { x: 140, y: 160 }, { x: 860, y: 160 }, { x: 500, y: 150 }]
-    : [{ x: 70, y: 480 }, { x: 70, y: 950 }, { x: 300, y: 720 }, { x: 140, y: 60 }, { x: 860, y: 60 }, { x: 500, y: 60 }];
+    : [{ x: 70, y: 480 }, { x: 70, y: 950 }, { x: 70, y: 700 }, { x: 140, y: 60 }, { x: 860, y: 60 }, { x: 500, y: 60 }];
 }
 
 /** Base du ciel (horizon) selon le mode. */

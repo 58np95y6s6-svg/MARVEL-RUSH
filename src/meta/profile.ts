@@ -85,7 +85,7 @@ export interface Profile {
   firstTen?: Record<string, boolean>;
   // ---- Coop à deux (§5.2, §5.4) ----
   /** Dernière partenaire vue en ligne (affichée hors ligne). */
-  partner?: { profileId: string; name: string; avatar: UnitId; seenAt: number; chapters?: number[] };
+  partner?: { profileId: string; name: string; avatar: UnitId; seenAt: number; chapters?: number[]; /** Dernier identifiant réseau personnel vu (connexion directe sans rendez-vous). */ peer?: string };
   /** Record du duo en Coop Infini (vagues tenues). */
   coopBest?: number;
   /** Coop Infini : palier → date (AAAA-MM-JJ) du dernier coffre obtenu (une fois par jour et par mode). */

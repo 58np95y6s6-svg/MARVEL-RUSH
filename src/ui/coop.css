@@ -26,12 +26,14 @@
 
 /* Pastille de la partenaire, entre les deux plateaux (côté gauche, libre). */
 .co-chip {
-  position: absolute; left: 22px; top: 622px; display: flex; align-items: center; gap: 12px; max-width: 420px;
-  padding: 6px 22px 6px 6px; border-radius: 60px; background: rgba(20, 14, 40, .62); border: 3px solid rgba(255,255,255,.14);
+  /* Colonne gauche, à côté du plateau de la partenaire : le tronc commun et le château restent dégagés. */
+  position: absolute; left: 4px; top: 500px; display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 120px;
+  padding: 6px; border-radius: 44px; background: rgba(20, 14, 40, .62); border: 3px solid rgba(255,255,255,.14);
   font-size: 34px; pointer-events: none;
 }
 .co-chip img { width: 64px; height: 64px; border-radius: 50%; background: #3a2f6b; border: 4px solid var(--ink); object-fit: cover; }
-.co-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.co-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; font-size: 22px; }
+.co-chip .co-dot { position: absolute; right: 8px; top: 52px; }
 .co-dot { width: 18px; height: 18px; border-radius: 50%; background: #5ee36a; border: 3px solid var(--ink); flex: none; }
 .co-dot.off { background: #9aa0b4; }
 
@@ -42,7 +44,7 @@
   font-family: var(--body); font-weight: 900; font-size: 34px; white-space: nowrap; opacity: 0; pointer-events: none; z-index: 7;
 }
 .co-bubble img { width: 72px; height: 72px; border-radius: 50%; background: #ffe7a6; object-fit: cover; }
-.co-bubble.partner { left: 40px; top: 520px; }
+.co-bubble.partner { left: 40px; top: 400px; }
 .co-bubble.me { right: 40px; top: 1180px; }
 .co-bubble.on { animation: co-bubble 2.6s ease-out forwards; }
 @keyframes co-bubble { 0% { opacity: 0; transform: scale(.4); } 10% { opacity: 1; transform: scale(1.1); } 18% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
@@ -106,6 +108,13 @@
 .du-pt b { font: 400 22px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .du-pt small { font: 800 14px var(--body); color: var(--rr-text); }
 .du-partner.on .du-pt small { color: #2a8a2e; }
+.du-pt { flex: 1; }
+.du-partner .du-pt small.du-diag { font: 700 12px var(--body); color: var(--rr-text); opacity: .85; }
+.du-refresh { flex: none; padding: 6px 10px; font-size: 15px; min-height: 0; }
+.du-save p { margin: 0 0 8px; display: grid; text-align: center; }
+.du-save p b { font: 400 18px var(--display); }
+.du-save p small { font: 800 14px var(--body); }
+.du-save .du-row { display: flex; gap: 8px; justify-content: center; }
 .du-seg { margin: 2px 6px; }
 .du-seg > button { flex: 1; }
 .du-panel { margin: 0 6px; padding: 10px; border-radius: 16px; background: var(--rr-in); color: var(--rr-navy); border: 3px solid var(--ink); box-shadow: 0 0 0 4px var(--rr-frame), 0 0 0 7px var(--ink); }

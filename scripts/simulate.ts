@@ -1,5 +1,5 @@
 // Simulateur d'équilibrage headless (agent Game design).
-// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--paliers <n>] [--eveil <n>] [--stats] [--campagne <c1-n3|c1|all>] [--attendu]
+// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--paliers <n>] [--eveil <n>] [--stats] [--campagne <c1-n3|c1|all>] [--attendu] [--coop-niveaux <cc1|all|cc1-n5>]
 // --attendu (avec --campagne) : chaque chapitre est joué avec le deck, le niveau de collection et les
 // paliers de talents attendus à ce stade (tableau EXPECTED, docs/campagne.md §2).
 // --campagne : joue un niveau de campagne (ou tous ceux d'un chapitre, ou les 60) et affiche le taux de
@@ -27,6 +27,7 @@ import { getMap } from '../src/maps/index';
 import { LEVELS, getLevel, levelConfig, type CampaignLevel } from '../src/campaign/levels';
 import { evaluateStars } from '../src/campaign/progress';
 import { createBattleTracker } from '../src/campaign/tracker';
+import { COOP_LEVELS, coopLevelConfig } from '../src/campaign/coopLevels';
 
 const argv = process.argv.slice(2).filter((a) => a !== '--');
 const flag = (name: string): string | undefined => {
@@ -59,6 +60,8 @@ interface WaveStat { n: number; hp: number; life: number; kills: number; dmg: nu
 const waveStats = new Map<number, WaveStat>();
 const ws = (w: number): WaveStat => waveStats.get(w) ?? waveStats.set(w, { n: 0, hp: 0, life: 0, kills: 0, dmg: 0, active: 0, boss: [], mini: [], bossN: 0, miniN: 0, bossHp: 0, miniHp: 0 }).get(w)!;
 const campaignArg = flag('--campagne');
+/** --coop-niveaux <cc1|all|cc1-n3> : niveaux Coop joués par deux bots avec la collection attendue du chapitre. */
+const coopLevelsArg = flag('--coop-niveaux');
 const games = argv.length && /^\d+$/.test(argv[argv.length - 1]!) ? Number(argv.pop()) : 20;
 const deck = (argv.length ? argv : ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow']) as UnitId[];
 for (const id of deck) if (!UNITS[id]) throw new Error(`Unité inconnue : ${id}`);
@@ -73,7 +76,7 @@ function coverage(player: number, slot: number, unit: UnitId): number {
   const key = `${player}:${slot}:${range}`;
   let v = coverCache.get(key);
   if (v === undefined) {
-    const lanes: LaneId[] = coop ? [player === 0 ? 'a' : 'b', 'tronc'] : ['a'];
+    const lanes: LaneId[] = coop ? ['a', 'b', 'tronc'] : ['a']; // branche de la partenaire : dernière ligne droite seulement
     v = 0;
     for (const l of lanes) for (const [a, b] of coveredSpans(geo, player, l, slot, range, 120)) v += b - a;
     coverCache.set(key, v);
@@ -251,6 +254,40 @@ const EXPECTED: Record<number, { deck: UnitId[]; level: number; tiers: number; s
   8: { deck: ['ironman', 'thor', 'superman', 'wonderwoman', 'batman'], level: 10, tiers: 3, stars: 2 }, // inter-univers, ★2
   9: { deck: ['ironman', 'thor', 'superman', 'batman', 'greenlantern'], level: 10, tiers: 3, stars: 4 }, // deck complet, ★4
 };
+
+if (coopLevelsArg) {
+  const targets = COOP_LEVELS.filter((l) => coopLevelsArg === 'all' || l.id === coopLevelsArg || `cc${l.chapter}` === coopLevelsArg);
+  const rates: number[] = [];
+  for (const lv of targets) {
+    const exp = EXPECTED[lv.chapter] ?? EXPECTED[1]!;
+    const d = exp.deck;
+    const talents = exp.tiers ? Object.fromEntries(d.map((u) => [u, Array.from({ length: exp.tiers }, () => 'a' as const)])) : {};
+    let wins = 0, waveSum = 0;
+    for (let g = 0; g < games; g++) {
+      const seed = seed0 + g;
+      botRng = seed * 7919 + 17;
+      const extra = coopLevelConfig(lv, seed);
+      const levels = Object.fromEntries(d.map((u) => [u, exp.level]));
+      const engine = createEngine({ ...extra, mode: 'coop', seed, mapId: extra.mapId ?? MAP_ID, players: [{ id: 'p1', deck: d, levels, talents }, { id: 'p2', deck: d, levels, talents }] } as GameConfig);
+      while (!engine.state.result) {
+        for (const [pi, p] of engine.state.players.entries()) {
+          if (casual && engine.state.tick % 20 !== 0) break;
+          const c = decide(p, pi);
+          if (c) engine.apply(c);
+        }
+        engine.tick();
+        engine.drainEvents();
+      }
+      const res = engine.state.result!;
+      waveSum += res.wave;
+      if (res.outcome === 'victoire') wins++;
+    }
+    rates.push(wins / games);
+    console.log(`${lv.id.padEnd(8)} ${String(lv.waves).padStart(2)} vagues · vague moy. ${(waveSum / games).toFixed(1)} · victoire ${Math.round((100 * wins) / games)} %`);
+  }
+  console.log(`Coop Niveaux : victoire moyenne ${Math.round((100 * rates.reduce((a, b) => a + b, 0)) / Math.max(1, rates.length))} %`);
+  process.exit(0);
+}
 
 if (campaignArg) {
   const targets: CampaignLevel[] = campaignArg === 'all' ? LEVELS

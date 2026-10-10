@@ -7,8 +7,18 @@
 // présents (« roster »). S'il disparaît, les clients se réélisent après une attente aléatoire.
 // Chaque appareil enregistre aussi son identifiant personnel `mr-<ns>-<profil>` pour les connexions directes
 // (invitations, parties). Battement toutes les 10 s, oubli après 30 s, pause quand la page est cachée.
+//
+// Robustesse (retours sur deux téléphones, octobre 2026) :
+// - réouverture de l'application : le serveur garde l'ancien identifiant personnel quelques secondes ; on
+//   réessaie avec une attente croissante, puis on prend un identifiant de secours `…-g<n>` annoncé par la présence ;
+// - « tous les deux en ligne sans se voir » (deux rendez-vous, ou un détenteur fantôme) : chaque appareil se
+//   connecte AUSSI directement à l'identifiant personnel connu de sa partenaire (mémorisé sur le profil) et
+//   échange sa présence sur ce lien ; nouvelle vérification toutes les 15 s ; un client qui ne reçoit plus la
+//   liste du détenteur le quitte et relance l'élection ; si deux appareils tiennent chacun un rendez-vous, celui
+//   dont l'identifiant est le plus petit cède le sien ;
+// - « Actualiser » (bouton) : tout est refait à la main ; `diag()` donne une ligne d'état lisible.
 
-import { NetError, type Endpoint, type Link, type Network } from './peer';
+import { NetError, openRetrying, type Endpoint, type Link, type Network } from './peer';
 import { msg, type NetMessage, type PresenceInfo } from './protocol';
 
 export const HEARTBEAT_MS = 10_000;
@@ -28,6 +38,9 @@ export const personalId = (ns: string, profileId: string): string => `mr-${ns}-$
 export const roomId = (ns: string, code: string): string => `mr-${ns}-room-${code.toUpperCase()}`;
 
 export type PresenceState = 'off' | 'connecting' | 'online' | 'unavailable';
+/** Ligne de diagnostic : relié au salon, lien direct avec la partenaire, en attente, en connexion, erreur. */
+export type PresenceDiag = 'off' | 'connexion' | 'salon' | 'direct' | 'attente' | 'erreur';
+export const RECHECK_MS = 15_000;
 
 export interface PresenceOptions {
   net: Network;
@@ -39,6 +52,12 @@ export interface PresenceOptions {
   /** Attente avant réélection, en ms (aléatoire entre min et max). */
   backoff?: [number, number];
   random?: () => number;
+  /** Identifiants personnels connus de la partenaire (profil), essayés en connexion directe. */
+  knownPeers?: () => (string | null | undefined)[];
+  /** Nouvelle vérification (liens directs, détenteur muet), en ms. */
+  recheckMs?: number;
+  /** Attentes avant de réessayer l'identifiant personnel encore « pris » (réouverture de l'application). */
+  openWaits?: number[];
 }
 
 export interface Presence {
@@ -55,8 +74,13 @@ export interface Presence {
   onChange(h: () => void): () => void;
   /** Lien direct entrant (invitation, reconnexion à une partie). */
   onLink(h: (l: Link) => void): () => void;
+  /** Lien direct entrant dont le premier message est une présence (classé par le service). */
+  adopt(l: Link, first?: NetMessage): void;
   /** Annonce immédiate (changement de statut). */
   announce(): void;
+  /** Bouton « Actualiser » : quitte et refait rendez-vous et liens directs. */
+  refresh(): Promise<void>;
+  diag(): PresenceDiag;
   start(): Promise<void>;
   /** Pause (page cachée) : quitte le rendez-vous, garde l'identifiant personnel. */
   pause(): void;
@@ -66,6 +90,12 @@ export interface Presence {
 
 export function createPresence(o: PresenceOptions): Presence {
   const hb = o.heartbeatMs ?? HEARTBEAT_MS;
+  const recheck = o.recheckMs ?? RECHECK_MS;
+  const direct = new Map<Link, { info: PresenceInfo | null; seen: number }>();
+  let lastRoster = 0;
+  let rosterSeen = false;
+  let lastRecheck = 0;
+  let dialing = false;
   const dropAfter = o.dropAfterMs ?? DROP_AFTER_MS;
   const [bmin, bmax] = o.backoff ?? [400, 2500];
   const rnd = o.random ?? Math.random;
@@ -84,7 +114,7 @@ export function createPresence(o: PresenceOptions): Presence {
   const linkHs = new Set<(l: Link) => void>();
   const changed = () => { for (const h of [...changeHs]) { try { h(); } catch (e) { console.error(e); } } };
 
-  const meInfo = (): PresenceInfo => ({ ...o.me(), peer: personal?.id ?? '' });
+  const meInfo = (): PresenceInfo => ({ ...o.me(), peer: personal?.id ?? '', ...(lobby ? { lobby: true } : {}) });
 
   function setState(s: PresenceState): void { if (s !== state) { state = s; changed(); } }
 
@@ -122,7 +152,9 @@ export function createPresence(o: PresenceOptions): Presence {
   // ---------------- client
   function asClient(l: Link): void {
     lobbyLink = l;
-    l.onMessage((m: NetMessage) => { if (m.t === 'roster') setRoster(m.list); });
+    lastRoster = Date.now();
+    rosterSeen = false;
+    l.onMessage((m: NetMessage) => { if (m.t === 'roster') { lastRoster = Date.now(); rosterSeen = true; setRoster(m.list); } });
     l.onClose(() => {
       if (lobbyLink !== l) return;
       lobbyLink = null;
@@ -176,9 +208,72 @@ export function createPresence(o: PresenceOptions): Presence {
       for (const [l, c] of clients) if (now - c.seen > dropAfter) { clients.delete(l); l.close(); }
       broadcast();
     } else if (lobbyLink) {
-      lobbyLink.send(msg({ t: 'presence', who: meInfo() }));
+      // Détenteur muet (fantôme d'une ancienne page, réseau coupé) : on le quitte et on réélit.
+      if (now - lastRoster > dropAfter) lobbyLink.close();
+      else lobbyLink.send(msg({ t: 'presence', who: meInfo() }));
     } else {
       scheduleElection();
+    }
+    const me = meInfo();
+    for (const [l, d] of direct) {
+      if (now - d.seen > dropAfter) { direct.delete(l); l.close(); changed(); continue; }
+      l.send(msg({ t: 'presence', who: me }));
+    }
+    if (now - lastRecheck >= recheck) { lastRecheck = now; void dial(); }
+  }
+
+  // ---------------- liens directs avec la partenaire (en plus du rendez-vous)
+  function directPartner(): PresenceInfo | null {
+    const me = o.me();
+    for (const d of direct.values()) if (d.info && d.info.device !== me.device && d.info.profileId !== me.profileId) return d.info;
+    return null;
+  }
+
+  function adoptDirect(l: Link, first?: NetMessage): void {
+    direct.set(l, { info: null, seen: Date.now() });
+    l.onMessage((m) => onDirect(l, m));
+    l.onClose(() => { if (direct.delete(l)) changed(); });
+    l.send(msg({ t: 'presence', who: meInfo() }));
+    if (first) onDirect(l, first);
+  }
+
+  function onDirect(l: Link, m: NetMessage): void {
+    const d = direct.get(l);
+    if (!d) return;
+    d.seen = Date.now();
+    if (m.t === 'presence') {
+      const before = JSON.stringify(d.info);
+      d.info = m.who;
+      if (JSON.stringify(m.who) !== before) changed();
+      // Deux rendez-vous (états différents du serveur) : le plus petit identifiant cède le sien.
+      if (m.who.lobby && lobby && personal && m.who.peer && personal.id < m.who.peer) {
+        leaveLobby();
+        scheduleElection();
+        changed();
+      }
+    } else if (m.t === 'ping') l.send(msg({ t: 'pong', at: m.at }));
+  }
+
+  /** Connexion directe aux identifiants connus de la partenaire, s'il n'y a pas déjà un lien direct. */
+  async function dial(): Promise<void> {
+    if (dialing || stopped || paused || !personal || directPartner()) return;
+    dialing = true;
+    try {
+      const me = o.me();
+      const fromRoster = roster.filter((p) => p.device !== me.device && p.profileId !== me.profileId).map((p) => p.peer);
+      const targets = [...new Set([...fromRoster, ...(o.knownPeers?.() ?? [])])].filter((t): t is string => !!t && t !== personal?.id);
+      for (const t of targets) {
+        if (stopped || paused || !personal || directPartner()) return;
+        try {
+          const l = await personal.connect(t, 6000);
+          if (stopped || paused) { l.close(); return; }
+          adoptDirect(l);
+          // Attend sa présence un court instant avant d'essayer l'identifiant suivant.
+          await new Promise((r) => setTimeout(r, Math.min(1500, hb)));
+        } catch { /* identifiant périmé ou appareil hors ligne */ }
+      }
+    } finally {
+      dialing = false;
     }
   }
 
@@ -192,8 +287,10 @@ export function createPresence(o: PresenceOptions): Presence {
   async function openPersonal(): Promise<void> {
     const me = o.me();
     const base = personalId(o.ns, me.profileId);
+    // Réouverture : l'ancien identifiant peut rester « pris » quelques secondes sur le serveur.
+    personal = await openRetrying(o.net, base, o.openWaits ?? [1000, 2000, 3000]);
     for (let i = 0; i < 3 && !personal; i++) {
-      const id = i === 0 ? base : `${base}-${Math.floor(rnd() * 1e6).toString(36)}`;
+      const id = `${base}-g${Math.floor(rnd() * 1e6).toString(36)}`;
       try {
         personal = await o.net.open(id);
       } catch (e) {
@@ -202,8 +299,16 @@ export function createPresence(o: PresenceOptions): Presence {
       }
     }
     if (!personal) throw new NetError('taken', 'Identifiant personnel indisponible.');
+    if (stopped) { personal.destroy(); personal = null; return; }
     personal.onLink((l) => { for (const h of [...linkHs]) h(l); });
-    personal.onLost(() => { personal = null; if (!stopped) { setState('unavailable'); setTimeout(() => void restart(), 3000); } });
+    const ep = personal;
+    personal.onLost(() => {
+      if (personal !== ep) return;
+      personal = null;
+      for (const l of [...direct.keys()]) l.close();
+      direct.clear();
+      if (!stopped) { setState('unavailable'); setTimeout(() => void restart(), 3000); }
+    });
   }
 
   async function restart(): Promise<void> {
@@ -211,6 +316,7 @@ export function createPresence(o: PresenceOptions): Presence {
     try {
       if (!personal) await openPersonal();
       if (!paused) await elect();
+      if (!paused) void dial();
     } catch {
       setState('unavailable');
       setTimeout(() => void restart(), 8000 + rnd() * 4000);
@@ -223,15 +329,40 @@ export function createPresence(o: PresenceOptions): Presence {
     get endpoint() { return personal; },
     others() {
       const me = o.me();
-      return roster.filter((p) => p.device !== me.device && p.profileId !== me.profileId);
+      const out = new Map<string, PresenceInfo>();
+      for (const p of roster) out.set(p.device, p);
+      for (const d of direct.values()) if (d.info) out.set(d.info.device, d.info); // le lien direct est le plus frais
+      return [...out.values()].filter((p) => p.device !== me.device && p.profileId !== me.profileId);
     },
     partner() { return self.others()[0] ?? null; },
     isLobbyHolder: () => !!lobby,
     onChange(h) { changeHs.add(h); return () => { changeHs.delete(h); }; },
     onLink(h) { linkHs.add(h); return () => { linkHs.delete(h); }; },
+    adopt(l, first) { if (stopped) { l.close(); return; } adoptDirect(l, first); },
     announce() {
       if (lobby) broadcast();
       else lobbyLink?.send(msg({ t: 'presence', who: meInfo() }));
+      const me = meInfo();
+      for (const l of direct.keys()) l.send(msg({ t: 'presence', who: me }));
+    },
+    async refresh() {
+      if (stopped) return;
+      paused = false;
+      leaveLobby();
+      for (const l of [...direct.keys()]) l.close();
+      direct.clear();
+      personal?.wake?.();
+      setState('connecting');
+      lastRecheck = Date.now();
+      await restart();
+    },
+    diag() {
+      if (stopped) return 'off';
+      if (state === 'unavailable') return 'erreur';
+      if (lobby || (lobbyLink && rosterSeen)) return 'salon';
+      if (directPartner()) return 'direct';
+      if (state === 'connecting') return 'connexion';
+      return 'attente';
     },
     async start() {
       if (!stopped) return;
@@ -245,10 +376,13 @@ export function createPresence(o: PresenceOptions): Presence {
       if (stopped || paused) return;
       paused = true;
       leaveLobby();
+      for (const l of [...direct.keys()]) l.close();
+      direct.clear();
     },
     resume() {
-      if (stopped || !paused) return;
+      if (stopped || !paused) { personal?.wake?.(); return; }
       paused = false;
+      personal?.wake?.();
       void restart();
     },
     stop() {
@@ -256,6 +390,8 @@ export function createPresence(o: PresenceOptions): Presence {
       if (timer) clearInterval(timer);
       timer = null;
       leaveLobby();
+      for (const l of [...direct.keys()]) l.close();
+      direct.clear();
       personal?.destroy();
       personal = null;
       setState('off');

@@ -324,11 +324,11 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 
 **Le plateau Coop**
 - **Deux plateaux** : le tien en bas, celui de ta partenaire en haut.
-- **Deux chemins qui se rejoignent.** Les ennemis entrent par deux portails, un de chaque côté, et chaque flot longe d'abord le plateau d'un joueur. Les deux chemins **se rejoignent ensuite au centre** en un seul chemin commun qui mène à la porte du château.
-- **Toutes les unités des deux joueurs** peuvent toucher n'importe quel ennemi, sur les deux branches et sur le tronc commun. Il faut donc s'entraider.
+- **Deux chemins qui se rejoignent.** Les ennemis entrent par deux portails, un de chaque côté, et chaque flot longe d'abord le plateau d'un joueur. Les deux chemins **se rejoignent ensuite à droite, entre les plateaux**, en un **long tronc commun** qui traverse toute la largeur des plateaux jusqu'à la porte du château (à gauche). Chemin complet ≈ 16,7 cases (Solo : 14).
+- **Qui touche quoi** (retour de la joueuse, octobre 2026) : tes unités touchent les ennemis de **ta branche** et du **tronc commun** ; ceux de la branche de ta partenaire seulement sur sa **dernière ligne droite** avant la jonction (le segment qui descend ou monte vers le tronc). Les portées s'appliquent toujours ; l'appui long montre la zone et un repère au début de cette ligne droite.
 - **Vies partagées** (3). Le mana est individuel, et celui des éliminations va au joueur qui a donné le coup final.
-- Les petits et les gros boss arrivent **par le tronc commun**. Leurs pouvoirs visent un plateau au hasard.
-- **Offrir une unité** : un bouton envoie une unité de ton plateau sur une case vide du plateau de ta partenaire, une fois par vague.
+- **Boss** : à chaque vague de boss (petit ou gros), **un boss par branche**, chacun du côté de son joueur ; il fait tout le chemin (sa branche puis le tronc), plus lentement qu'en Solo (gros boss 0,35 case/s, mini-boss ×0,7), et ses pouvoirs visent **le plateau de son côté**. PV de chacun : 65 % d'un boss Solo de la vague (Coop Niveaux, boss imposé : 100 %, il faut abattre les deux). La barre de boss montre les deux (à gauche le tien).
+- **Offrir une unité** : bouton « Offrir » puis un simple toucher sur l'unité (5 s pour choisir ; un glisser ou un toucher ailleurs annule), une fois par vague. Elle part sur une case vide du plateau de ta partenaire, qui voit « X t'offre … ».
 
 **Coop — Niveaux à gagner**
 - Une **campagne à deux** de 6 chapitres × 10 niveaux, sur les mêmes maps que le Solo, avec des vagues plus nombreuses et plus fortes.
@@ -370,7 +370,8 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 - **L'hôte fait autorité** : le joueur qui crée la partie fait tourner le moteur complet (les deux plateaux et le chemin).
 - L'invité envoie seulement des **commandes** (`summon`, `merge {from,to}`, `powerup {unitId}`, `gift {slot}`, `emote`).
 - L'hôte diffuse un **instantané compact** de l'état 10 fois par seconde, plus les **événements** (coups, éliminations, pouvoirs) pour que les effets visuels se déclenchent chez l'invité. L'invité interpole entre deux instantanés.
-- Messages typés et versionnés (`{v:1, t:'snapshot', …}`). Gère la reconnexion : si l'invité revient dans les 30 s, il reprend la partie ; sinon l'hôte continue seul, et la partie est sauvegardée pour être reprise à deux plus tard.
+- Messages typés et versionnés (`{v:1, t:'snapshot', …}`). Gère la reconnexion : si l'invité revient dans les 30 s, il reprend la partie ; sinon l'hôte choisit « Attendre encore », « Continuer seule » ou « Quitter », et la partie (sauvegardée à chaque vague sur l'appareil de l'hôte) se reprend à deux plus tard avec « Reprendre » sur l'écran Coop.
+- **Robustesse réseau** (deux téléphones, octobre 2026) : application rouverte → l'identifiant personnel encore retenu par le serveur est redemandé avec une attente croissante, puis un identifiant de secours est annoncé par la présence ; l'invitée qui rouvre l'application pendant une partie la **rejoint automatiquement** (session mémorisée 10 min) ; signalisation perdue → `reconnect()` avec attente croissante, retour au premier plan → reconnexion immédiate ; liaison WebRTC « disconnected » → 5 s de grâce avant de couper. **Présence** : en plus du rendez-vous `mr-<ns>-lobby`, chaque appareil se connecte directement à l'identifiant personnel connu de sa partenaire (mémorisé sur le profil), revérifie toutes les 15 s, quitte un rendez-vous muet ; si deux rendez-vous coexistent, le plus petit identifiant cède le sien. Écran Coop : ligne « Présence : connecté au salon / lien direct / en attente / erreur réseau » et bouton « Actualiser ».
 - **Salon** :
   1. Le joueur A choisit Coop Niveaux (et le niveau) ou Coop Infini, puis « Créer une partie ».
   2. L'app génère un identifiant de salon et le lien `https://<site>/#k=<CLE>&room=<ID>` (la clé secrète est conservée).
@@ -536,7 +537,7 @@ Chaque partie se joue sur une **map** liée à l'univers d'un personnage. Quand 
   - **2 ou 3 animations d'ambiance** ;
   - une **palette** ;
   - une **ambiance sonore**.
-- En **Coop**, la map est symétrique : deux portails, un de chaque côté, deux branches qui longent chacune un plateau, puis le tronc commun au centre qui mène au château.
+- En **Coop**, la map est symétrique : deux portails, un de chaque côté, deux branches qui longent chacune un plateau, puis un long tronc commun entre les plateaux qui mène au château (à gauche).
 - **Choix de la map** :
   - en Solo, l'univers majoritaire du deck décide, ou le joueur choisit parmi les maps débloquées ;
   - en multi, l'hôte choisit.

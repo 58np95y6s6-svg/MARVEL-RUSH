@@ -1,7 +1,7 @@
 // Moteur de simulation pur à pas fixe (20 ticks/s), déterministe (graine mulberry32).
 // Aucune dépendance au DOM, à l'heure ou à Math.random.
 
-import { BOSSES, BOSS_POOLS, BOSS_STATS, LIEUTENANTS } from '../data/bosses';
+import { BOSSES, BOSS_POOLS, BOSS_STATS, COOP_BOSS, LIEUTENANTS } from '../data/bosses';
 import { EXTRA_MILESTONE_WAVES, milestoneAt } from '../data/milestones';
 import { ENEMIES, WAVE_RULES, monsterHp, monstersInWave, spawnWeights, waveHp } from '../data/enemies';
 import { activeTeams } from '../data/teams';
@@ -12,7 +12,7 @@ import {
   type LaneId, type PlayerId,
 } from './types';
 import {
-  COOP_LIVES, DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
+  COOP_LIVES, coopHpMul, DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
   SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, rand, spawnRand,
   type Ctx, type PlayerInfo, type SimEnemy, type SimPlayer, type SimState, type SimUnit, type TeamAgg,
 } from './internal';
@@ -271,14 +271,14 @@ function waveFinished(ctx: Ctx): void {
 /** PV d'un ennemi normal au début de la vague (base des boss et des sbires). */
 function normalHp(ctx: Ctx, wave: number): number {
   const s = ctx.cfg.script;
-  return waveHp(wave, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1);
+  return waveHp(wave, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1) * (ctx.coop ? coopHpMul(wave) : 1);
 }
 
 /** PV du prochain monstre de la vague (Rush Royale : ils montent à chaque nouveau monstre). */
 function nextMonsterHp(ctx: Ctx): number {
   const s = ctx.cfg.script;
   const st = ctx.st;
-  return monsterHp(st.wave, st.spawnCount, st.waveMonsters, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1);
+  return monsterHp(st.wave, st.spawnCount, st.waveMonsters, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1) * (ctx.coop ? coopHpMul(st.wave) : 1);
 }
 
 /** PV d'un boss ou d'un lieutenant : PV d'un ennemi normal × `script.bossHpMultiplier`. */
@@ -291,9 +291,15 @@ function entryLanes(ctx: Ctx): LaneId[] {
   return ctx.coop ? ['a', 'b'] : ['a'];
 }
 
-/** Les boss entrent par le tronc commun en Coop. */
-function bossLane(ctx: Ctx): LaneId {
-  return ctx.coop ? 'tronc' : 'a';
+/** Part des PV de chaque boss en Coop (un boss par branche) ; 1 en Solo. */
+function coopBossShare(ctx: Ctx): number {
+  if (!ctx.coop) return 1;
+  return ctx.cfg.script?.endOnBossKill ? COOP_BOSS.levelHpShare : COOP_BOSS.hpShare;
+}
+
+/** Branches d'entrée des boss : en Coop, un boss par branche (chaque joueur voit le sien de son côté). */
+function bossLanes(ctx: Ctx): LaneId[] {
+  return entryLanes(ctx);
 }
 
 function addEnemy(ctx: Ctx, e: Omit<SimEnemy, 'uid' | 'distance' | 'effects'>): SimEnemy {
@@ -365,16 +371,19 @@ export function spawnInterval(wave: number, countMul = 1): number {
 function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
   const st = ctx.st;
   const prm = BOSSES[master].minion.params;
-  const hp = bossHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul);
-  const e = addEnemy(ctx, {
-    kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: WAVE_RULES.baseSpeed * BOSS_STATS.smallSpeedMul, armor: prm.armor ?? 0,
-    shieldHits: prm.shieldHits ?? 0, minionOf: master, giant: true,
-    x: {
-      mini: 1, rageIn: BOSS_STATS.rageAfter, flying: prm.flying ? 1 : undefined,
-      ...(scripted ? {} : { master, lieutenant: 1, powerIn: LIEUTENANTS[master].power.interval }),
-    },
-  });
-  emit(ctx, { type: 'miniBossSpawn', enemy: e.uid, boss: master });
+  const hp = bossHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul) * coopBossShare(ctx);
+  const speed = WAVE_RULES.baseSpeed * (ctx.coop ? COOP_BOSS.smallSpeedMul : BOSS_STATS.smallSpeedMul);
+  for (const lane of bossLanes(ctx)) {
+    const e = addEnemy(ctx, {
+      kind: 'sbire', lane, hp, maxHp: hp, speed, armor: prm.armor ?? 0,
+      shieldHits: prm.shieldHits ?? 0, minionOf: master, giant: true,
+      x: {
+        mini: 1, rageIn: BOSS_STATS.rageAfter, flying: prm.flying ? 1 : undefined,
+        ...(scripted ? {} : { master, lieutenant: 1, powerIn: LIEUTENANTS[master].power.interval }),
+      },
+    });
+    emit(ctx, { type: 'miniBossSpawn', enemy: e.uid, boss: master });
+  }
   st.currentBoss = master;
   st.currentBossSmall = true;
   st.bossRageIn = BOSS_STATS.rageAfter;
@@ -384,13 +393,14 @@ function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
 function spawnBigBoss(ctx: Ctx, boss: BossId): void {
   const st = ctx.st;
   const def = BOSSES[boss];
-  const hp = bossHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1);
-  const lane = bossLane(ctx);
-  const e = addEnemy(ctx, {
-    kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: def.power.params.bossArmor ?? 0, shieldHits: 0,
-    bossId: boss, x: { powerIn: def.power.interval, rageIn: BOSS_STATS.rageAfter },
-  });
-  emit(ctx, { type: 'bossSpawn', enemy: e.uid, boss, lane });
+  const hp = bossHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1) * coopBossShare(ctx);
+  for (const lane of bossLanes(ctx)) {
+    const e = addEnemy(ctx, {
+      kind: 'normal', lane, hp, maxHp: hp, speed: ctx.coop ? COOP_BOSS.speed : BOSS_STATS.speed, armor: def.power.params.bossArmor ?? 0, shieldHits: 0,
+      bossId: boss, x: { powerIn: def.power.interval, rageIn: BOSS_STATS.rageAfter },
+    });
+    emit(ctx, { type: 'bossSpawn', enemy: e.uid, boss, lane });
+  }
   st.currentBoss = boss;
   st.currentBossSmall = false;
   st.pendingBoss = null;

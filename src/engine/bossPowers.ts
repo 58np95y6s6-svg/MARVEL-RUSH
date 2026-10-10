@@ -9,7 +9,7 @@ import { WAVE_RULES } from '../data/enemies';
 import type { BossId } from '../data/types';
 import { GRID_COLS, GRID_SIZE } from './types';
 import {
-  DT, EPS, emit, pick, pickMany, randInt, type Ctx, type LostUnit, type SimEnemy, type SimUnit,
+  DT, EPS, coopHpMul, emit, pick, pickMany, randInt, type Ctx, type LostUnit, type SimEnemy, type SimUnit,
 } from './internal';
 import { effectiveId, unitParams } from './combat';
 import { initUnitCounters } from './abilities';
@@ -19,6 +19,12 @@ import { sacrifice } from './archetypes';
 function targetPlayer(ctx: Ctx): number {
   if (ctx.st.players.length > 1) return randInt(ctx, ctx.st.players.length);
   return 0;
+}
+
+/** Plateau visé par un boss : en Coop, celui de son côté (branche d'entrée) ; sinon au hasard. */
+function bossPlayer(ctx: Ctx, e: SimEnemy | undefined): number {
+  const o = e?.x.owner;
+  return o !== undefined && ctx.st.players[o] ? o : targetPlayer(ctx);
 }
 
 /** Cases des unités qui peuvent subir un pouvoir (talent `immuneBossControl` : elles y échappent). */
@@ -87,7 +93,7 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
   const id = (boss.bossId ?? boss.x.master)!;
   const def = boss.bossId ? BOSSES[id] : LIEUTENANTS[id];
   const prm = def.power.params;
-  const player = targetPlayer(ctx);
+  const player = bossPlayer(ctx, boss);
   const p = ctx.st.players[player]!;
   const lost: LostUnit[] = [];
   switch (id) {
@@ -298,7 +304,7 @@ function orthogonal(slot: number): number[] {
 function boomTube(ctx: Ctx, boss: SimEnemy, count: number): void {
   const prm = BOSSES.darkseid.minion.params;
   const hp = WAVE_RULES.baseHp * Math.pow(WAVE_RULES.hpGrowth, Math.max(0, ctx.st.wave - 1))
-    * (ctx.cfg.script?.enemyHpMultiplier ?? 1) * (prm.hpMul ?? 1);
+    * (ctx.cfg.script?.enemyHpMultiplier ?? 1) * (prm.hpMul ?? 1) * (ctx.coop ? coopHpMul(ctx.st.wave) : 1);
   for (let k = 0; k < Math.max(0, Math.round(count)); k++) {
     const e: SimEnemy = {
       uid: ctx.st.nextUid++, kind: 'sbire', lane: boss.lane, distance: Math.max(0, boss.distance - 0.4 * (k + 1)),
@@ -313,9 +319,9 @@ function boomTube(ctx: Ctx, boss: SimEnemy, count: number): void {
 }
 
 /** Équation d'Anti-Vie (Darkseid) : les meilleures unités perdent un rang, tout le plateau est hypnotisé. */
-function antiLife(ctx: Ctx): void {
+function antiLife(ctx: Ctx, boss?: SimEnemy): void {
   const prm = BOSSES.darkseid.power.params;
-  const player = targetPlayer(ctx);
+  const player = bossPlayer(ctx, boss);
   const grid = ctx.st.players[player]!.grid;
   const all = candidates(ctx, player, () => true);
   const lost: LostUnit[] = [];
@@ -327,9 +333,9 @@ function antiLife(ctx: Ctx): void {
 }
 
 /** Claquement de doigts : 3 unités perdent la moitié de leurs rangs (au moins 1 rang). */
-function snap(ctx: Ctx): void {
+function snap(ctx: Ctx, boss?: SimEnemy): void {
   const prm = BOSSES.thanos.power.params;
-  const player = targetPlayer(ctx);
+  const player = bossPlayer(ctx, boss);
   const grid = ctx.st.players[player]!.grid;
   const slots = pickMany(ctx, candidates(ctx, player, () => true), prm.snapUnits ?? 3);
   const lost: LostUnit[] = [];
@@ -405,7 +411,7 @@ export function updateBosses(ctx: Ctx): void {
         e.x.venom = 1;
         e.hp = Math.min(e.maxHp, e.hp + e.maxHp * (prm.venomHeal ?? 0.15));
         e.speed *= prm.venomSpeedMul ?? 1;
-        powerEvent(ctx, 'bane', targetPlayer(ctx), [], VENOM_NAME);
+        powerEvent(ctx, 'bane', bossPlayer(ctx, e), [], VENOM_NAME);
       }
     }
     // Équation d'Anti-Vie (Darkseid) : annonce à 30 % de PV, effet après un délai.
@@ -414,13 +420,13 @@ export function updateBosses(ctx: Ctx): void {
       if (!e.x.antiLife && e.hp <= e.maxHp * (prm.antiLifeThreshold ?? 0.3)) {
         e.x.antiLife = 1;
         e.x.antiLifeIn = prm.antiLifeDelay ?? 1;
-        powerEvent(ctx, 'darkseid', targetPlayer(ctx), [], ANTI_LIFE_NAME);
+        powerEvent(ctx, 'darkseid', bossPlayer(ctx, e), [], ANTI_LIFE_NAME);
       }
       if (e.x.antiLifeIn !== undefined && e.x.antiLifeIn > 0) {
         e.x.antiLifeIn = Math.max(0, e.x.antiLifeIn - DT);
         if (e.x.antiLifeIn <= EPS) {
           e.x.antiLifeIn = 0;
-          antiLife(ctx);
+          antiLife(ctx, e);
         }
         continue; // les autres pouvoirs se taisent pendant l'Équation
       }
@@ -432,13 +438,13 @@ export function updateBosses(ctx: Ctx): void {
         e.x.snapped = 1;
         e.x.snapIn = prm.snapDelay ?? 1;
         // Annonce : fond blanc et silence (aucune case), l'effet suit après le délai.
-        powerEvent(ctx, 'thanos', targetPlayer(ctx), [], SNAP_NAME);
+        powerEvent(ctx, 'thanos', bossPlayer(ctx, e), [], SNAP_NAME);
       }
       if (e.x.snapIn !== undefined && e.x.snapIn > 0) {
         e.x.snapIn = Math.max(0, e.x.snapIn - DT);
         if (e.x.snapIn <= EPS) {
           e.x.snapIn = 0;
-          snap(ctx);
+          snap(ctx, e);
         }
         continue; // le gant se tait pendant le claquement
       }
@@ -455,7 +461,7 @@ export function updateBosses(ctx: Ctx): void {
 /** Citrouilles volantes : explosion à l'arrivée, qui étourdit des unités. */
 export function pumpkinExplosion(ctx: Ctx, e: SimEnemy): void {
   if (!e.x.arrivalStun) return;
-  const player = e.x.owner !== undefined && ctx.st.players[e.x.owner] ? e.x.owner : targetPlayer(ctx);
+  const player = bossPlayer(ctx, e);
   const slots = pickMany(ctx, candidates(ctx, player), e.x.arrivalStunUnits ?? 2);
   disable(ctx, player, slots, 'stunnedFor', e.x.arrivalStun);
   powerEvent(ctx, 'bouffon', player, slots, 'Explosion de citrouille');

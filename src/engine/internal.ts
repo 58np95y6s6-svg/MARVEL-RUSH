@@ -34,9 +34,21 @@ export function levelDamageMul(def: Pick<UnitDef, 'damage' | 'damagePerLevel'>, 
   return 1 + (def.damagePerLevel / def.damage) * n;
 }
 export const DEFAULT_PATH_LENGTH = 30;
-export const DEFAULT_COOP_LENGTHS = { a: 18, b: 18, tronc: 14 };
+/** Longueurs Coop par défaut (map inconnue) : celles du tracé en U (src/maps/layout.ts). */
+export const DEFAULT_COOP_LENGTHS = { a: 11, b: 11, tronc: 5.6 };
 /** Vies en Solo (Rush Royale, PvP : 3). */
 export const START_LIVES = 3;
+/**
+ * Coop : PV des monstres × ce facteur. Le chemin Coop (branche + long tronc, ≈ 16,7 cases) est plus long que le
+ * chemin Solo (14) et l'ennemi de la partenaire devient touchable sur sa dernière ligne droite : réglé au
+ * simulateur pour garder les vagues atteintes d'avant (docs/equilibrage.md §12).
+ */
+export const COOP_ENEMY_HP_MUL = 3.5;
+/** …atteint progressivement : ×1 à la vague 1, plein facteur à partir de la vague 1 + COOP_HP_RAMP_WAVES. */
+export const COOP_HP_RAMP_WAVES = 14;
+export function coopHpMul(wave: number): number {
+  return 1 + (COOP_ENEMY_HP_MUL - 1) * Math.min(1, Math.max(0, wave - 1) / COOP_HP_RAMP_WAVES);
+}
 /** Vies en Coop : 3 vies partagées par les deux joueurs (choix Marvel Rush ; Rush Royale n'en a qu'une). */
 export const COOP_LIVES = 3;
 /** Chance de critique par défaut de toutes les unités (Rush Royale : 5 %) ; dégâts critiques ×2 (NO_TEAM.critMul). */
