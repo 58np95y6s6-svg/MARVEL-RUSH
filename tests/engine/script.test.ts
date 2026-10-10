@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine';
-import { debugPlace, debugSpawn, simState } from '../../src/engine/debug';
+import { debugNoRange, debugPlace, debugSpawn, simState } from '../../src/engine/debug';
 import type { Engine, EngineEvent, GameConfig } from '../../src/engine/types';
 import { MARVEL, ofType, quiet, setup, step } from './helpers';
 
@@ -51,14 +51,18 @@ describe('options de script de la campagne', () => {
     expect(ofType(step(e, 2), 'gameOver')[0]).toMatchObject({ outcome: 'victoire', wave: 3 });
   });
 
-  it('passifs d’éveil : appliqués à partir de leur étoile (Thor ★10 : +1 rebond)', () => {
-    const hits = (stars: number) => {
+  it('passifs d’éveil : appliqués à partir de leur étoile (Thor ★10 : zone +25 points)', () => {
+    const ratio = (stars: number) => {
       const e = quiet(['thor', ...MARVEL.slice(0, 4)], {}, { awakening: { thor: stars } });
+      debugNoRange(e);
       debugPlace(e, 0, 0, 'thor');
-      for (let i = 0; i < 8; i++) debugSpawn(e, { hp: 1e9, distance: i });
-      return ofType(step(e, 1), 'hit').length;
+      const t = debugSpawn(e, { hp: 1e9, distance: 8 });
+      debugSpawn(e, { hp: 1e9, distance: 7.6 });
+      const h = ofType(step(e, 1), 'hit');
+      const main = h.find((x) => x.enemy === t.uid)!.damage;
+      return h.find((x) => x.enemy !== t.uid)!.damage / main;
     };
-    expect(hits(9)).toBe(2);
-    expect(hits(10)).toBe(3);
+    expect(ratio(9)).toBeCloseTo(1); // seul : mode actif, zone à 100 %
+    expect(ratio(10)).toBeCloseTo(1.25);
   });
 });

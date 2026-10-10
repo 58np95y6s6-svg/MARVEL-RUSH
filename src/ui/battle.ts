@@ -7,7 +7,7 @@ import { UNITS } from '../data/units';
 import {
   GRID_SIZE, MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, MAX_RANK, POWERUP_ATTACK_SPEED, POWERUP_COSTS,
   POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
-  formationLength, growthBonus, rangeLabel,
+  formationLength, growthBonus, growthPointsOf, rangeLabel,
   type Command, type Engine, type EngineEvent, type GameConfig, type PlayerId,
 } from '../engine';
 import { getMap } from '../maps';
@@ -539,7 +539,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const d = UNITS[id];
     const lv = engine.state.players[0]!.powerUps[u.unit] ?? 1;
     const copyMul = u.status.copyMul ?? 1;
-    const growth = growthBonus(d.ability.params, u.counters['growth'] ?? 0);
+    const growth = growthBonus(d.ability.params, growthPointsOf(d.ability.params, u, engine.state.players[0]!.mana));
     const formation = d.ability.params.formationDamagePerAlly && u.unit === id
       ? d.ability.params.formationDamagePerAlly * (Math.min(formationLength(engine.state.players[0]!.grid, slot), d.ability.params.formationMax ?? 3) - 1) : 0;
     const formationTag = formation > 0 ? `<span class="grow">Formation +${Math.round(formation * 100)} %</span>` : '';

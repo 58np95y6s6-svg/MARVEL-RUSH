@@ -29,7 +29,7 @@ const DEMO: Record<UnitId, Demo> = {
   ironman: { atk: [['ironman:repulseur', 'first']], ab: { name: 'Uni-Beam', fx: 'ironman:unibeam', tgt: 'line' } },
   spiderman: { atk: [['spiderman:toile', 'first']], ab: { name: 'Toile collante', fx: 'spiderman:toile', tgt: 'first', status: { stunFor: 1 } }, status: { slow: 0.1, slowFor: 2 } },
   hulk: { atk: [['hulk:coup', 'chain']], ab: { name: 'Hulk Smash', fx: 'hulk:smash', tgt: 'chain', status: { stunFor: 1 } } },
-  thor: { atk: [['thor:chaine', 'chain']], ab: { name: 'Éclair en chaîne', fx: 'thor:chaine', tgt: 'all' } },
+  thor: { atk: [['thor:marteau', 'chain'], ['thor:foudre', 'chain']], ab: { name: 'Marteau de foi', fx: 'thor:marteau-foi', tgt: 'chain', status: { stunFor: 1 } } },
   strange: { atk: [['strange:magie', 'first']], ab: { name: 'Portail', tgt: 'first' } },
   venom: { atk: [['venom:griffes', 'first']], ab: { name: 'Dévorer', fx: 'venom:devorer', tgt: 'first' } },
   cmarvel: { atk: [['cmarvel:rafale', 'first'], ['cmarvel:rafale', 'first'], ['cmarvel:binaire', 'first']], ab: { name: 'Mode binaire', tgt: 'first' } },

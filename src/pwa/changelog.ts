@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10l',
+    title: 'Thor Inquisiteur et nouvelle fiche',
+    date: '10 octobre 2026',
+    items: [
+      'Thor devient l’Inquisiteur de Rush Royale : Mjolnir frappe une zone, chaque coup sur la même cible fait monter les dégâts (+15 %, jusqu’à 600 %), et 1, 3, 5 ou 7 Thor passent en mode actif (0,6 s, zone à 100 %).',
+      'Nouvel arbre de talents de Thor (Chevalier de lumière ou des ténèbres, Purification, Bouclier de foi, Ronin, Unité) et talent ultime « Marteau de foi » au niveau 10 ; Venom (Zélote) se nourrit de ton mana en réserve.',
+      'Nouvelle fiche de héros façon Rush Royale, la même partout (Collection, Decks, Encyclopédie) : onglets Principal, Stats, Talents en arbre, Éveil et Info, avec flèches pour passer d’un héros à l’autre.',
+    ],
+  },
+  {
     id: '2026-10-10k',
     title: 'Pluie de gemmes',
     date: '10 octobre 2026',

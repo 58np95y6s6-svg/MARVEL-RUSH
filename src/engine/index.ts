@@ -10,7 +10,7 @@ export {
   boardGeometry, coveredSpans, rangeClass, rangeLabel, unitRange, RANGE_LONG, RANGE_MEDIUM, RANGE_SHORT,
   type BoardGeometry, type RangeClass,
 } from './geometry';
-export { BOSS_KILL_REWARD, dropAction, formationLength, formationPartners, growthBonus, KILL_MANA, SACRIFICE_MANA, type DropAction } from './archetypes';
+export { BOSS_KILL_REWARD, dropAction, formationLength, formationPartners, growthBonus, growthPointsOf, KILL_MANA, SACRIFICE_MANA, type DropAction } from './archetypes';
 export {
   MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, POWERUP_ATTACK_SPEED, POWERUP_COSTS, POWERUP_DAMAGE, POWERUP_MAX, START_MANA,
 } from './internal';

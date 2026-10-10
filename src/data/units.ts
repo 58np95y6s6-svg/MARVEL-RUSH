@@ -59,13 +59,17 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Thunderer (pas de « Paladin » dans Rush Royale ; le Marteau de la foi est un talent).
-    id: 'thor', name: 'Thor', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts en chaîne',
-    targeting: 'premier', damage: 80, attackInterval: 1.0, range: 3.4,
+    // Rush Royale : Inquisiteur (fiche de l'unité : 834 dégâts au niveau 12, +129 par niveau → 189 au niveau 7,
+    // notre niveau 1 ; ensuite +10 % par niveau de collection comme toutes les unités). Intervalle 1 s, 0,6 s actif.
+    id: 'thor', name: 'Thor', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts de zone',
+    targeting: 'premier', damage: 189, attackInterval: 1.0, range: 3.4,
     ability: {
-      name: 'Éclair en chaîne',
-      description: 'L’éclair rebondit sur 1 ennemi de plus par rang (rang 1 : 2 ennemis, rang 7 : 8) ; les ennemis touchés par rebond subissent 119 % des dégâts.',
-      params: { chainPerRank: 1, chainDamage: 1.19 },
+      name: 'Mjolnir',
+      description: 'Thor inflige des dégâts de zone égaux à 50 % de ses dégâts de base. Chaque coup consécutif sur une même cible augmente les dégâts qu’elle subit de 15 % (600 % au plus). Si Thor change de cible (la cible actuelle est morte ou hors de portée), l’augmentation des dégâts repart de zéro.\nSi le nombre de Thor sur ton plateau est égal à 1, 3, 5 ou 7, ils passent en mode actif : leur intervalle d’attaque passe de 1 s à 0,6 s et leurs attaques de zone infligent 100 % des dégâts. L’augmentation des dégâts est gardée au changement de mode.',
+      params: {
+        rampPerHit: 0.15, rampMax: 6, areaDamage: 0.5, areaRadius: 1.2,
+        activeCounts: 1, activeAttackSpeed: 1 / 0.6, activeAreaDamage: 1,
+      },
     },
   },
   {
@@ -79,16 +83,13 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Inquisitrice.
+    // Rush Royale : Zélote (dégâts selon le mana en réserve : ×2 vers 1 000, ×3 vers 60 000).
     id: 'venom', name: 'Venom', pack: 'marvel', rarity: 'epique', role: 'Croissance',
     targeting: 'premier', damage: 145, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Symbiote',
-      description: 'Ses dégâts montent à chaque coup sur la même cible (×2 après 23 coups, ×3 après 154), et retombent quand il change de cible. Quand il y a 1, 4, 7 ou 10 Venom sur le plateau, le symbiote s’active : cadence ×1,67 et éclaboussure de 50 %.',
-      params: {
-        growthPerHit: 1, growthResetOnRetarget: 1, growthScale: 0.319, growthExponent: 0.3646,
-        activeCounts: 1, activeAttackSpeed: 1.667, activeSplash: 0.5, activeSplashRadius: 1.5,
-      },
+      description: 'Le symbiote se nourrit de ton mana : plus tu gardes de mana en réserve, plus Venom frappe fort (+68 % avec 100 de mana, ×2 vers 1 000, ×3 vers 60 000). Dépenser le mana l’affaiblit aussitôt.',
+      params: { growthPerMana: 1, growthScale: 0.3105, growthExponent: 0.1693 },
     },
   },
   {

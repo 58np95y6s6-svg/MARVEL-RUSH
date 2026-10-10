@@ -11,7 +11,7 @@ import {
   type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
 } from './internal';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitParams } from './talents';
-import { bossReward, formationBonus, growOnKill, growthBonus, tagForMana } from './archetypes';
+import { bossReward, formationBonus, growOnKill, growthBonus, growthPointsOf, tagForMana } from './archetypes';
 
 // ───────────── Ennemis du chemin ─────────────
 // Solo : une branche 'a' jusqu'au château. Coop : deux branches 'a' et 'b' qui se rejoignent
@@ -312,10 +312,22 @@ export function hasSameNeighbor(ctx: Ctx, player: number, slot: number, unit: Un
   return neighbors(slot, false).some((j) => { const n = grid[j]; return !!n && effectiveId(n) === unit; });
 }
 
-/** Venom (Inquisitrice) : actif quand le plateau compte 1, 4, 7 ou 10 exemplaires. */
+/** Nombres d'exemplaires qui mettent l'Inquisiteur (Thor) en mode actif (fiche Rush Royale : 1, 3, 5 ou 7). */
+export const ACTIVE_COUNTS: readonly number[] = [1, 3, 5, 7];
+
+/** Thor (Inquisiteur) : mode actif selon le nombre d'exemplaires sur le plateau (`activeCounts`). */
 export function inquisitorActive(ctx: Ctx, player: number, unit: UnitId): boolean {
-  const n = countOnBoard(ctx, player, unit);
-  return n > 0 && n % 3 === 1;
+  return ACTIVE_COUNTS.includes(countOnBoard(ctx, player, unit));
+}
+
+/**
+ * Mode actif d'une unité (Inquisiteur) : nombre d'exemplaires, ou mode forcé par un talent
+ * (Chevalier de lumière : 10 s après une fusion ; Chevalier des ténèbres : toujours).
+ */
+export function unitActive(ctx: Ctx, player: number, u: SimUnit): boolean {
+  const prm = unitParams(ctx, player, effectiveId(u));
+  if (!prm.activeCounts) return false;
+  return (u.counters.dark ?? 0) > 0 || (u.counters.activeFor ?? 0) > EPS || inquisitorActive(ctx, player, effectiveId(u));
 }
 
 /** Shang-Chi (Danse-lames) : nombre d'exemplaires qui dansent (sans voisin identique). */
@@ -351,7 +363,7 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   // Compétences de cadence des profils Rush Royale.
   if (prm.hawkSpeed !== undefined) mul *= 1 + (u.counters.form ? prm.sharkSpeed ?? 0 : prm.hawkSpeed);   // Borée (Maui)
   if ((u.counters.hurricaneFor ?? 0) > EPS) mul *= prm.hurricaneSpeedMul ?? 1;                           // Archer du vent (Vaïana)
-  if (prm.activeCounts && inquisitorActive(ctx, player, id)) mul *= prm.activeAttackSpeed ?? 1;          // Inquisitrice (Venom)
+  if (prm.activeCounts && unitActive(ctx, player, u)) mul *= prm.activeAttackSpeed ?? 1;                // Inquisiteur (Thor)
   if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Shang-Chi)
   if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (Mulan)
   if (prm.bossWaveAttackSpeedMul && ctx.st.phase === 'boss') mul *= prm.bossWaveAttackSpeedMul;          // Tireur d'élite (Falcon)
@@ -375,8 +387,8 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
   dmg *= prm.damageMul ?? 1;
   dmg *= 1 + AWAKENING_DAMAGE * awakeningOf(ctx, player, id);
-  // Archétypes : croissance sans plafond (Venom, ou héritée d'une fusion) et malus de la copie (Loki).
-  dmg *= 1 + growthBonus(prm, u.counters.growth ?? 0);
+  // Archétypes : croissance sans plafond (Venom : mana en réserve, ou héritée d'une fusion) et malus de la copie (Loki).
+  dmg *= 1 + growthBonus(prm, growthPointsOf(prm, u, p.mana));
   dmg *= u.status.copyMul ?? 1;
   dmg *= 1 + formationBonus(ctx, player, slot, u);
   // Profils Rush Royale.
@@ -385,6 +397,8 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
     const others = Math.min(dancers(ctx, player, id), prm.dancerMax ?? 8) - (hasSameNeighbor(ctx, player, slot, id) ? 0 : 1);
     dmg *= 1 + prm.dancerDamage * Math.max(0, others);
   }
+  if (prm.bossKillDamage) dmg *= 1 + prm.bossKillDamage * (p.bossKills?.[id] ?? 0);                      // Chevalier de lumière (Thor)
+  if (prm.unityDamage && countOnBoard(ctx, player, id) >= (prm.unityAt ?? 4)) dmg *= 1 + prm.unityDamage;  // Unité (Thor)
   if (prm.evenDamageMul && countOnBoard(ctx, player, id) % 2 === 0) dmg *= prm.evenDamageMul;             // Pyrotechnicien
   if (prm.chargeDamage) {                                                                                  // Tesla
     const max = Math.max(1, (prm.chargeMax ?? 1) * u.rank);

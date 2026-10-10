@@ -10,7 +10,7 @@
 //   cooldownReduction compétences à recharge plus rapide (0.25 = 25 %)
 //   controlDuration   durée des contrôles (étourdir, arrêter, ralentir) +x
 //   markSlow          les ennemis marqués par Falcon sont ralentis de x
-//   chainIllusionChance chance que l'éclair de Thor applique l'illusion de Loki (recul 2 s)
+//   chainIllusionChance chance que les coups de Thor appliquent l'illusion de Loki (recul 2 s)
 //   manaPerWave, manaPerExtra  mana au début de chaque vague (+ par membre au-delà du minimum)
 //   doubleAttackChance chance d'attaquer deux fois
 
@@ -27,7 +27,7 @@ export const TEAM_LIST: TeamBonusDef[] = [
   },
   {
     id: 'asgard', name: 'Asgard', units: ['thor', 'loki'],
-    description: 'Les éclairs de Thor appliquent l’illusion de Loki (25 % de chance de faire reculer l’ennemi).', params: { chainIllusionChance: 0.25, illusionDuration: 2 },
+    description: 'Les coups de Mjolnir appliquent l’illusion de Loki (25 % de chance de faire reculer l’ennemi).', params: { chainIllusionChance: 0.25, illusionDuration: 2 },
   },
   {
     id: 'agents', name: 'Les Agents', units: ['widow', 'hawkeye', 'bucky'],

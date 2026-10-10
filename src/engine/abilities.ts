@@ -10,8 +10,8 @@ import {
 } from './internal';
 import {
   aliveAll, applyBurn, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate, countOnBoard,
-  effectiveDef, effectiveId, inquisitorActive, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors,
-  progress, selectTarget, sendToStart, teamFor, unitHit, unitParams, within,
+  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors,
+  progress, selectTarget, sendToStart, teamFor, unitActive, unitHit, unitParams, within,
 } from './combat';
 import { enemyGridPos, inReach, unitRange } from './geometry';
 import { formationSplash, growOverTime } from './archetypes';
@@ -56,12 +56,47 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
     }
   }
   const c = u.counters;
-  for (const k of ['hasteFor', 'boostFor', 'restoredFor', 'immuneFor', 'hurricaneFor', 'buffFor', 'killManaFor', 'berserkFor', 'rockfallFor'] as const) {
+  for (const k of ['hasteFor', 'boostFor', 'restoredFor', 'immuneFor', 'hurricaneFor', 'buffFor', 'killManaFor', 'berserkFor', 'rockfallFor', 'activeFor'] as const) {
     if ((c[k] ?? 0) > 0) c[k] = Math.max(0, (c[k] ?? 0) - DT);
   }
   const rate = cooldownRate(ctx, player, effectiveId(u));
   if (c.cd !== undefined && c.cd > 0) c.cd = Math.max(0, c.cd - DT * rate);
   growOverTime(ctx, player, u, DT);
+}
+
+/**
+ * Talents de l'Inquisiteur (Thor) qui vivent sur le plateau :
+ * - Chevalier des ténèbres (`darkKnight`) : le plus ancien exemplaire est toujours actif et, toutes les
+ *   `darkStealEvery` s, prend 1 rang à l'autre exemplaire du plus haut rang (rang 7 au plus) ;
+ * - Bouclier de foi (`shieldEvery`) : toutes les N s, insensible aux pouvoirs de boss pendant `shieldDuration` s.
+ */
+function knightTalents(ctx: Ctx, player: number): void {
+  const p = ctx.st.players[player]!;
+  const seen = new Set<UnitId>();
+  for (const u of p.grid) {
+    if (!u) continue;
+    const id = effectiveId(u);
+    const prm = unitParams(ctx, player, id);
+    if (prm.shieldEvery) {
+      const c = u.counters;
+      c.shieldIn = (c.shieldIn ?? prm.shieldEvery) - DT;
+      if (c.shieldIn <= EPS) { c.shieldIn = prm.shieldEvery; c.immuneFor = Math.max(c.immuneFor ?? 0, prm.shieldDuration ?? 5); }
+    }
+    if (!prm.darkKnight || seen.has(id)) continue;
+    seen.add(id);
+    const mine = p.grid.filter((x): x is SimUnit => !!x && effectiveId(x) === id);
+    const dark = mine.reduce((a, b) => (b.uid < a.uid ? b : a));
+    for (const x of mine) x.counters.dark = x === dark ? 1 : 0;
+    const c = dark.counters;
+    c.darkIn = (c.darkIn ?? prm.darkStealEvery ?? 25) - DT;
+    if (c.darkIn > EPS) continue;
+    c.darkIn = prm.darkStealEvery ?? 25;
+    const victim = mine.filter((x) => x !== dark && x.rank >= 2).sort((a, b) => b.rank - a.rank || a.uid - b.uid)[0];
+    if (!victim || dark.rank >= MAX_RANK) continue;
+    victim.rank -= 1;
+    dark.rank += 1;
+    abilityEvent(ctx, player, p.grid.indexOf(dark), id, 'Chevalier des ténèbres', []);
+  }
 }
 
 /** Talent de Raiponce (Meule) : retire les effets de boss des unités voisines. */
@@ -88,6 +123,7 @@ const MAX_ATTACKS_PER_TICK = 3;
 export function updateUnits(ctx: Ctx, player: number): void {
   const p = ctx.st.players[player]!;
   cleanse(ctx, player);
+  knightTalents(ctx, player);
   const units = p.grid.filter((u): u is SimUnit => !!u);
   for (const u of units) {
     const slot = p.grid.indexOf(u);
@@ -273,17 +309,17 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
       return true;
     }
     case 'thor': {
-      // Talent « Marteau de la foi » (Inquisitrice de Rush Royale) : coup lourd qui étourdit.
+      // Talent ultime « Marteau de foi » (Inquisiteur, niveau 15 de Rush Royale) : coup lourd qui étourdit.
       if (!prm.hammerDamage) return true;
       const lead = bestBy(enemies, (e) => progress(ctx, e));
       if (!lead) return false;
       const zone = [lead, ...within(ctx, all, lead, 1)].filter(isAlive);
-      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: zone.map((e) => e.uid), fx: 'thor:chaine' });
+      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: zone.map((e) => e.uid), fx: 'thor:marteau-foi' });
       for (const e of zone) {
         unitHit(ctx, player, u, e, baseDamage(ctx, player, slot, u) * prm.hammerDamage, { noOnHit: true });
         if (isAlive(e)) applyStun(e, (prm.hammerStun ?? 1) * ctrl);
       }
-      abilityEvent(ctx, player, slot, id, 'Marteau de la foi', zone);
+      abilityEvent(ctx, player, slot, id, 'Marteau de foi', zone);
       return true;
     }
     case 'moana': {
@@ -373,7 +409,7 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
   const prm = unitParams(ctx, player, id);
   const c = u.counters;
   const fresh = c.lastTarget !== target.uid;
-  // Croissance par coup (Inquisitrice) et rampe (talent du Minotaure) : remises à zéro au changement de cible.
+  // Croissance par coup et rampe (Inquisiteur, talent du Minotaure) : remises à zéro au changement de cible.
   if (fresh) {
     if (prm.growthResetOnRetarget) c.growth = (c.growth ?? 0) * (prm.growthKeepOnRetarget ?? 0);
     c.ramp = 0;
@@ -385,7 +421,11 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
   const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool, fresh);
   c.lastTarget = target.uid;
   if (prm.growthPerHit) c.growth = (c.growth ?? 0) + prm.growthPerHit;
-  if (prm.rampPerHit) c.ramp = Math.min(prm.rampMax ?? 4, (c.ramp ?? 0) + prm.rampPerHit);
+  if (prm.rampPerHit) {
+    // Purification (talent de Thor) : la rampe monte plus vite en mode actif.
+    const k = prm.activeRampMul && unitActive(ctx, player, u) ? prm.activeRampMul : 1;
+    c.ramp = Math.min(prm.rampMax ?? 4, (c.ramp ?? 0) + prm.rampPerHit * k);
+  }
   ctx.ev.splice(at, 0, {
     type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id,
     targets: targets.map((e) => e.uid), fx,
@@ -400,7 +440,8 @@ function attackOf(
   const c = u.counters;
   let dmg = baseDamage(ctx, player, slot, u);
   if ((c.buffFor ?? 0) > EPS) dmg *= 1 + (c.buff ?? 0);               // potion de force (Nemo)
-  if (c.ramp) dmg *= 1 + c.ramp;                                         // talent Fureur (Hulk)
+  const unramped = dmg;
+  if (c.ramp) dmg *= 1 + c.ramp;                                         // Inquisiteur (Thor), talent Fureur (Hulk)
   if (prm.batPctHp) dmg += target.hp * prm.batPctHp;                    // talent Chauves-souris (Tiana)
   const hit = (e: SimEnemy, d: number, o?: { crit?: boolean; shieldBreak?: boolean; noOnHit?: boolean }) => unitHit(ctx, player, u, e, d, o);
   const splash = (center: SimEnemy, d: number, radius: number) => {
@@ -431,27 +472,26 @@ function attackOf(
       return { targets: [target], fx: 'hulk:coup' };
     }
     case 'thor': {
-      // Thunderer : 1 rebond de plus par rang.
-      const n = 1 + Math.round((prm.chainPerRank ?? 1) * u.rank) + Math.round(prm.chainExtra ?? 0) + (ctx.mods.chainBounces ?? 0);
-      const chain = [target];
-      const seen = new Set([target.uid]);
-      let cur = target;
-      while (chain.length < n) {
-        const next = nearest(ctx, enemies.filter(isAlive), cur, 1, seen)[0];
-        if (!next) break;
-        chain.push(next);
-        seen.add(next.uid);
-        cur = next;
+      // Inquisiteur : la rampe des coups consécutifs est dans `dmg` (cible principale) ; zone autour de la
+      // cible à 50 % des dégâts de base, 100 % en mode actif (1, 3, 5 ou 7 Thor, ou talent).
+      const active = unitActive(ctx, player, u);
+      let crit = false;
+      if (prm.unityCritChance && countOnBoard(ctx, player, id) >= (prm.unityCritAt ?? 7) && rand(ctx) < prm.unityCritChance) {
+        crit = true;
+        dmg *= prm.unityCritMul ?? 2;
       }
+      hit(target, dmg, { crit });
+      const share = active ? prm.activeAreaDamage ?? 1 : prm.areaDamage ?? 0.5;
+      const radius = (prm.areaRadius ?? 1.2) + 0.3 * (ctx.mods.chainBounces ?? 0);
+      const around = share > 0 ? splash(target, unramped * share, radius) : [];
       const info = ctx.info[player]!;
-      chain.forEach((e, i) => {
-        hit(e, i === 0 ? dmg : dmg * (prm.chainDamage ?? 1));
-        if (i > 0 && prm.chainStun && isAlive(e)) applyStun(e, prm.chainStun * ctrl);
-        if (isAlive(e) && info.chainIllusionChance > 0 && rand(ctx) < info.chainIllusionChance && displaceable(e)) {
-          e.x.knockFor = info.illusionDuration;
-        }
-      });
-      return { targets: chain, fx: 'thor:chaine' };
+      for (const e of [target, ...around]) {
+        if (!isAlive(e)) continue;
+        if (prm.chainStun && e !== target) applyStun(e, prm.chainStun * ctrl);
+        // Équipe avec Loki : l'illusion fait reculer l'ennemi.
+        if (info.chainIllusionChance > 0 && rand(ctx) < info.chainIllusionChance && displaceable(e)) e.x.knockFor = info.illusionDuration;
+      }
+      return { targets: [target, ...around], fx: active ? 'thor:foudre' : 'thor:marteau' };
     }
     case 'strange': {
       // Mage du portail : chance de renvoyer la cible au début du chemin, de moins en moins sur la même.
@@ -470,15 +510,12 @@ function attackOf(
       return { targets: [target], fx: 'strange:magie' };
     }
     case 'venom': {
-      // Inquisitrice : la croissance par coup est dans `dmg` ; active (1, 4, 7, 10 exemplaires) : zone.
+      // Zélote : la croissance (mana en réserve) est dans `dmg`. Talent Dévorer : exécute sous un seuil de PV.
       hit(target, dmg);
       if (prm.executeThreshold && isAlive(target) && !target.bossId && !target.x.mini && target.hp / target.maxHp < prm.executeThreshold) {
         killEnemy(ctx, target, player, u);
         abilityEvent(ctx, player, slot, id, 'Dévorer', [target]);
-      }
-      if (prm.activeCounts && inquisitorActive(ctx, player, id)) {
-        const around = splash(target, dmg * (prm.activeSplash ?? 0.5), prm.activeSplashRadius ?? 1.5);
-        return { targets: [target, ...around], fx: 'venom:devorer' };
+        return { targets: [target], fx: 'venom:devorer' };
       }
       return { targets: [target], fx: 'venom:griffes' };
     }

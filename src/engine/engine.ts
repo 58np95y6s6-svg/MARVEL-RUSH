@@ -570,6 +570,11 @@ function applyCommand(ctx: Ctx, c: Command): void {
       p.grid[c.to] = merged;
       // Profils Rush Royale : Éboulement du Minotaure (Hulk), charges de la Tesla (Iron Man) voisine.
       if (a.unit === 'hulk') startRockfall(ctx, pi, merged);
+      // Talent Chevalier de lumière (Thor) : fusionner un exemplaire met tous les exemplaires en mode actif.
+      const fused = unitParams(ctx, pi, a.unit);
+      if (fused.mergeActiveDuration) {
+        for (const x of p.grid) if (x && x.unit === a.unit) x.counters.activeFor = fused.mergeActiveDuration;
+      }
       onRankUp(ctx, pi, c.to);
       emit(ctx, { type: 'merge', player: p.id, from: c.from, to: c.to, unit, rank });
       return;

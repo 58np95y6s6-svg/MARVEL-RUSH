@@ -13,7 +13,7 @@ export const UNIT_FX_COLOR: Record<UnitId, number> = {
 
 /** Effets d'attaque ayant une signature dédiée (les `nemo:…` combinent ralenti, double, poison, cadence). */
 export const ATTACK_FX = [
-  'ironman:repulseur', 'ironman:unibeam', 'spiderman:toile', 'hulk:coup', 'hulk:smash', 'thor:chaine',
+  'ironman:repulseur', 'ironman:unibeam', 'spiderman:toile', 'hulk:coup', 'hulk:smash', 'thor:marteau', 'thor:foudre', 'thor:marteau-foi',
   'strange:magie', 'venom:griffes', 'venom:devorer', 'cmarvel:rafale', 'cmarvel:binaire', 'cap:bouclier',
   'loki:dague', 'bucky:tir', 'bucky:critique', 'hawkeye:explosive', 'hawkeye:glace', 'hawkeye:electrique',
   'falcon:tir-aerien', 'widow:tir', 'widow:morsure', 'shangchi:combo', 'shangchi:anneaux', 'moana:rame',

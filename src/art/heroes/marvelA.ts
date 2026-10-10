@@ -110,8 +110,8 @@ export const MARVEL_A: CharDef[] = [
   }
 },
 {
-  id:'thor',name:'Thor',role:'Dégâts en chaîne',rarity:'Légendaire',rar:'var(--leg)',tint:'#d8e3ff',tint2:'#8fa7de',stats:[4,2,3],shake:true,
-  atk:'Coup de marteau électrique.',skill:'Éclair en chaîne : la foudre rebondit sur 3 à 5 ennemis.',
+  id:'thor',name:'Thor',role:'Dégâts de zone',rarity:'Légendaire',rar:'var(--leg)',tint:'#d8e3ff',tint2:'#8fa7de',stats:[4,2,3],shake:true,
+  atk:'Mjolnir frappe la cible et sa zone.',skill:'Mode actif (1, 3, 5 ou 7 Thor) : frappe plus vite, zone à pleine puissance.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:14,R:-58},{L:34,R:-148,body:[-3,-6,-6,1,1.03]},{L:18,R:-36,body:[5,6,7,1.04,.95]}],
   draw(this: CharDef, x: Ctx): string {
@@ -178,8 +178,8 @@ export const MARVEL_A: CharDef[] = [
   }
 },
 {
-  id:'venom',name:'Venom',role:'Exécution',rarity:'Épique',rar:'var(--epi)',tint:'#dcdbef',tint2:'#9c9ac4',stats:[4,3,1],
-  atk:'Coup de griffes au corps à corps.',skill:'Dévorer : exécute un ennemi sous 15 % de PV et se renforce.',
+  id:'venom',name:'Venom',role:'Croissance',rarity:'Épique',rar:'var(--epi)',tint:'#dcdbef',tint2:'#9c9ac4',stats:[4,3,1],
+  atk:'Coup de griffes au corps à corps.',skill:'Symbiote : plus il reste de mana, plus Venom frappe fort.',
   sh:{L:[66,150],R:[134,150]},
   poses:[{L:16,R:-16},{L:58,R:-58,body:[0,8,0,1.07,.9]},{L:108,R:-108,body:[0,-3,0,.98,1.05],head:[0,10,1.17]}],
   draw(this: CharDef, x: Ctx): string {

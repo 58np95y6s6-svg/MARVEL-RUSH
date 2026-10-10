@@ -97,15 +97,16 @@ Valeurs « niv. N » = niveau de **carte** Rush Royale. « Rang » = rang de fus
 - Dégâts : base **260 / +360 par charge** au niv. 7 → **1 118 / 1 766** au niv. 15 ; niv. 9 : 374 / 535. Intervalle **0,6 s** au rang 1 (0,09 s au rang 7 = 0,6 ÷ 7). Conf. A (tableau aux en-têtes mélangés : B pour « par charge »).
 - 15.0 : dégâts légèrement réduits à tous les niveaux. Conf. A.
 
-### Thunderer (épique, dégâts, premier) → Thor
+### Inquisiteur (légendaire, dégâts, premier) → Thor
 
-- **Éclair en chaîne : +1 cible par rang de fusion**. Intervalle ÷ rang. Dégâts niv. 11 : 157, éclair 182 ; niv. 12 : 202 ; niv. 13 : 226. Patchs : dégâts d'éclair initiaux réduits, l'amélioration au mana augmente moins l'éclair. Conf. A.
-- *Paladin* : **n'existe pas** dans Rush Royale. Le seul « marteau » d'unité est le talent niv. 13 de l'Inquisitrice (17.0) : **Marteau de la foi**, qui étourdit périodiquement et inflige de gros dégâts (conf. A), et un talent de l'Arlequin (24.1) : « coup de marteau » sur les ennemis les plus dangereux.
+- **Fiche de l'unité (captures fournies, conf. A)** : Offensif **834 au niv. 12, +129 par niveau** ; intervalle **1 s**, **0,6 s actif** ; dégâts augmentés **15 %** par coup consécutif, limite **600 %** ; zone = **moitié des dégâts de base** (100 % actif) ; actif quand le nombre d'Inquisiteurs vaut **1, 3, 5 ou 7** ; changer de cible (morte ou hors de portée) remet l'augmentation à zéro ; le bonus persiste au changement de mode. Faction Royaume de la lumière, type Dégâts, cible Premier.
+- Talents : niv. 9 Chevalier de lumière / Chevalier des ténèbres, niv. 11 Purification / Bouclier de foi, niv. 13 Ronin / Unité, niv. 15 Marteau de foi. Détails et niveaux de confiance dans docs/rush-royale-mapping.md.
+- Anciennes données (wiki, avant la refonte) : dégâts qui montent ≈ ×2 après 30 coups, ×3 après 200 ; activation à 1/4/7/10 ; dégâts niv. 7 : 145. Remplacées par la fiche.
 
-### Inquisitrice (légendaire) → Venom
+### Zélote → Venom
 
-- Ses dégâts **montent à chaque coup consécutif sur la même cible** (≈ **×2 après 30 coups**, **×3 après 200**), remis à zéro au changement de cible ; 14.0 : il faut **23 % de coups en moins** ; l'amélioration au mana réduit le nombre de coups. Conf. A.
-- **Activation** quand le nombre d'Inquisitrices sur le terrain vaut **1, 4, 7 ou 10** : cadence **×2** et dégâts de **zone** (elle garde son bonus). Intervalle **1,0 s** inactive (1,2 → 1,0 en 13.0), **0,6 s** active. Dégâts niv. 7 : **145**, niv. 10 : 261, niv. 13 : 469. Conf. A.
+- Dégâts selon le **mana en réserve** : ×2 vers 1 000, ×3 vers 60 000 (conf. B). Talents non trouvés (augmentent vitesse d'attaque et dégâts, conf. C).
+- (Thunderer, épique : éclair en chaîne, +1 cible par rang ; n'est plus utilisé.)
 
 ### Arlequin (légendaire, spécial) → Loki
 
@@ -209,4 +210,4 @@ Valeurs « niv. N » = niveau de **carte** Rush Royale. « Rang » = rang de fus
 
 ### Autres unités relevées (non utilisées)
 
-Bourreau (exécute sous **17,5 % (niv. 5) → 29,5 % (niv. 13)** des PV, moitié contre les boss, dégâts 104 → 252), Zélote (dégâts selon le mana en réserve : ×2 vers 1 000, ×3 vers 60 000), Cogneur (rage : 10 % de chance par nouveau monstre au-delà de 7), Barde (mode Musique, talents chiffrés), Démonologue, Banshee, Cultiste, Mime, Ferrailleur.
+Thunderer, Bourreau (exécute sous **17,5 % (niv. 5) → 29,5 % (niv. 13)** des PV, moitié contre les boss, dégâts 104 → 252), Cogneur (rage : 10 % de chance par nouveau monstre au-delà de 7), Barde (mode Musique, talents chiffrés), Démonologue, Banshee, Cultiste, Mime, Ferrailleur.

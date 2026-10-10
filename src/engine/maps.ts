@@ -36,7 +36,7 @@ export function mapLengths(id: string): MapLengths | undefined {
  * Modificateurs de map (§7 bis) lus par le moteur dans GameConfig.mapModifiers :
  *   fastSpeed          vitesse des rapides +x (0.1 = +10 %)
  *   beamDamage         dégâts des rayons (Uni-Beam, laser de Buzz) +x
- *   chainBounces       rebonds supplémentaires (Thor, flèche électrique)
+ *   chainBounces       zone de Thor plus large (+0,3 case par point)
  *   cooldownReduction  recharges des compétences −x
  *   comboDamage        dégâts des anneaux de Shang-Chi +x
  *   controlDuration    durée des contrôles +x

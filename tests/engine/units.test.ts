@@ -99,16 +99,56 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(ofType(rock, 'hit').some((h) => h.enemy === hurt.uid && close(h.damage, 4e5 * 0.05, 0.01))).toBe(true);
   });
 
-  it('Thor (Thunderer) : 1 rebond de plus par rang, 119 % sur les rebonds', () => {
+  it('Thor (Inquisiteur) : zone à 50 % des dégâts de base, +15 % par coup consécutif sur la même cible (600 % au plus)', () => {
+    // 2 Thor : nombre pair, pas de mode actif.
     const e = arena('thor');
-    for (let i = 0; i < 10; i++) debugSpawn(e, { hp: BIG, distance: i });
-    const dmg = ofType(step(e, 1), 'hit').map((h) => h.damage);
-    expect(dmg).toHaveLength(2);
-    expect(dmg[0]).toBeCloseTo(D('thor'));
-    expect(dmg[1]).toBeCloseTo(D('thor') * 1.19);
-    const e3 = arena('thor', 3);
-    for (let i = 0; i < 10; i++) debugSpawn(e3, { hp: BIG, distance: i });
-    expect(ofType(step(e3, 1), 'hit')).toHaveLength(4);
+    debugPlace(e, 0, 0, 'thor').cooldown = 99;
+    const t = debugSpawn(e, { hp: BIG, distance: 11 });
+    const n = debugSpawn(e, { hp: BIG, distance: 10.5 });
+    const ev = step(e, 20 * 60);
+    const onT = ofType(ev, 'hit').filter((h) => h.enemy === t.uid).map((h) => h.damage);
+    const onN = ofType(ev, 'hit').filter((h) => h.enemy === n.uid).map((h) => h.damage);
+    expect(onT[0]).toBeCloseTo(D('thor'));
+    expect(onT[1]).toBeCloseTo(D('thor') * 1.15);
+    expect(onT[10]).toBeCloseTo(D('thor') * 2.5);
+    expect(onT[45]).toBeCloseTo(D('thor') * 7); // plafond : +600 %
+    expect(onN.every((d) => close(d, D('thor') * 0.5))).toBe(true); // la zone ne profite pas de la rampe
+    expect(ofType(ev, 'attack').filter((a) => a.unit === 'thor')[0]!.fx).toBe('thor:marteau');
+    expect(onT.length).toBeGreaterThanOrEqual(59);
+    expect(onT.length).toBeLessThanOrEqual(61); // 1 coup par seconde
+  });
+
+  it('Thor : la rampe repart de zéro au changement de cible', () => {
+    const e = arena('thor');
+    debugPlace(e, 0, 0, 'thor').cooldown = 99;
+    debugSpawn(e, { hp: BIG, distance: 5 });
+    step(e, 20 * 5);
+    const lead = debugSpawn(e, { hp: BIG, distance: 20 });
+    const h = ofType(step(e, 20 * 2), 'hit').filter((x) => x.enemy === lead.uid);
+    expect(h[0]!.damage).toBeCloseTo(D('thor'));
+    expect(h[1]!.damage).toBeCloseTo(D('thor') * 1.15);
+  });
+
+  it('Thor : mode actif avec 1, 3, 5 ou 7 exemplaires (intervalle 0,6 s, zone à 100 %)', () => {
+    const e = arena('thor');
+    debugSpawn(e, { hp: BIG, distance: 11 });
+    const n = debugSpawn(e, { hp: BIG, distance: 10.5 });
+    const ev = step(e, 20 * 6);
+    const onN = ofType(ev, 'hit').filter((h) => h.enemy === n.uid).map((h) => h.damage);
+    expect(onN[0]).toBeCloseTo(D('thor'));
+    expect(onN.length).toBeGreaterThanOrEqual(9); // 6 s ÷ 0,6 s
+    expect(ofType(ev, 'attack').filter((a) => a.unit === 'thor')[0]!.fx).toBe('thor:foudre');
+    const count = (k: number) => {
+      const x = arena('thor');
+      for (let i = 1; i < k; i++) debugPlace(x, 0, i - 1 + (i > 7 ? 1 : 0), 'thor').cooldown = 99;
+      debugSpawn(x, { hp: BIG, distance: 11 });
+      return attacksOf(x, 'thor', 20 * 6);
+    };
+    const one = count(1);
+    expect(count(2)).toBeLessThan(one * 0.7);
+    expect(count(3)).toBe(one);
+    expect(count(4)).toBeLessThan(one * 0.7);
+    expect(count(5)).toBe(one);
   });
 
   it('Doctor Strange (Mage du portail) : 5 % de chance de renvoyer la cible au début (sauf boss)', () => {
@@ -124,17 +164,17 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(ofType(step(b, 20 * 200), 'ability').some((a) => a.name === 'Portail')).toBe(false);
   });
 
-  it('Venom (Inquisitrice) : dégâts qui montent à chaque coup sur la même cible, actif seul (cadence ×1,67, zone)', () => {
-    const e = arena('venom');
-    const t = debugSpawn(e, { hp: BIG, distance: 11 });
-    const n = debugSpawn(e, { hp: BIG, distance: 10 });
-    const ev = step(e, 20 * 10);
-    const onT = ofType(ev, 'hit').filter((h) => h.enemy === t.uid).map((h) => h.damage);
-    expect(onT[0]).toBeCloseTo(D('venom'));
-    expect(onT[1]).toBeCloseTo(D('venom') * (1 + 0.319));
-    expect(onT[15]! / D('venom')).toBeCloseTo(1 + 0.319 * Math.pow(15, 0.3646), 3); // ≈ ×2 vers 23 coups
-    expect(ofType(ev, 'hit').some((h) => h.enemy === n.uid && close(h.damage, D('venom') * 0.5))).toBe(true);
-    expect(onT.length).toBeGreaterThanOrEqual(16); // 10 s à 0,6 s (actif)
+  it('Venom (Zélote) : dégâts selon le mana en réserve (×2 vers 1 000, ×3 vers 60 000)', () => {
+    const at = (mana: number) => {
+      const e = arena('venom');
+      e.state.players[0]!.mana = mana;
+      debugSpawn(e, { hp: BIG, distance: 11 });
+      return ofType(step(e, 1), 'hit')[0]!.damage / D('venom');
+    };
+    expect(at(0)).toBeCloseTo(1);
+    expect(at(1000)).toBeCloseTo(2, 1);
+    expect(at(60000)).toBeCloseTo(3, 1);
+    expect(at(100)).toBeCloseTo(1 + 0.3105 * Math.pow(100, 0.1693), 3);
   });
 
   it('Captain Marvel (Mage de feu) : explosion de 78 % autour de la cible', () => {
