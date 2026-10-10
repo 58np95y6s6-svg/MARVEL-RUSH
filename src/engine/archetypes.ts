@@ -9,10 +9,11 @@
 //   Booster de fusion     promoteAlly        1 = glissée sur une alliée de même rang, la fait monter d'un rang ;
 //                         promoteMana : mana gagné à chaque promotion (talents et éveils, Robin)
 //   Croissance            growthPerHit (par coup ; growthResetOnRetarget = remis à zéro au changement de
-//                         cible, Inquisitrice), growthPerSecond, growthPerKill : points (counters.growth) ;
+//                         cible), growthPerSecond, growthPerKill : points (counters.growth) ;
 //                         bonus de dégâts = growthScale × points^growthExponent (rendements décroissants,
 //                         sans plafond ; défaut 1 et 1 = linéaire) ; growthKeepOnMerge : part du bonus
-//                         gardée par l'unité issue d'une fusion
+//                         gardée par l'unité issue d'une fusion ; growthPerMana : points = mana en réserve ×
+//                         valeur (Zélote, Venom), recalculés à chaque coup
 //   Mana par élimination  manaPerKill        multiplicateur de KILL_MANA ; bossKillMana en plus sur un boss
 //   Boost de vitesse      auraAttackSpeed    aura de cadence aux voisines (combat.ts, aurasAt)
 //   Échangeur             swapAlly           1 = glissée sur une alliée de même rang, elles échangent leurs cases ;
@@ -89,6 +90,11 @@ export function sacrifice(ctx: Ctx, player: number, slot: number, u: SimUnit): n
 export function growthBonus(prm: Record<string, number>, points: number): number {
   if (points <= 0) return 0;
   return (prm.growthScale ?? 1) * Math.pow(points, prm.growthExponent ?? 1);
+}
+
+/** Points de croissance d'une unité : compteur (coups, secondes, éliminations) + mana en réserve (growthPerMana). */
+export function growthPointsOf(prm: Record<string, number>, u: { counters: Record<string, number> }, mana: number): number {
+  return (u.counters.growth ?? 0) + (prm.growthPerMana ? prm.growthPerMana * Math.max(0, mana) : 0);
 }
 
 /** Points de croissance qui donnent `bonus` sur la courbe de l'unité (inverse de growthBonus). */
@@ -184,11 +190,17 @@ export function swapCells(ctx: Ctx, player: number, from: number, to: number): v
 export function bossReward(ctx: Ctx, e: SimEnemy): void {
   if (!e.bossId && !e.x.mini) return;
   const factor = e.bossId === 'thanos' ? BOSS_KILL_REWARD.thanos : e.bossId ? BOSS_KILL_REWARD.boss : BOSS_KILL_REWARD.lieutenant;
-  for (const p of ctx.st.players) {
+  ctx.st.players.forEach((p, pi) => {
+    // Talent Chevalier de lumière (Thor) : +x % de dégâts par boss éliminé, une chance sur un petit boss.
+    for (const id of new Set(p.deck)) {
+      const prm = unitParams(ctx, pi, id);
+      if (!prm.bossKillDamage) continue;
+      if (e.bossId || rand(ctx) < (prm.miniKillChance ?? 0)) (p.bossKills ??= {})[id] = (p.bossKills?.[id] ?? 0) + 1;
+    }
     const amount = Math.round(factor * p.summonCost * manaYield(p));
     p.mana += amount;
     emit(ctx, { type: 'mana', player: p.id, slot: -1, amount, reason: 'boss', enemy: e.uid });
-  }
+  });
 }
 
 /** Cases du groupe relié de la même unité (cases voisines, haut/bas/gauche/droite) qui contient `slot`. */

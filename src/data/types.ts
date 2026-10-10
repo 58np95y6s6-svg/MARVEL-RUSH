@@ -51,7 +51,7 @@ export interface UnitDef {
 
 export interface TalentDef {
   unit: UnitId;
-  tier: 1 | 2 | 3;         // paliers débloqués aux niveaux 5, 7, 9
+  tier: 1 | 2 | 3 | 4;     // paliers débloqués aux niveaux 5, 7, 9 ; 4 = talent ultime (niveau 10, option 'a' seule, gratuit)
   option: 'a' | 'b';
   name: string;
   description: string;

@@ -21,6 +21,13 @@ for (const [a, b] of [[1, 30], [31, 90], [91, 240], [241, days]] as [number, num
   const per = rare.map((r) => daysPerTenPull(r, a, b));
   console.log(`Jours ${a}-${b} : un lot de 10 acheté tous les ${(per.reduce((x, y) => x + y, 0) / per.length).toFixed(1)} jours`);
 }
+console.log('Tirages ouverts (achetés + offerts), en lots de 10 :');
+for (const [a, b] of [[1, 7], [8, 14], [15, 30], [31, 90], [91, 240]] as [number, number][]) {
+  if (b > days) break;
+  const pulls = rare.reduce((n, r) => n + (r.days[b - 1]!.pulls - (a > 1 ? r.days[a - 2]!.pulls : 0)), 0) / rare.length;
+  const bought = rare.reduce((n, r) => n + r.tenPulls.filter((d) => d >= a && d <= b).length, 0) / rare.length;
+  console.log(`  Jours ${a}-${b} : ${(pulls / 10).toFixed(1)} lots (${bought.toFixed(1)} achetés) · ${(pulls / 10 / (b - a + 1)).toFixed(2)} lot/jour · un lot tous les ${((b - a + 1) / (pulls / 10)).toFixed(1)} jours`);
+}
 for (let i = 0; i < rare[0]!.income.length; i++) {
   const m = (f: (x: SimResult['income'][number]) => number) => Math.round(rare.reduce((n, r) => n + f(r.income[i]!), 0) / rare.length);
   const x = rare[0]!.income[i]!;

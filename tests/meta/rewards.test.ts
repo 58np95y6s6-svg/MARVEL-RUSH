@@ -122,9 +122,10 @@ describe('quêtes du jour', () => {
     expect(questsClaimable(p, '2026-10-10')).toBe(3);
     const gold = p.gold, gems = p.shards;
     const def = QUEST_DEFS[q.list[0]!.id as keyof typeof QUEST_DEFS];
-    expect(claimQuest(p, 0, '2026-10-10')).toEqual({ gold: def.reward.gold, shards: def.reward.gems });
+    // Débutant (compte sous le niveau 15) : +20 gemmes par quête.
+    expect(claimQuest(p, 0, '2026-10-10')).toEqual({ gold: def.reward.gold, shards: def.reward.gems + 20 });
     expect(p.gold).toBe(gold + def.reward.gold);
-    expect(p.shards).toBe(gems + def.reward.gems);
+    expect(p.shards).toBe(gems + def.reward.gems + 20);
     expect(claimQuest(p, 0, '2026-10-10')).toBeNull(); // une seule fois
     expect(p.quests!.weekDone).toBe(1);
     // Lendemain : nouvelles quêtes à zéro, la semaine continue.
@@ -181,11 +182,19 @@ describe('quêtes du jour', () => {
 });
 
 describe('Route des récompenses', () => {
-  it('chaque niveau donne de l’or ; lot de 10 tous les 10 niveaux, coffre aux 5, cadres', () => {
-    expect(roadReward(2)).toMatchObject({ gold: 180, gems: 40 });
-    expect(roadReward(3)).toMatchObject({ gold: 220, crystals: 30 });
-    expect(roadReward(5)).toMatchObject({ chest: 'or', big: true, frame: { id: 'bronze' } });
-    expect(roadReward(10)).toMatchObject({ pulls: 10, frame: { id: 'argent' } });
+  it('chaque niveau donne de l’or ; lot de 10 tous les 10 niveaux, coffre aux 5, cadres ; niveaux 2-15 très généreux', () => {
+    expect(roadReward(2)).toMatchObject({ gold: 180, gems: 200 });
+    expect(roadReward(3)).toMatchObject({ gold: 220, crystals: 30, gems: 150 });
+    expect(roadReward(5)).toMatchObject({ chest: 'or', pulls: 10, big: true, frame: { id: 'bronze' } });
+    expect(roadReward(10)).toMatchObject({ pulls: 10, gems: 300, frame: { id: 'argent' } });
+    expect(roadReward(15)).toMatchObject({ chest: 'or', pulls: 10 });
+    // Ensuite, le rythme normal.
+    expect(roadReward(16)).toMatchObject({ gems: 40 });
+    expect(roadReward(17).gems).toBeUndefined();
+    expect(roadReward(17).crystals).toBe(30);
+    expect(roadReward(20)).toMatchObject({ pulls: 10 });
+    expect(roadReward(20).gems).toBeUndefined();
+    expect(roadReward(25).pulls).toBeUndefined();
     expect(roadReward(25).chest).toBe('heroique');
     expect(roadReward(45).chest).toBe('legendaire');
     for (let l = ROAD_FIRST; l < 80; l++) expect(roadReward(l).gold).toBeGreaterThan(0);

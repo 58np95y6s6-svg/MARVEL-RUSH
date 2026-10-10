@@ -30,6 +30,52 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-10o',
+    title: 'Nouveau style façon Rush Royale',
+    date: '10 octobre 2026',
+    items: [
+      'Toute l’app adopte le style de la nouvelle fiche de héros façon Rush Royale : cadres bleu ardoise, contenus clairs, tuiles, gros boutons orange et bleus, croix rouge ronde.',
+      'Nouvelle barre de monnaies en haut (gemmes, or, cristaux, parchemins) : chaque ➕ explique comment en gagner et mène au bon écran.',
+      'Nouvelle barre d’onglets en bas, à grandes icônes, avec l’onglet actif surélevé ; tous les écrans sont harmonisés.',
+    ],
+  },
+  {
+    id: '2026-10-10n',
+    title: 'Thor s’illumine',
+    date: '10 octobre 2026',
+    items: [
+      'Thor s’illumine : en mode actif (1, 3, 5 ou 7 Thor), sa silhouette se nimbe d’une lueur jaune pulsante avec petits éclairs ; en Chevalier de lumière, lueur bleue, en Chevalier des ténèbres, lueur rouge cramoisi et fumée sombre, plus intenses quand le mode actif s’ajoute.',
+    ],
+  },
+  {
+    id: '2026-10-10m',
+    title: 'Coffre de la semaine',
+    date: '10 octobre 2026',
+    items: [
+      'Le coffre de la semaine (12 quêtes) contient maintenant un lot de 10 tirages offert : avec tes gemmes, ça fait au moins 2 lots de 10 par semaine, même après les premières semaines.',
+    ],
+  },
+  {
+    id: '2026-10-10l',
+    title: 'Thor Inquisiteur et nouvelle fiche',
+    date: '10 octobre 2026',
+    items: [
+      'Thor devient l’Inquisiteur de Rush Royale : Mjolnir frappe une zone, chaque coup sur la même cible fait monter les dégâts (+15 %, jusqu’à 600 %), et 1, 3, 5 ou 7 Thor passent en mode actif (0,6 s, zone à 100 %).',
+      'Nouvel arbre de talents de Thor (Chevalier de lumière ou des ténèbres, Purification, Bouclier de foi, Ronin, Unité) et talent ultime « Marteau de foi » au niveau 10 ; Venom (Zélote) se nourrit de ton mana en réserve.',
+      'Nouvelle fiche de héros façon Rush Royale, la même partout (Collection, Decks, Encyclopédie) : onglets Principal, Stats, Talents en arbre, Éveil et Info, avec flèches pour passer d’un héros à l’autre.',
+    ],
+  },
+  {
+    id: '2026-10-10k',
+    title: 'Pluie de gemmes',
+    date: '10 octobre 2026',
+    items: [
+      '💎 Pluie de gemmes pour bien démarrer : chaque première victoire des chapitres 1 à 3 rapporte 400 / 300 / 150 gemmes, la Route des récompenses est très généreuse jusqu’au niveau 15 (3 lots de 10 offerts) et un calendrier de bienvenue de 7 jours offre 3 300 gemmes et 3 lots de 10. Tu reçois aussi les gemmes des niveaux déjà gagnés !',
+      '🎉 Le lot de 10 devient excitant : 10 % de Légendaire par carte (60 % Rare, 30 % Épique), Légendaire garanti au 30e tirage au lieu du 40e, et ton premier lot de 10 de chaque pack contient un Légendaire.',
+      '❓ Nouveau « Comment gagner des gemmes ? » sur l’écran Tirages : toutes les sources avec leurs montants et ce qu’il te reste à prendre. Les taux ×1 et ×10 sont affichés sur chaque pack.',
+    ],
+  },
+  {
     id: '2026-10-10j',
     title: 'Copie Rush Royale, or et gemmes, coffres',
     date: '10 octobre 2026',

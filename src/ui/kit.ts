@@ -80,6 +80,11 @@ export const icon = (n: IconName, cls = ''): string => `<i class="ic ${cls}">${I
 
 // ------------------------------------------------------------------ panneaux et messages
 
+/** Croix blanche cernée d'encre (bouton rouge rond « Fermer », comme la fiche de héros). */
+export const CLOSE_SVG = `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 14 L34 34 M34 14 L14 34" stroke="#1d1733" stroke-width="11" stroke-linecap="round"/><path d="M14 14 L34 34 M34 14 L14 34" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/></svg>`;
+/** Plus blanc cerné (➕ des raccourcis). */
+export const PLUS_SVG = `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 11 V37 M11 24 H37" stroke="#4a5468" stroke-width="13" stroke-linecap="round"/><path d="M24 11 V37 M11 24 H37" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/></svg>`;
+
 export interface Sheet { el: HTMLElement; body: HTMLElement; close(): void; onClose(fn: () => void): void }
 
 /** Panneau qui monte du bas, fond assombri ; seul son contenu défile. */
@@ -90,7 +95,7 @@ export function openSheet(host: HTMLElement, o: { title?: string; cls?: string; 
     <div class="mk-sheet${o.tall ? ' tall' : ''}" role="dialog" aria-modal="true">
       <div class="mk-grab"></div>
       ${o.title ? `<h2 class="mk-sheet-title">${o.title}</h2>` : ''}
-      <button class="mk-close" aria-label="Fermer" data-tuto="sheet-close">✕</button>
+      <button class="mk-close" aria-label="Fermer" data-tuto="sheet-close">${CLOSE_SVG}</button>
       <div class="mk-sheet-body scroll"></div>
     </div>`;
   const body = wrap.querySelector<HTMLElement>('.mk-sheet-body')!;

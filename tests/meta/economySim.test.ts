@@ -9,7 +9,7 @@ describe('simulation de l’économie (joueur régulier)', () => {
     expect(infiniteWave(240)).toBe(50);
   });
 
-  it('rythme : ★1 la 1re ou 2e semaine, ★5 Rare en 2 à 3 mois, un lot de 10 tous les 3 à 4 jours', () => {
+  it('rythme : ★1 la 1re ou 2e semaine, ★5 Rare en 2 à 3 mois, pluie de tirages au début puis un lot tous les 3 à 4 jours', () => {
     const runs = [1, 2, 3].map((seed) => simulateEconomy({ days: 120, seed, focus: 'rare' }));
     for (const r of runs) {
       expect(r.firstStar1).not.toBeNull();
@@ -17,7 +17,13 @@ describe('simulation de l’économie (joueur régulier)', () => {
       expect(r.rareStar5).not.toBeNull();
       expect(r.rareStar5!).toBeGreaterThanOrEqual(55);
       expect(r.rareStar5!).toBeLessThanOrEqual(100);
-      const per = daysPerTenPull(r, 1, 120);
+      // Jours 1 à 14 (achetés + offerts) : 2 à 3 lots par jour la 1re semaine, puis moins.
+      const lots = (a: number, b: number) => (r.days[b - 1]!.pulls - (a > 1 ? r.days[a - 2]!.pulls : 0)) / 10;
+      expect(lots(1, 7)).toBeGreaterThanOrEqual(14);
+      expect(lots(1, 7)).toBeLessThanOrEqual(28);
+      expect(lots(8, 14)).toBeLessThan(lots(1, 7));
+      expect(lots(8, 14)).toBeGreaterThanOrEqual(5);
+      const per = daysPerTenPull(r, 31, 120);
       expect(per).toBeGreaterThanOrEqual(2.5);
       expect(per).toBeLessThanOrEqual(4.5);
     }

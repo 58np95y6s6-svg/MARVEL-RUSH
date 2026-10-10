@@ -88,6 +88,8 @@ export interface SimPlayer extends PlayerState {
   grid: (SimUnit | null)[];
   summons: number;        // nombre d'invocations (pour script.forcedSummons)
   extraRestores: number;  // résurrections bonus de la map (Royaume des morts)
+  /** Boss éliminés comptés par unité (talent Chevalier de lumière de Thor). */
+  bossKills?: Partial<Record<UnitId, number>>;
 }
 
 export interface SimState extends EngineState {

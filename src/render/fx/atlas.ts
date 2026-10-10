@@ -108,6 +108,17 @@ const D = {
     path(); g.stroke({ color: INK, width: 5.5, cap: 'round' });
     path(); g.stroke({ color: 0xf8f6ff, width: 2.4, cap: 'round' });
   },
+  // --- Thor : Mjolnir (tête d'acier, manche gainé de cuir, dragonne)
+  hammer: (g) => {
+    g.roundRect(-3.5, -2, 7, 26, 3).fill(0x8a5a32).stroke({ color: INK, width: 3 });
+    g.moveTo(-3.5, 8).lineTo(3.5, 11).moveTo(-3.5, 14).lineTo(3.5, 17).stroke({ color: 0x5a3a1e, width: 2 });
+    g.circle(0, 26, 4).fill(0x8a5a32).stroke({ color: INK, width: 2.6 });
+    g.roundRect(-17, -16, 34, 16, 4).fill(0xc9d2e2).stroke({ color: INK, width: 3.5 });
+    g.roundRect(-14, -13, 28, 4, 2).fill(W);
+    g.rect(-17, -5, 34, 5).fill(0x8f9ab0);
+    g.roundRect(-17, -16, 34, 16, 4).stroke({ color: INK, width: 3.5 });
+    g.poly([-5, -12, 0, -9, 5, -12, 0, -4]).fill(0x9fd8ff);
+  },
   // --- Hulk
   boulder: (g) => {
     const r = rng(7), p: number[] = [];

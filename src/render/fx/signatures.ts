@@ -419,17 +419,13 @@ export function playAttack(fx: CombatFx, slot: number, unit: UnitId, key: string
       return;
     }
     case 'thor': {
-      // Éclair en chaîne : vraies ramifications, ré-tracées pendant qu'elles brillent.
-      fx.glow(o.x, o.y, 0xbfe6ff, 1.6, 0.25);
-      let a: P = o;
-      targets.forEach((t, i) => {
-        const b = fx.body(t);
-        if (!b) return;
-        fx.bolt(a, b, 0x9fd8ff, 14 - i, 0.32, 2, i * 0.06, t);
-        fx.later(t, 0.02 + i * 0.06, hitSmallZap, 0x9fd8ff);
-        a = b;
-      });
-      fx.host.shake(2, 0.12);
+      // Inquisiteur : Mjolnir lancé en cloche sur la cible, onde de choc de zone à l'impact ; en mode
+      // actif, la foudre tombe en plus sur la cible ; Marteau de foi : marteau géant doré qui étourdit.
+      if (name === 'marteau-foi') { thorFaith(fx, slot, t0, targets); return; }
+      const active = name === 'foudre';
+      const m = fx.shot('hammer', o, t0, fx.travel(o, b0, active ? 2100 : 1600, 0.14, 0.36), active ? thorLandActive : thorLand, 0x9fd8ff);
+      m.arc = active ? 70 : 120; m.spin = 14; m.s0 = 0.9; m.s1 = active ? 1.25 : 1.1;
+      targets.slice(1).forEach((t, i) => fx.later(t, 0.06 + i * 0.03 + fx.travel(o, b0, 1600, 0.14, 0.36), hitSmallZap, active ? 0xfff6c0 : 0x9fd8ff));
       return;
     }
     case 'strange': {
@@ -863,6 +859,49 @@ function smashLand(m: Mote): void {
   fx.puffs(x, y, 0xe8dcc8, 6, 1.1, 220, 0.6);
   fx.host.shake(9, 0.35);
   fx.host.flash(0.14, 0.2, 0x7ed957);
+}
+
+function thorLand(m: Mote): void {
+  const fx = fxOf(m);
+  const f = fx.feet(m.uid) ?? { x: m.x, y: m.y + 20 };
+  fx.ring(f.x, f.y, 0x9fd8ff, 120, 0.36, 'ground', 0.5);
+  fx.ring(f.x, f.y, 0xffffff, 80, 0.26, 'ground', 0.5);
+  fx.pop(m.x, m.y, 0xbfe6ff, 1.1, 0.24);
+  fx.sparks(m.x, m.y, 0x9fd8ff, 6, 360, 0.6);
+  fx.puffs(f.x, f.y, 0xe8eef8, 3, 0.8, 140, 0.4);
+  fx.host.shake(2.5, 0.14);
+}
+function thorLandActive(m: Mote): void {
+  const fx = fxOf(m);
+  const f = fx.feet(m.uid) ?? { x: m.x, y: m.y + 20 };
+  fx.bolt({ x: m.x + 10, y: m.y - 260 }, { x: m.x, y: m.y }, 0xfff6c0, 16, 0.24, 2);
+  fx.ring(f.x, f.y, 0xfff6c0, 150, 0.4, 'ground', 0.5);
+  fx.ring(f.x, f.y, 0x9fd8ff, 105, 0.32, 'ground', 0.5);
+  fx.glow(m.x, m.y, 0xfff6c0, 2, 0.22);
+  fx.sparks(m.x, m.y, 0xfff6c0, 9, 460, 0.7);
+  fx.host.shake(3.5, 0.16);
+}
+
+function thorFaith(fx: CombatFx, slot: number, t0: number, targets: readonly number[]): void {
+  const f = fx.feet(t0);
+  if (!f) return;
+  const c = fx.host.cell(slot);
+  const m = fx.shotTo('hammer', { x: c.x, y: c.y - 50 }, { x: f.x, y: f.y - 24 }, 0.32, thorFaithLand, 0xffd34a);
+  m.arc = 240; m.spin = 10; m.s0 = 1.4; m.s1 = 2.6; m.ease = Ease.In; m.p0 = t0;
+  void targets;
+}
+function thorFaithLand(m: Mote): void {
+  const fx = fxOf(m);
+  const x = m.x, y = m.y + 24;
+  const cr = fx.put('crack', x, y, 1, 'ground');
+  cr.curve = Curve.Out; cr.s0 = 0.5; cr.s1 = 1.1; cr.sy = 0.55; cr.fout = 0.6;
+  fx.bolt({ x: x - 20, y: y - 320 }, { x, y: y - 30 }, 0xffe27a, 22, 0.3, 3);
+  fx.ring(x, y, 0xffd34a, 200, 0.45, 'ground', 0.5);
+  fx.ring(x, y, 0xffffff, 140, 0.35, 'ground', 0.5);
+  fx.pop(x, y - 40, 0xffe27a, 1.8, 0.32);
+  fx.debris(x, y - 10, 'stunStar', 0xffffff, 5, 420, 0.8, 0.7);
+  fx.host.shake(8, 0.32);
+  fx.host.flash(0.14, 0.2, 0xffe27a);
 }
 
 function venomDevour(fx: CombatFx, o: P, t0: number): void {

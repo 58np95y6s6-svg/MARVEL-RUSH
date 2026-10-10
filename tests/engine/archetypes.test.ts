@@ -185,39 +185,37 @@ describe('Booster de fusion (Coco)', () => {
   });
 });
 
-describe('Croissance par coup (Venom, Inquisitrice)', () => {
-  const bonus = (pts: number) => 0.319 * Math.pow(pts, 0.3646);
-  it('chaque coup sur la même cible ajoute 1 point ; ×2 vers 23 coups, ×3 vers 154, sans plafond', () => {
-    expect(bonus(22)).toBeCloseTo(1, 1);
-    expect(bonus(153)).toBeCloseTo(2, 1);
-    expect(bonus(1000)).toBeGreaterThan(bonus(500));
+describe('Croissance par le mana (Venom, Zélote)', () => {
+  const bonus = (pts: number) => 0.3105 * Math.pow(pts, 0.1693);
+  it('le bonus suit le mana en réserve, sans plafond, et retombe quand on le dépense', () => {
+    expect(bonus(1000)).toBeCloseTo(1, 1);
+    expect(bonus(60000)).toBeCloseTo(2, 1);
     const e = quiet(DECK);
     debugNoRange(e);
-    const v = debugPlace(e, 0, 0, 'venom', 1);
+    debugPlace(e, 0, 0, 'venom', 1);
     debugSpawn(e, { hp: BIG, distance: 5 });
-    const hits = ofType(step(e, 20 * 6), 'hit').map((h) => h.damage);
-    expect(v.counters.growth).toBe(hits.length);
-    hits.forEach((d, n) => expect(d).toBeCloseTo(UNITS.venom.damage * (1 + bonus(n)), 3));
+    const p = e.state.players[0]!;
+    p.mana = 400;
+    const a = ofType(step(e, 1), 'hit')[0]!.damage;
+    expect(a).toBeCloseTo(UNITS.venom.damage * (1 + bonus(400)), 3);
+    p.mana = 10;
+    const b = ofType(step(e, 20), 'hit')[0]!.damage;
+    expect(b).toBeCloseTo(UNITS.venom.damage * (1 + bonus(10)), 3);
   });
 
-  it('remise à zéro au changement de cible ; une fusion ne transmet rien (Rush Royale)', () => {
-    const e = quiet(DECK);
+  it('talent « Nous sommes Venom » : chaque point de mana compte double', () => {
+    const e = createEngine({ mode: 'solo', seed: 7, mapId: 'test', players: [setup(DECK, { levels: { venom: 9 }, talents: { venom: ['a', 'a', 'a'] } })] });
+    simState(e).paused = false;
     debugNoRange(e);
-    const v = debugPlace(e, 0, 0, 'venom', 1);
-    const a = debugSpawn(e, { hp: BIG, distance: 5 });
-    step(e, 20 * 3);
-    expect(v.counters.growth).toBeGreaterThan(3);
-    debugSpawn(e, { hp: BIG, distance: 9 }); // plus avancé : nouvelle cible
-    void a;
-    const h = ofType(step(e, 20), 'hit');
-    expect(h[0]!.damage).toBeCloseTo(UNITS.venom.damage);
-    const m = quiet(DECK);
-    const x = debugPlace(m, 0, 0, 'venom', 2);
-    const y = debugPlace(m, 0, 1, 'venom', 2);
-    x.counters.growth = 8; y.counters.growth = 4;
-    m.apply({ type: 'merge', player: 'p1', from: 0, to: 1 });
-    step(m);
-    expect(grid(m)[1]!.counters.growth ?? 0).toBe(0);
+    e.drainEvents();
+    const s = simState(e);
+    s.enemies.length = 0;
+    debugPlace(e, 0, 0, 'venom', 1);
+    debugSpawn(e, { hp: BIG, distance: 5 });
+    s.players[0]!.mana = 300;
+    const dmg = ofType(step(e, 1), 'hit').filter((h) => h.damage > 0)[0]!.damage;
+    const lv = UNITS.venom.damage * 1.8; // niveau 9 : +80 %
+    expect(dmg).toBeCloseTo(lv * (1 + 0.3105 * 1.15 * Math.pow(600, 0.1693)), 0);
   });
 });
 

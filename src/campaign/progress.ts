@@ -13,6 +13,7 @@ import {
 } from './levels';
 import type { BattleOutcome } from './tracker';
 import { CHEST_TIERS, tierAt, type ChestTier } from '../meta/chests';
+import { firstClearGems, threeStarGems } from '../meta/gems';
 
 export type Stars = [boolean, boolean, boolean];
 
@@ -128,7 +129,7 @@ export const GOLD_PER_NEW_STAR = 20;
 export const GOLD_PER_REPLAY_STAR = 8;
 /** Gemmes par étoile obtenue pour la première fois. */
 export const GEMS_PER_NEW_STAR = 2;
-/** Premières 3 étoiles d'un niveau : bonus. */
+/** Premières 3 étoiles d'un niveau : bonus (gemmes : 30 aux chapitres 1-2, 15 au 3, 5 ensuite, voir gems.ts). */
 export const THREE_STAR_BONUS = { gold: 150, gems: 5 };
 /** Durée relative d'un niveau (vagues / 10) : l'or des étoiles et l'XP lui sont proportionnels. */
 export const lengthFactor = (level: CampaignLevel): number => level.waves / 10;
@@ -174,7 +175,7 @@ export function victoryChest(level: CampaignLevel, earned: Stars, firstWin: bool
 export interface VictoryChest { tier: ChestTier; scale: number; crystals: number }
 
 export interface RewardLine {
-  kind: 'etoiles' | 'coffre' | 'lieutenant' | 'boss' | 'cristaux' | 'xp' | 'bonus';
+  kind: 'etoiles' | 'coffre' | 'lieutenant' | 'boss' | 'cristaux' | 'xp' | 'bonus' | 'gemmes';
   label: string;
   reward: Reward;
 }
@@ -217,7 +218,8 @@ export function addReward(a: Reward, b: Reward): Reward {
  * Récompenses fixes d'un niveau (première victoire ou rejouer), sans modifier le profil. Le coffre de
  * victoire (`chest`) est tiré à part.
  * - Or : +40 par étoile obtenue pour la première fois, +15 par étoile refaite, pour 10 vagues (× vagues / 10).
- * - Gemmes : +5 par étoile nouvelle ; premières 3 étoiles du niveau : +300 or et +15 gemmes.
+ * - Gemmes : +2 par étoile nouvelle ; premières 3 étoiles : +150 or et +30 / 15 / 5 gemmes (ch. 1-2 / 3 / 4-6).
+ * - Première victoire, chapitres 1 à 3 : +400 / 300 / 150 gemmes (src/meta/gems.ts).
  * - Coffres d'étoiles du chapitre à 10, 20 et 30 étoiles.
  * - Niveau 5, 1re victoire : 1 parchemin + 10 cartes d'une unité du deck.
  * - Niveau 10, 1re victoire : 2 parchemins + 300 gemmes + personnage garanti (ch. 6 : + 100 ✦).
@@ -249,8 +251,10 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
       reward: { ...(gold ? { gold } : {}), ...(gems ? { shards: gems } : {}) },
     });
   }
+  const fcGems = firstWin ? firstClearGems(level.chapter) : 0;
+  if (fcGems) lines.push({ kind: 'gemmes', label: 'Première victoire', reward: { shards: fcGems } });
   if (stars.every(Boolean) && !prevStars.every(Boolean)) {
-    lines.push({ kind: 'bonus', label: 'Premières 3 étoiles !', reward: { gold: THREE_STAR_BONUS.gold, shards: THREE_STAR_BONUS.gems } });
+    lines.push({ kind: 'bonus', label: 'Premières 3 étoiles !', reward: { gold: THREE_STAR_BONUS.gold, shards: threeStarGems(level.chapter) } });
   }
 
   const ch = getChapter(level.chapter)!;

@@ -8,12 +8,12 @@ import { UNIT_LIST } from '../data/units';
 import { BOSS_LIST, LIEUTENANTS, THANOS_STONES } from '../data/bosses';
 import { PACK_LIST } from '../data/packs';
 import { TEAM_LIST } from '../data/teams';
-import { talentsFor, TALENT_TIER_LEVELS } from '../data/talents';
-import { passivesFor } from '../data/awakenings';
 import { HERO_CATEGORIES, HERO_CATEGORY_LIST, categoriesFor, rangeLabel, rangeValue } from '../data/categories';
-import { getHeroProgress, nextStep, MAX_AWAKENING, MAX_HERO_LEVEL, type HeroProgress } from '../meta/collection';
+import { getHeroProgress, MAX_AWAKENING, type HeroProgress } from '../meta/collection';
 import { ficheUrl } from '../access/fiches';
 import { heroCardHtml } from './heroCard';
+import { openHeroSheet, type HeroSheet } from './heroSheet';
+import { CLOSE_SVG } from './kit';
 import { getProfile } from '../meta/profile';
 import type { BossDef, Rarity, Targeting, UnitDef } from '../data/types';
 
@@ -75,6 +75,8 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
   let tab: 'heros' | 'mechants' = 'heros';
   let sheetPushed = false;
   let destroyed = false;
+  let hero: HeroSheet | null = null;
+  let routeClosing = false;
   const progress = new Map<string, HeroProgress>(UNIT_LIST.map((u) => [u.id, getHeroProgress(u.id)]));
   const prog = (id: string): HeroProgress => progress.get(id) ?? getHeroProgress(id);
 
@@ -137,7 +139,7 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
     location.hash = card.dataset.kind === 'boss' ? `#encyclopedie/mechant/${card.dataset.id}` : `#encyclopedie/heros/${card.dataset.id}`;
   });
 
-  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && sheetHost.firstChild) closeSheet(); };
+  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && sheetHost.firstChild) { if (hero) hero.close(); else closeSheet(); } };
   window.addEventListener('keydown', onKey);
 
   // ---------- grille des héros ----------
@@ -236,7 +238,7 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
     sheetHost.innerHTML = `
       <div class="cx-veil" data-a="close"></div>
       <div class="cx-sheet ${kind}" role="dialog" aria-modal="true">
-        <button class="cx-close" data-a="close" aria-label="Fermer">✕</button>
+        <button class="cx-close" data-a="close" aria-label="Fermer">${CLOSE_SVG}</button>
         <div class="cx-sheet-body scroll">${html}</div>
       </div>`;
     sheetHost.querySelectorAll('[data-a="close"]').forEach((el) => el.addEventListener('click', closeSheet));
@@ -253,55 +255,6 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
   }
 
   const chip = (t: string, cls = '') => `<span class="cx-chip ${cls}">${t}</span>`;
-
-  function heroSheet(u: UnitDef): string {
-    const p = prog(u.id);
-    const cats = categoriesFor(u);
-    const step = nextStep(p);
-    const stars = Array.from({ length: MAX_AWAKENING }, (_, i) => `<i class="${i < p.awakening ? 'on' : ''}">★</i>`).join('');
-    const pct = step && step.needed > 0 ? Math.min(100, (p.copies / step.needed) * 100) : 100;
-    const talents = talentsFor(u.id);
-    const tiers = ([1, 2, 3] as const).map((t) => {
-      const opts = talents.filter((x) => x.tier === t);
-      const lockedT = p.level < TALENT_TIER_LEVELS[t];
-      return `<div class="cx-tier${lockedT ? ' locked' : ''}">
-        <h4>Niveau ${TALENT_TIER_LEVELS[t]} ${lockedT ? '<span>🔒</span>' : ''}</h4>
-        <div class="cx-opts">${opts.map((x, i) => `${i > 0 ? '<em>ou</em>' : ''}<div class="cx-opt"><b>${esc(x.name)}</b><span>${esc(x.description)}</span></div>`).join('')}</div>
-      </div>`;
-    }).join('');
-    const passives = passivesFor(u.id).map((x) => `
-      <li class="${p.awakening >= x.star ? 'on' : ''}${x.star === 10 ? ' ult' : ''}"><span class="cx-pstar">★${x.star}</span><div><b>${esc(x.name)}</b><span>${esc(x.description)}</span></div></li>`).join('');
-    const teams = TEAM_LIST.filter((t) => t.units.includes(u.id)).map((t) => `
-      <li><div class="cx-team-faces">${t.units.map((m) => {
-        const mu = UNIT_LIST.find((x) => x.id === m);
-        return mu ? `<img src="${heroImg(mu)}" alt="${esc(mu.name)}" title="${esc(mu.name)}" class="${m === u.id ? 'me' : ''}" style="--plate:${tokenColor(mu.id)}">` : '';
-      }).join('')}</div><b>${esc(t.name)}</b><span>${esc(t.description)}</span></li>`).join('');
-    const dps = u.damage / u.attackInterval;
-    return `
-      <div class="cx-hero-art" style="--plate:${tokenColor(u.id)};--rar:${RARITY_COLORS[u.rarity]}"><img class="cx-token" src="${heroImg(u)}" alt=""></div>
-      <h2 class="cx-sname">${esc(u.name)}</h2>
-      <div class="cx-chips">${chip(esc(packLabel(u.pack)), 'pack')}${chip(RARITY_LABEL[u.rarity], `r-${u.rarity}`)}${chip(esc(u.role), 'role')}</div>
-      <div class="cx-chips cats">${cats.map((c) => chip(`${HERO_CATEGORIES[c].icon} ${HERO_CATEGORIES[c].label}`, 'cat')).join('')}</div>
-
-      <div class="cx-prog">
-        <div class="cx-prog-top"><span class="cx-lv">Niv. <b>${p.level}</b>/${MAX_HERO_LEVEL}</span><span class="cx-stars" aria-label="Éveil ${p.awakening} sur ${MAX_AWAKENING}">${stars}</span></div>
-        <div class="cx-bar"><i style="width:${pct}%"></i><span>${step ? `${p.copies}/${step.needed} copies · ${step.kind === 'niveau' ? `niveau ${step.target}` : `éveil ★${step.target}`}` : 'Maximum atteint'}</span></div>
-      </div>
-
-      <dl class="cx-stats">
-        <div><dt>Portée</dt><dd>${rangeLabel(u.range)}</dd></div>
-        <div><dt>Dégâts</dt><dd>${num(u.damage)}</dd></div>
-        <div><dt>Attaque</dt><dd>toutes les ${num(u.attackInterval)} s</dd></div>
-        <div><dt>Dégâts/s</dt><dd>${num(Math.round(dps))}</dd></div>
-        <div class="wide"><dt>Cible</dt><dd>${TARGETING_LABEL[u.targeting]}</dd></div>
-      </dl>
-
-      <section class="cx-sec"><h3>Compétence</h3>
-        <div class="cx-ability"><b>${esc(u.ability.name)}</b><p>${esc(u.ability.description)}</p></div></section>
-      ${talents.length ? `<section class="cx-sec"><h3>Talents</h3>${tiers}</section>` : ''}
-      ${passives ? `<section class="cx-sec"><h3>Éveil</h3><ul class="cx-passives">${passives}</ul></section>` : ''}
-      ${teams ? `<section class="cx-sec"><h3>Équipes</h3><ul class="cx-teams">${teams}</ul></section>` : ''}`;
-  }
 
   function bossSheet(b: BossDef): string {
     const lt = LIEUTENANTS[b.id];
@@ -329,8 +282,25 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
     if (newTab !== tab || !content.firstChild) { tab = newTab; renderList(); content.scrollTop = 0; }
     const unit = a === 'heros' ? UNIT_LIST.find((u) => u.id === id) : undefined;
     const boss = a === 'mechant' ? BOSS_LIST.find((b) => b.id === id) : undefined;
-    if (unit) openSheet(heroSheet(unit), unit.id, 'hero');
-    else if (boss) openSheet(bossSheet(boss), boss.id, 'boss');
+    if (unit) {
+      // Fiche de héros commune (src/ui/heroSheet.ts) ; les flèches suivent l'ordre de la grille affichée.
+      if (hero && !hero.el.isConnected) hero = null;
+      if (hero) { hero.show(unit.id); return; }
+      if (sheetHost.firstChild) sheetHost.innerHTML = '';
+      const list = UNIT_LIST.filter(matches).sort(compare).map((x) => x.id);
+      hero = openHeroSheet(sheetHost, unit.id, {
+        go: (h) => { location.hash = h; },
+        list,
+        onBrowse: (nid) => location.replace(`#encyclopedie/heros/${nid}`),
+      });
+      hero.onClose(() => {
+        hero = null;
+        if (!routeClosing) closeSheet();
+      });
+      return;
+    }
+    if (hero) { routeClosing = true; hero.close(); routeClosing = false; hero = null; }
+    if (boss) openSheet(bossSheet(boss), boss.id, 'boss');
     else { sheetHost.innerHTML = ''; sheetPushed = false; }
   }
 
@@ -340,6 +310,7 @@ export function mountCodex(root: HTMLElement, o: { onHome: () => void }, initial
     update,
     destroy() {
       destroyed = true;
+      if (hero) { routeClosing = true; hero.close(); hero = null; }
       window.removeEventListener('keydown', onKey);
       view.remove();
       for (const u of urls.values()) URL.revokeObjectURL(u);

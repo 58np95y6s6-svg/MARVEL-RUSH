@@ -72,7 +72,7 @@ function drive(): void {
     // Fiche du héros ouverte (toucher au lieu de glisser) : « Au deck ».
     const toDeck = document.querySelector('[data-tuto="hero-to-deck"]');
     if (toDeck) {
-      show(`deck-sheet-${unit}`, { text: `Touche <b>Au deck</b> pour prendre ${nameOf(unit)} dans ton équipe.`, holes: ['[data-tuto="hero-to-deck"]'], hand: { tap: '[data-tuto="hero-to-deck"]' } });
+      show(`deck-sheet-${unit}`, { text: `Touche <b>Sélectionner</b> pour prendre ${nameOf(unit)} dans ton équipe.`, holes: ['[data-tuto="hero-to-deck"]'], hand: { tap: '[data-tuto="hero-to-deck"]' } });
       return;
     }
     if (document.querySelector('.mk-sheet-wrap:not(.out)')) {

@@ -32,14 +32,21 @@ export interface RoadReward {
 }
 
 export const ROAD_FIRST = 2;
+/** Début de partie : jusqu'à ce niveau de compte, la route est très généreuse en gemmes et en tirages. */
+export const ROAD_ROOKIE_MAX = 15;
 
-/** Récompense du niveau de compte `level` (≥ 2). */
+/**
+ * Récompense du niveau de compte `level` (≥ 2).
+ * Niveaux 2 à 15 : 200 gemmes (pairs) ou 150 gemmes + 30 ✦ (impairs) ; 5 et 15 : coffre d'or + lot de 10 ;
+ * 10 : lot de 10 + 300 gemmes. Ensuite : 40 gemmes ou 30 ✦, coffre tous les 5, lot de 10 tous les 10.
+ */
 export function roadReward(level: number): RoadReward {
   const r: RoadReward = { level, gold: 100 + 40 * level, big: false };
-  if (level % 10 === 0) { r.pulls = 10; r.big = true; }
-  else if (level % 5 === 0) { r.chest = level < 20 ? 'or' : level < 40 ? 'heroique' : 'legendaire'; r.big = true; }
-  else if (level % 2 === 0) r.gems = 40;
-  else r.crystals = 30;
+  const rookie = level <= ROAD_ROOKIE_MAX;
+  if (level % 10 === 0) { r.pulls = 10; r.big = true; if (rookie) r.gems = 300; }
+  else if (level % 5 === 0) { r.chest = level < 20 ? 'or' : level < 40 ? 'heroique' : 'legendaire'; r.big = true; if (rookie) r.pulls = 10; }
+  else if (level % 2 === 0) r.gems = rookie ? 200 : 40;
+  else { r.crystals = 30; if (rookie) r.gems = 150; }
   const f = FRAMES[level];
   if (f) { r.frame = f; r.big = true; }
   return r;

@@ -456,39 +456,53 @@ Retour joueur : « La même monnaie pour pack et pour évoluer c'est nul… Les 
 | Montées de niveau (or) | 300, 700, 1 200, 2 000, 3 000, 4 500, 6 500, 9 000, 12 000 → **39 200 or** du niveau 1 au 10 (+ 21 cartes, inchangé) |
 | Coffres (or ±10 % · gemmes · cartes) | bois 120 · 4 · 6 R + 1 É (50 %) ; argent 250 · 8 · 12 R, 3 É, 1 L (10 %) ; or 500 · 16 · 24 R, 6 É, 1 L (35 %) ; héroïque 1 000 · 30 · 40 R, 13 É, 1 L (75 %) ; légendaire 2 000 · 60 · 60 R, 20 É, 2-3 L. Nouveau héros : 0 / 2 / 5 / 10 / 25 %. Piles : deck actif 6 fois sur 10 |
 | Campagne, victoire | coffre : rang du chapitre (1-2 bois, 3-4 argent, 5-6 or), +1 si 3 ★ dans le combat, +1 niveau 5, +2 niveau du boss ; rejouer : −1 rang, contenu × 0,5 ; 1re victoire d'un niveau de boss : +10 ✦ (lieutenant) / +20 ✦ (boss) dans le coffre |
-| Campagne, fixe | +20 or par étoile nouvelle (+8 refaite) × vagues / 10 ; +2 gemmes par étoile nouvelle ; premières 3 ★ : +150 or +5 gemmes ; coffres d'étoiles 10/20/30 ★ : 400/800/1 200 or + 40/60/80 gemmes (+ parchemins, cartes, tirage, inchangés) ; boss de chapitre : +100 gemmes |
+| Campagne, fixe | +20 or par étoile nouvelle (+8 refaite) × vagues / 10 ; +2 gemmes par étoile nouvelle ; **1re victoire d'un niveau : +400 / 300 / 150 gemmes (ch. 1 / 2 / 3)** ; premières 3 ★ : +150 or + 30 / 15 / 5 gemmes (ch. 1-2 / 3 / 4-6) ; coffres d'étoiles 10/20/30 ★ : 400/800/1 200 or + 40/60/80 gemmes (+ parchemins, cartes, tirage, inchangés) ; boss de chapitre : +100 gemmes |
 | Butin des boss (combat) | lieutenant 20 or, gros boss 60, Thanos 300 |
 | Solo Infini | 15 or par vague ; paliers 10/20/30/40/50 : coffres bois/argent/or/héroïque/légendaire (+ ✦ et parchemins inchangés), puis coffre d'or tous les 10 ; record battu : +500 or +50 gemmes |
 | Coffre quotidien | coffre d'argent + 40 gemmes + 10 ✦ (minuit, heure locale) |
-| Quêtes du jour | 3 par jour parmi 8, 250 à 500 or + 25 à 35 gemmes chacune ; coffre de la semaine (12 quêtes) : coffre légendaire + 150 gemmes + 40 ✦ |
-| Route des récompenses | niveau n : 100 + 40 n or, + 40 gemmes (pair) ou 30 ✦ (impair) ; tous les 5 : coffre (or, héroïque dès 20, légendaire dès 40) ; tous les 10 : lot de 10 tirages offert ; cadres aux niveaux 5, 10, 20, 30, 50 |
+| Quêtes du jour | 3 par jour parmi 8, 250 à 500 or + 25 à 35 gemmes chacune (+20 gemmes « débutant » sous le niveau de compte 15) ; coffre de la semaine (12 quêtes) : coffre légendaire + 150 gemmes + 40 ✦ + un lot de 10 offert |
+| Route des récompenses | niveau n : 100 + 40 n or ; **niveaux 2 à 15 : 200 gemmes (pair) ou 150 gemmes + 30 ✦ (impair), lot de 10 offert aux niveaux 5, 10 (+300 gemmes) et 15** ; ensuite 40 gemmes (pair) ou 30 ✦ (impair) ; tous les 5 : coffre (or, héroïque dès 20, légendaire dès 40) ; tous les 10 : lot de 10 tirages offert ; cadres aux niveaux 5, 10, 20, 30, 50 |
+| Calendrier de bienvenue | 7 jours de connexion (un par jour, sans obligation d'enchaîner) : 300 + lot de 10, 400, 500, 300 + lot de 10, 600, 700, 500 + lot de 10 → **3 300 gemmes + 30 tirages** |
+| Packs | ×1 : Rare 72 %, Épique 24 %, Légendaire 4 % ; **lot de 10 : 60 / 30 / 10 % par carte**, ≥ 1 Épique ; Légendaire garanti au **30e** tirage (compteur par pack) ; **1er lot de 10 payé de chaque pack : Légendaire garanti** |
 
-### Simulation (`npx vite-node scripts/economie.ts -- --seeds 10 --days 400`, moteur `src/meta/economySim.ts`)
-Mêmes hypothèses de joueur régulier que plus haut, mais **avec les vraies fonctions du jeu** (coffres tirés au hasard à graine, cartes réparties sur la collection réelle, packs « Complet », montées de niveau et éveils) : 3 niveaux de campagne gagnés à 3 ★ par jour (campagne finie au jour 20), puis 2 niveaux rejoués par jour ; 1 partie de Solo Infini par jour (vague 15 → 20 → 30 au jour 60 → 40 au jour 120 → 50 au jour 240) ; coffre quotidien, 3 quêtes et coffre de la semaine ; la route réclamée chaque jour ; un lot de 10 acheté dès 900 gemmes ; l'or va d'abord au héros visé, puis au deck. Les éveils se mesurent héros par héros (un Rare du deck de départ, ou le premier Légendaire obtenu).
+### Pluie de gemmes des débutants et lot de 10 boosté (octobre 2026)
+Retour joueur : « Comment je gagne de la monnaie de tirage ? Je devrais pouvoir en faire beaucoup dans les bas niveaux… 10 persos par tirage c'est trop équilibré » (trop de Rares, pas de surprise). Réglage :
+- **Premières victoires** des chapitres 1 à 3 : +400 / 300 / 150 gemmes par niveau (≈ un lot de 10 tous les 2 à 3 niveaux aux chapitres 1-2 ; 8 500 gemmes en tout) ; affiché sur la fiche du niveau (« Première victoire : +400 💎 »). Rien aux chapitres 4 à 6 : le rythme long reste celui du §6 bis.
+- **Calendrier de bienvenue** (7 jours, 3 300 gemmes + 3 lots de 10), **Route** très généreuse jusqu'au niveau de compte 15 (≈ 2 250 gemmes + 3 lots de 10), **quêtes** +20 gemmes sous le niveau 15, **3 ★** à +30 gemmes aux chapitres 1-2.
+- **Lot de 10 boosté** : 60 / 30 / 10 % par carte (un lot donne en moyenne 1 Légendaire, contre 0,4 à l'unité) ; garantie Légendaire au 30e tirage (au lieu de 40) ; le **1er lot de 10 payé de chaque pack** contient un Légendaire. Les lots offerts ont aussi les taux boostés, mais pas la garantie du 1er lot.
+- **Profils existants** : le calendrier démarre à la mise à jour ; les gemmes de première victoire des niveaux déjà gagnés sont versées une fois (drapeau `gemsRetro`, `migrateProfile`), sans plafond.
+- Code : `src/meta/gems.ts` (montants, calendrier, rattrapage), `pulls.ts`, `road.ts`, `quests.ts`, `src/campaign/progress.ts` ; écran Tirages : calendrier, taux ×1 / ×10, feuille « Comment gagner des gemmes ? » (`src/ui/gemsSheet.ts`).
 
-| Revenu moyen par jour | Or | Gemmes | ✦ | Lot de 10 acheté tous les… |
+### Simulation (`npx vite-node scripts/economie.ts -- --seeds 20 --days 400`, moteur `src/meta/economySim.ts`)
+Mêmes hypothèses de joueur régulier que plus haut, mais **avec les vraies fonctions du jeu** (coffres tirés au hasard à graine, cartes réparties sur la collection réelle, packs « Complet », montées de niveau et éveils) : 3 niveaux de campagne gagnés à 3 ★ par jour (campagne finie au jour 20), puis 2 niveaux rejoués par jour ; 1 partie de Solo Infini par jour (vague 15 → 20 → 30 au jour 60 → 40 au jour 120 → 50 au jour 240) ; coffre quotidien, 3 quêtes et coffre de la semaine ; la route réclamée chaque jour ; le calendrier de bienvenue réclamé chaque jour ; un lot de 10 acheté dès 900 gemmes (le 1er de chaque pack d'abord) ; tous les tirages offerts ouverts ; l'or va d'abord au héros visé, puis au deck. Les éveils se mesurent héros par héros (un Rare du deck de départ, ou le premier Légendaire obtenu).
+
+| Revenu moyen par jour | Or | Gemmes | ✦ | Lots de 10 ouverts (achetés + offerts) |
 |---|---|---|---|---|
-| Jours 1-30 (campagne) | 6 260 | 326 | 52 | 2,5 jours |
-| Jours 31-90 | 4 790 | 217 | 43 | 4,3 jours |
-| Jours 91-240 | 6 150 | 246 | 77 | 3,7 jours |
-| Jours 241-400 | 8 550 | 307 | 192 | 2,9 jours |
+| Jours 1-7 | 4 990 | **2 080** | 46 | **22,2** (17 achetés) : 3,2 par jour |
+| Jours 8-14 | 7 130 | **680** | 45 | **8,2** (6 achetés) : 1,2 par jour |
+| Jours 15-30 | 6 400 | 290 | 57 | 6,3 : un tous les 2,5 jours |
+| Jours 31-90 | 4 800 | 217 | 43 | 15,8 : un tous les 3,8 jours |
+| Jours 91-240 | 6 170 | 246 | 77 | 44 : un tous les 3,4 jours |
+| Jours 241-400 | 8 540 | 307 | 192 | un acheté tous les 2,9 jours |
 
-En moyenne sur 400 jours : **un lot de 10 tous les 3,3 jours**, plus les 10 tirages offerts par la route tous les 10 niveaux de compte (niveaux 10, 20, 30, 40 vers les jours 8, 18, 53, 101). Niveau de compte : 9 au jour 7, 24 au jour 30, 38 au jour 90, 62 au jour 240.
+Les 14 premiers jours : **≈ 30 lots de 10** (≈ 300 tirages, 2,2 lots par jour en moyenne, 3 la 1re semaine puis 1 la 2e). Ensuite le rythme d'avant ne change pas (un lot tous les 3 à 4 jours). Avant ce réglage : 4,3 lots la 1re semaine, 4,1 la 2e. Niveau de compte : 9 au jour 7, 24 au jour 30, 38 au jour 90, 62 au jour 240.
 
-Sources des jours 1 à 30 (or · gemmes · ✦ par jour) : coffres de victoire 1 780 · 54 · 7 ; quêtes 1 000 · 84 · 0 ; Solo Infini 770 · 21 · 10 ; étoiles et boss de campagne 700 · 42 · 14 ; butin des boss 610 · 0 · 0 ; route 510 · 14 · 9 ; coffres d'étoiles 480 · 36 · 0 ; coffre de la semaine 270 · 28 · 5 ; coffre quotidien 250 · 48 · 10.
+Sources des jours 1 à 30 (or · gemmes · ✦ par jour) : campagne, étoiles, premières victoires et boss 700 · 345 · 14 ; calendrier de bienvenue 0 · 110 · 0 (+ 3 lots de 10) ; quêtes 1 000 · 108 · 0 ; route 510 · 81 · 9 (+ lots de 10) ; coffres de victoire 1 780 · 54 · 7 ; coffre quotidien 250 · 48 · 10 ; coffres d'étoiles 480 · 36 · 0 ; coffre de la semaine 260 · 28 · 5 ; Solo Infini 770 · 21 · 10 ; butin des boss 610 · 0 · 0.
 
-| Objectif | Visé | Obtenu (10 joueurs) | Sensibilité k = 0,8 / 1,15 |
+| Objectif | Visé | Obtenu (20 joueurs) | Sensibilité k = 0,8 / 1,15 |
 |---|---|---|---|
-| Premier ★1 | 1re semaine | **jour 8** | 8 / 8 |
+| Premier ★1 | 1re semaine | **jour 8** (l'or limite, pas les cartes) | 8 / 8 |
 | ★5 sur un Rare | 60 – 90 jours | **jour 84** | 105 / 77 |
-| ★10 sur un Légendaire | > 240 jours | **jour 287** (≈ 9,4 mois) | 411 / 236 |
-| Lot de 10 avec les gemmes | tous les 3 – 4 jours | **3,3 jours** en moyenne | 2,7 jours sur le 1er mois dans les deux cas |
+| ★10 sur un Légendaire | > 240 jours | **jour 288** (≈ 9,5 mois) | > 400 / 236 |
+| Lots de 10, jours 1-14 | 2 à 3 par jour au début, puis moins | **22 la 1re semaine, 8 la 2e** | — |
+| Lot de 10, ensuite | tous les 3 – 4 jours | **3,4 à 3,8 jours** (jours 31-240) | — |
 | Deck niveau 9 | fin de campagne (≈ jour 21) | **9,2 au jour 21**, 10 au jour 30 | — |
 
-Garde-fous automatiques : `tests/meta/economySim.test.ts` (★1 ≤ 12 jours, ★5 Rare entre 55 et 100 jours, un lot de 10 tous les 2,5 à 4,5 jours sur 120 jours, pas de ★10 Légendaire avant 245 jours), `tests/meta/rewards.test.ts` (coffres à graine, quêtes, route, migration).
+Garde-fous automatiques : `tests/meta/economySim.test.ts` (★1 ≤ 12 jours, ★5 Rare entre 55 et 100 jours, 14 à 28 lots de 10 la 1re semaine et moins la 2e, un lot de 10 tous les 2,5 à 4,5 jours des jours 31 à 120, pas de ★10 Légendaire avant 245 jours), `tests/meta/rewards.test.ts` (coffres à graine, quêtes, route, migration), `tests/meta/gems.test.ts` (premières victoires, calendrier, rattrapage), `tests/meta/economy.test.ts` (taux ×1 / ×10, 1er lot, garantie au 30e).
 
 Points de vigilance :
-- Le premier mois est le plus généreux (campagne + route) : c'est voulu, la collection se construit. Si les packs paraissent trop faciles, baisser d'abord les gemmes des coffres d'étoiles (40/60/80).
+- Les deux premières semaines sont volontairement très généreuses (≈ 30 lots de 10) : la collection se construit vite, mais l'éveil reste limité par l'or et les cristaux (★10 Légendaire inchangé, ≈ jour 288). Si c'est trop, baisser d'abord les premières victoires (400 / 300 / 150) puis le calendrier ; si le lot de 10 paraît encore « moyen », monter son Légendaire (10 %) avant de toucher au tirage à l'unité.
+- k = 1,15 donne un ★10 Légendaire au jour 236, juste sous les 8 mois (inchangé par ce réglage).
 - L'or ne limite plus la fin de partie (8 500 or par jour au-delà du jour 240) : il sert alors à monter toute la collection (28 héros × 39 200 or ≈ 1,1 million). Si l'or s'accumule, ajouter un coût en or aux éveils.
 - Les Légendaires du coffre de palier 50 et des coffres légendaires accélèrent le ★10 si k ≥ 1,15 (jour 236) : garder le Légendaire garanti du palier 50 au hasard.
 

@@ -64,14 +64,16 @@ export const TALENTS: TalentDef[] = [
     ['Brèche', 'Le Séisme inflige 150 % des dégâts par seconde au lieu de 100 %.', { quakeDpsAdd: 0.5 }],
     ['Fureur', 'Chaque coup sur la même cible : +10 % de dégâts (+400 % au plus), remis à zéro au changement de cible.', { rampPerHit: 0.1, rampMax: 4 }],
   ),
-  ...u('thor', // Thunderer
-    ['Foudre', 'Les ennemis touchés par rebond subissent 139 % des dégâts au lieu de 119 %.', { chainDamageAdd: 0.2 }],
-    ['Tempête', 'L’éclair rebondit sur 1 ennemi de plus.', { chainExtra: 1 }],
-    ['Asgardien', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
-    ['Mjolnir', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
-    ['Marteau de la foi', 'Toutes les 8 s, Mjolnir s’abat sur l’ennemi de tête : 500 % des dégâts autour de lui et étourdissement de 1 s (talent de l’Inquisitrice de Rush Royale).', { abilityCooldown: 8, hammerDamage: 5, hammerStun: 1 }],
-    ['Stormbreaker', 'Les ennemis touchés par rebond sont étourdis 0,3 s.', { chainStun: 0.3 }],
+  ...u('thor', // Inquisiteur (fiche de l'unité, arbre des niveaux 9/11/13/15 ; recherches : voir docs/rush-royale-mapping.md)
+    ['Chevalier de lumière', 'Thor combat en Chevalier de lumière : +6,5 % de dégâts par boss éliminé pendant la partie (20 % de chance par petit boss). Fusionner n’importe quel Thor met tous les Thor en mode actif pendant 10 s.', { bossKillDamage: 0.065, miniKillChance: 0.2, mergeActiveDuration: 10 }],
+    ['Chevalier des ténèbres', 'Le premier Thor du plateau est un Chevalier des ténèbres : toujours en mode actif ; toutes les 25 s, il prend 1 rang à un autre Thor (rang 7 au plus).', { darkKnight: 1, darkStealEvery: 25 }],
+    ['Purification', 'En mode actif, les coups consécutifs font monter les dégâts deux fois plus vite : +30 % par coup au lieu de +15 %.', { activeRampMul: 2 }],
+    ['Bouclier de foi', 'Toutes les 15 s, un bouclier de foi protège chaque Thor pendant 5 s : les pouvoirs de boss ne le touchent pas.', { shieldEvery: 15, shieldDuration: 5 }],
+    ['Ronin', 'Limite d’augmentation des dégâts : 800 % au lieu de 600 %.', { rampMaxAdd: 2 }],
+    ['Unité', 'Avec 4 Thor ou plus sur le plateau : +15 % de dégâts ; avec 7 ou plus : 8 % de chance de coup critique (dégâts ×2,35).', { unityDamage: 0.15, unityAt: 4, unityCritChance: 0.08, unityCritAt: 7, unityCritMul: 2.35 }],
   ),
+  // Talent ultime (niveau 15 de Rush Royale → notre niveau 10) : gratuit, une fois les 3 paliers choisis.
+  { unit: 'thor', tier: 4, option: 'a', name: 'Marteau de foi', description: 'Toutes les 8 s, Mjolnir s’abat sur l’ennemi de tête : 500 % des dégâts autour de lui et étourdissement de 1 s.', params: { abilityCooldown: 8, hammerDamage: 5, hammerStun: 1 } },
   ...u('strange', // Mage du portail
     ['Portails multiples', '8 % de chance de renvoi au lieu de 5 %.', { teleportChanceAdd: 0.03 }],
     ['Main de sorcier', '+20 % de vitesse d’attaque.', { attackSpeedMul: 1.2 }],
@@ -80,12 +82,12 @@ export const TALENTS: TalentDef[] = [
     ['Bandes de Cyttorak', 'L’ennemi renvoyé est ralenti de 30 % pendant 3 s.', { teleportSlow: 0.3 }],
     ['Sorcier suprême', '+30 % de dégâts.', { damageMul: 1.3 }],
   ),
-  ...u('venom', // Inquisitrice
-    ['Faim', 'La croissance va 15 % plus vite (Rush Royale 14.0 : moins de coups pour le bonus max).', { growthScaleMul: 1.15 }],
+  ...u('venom', // Zélote (talents introuvables : même famille, (C))
+    ['Faim', 'Le symbiote profite mieux du mana : bonus de croissance +15 %.', { growthScaleMul: 1.15 }],
     ['Symbiote agile', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
-    ['Toxine', 'Actif, l’éclaboussure fait 75 % au lieu de 50 %.', { activeSplashAdd: 0.25 }],
+    ['Toxine', 'Empoisonne la cible : 20 % des dégâts du coup par seconde pendant 3 s.', { burnPerSecond: 0.2, burnDuration: 3 }],
     ['Carnage', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
-    ['Mémoire du symbiote', 'Au changement de cible, garde la moitié de sa croissance.', { growthKeepOnRetarget: 0.5 }],
+    ['Nous sommes Venom', 'Chaque point de mana en réserve compte double pour la croissance.', { growthPerManaMul: 2 }],
     ['Dévorer', 'Exécute un ennemi sous 10 % de PV (sauf boss).', { executeThreshold: 0.1 }],
   ),
   ...u('cmarvel', // Mage de feu
@@ -390,13 +392,21 @@ export const TALENTS: TalentDef[] = [
   ),
 ];
 
-/** Les 6 talents d'une unité, triés par palier puis option. */
+/** Les talents d'une unité (6, plus l'éventuel talent ultime de palier 4), triés par palier puis option. */
 export function talentsFor(unit: UnitId): TalentDef[] {
   return TALENTS.filter((t) => t.unit === unit).sort((a, b) => a.tier - b.tier || a.option.localeCompare(b.option));
 }
 
 /** Niveau de collection requis pour chaque palier (§5.1). */
 export const TALENT_TIER_LEVELS: Record<1 | 2 | 3, number> = { 1: 5, 2: 7, 3: 9 };
+
+/** Talent ultime (palier 4, niveau 15 de Rush Royale) : actif au niveau 10, une fois les 3 paliers choisis. */
+export const FINAL_TALENT_LEVEL = 10;
+
+/** Talent ultime d'une unité, s'il existe. */
+export function finalTalentOf(unit: UnitId): TalentDef | undefined {
+  return TALENTS.find((t) => t.unit === unit && t.tier === 4);
+}
 
 /** Parchemins de talent nécessaires pour ouvrir chaque palier (voir docs/campagne.md). */
 export const TALENT_TIER_SCROLLS: Record<1 | 2 | 3, number> = { 1: 1, 2: 2, 3: 3 };

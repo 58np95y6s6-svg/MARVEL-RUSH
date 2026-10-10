@@ -7,6 +7,7 @@ import { BOSSES, LIEUTENANTS } from '../data/bosses';
 import type { BossId, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { getMap } from '../maps';
+import { firstClearGems } from '../meta/gems';
 import { getProfile, loadActiveProfile, onProfileChange, updateProfile, type Reward } from '../meta/profile';
 import {
   CHAPTERS, STAR_CHEST_THRESHOLDS, chapterLevels, constraintIcon, constraintLabel, getChapter, getLevel, guaranteedHero,
@@ -35,7 +36,7 @@ export const ICONS = {
   check: `<svg class="ic-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6" fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12.5l5 5L20 6" fill="none" stroke="#5fd34a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   pull: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="3" fill="#f6c64a" stroke="${INK}" stroke-width="2.2"/><path d="M3 11h18M12 7v14" stroke="${INK}" stroke-width="2"/><path d="M12 7c-2-4-7-4-6-1s6 1 6 1 5 2 6-1-4-3-6 1z" fill="#e8413b" stroke="${INK}" stroke-width="1.8"/></svg>`,
   grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2" fill="#fff"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#fff"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#fff"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#fff"/></svg>`,
-  close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/></svg>`,
+  close: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 14 L34 34 M34 14 L14 34" stroke="#1d1733" stroke-width="11" stroke-linecap="round"/><path d="M14 14 L34 34 M34 14 L14 34" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/></svg>`,
   heart: `<svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 20C4 14 2 10.5 2 7a5 5 0 0 1 10-1.5A5 5 0 0 1 22 7c0 3.5-2 7-10 13z" fill="#ff4a5a" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/></svg>`,
 };
 
@@ -420,6 +421,7 @@ function levelSheet(l: CampaignLevel, h: { onClose: () => void; onPlay: () => vo
     <h4>${l.boss ? (l.boss.kind === 'boss' ? 'Boss du niveau' : 'Lieutenant du niveau') : 'Boss'}</h4>
     ${bossBlock}
     <h4>Récompenses ${won ? '(en rejouant, 3 étoiles)' : '(première victoire, 3 étoiles)'}</h4>
+    ${firstClearGems(l.chapter) ? `<p class="cp-firstgems${won ? ' done' : ''}">💎 Première victoire : +${firstClearGems(l.chapter)} gemmes${won ? ' (déjà gagnées)' : ''}</p>` : ''}
     <div class="cp-chips">${preview.chest ? `<span class="cp-chip chest">${chestMiniSvg(preview.chest.tier)}<b>${esc(CHEST_NAMES[preview.chest.tier])}</b></span>` : ''}${rewardChips(preview.total)}</div>
     <h4>Ton deck${deckTabs ? '' : ' actif'}</h4>${deckTabs}
     <div class="cp-deck">${deck.map((u) => `<span><img alt="" src="${tokenUrl(u)}"><small>${esc(UNITS[u].name)}</small></span>`).join('')}</div>`;

@@ -14,7 +14,7 @@
 // paramètres résolus et pourront être lues par le moteur au fil de l'équilibrage.
 
 import type { AwakeningPassiveDef, TalentDef, UnitId } from '../data/types';
-import { TALENTS, TALENT_TIER_LEVELS } from '../data/talents';
+import { FINAL_TALENT_LEVEL, TALENTS, TALENT_TIER_LEVELS } from '../data/talents';
 import { AWAKENINGS } from '../data/awakenings';
 
 let catalog: readonly TalentDef[] = TALENTS;
@@ -34,6 +34,11 @@ export function activeTalents(unit: UnitId, level: number, choices: readonly ('a
     const def = catalog.find((t) => t.unit === unit && t.tier === tier && t.option === option);
     if (def) out.push(def);
   });
+  // Talent ultime (palier 4) : niveau FINAL_TALENT_LEVEL, une fois les 3 paliers choisis.
+  if (level >= FINAL_TALENT_LEVEL && choices[2]) {
+    const fin = catalog.find((t) => t.unit === unit && t.tier === 4);
+    if (fin) out.push(fin);
+  }
   return out;
 }
 

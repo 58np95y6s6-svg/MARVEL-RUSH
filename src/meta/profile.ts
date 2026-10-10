@@ -7,6 +7,7 @@
 
 import { get, set } from 'idb-keyval';
 import type { BossId, Pack, UnitId } from '../data/types';
+import { applyRetroGems, type WelcomeState } from './gems';
 
 /** v2 (octobre 2026) : deux monnaies, l'or (montées de niveau) et les gemmes (packs), voir `migrateProfile`. */
 export const PROFILE_VERSION = 2;
@@ -76,6 +77,12 @@ export interface Profile {
   chestsOpened?: number;
   /** Astuces contextuelles déjà vues (une seule fois chacune), clé = id de l'astuce (src/tutorial/tips.ts). */
   tips?: Record<string, boolean>;
+  /** Calendrier de bienvenue (7 jours, src/meta/gems.ts). Absent = rien réclamé. */
+  welcome?: WelcomeState;
+  /** Rattrapage des gemmes de première victoire déjà fait (src/meta/gems.ts). */
+  gemsRetro?: boolean;
+  /** Packs dont le premier lot de 10 payé (Légendaire garanti) a déjà été tiré (src/meta/pulls.ts). */
+  firstTen?: Record<string, boolean>;
 }
 
 /** Quêtes quotidiennes (3 par jour) et coffre de la semaine (src/meta/quests.ts). */
@@ -148,6 +155,8 @@ export function migrateProfile(p: Profile): boolean {
     p.version = 2;
     changed = true;
   }
+  // Gemmes de première victoire (chapitres 1 à 3) pour les niveaux déjà gagnés : une seule fois.
+  if (!p.gemsRetro) { applyRetroGems(p); changed = true; }
   return changed;
 }
 
@@ -191,7 +200,7 @@ export function blankProfile(name: string, avatar: UnitId): Profile {
     shards: START_GEMS, gold: START_GOLD, crystals: 0, scrolls: 0, xp: 0,
     heroes: {}, pity: {}, decks: [], activeDeck: 0,
     campaign: {}, campaignChests: {}, infiniteBest: 0, infiniteTiers: {},
-    tutorialDone: false,
+    tutorialDone: false, gemsRetro: true,
   };
 }
 
