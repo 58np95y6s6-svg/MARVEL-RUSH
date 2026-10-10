@@ -6,8 +6,8 @@
 > A/B/C). Chaque unité Rush Royale n'est utilisée qu'une fois.
 >
 > **Ce qui ne change pas** : la rareté Marvel Rush (elle règle les tirages : voir « Écarts »), la portée
-> (Rush Royale n'en a pas ; on garde notre système et on choisit une portée cohérente avec le type
-> d'unité), les clés d'archétype du moteur (`copyDamageMul`, `promoteAlly`, `swapAlly`,
+> (Rush Royale n'en a pas ; on garde notre système et on choisit la portée selon le personnage et
+> l'attaque de l'unité copiée : voir « Portées »), les clés d'archétype du moteur (`copyDamageMul`, `promoteAlly`, `swapAlly`,
 > `sacrificeMana`, `manaPerKill`, `auraAttackSpeed`, croissance…).
 
 ## Conversion des chiffres
@@ -45,7 +45,7 @@
 | **Rebelle (Merida)** | **Chasseur** | Archère de la forêt : premier tir renforcé sur chaque nouvelle cible. |
 | **Captain Marvel** | **Mage de feu** | Explosion autour de la cible à chaque tir (rafales photoniques). |
 | **Soldat de l'hiver** | **Voleur (Rogue)** | Bonus de dégâts aléatoire jusqu'aux dégâts critiques à chaque coup. |
-| **Shang-Chi** | **Danse-lames** | Combattant au corps à corps : plus rapide quand il est seul, chaque danseur isolé renforce les autres. |
+| **Shang-Chi** | **Danse-lames** | Les Dix Anneaux lancés ↔ les lames qui volent : plus rapide quand il est seul, chaque danseur isolé renforce les autres. Portée longue (voir « Portées »). |
 | **Vaïana & Pua** | **Archer du vent** | Vent et océan : mode Ouragan périodique (cadence fortement augmentée), +dégâts et +durée par rang. Borée sert à Maui. |
 | **Maui** | **Borée** | Deux formes en alternance (faucon / requin) ↔ deux phases de tir (cadence / cadence + critique). Le Chasseur de démons et le Maître des esprits ne changent pas de forme. |
 | **Mulan & Mushu** | **Pyrotechnicien** | Feu de Mushu : zone en nombre impair, tir sur le premier en nombre pair. |
@@ -55,6 +55,54 @@
 | **Buzz & Woody** | **Ingénieur** | Les jouets reliés : dégâts par Ingénieur adjacent relié. |
 | **Raiponce & Pascal** | **Meule** | Soutien : dégâts des voisines selon le rang. Le nettoyage des effets de boss devient un talent. |
 | **Rox & Rouky** | **Jumeaux** | Duo (Lune et Soleil). Mécanique chiffrée introuvable : on garde la double attaque *(C)*. |
+
+## Portées (revue d'octobre 2026)
+
+> Retour joueuse : « Shang-Chi a les mêmes capacités que Danse-lames, mais pas la même portée d'attaque… adapte
+> les portées en fonction des persos. » Rush Royale n'a pas de portée ; chaque portée est choisie selon
+> **(a)** le style de combat du personnage et **(b)** la façon dont l'unité Rush Royale copiée attaque
+> (projectile qui vole jusqu'à la cible, sort à distance, coup au contact). Portées : globale (toute la map),
+> longue 3,4, moyenne 2,4, courte 1,6 cases (`src/engine/geometry.ts`).
+>
+> **Compensation** : seule une unité qui **change de catégorie** voit ses dégâts recalculés, avec les facteurs
+> du §2 bis de `docs/equilibrage.md` (globale 1 · longue 1,4 · moyenne 1,7 · courte 3) : dégâts × facteur
+> nouveau / facteur ancien. Le pas par niveau du tableau Rush Royale (`damagePerLevel`) est multiplié par le
+> même rapport, pour garder la forme du tableau (niv. 15 / niv. 7 inchangé). Les soutiens qui n'attaquent pas
+> (Statue, Bannière, Meule) gardent une portée indicative.
+
+| Héros | Unité Rush Royale | Avant → après | Pourquoi |
+|---|---|---|---|
+| Iron Man | Tesla | globale → **globale** | Répulseurs et uni-rayon ; la Tesla frappe à distance (éclair). |
+| Spider-Man | Trappeur | longue → **longue** | Toiles tirées au loin ; le Trappeur lance ses filets sur le chemin. |
+| Hulk | Minotaure | courte → **courte** | Poings et sol frappé ; Minotaure au contact (séisme). |
+| Thor | Inquisiteur | longue → **longue** | Mjolnir lancé et éclairs ; marteau de l'Inquisiteur projeté. |
+| Doctor Strange | Mage du portail | globale → **globale** | Sorts et portails ; sort à distance. |
+| Venom | Zélote | moyenne → **moyenne** | Tentacules du symbiote : allonge, pas tir. |
+| Captain Marvel | Mage de feu | globale → **globale** | Rafales photoniques ; boule de feu à distance. |
+| Captain America | Statue de chevalier | moyenne → **moyenne** | Bouclier lancé qui revient ; n'attaque pas (soutien). |
+| Loki | Arlequin | longue → **longue** | Dagues lancées et illusions ; cartes de l'Arlequin. |
+| **Soldat de l'hiver** | Voleur | longue → **globale** (70 → 50) | Tireur d'élite (fusil) : la portée d'un sniper ; dagues lancées du Voleur. |
+| Œil de faucon | Archer | globale → **globale** | Archer : flèches sur toute la map. |
+| Falcon | Tireur d'élite | globale → **globale** | Tir aérien et drone Redwing. |
+| Black Widow | Prêtresse | longue → **longue** | Pistolets et Morsure de veuve ; sort de la Prêtresse. |
+| **Shang-Chi** | Danse-lames | courte → **longue** (215 → 100, +98,25 → +45,85/niv.) | Les Dix Anneaux sont lancés et reviennent, comme les lames du Danse-lames qui volent jusqu'à leurs cibles. |
+| Vaïana & Pua | Archer du vent | longue → **longue** | Appel de l'océan, rame ; flèches de vent. |
+| Maui | Borée | moyenne → **moyenne** | Hameçon géant et piqué du faucon : allonge sans tir. |
+| Pocahontas & Meeko | Bannière | longue → **longue** | Couleurs du vent ; n'attaque pas (soutien). |
+| **Mulan & Mushu** | Pyrotechnicien | moyenne → **longue** (229 → 189, +61,7 → +50,8/niv.) | La fusée de Mushu (l'Avalanche du film) ; le Pyrotechnicien tire des fusées au loin. |
+| Rebelle | Chasseur | globale → **globale** | Archère : premier tir sur toute la map. |
+| Ariel & Sébastien | Stase | longue → **longue** | Chant qui porte ; sphères de stase lancées. |
+| Rox & Rouky | Jumeaux | courte → **courte** | Renard et chien : morsures au contact. |
+| Tiana & Naveen | Vampire | globale → **globale** | Ray la luciole guide Tiana partout ; morsure marquée à distance. |
+| Nemo & Dory | Chaudron magique | longue → **longue** | Potions lancées, courant marin. |
+| Coco (Miguel) | Dryade | longue → **longue** | Guitare et chanson ; sort de la Dryade. |
+| Nick & Judy | Chimiste | moyenne → **moyenne** | Enquête de terrain (stylo-carotte, menottes) ; fioles lancées de près. |
+| Buzz & Woody | Ingénieur | longue → **longue** | Laser de Buzz, lasso de Woody ; tourelles reliées. |
+| Raiponce & Pascal | Meule | moyenne → **moyenne** | Cheveux-fouet ; n'attaque pas (soutien). |
+| Vanellope & Ralph | Gardien du portail | moyenne → **moyenne** | Kart qui « glitche », poings de Ralph. |
+
+Catégories (Encyclopédie) mises à jour : Shang-Chi et Mulan ne sont plus « Corps à corps », le Soldat de
+l'hiver devient « Tireur ».
 
 ## Thor (Inquisiteur) — fiche d'unité et arbre de talents
 
@@ -97,7 +145,7 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 
 > Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et
 > Disney. Les archétypes DC sont gardés (clés génériques du moteur) et posés sur l'unité Rush Royale qui leur
-> ressemble le plus. Portées inchangées. Sources : recherche web (extraits des guides alucare.fr, touchtapplay,
+> ressemble le plus. Portées : voir « Portées DC » ci-dessous. Sources : recherche web (extraits des guides alucare.fr, touchtapplay,
 > wiki Fandom, tier lists 2024-2026) ; le wiki ne s'ouvre pas depuis l'environnement, d'où beaucoup de
 > chiffres **(C)** (approximation) : ils ont été réglés au simulateur pour que les decks DC restent à ~10 % des
 > decks Marvel (`docs/equilibrage.md` §2 sexies).
@@ -119,6 +167,29 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 | **Catwoman** | **Démonologue** (Demonologist) | Mana en plus sur les éliminations (doublé en Coop dans Rush Royale) → **archétype Mana par élimination** (barème ×2). | B |
 | **Harley Quinn** | **Clown** | Fusion : chance de copie, sinon **mana** et perte de rang → **archétype Sacrifice → mana** (barème standard). | B |
 | **Green Arrow** | **Mage de glace** (Cold Mage) | Chaque tir ralentit un peu plus la cible (6 % par flèche, 30 % au plus) : flèches cryogéniques. | C |
+
+### Portées DC (revue d'octobre 2026)
+
+Même règle que la section « Portées » (personnage + attaque de l'unité Rush Royale ; dégâts × facteur nouveau /
+facteur ancien en cas de changement de catégorie).
+
+| Héros | Unité Rush Royale | Avant → après | Pourquoi |
+|---|---|---|---|
+| Batman | Bourreau | moyenne → **moyenne** | Poings, grappin et batarangs de près ; la hache du Bourreau. |
+| Superman | Givre | globale → **globale** | Vision thermique et souffle glacial sur tout le chemin. |
+| Wonder Woman | Moine | moyenne → **moyenne** | Épée et lasso de vérité : allonge, pas tir. |
+| Green Lantern | Cultiste | longue → **longue** | Constructions de l'anneau projetées ; rayon du Cultiste. |
+| Flash | Cogneur | courte → **courte** | Poings à grande vitesse ; le Cogneur frappe au contact. |
+| Aquaman | Faucheuse | moyenne → **moyenne** | Trident ; faux de la Faucheuse. |
+| Cyborg | Génie | globale → **globale** | Canon sonique. |
+| Supergirl | Barde | longue → **longue** | Vision thermique, ondes du Barde. |
+| **Shazam** | Météore | moyenne → **longue** (90 → 74) | La foudre de SHAZAM ! tombe du ciel comme le Météore. |
+| Martian Manhunter | Mime | longue → **longue** | Télépathie et rayons martiens. |
+| Robin | Ferrailleur | courte → **courte** | Bâton bo au contact. |
+| **Batgirl** | Bombardier | courte → **longue** (130 → 61) | Batarangs explosifs lancés, comme les bombes du Bombardier. |
+| Catwoman | Démonologue | courte → **courte** | Griffes et fouet au contact. |
+| Harley Quinn | Clown | courte → **courte** | Maillet géant. |
+| Green Arrow | Mage de glace | globale → **globale** | Archer : flèches cryogéniques sur toute la map. |
 
 Talents DC : Rush Royale ne publie pas les talents de ces unités dans les extraits trouvés ; chaque héros a
 3 paliers de talents **de même famille** que son unité (seuil, cumuls, rage, charges, chance de double

@@ -37,6 +37,10 @@ describe('portées d’attaque (§4.1)', () => {
     expect(rangeLabel('venom')).toBe('moyenne');
     expect(rangeLabel('thor')).toBe('longue');
     expect(rangeClass({})).toBe('globale'); // absent = globale
+    // Revue des portées (octobre 2026) : Shang-Chi lance les Dix Anneaux comme le Danse-lames ses lames.
+    expect(rangeLabel('shangchi')).toBe('longue');
+    expect(rangeLabel('mulan')).toBe('longue');
+    expect(rangeLabel('bucky')).toBe('toute la map');
     expect(unitRange({ range: 2 })).toBe(2);
   });
 

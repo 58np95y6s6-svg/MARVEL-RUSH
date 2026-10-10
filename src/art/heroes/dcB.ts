@@ -64,7 +64,7 @@ export const DC_B: CharDef[] = [
 },
 {
   id:'batgirl',name:'Batgirl',role:'Ciblage',rarity:'Rare',rar:'var(--rare)',tint:'#e6defa',tint2:'#a593d8',stats:[3,4,4],
-  atk:'Grappin qui frappe l’ennemi le plus avancé.',skill:'Analyse : marque un ennemi, qui subit +25 % de dégâts de toute l’équipe.',
+  atk:'Batarang explosif lancé au loin.',skill:'Analyse : marque un ennemi, qui subit +25 % de dégâts de toute l’équipe.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:12,R:-12},{L:20,R:-118,body:[-2,-2,-3,1,1]},{L:24,R:-112,body:[-6,0,-4,1,1]}],
   draw(this: CharDef, x: Ctx): string {

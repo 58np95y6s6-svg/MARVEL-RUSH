@@ -165,7 +165,7 @@ export const DISNEY_A: CharDef[] = [
 },
 {
   id:'mulan',name:'Mulan & Mushu',role:'Dégâts / brûlure',rarity:'Légendaire',rar:'var(--leg)',tint:'#ffdcd2',tint2:'#ef9682',stats:[4,3,2],
-  atk:'Coup d’épée.',skill:'Souffle de Mushu : brûlure ; Avalanche une fois par vague.',
+  atk:'Fusée de Mushu.',skill:'Souffle de Mushu : brûlure ; Avalanche une fois par vague.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:12,R:-140,sk:[0,0,0,1,1]},{L:30,R:-168,body:[-4,-4,-5,1,1.02],sk:[2,-2,10,1.08,1.08]},{L:20,R:-68,body:[7,3,7,1,1],sk:[-2,0,-6,1,1]}],
   draw(this: CharDef, x: Ctx): string {

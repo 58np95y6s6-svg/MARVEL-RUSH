@@ -124,6 +124,15 @@ Mesures (`scripts/simulate.ts`, Solo Infini, niveau 1, toits de New York) :
 
 À surveiller : les decks riches en corps à corps (méta Disney, `mixte-legendaires`, `arcanes`, `controle`) perdent 10 à 20 % avec le joueur automatique, qui place mal ; un joueur qui fusionne vers les cases du bord doit compenser. Si les journaux réels confirment l'écart, relever d'abord la portée courte (1,8) plutôt que les dégâts (déjà ×3,7).
 
+**Revue des portées par personnage (octobre 2026, `docs/rush-royale-mapping.md` « Portées »)** : portée choisie
+selon le style du personnage et l'attaque de l'unité Rush Royale copiée. Trois changements de catégorie, dégâts
+(et pas par niveau) × facteur nouveau / facteur ancien (globale 1 · longue 1,4 · moyenne 1,7 · courte 3) :
+Shang-Chi courte → longue (215 → 100, +98,25 → +45,85), Mulan & Mushu moyenne → longue (229 → 189, +61,7 →
++50,8), Soldat de l'hiver longue → globale (70 → 50). Mesures (`--casual`, niveau 1, Solo Infini) : départs
+inchangés (Marvel 18,32, Disney 14,97, 40 parties ; référence 19,85 / 17,55) ; méta Disney (Mulan) 17,0 → 19,2,
+Arcanes (Shang-Chi) 21,0 → 22,6, Agents + Ailes (Soldat de l'hiver) 18,25 → 18,20, Légendaires mixtes 20,3 →
+20,3 (20 parties) ; campagne `--attendu` ch. 1 97 % (pire 75 %), ch. 4 100 % (12 / 8 parties par niveau), inchangés.
+
 ## 2 ter. Archétypes de stratégie et début de partie (octobre 2026)
 
 **Archétypes** (`src/engine/archetypes.ts`, docs/roadmap.md) : Black Widow perd son ×2 contre les boss (Sacrifice → mana : 10/25/45/70/100/140/190 une fois par fusion ou à la destruction), Loki sa transformation périodique (Copieur à −25 %, et Formation : +15 % par autre Loki aligné, +30 % max, zone à 40 % à 3 alignés), Venom son plafond de +40 % (Croissance : points +0,5/s et +0,02 par élimination, bonus = 0,28 × points^0,75, soit ≈ +100 % vers la vague 30 et +200 % vers la vague 60, 50 % du bonus gardé en fusion), Tiana son mana de vague (+1/2/3/4/5/6/8 par ennemi touché qui tombe), Vanellope sa téléportation aléatoire (Échangeur manuel, même bonus de cadence) ; Coco gagne le Booster de fusion.
@@ -234,13 +243,18 @@ Après la « copie Rush Royale » de `main`, les 15 héros DC reprennent chacun 
 | Aquaman | Faucheuse | 140 / 1,0 s | moyenne |
 | Cyborg | Génie | 90 / 0,8 s | globale |
 | Supergirl | Barde | 100 / 1,0 s | longue |
-| Shazam | Météore | 90 / 1,0 s | moyenne |
+| Shazam | Météore | 74 / 1,0 s (90 avant la revue des portées) | longue |
 | Martian Manhunter | Mime | 30 / 1,0 s | longue |
 | Robin | Ferrailleur | 140 / 0,8 s | courte |
-| Batgirl | Bombardier | 130 / 0,8 s | courte |
+| Batgirl | Bombardier | 61 / 0,8 s (130 avant la revue des portées) | longue |
 | Catwoman | Démonologue | 140 / 0,7 s | courte |
 | Harley Quinn | Clown | 150 / 0,8 s | courte |
 | Green Arrow | Mage de glace | 82 / 0,5 s | globale |
+
+**Revue des portées DC** (`docs/rush-royale-mapping.md` « Portées DC ») : Shazam moyenne → longue (90 → 74), Batgirl
+courte → longue (130 → 61). `--casual`, niveau 1 : `dc-rares` 16,70 → 17,53 (30 parties), `bat-famille` 13,60 →
+14,90, `cosmiques` 16,85 → 17,65, `meta-dc` 20,80 inchangé, départ Marvel 18,00 inchangé (20 parties) ; chapitre 7
+`--attendu` 100 % (pire 100 %).
 
 **Solo Infini**, niveau 1, toits de New York, graines 1..60, rotation « tous les univers » (vague moyenne) :
 

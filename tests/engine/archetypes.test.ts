@@ -165,23 +165,31 @@ describe('Booster de fusion (Coco)', () => {
     expect(grid(e)[1]!.counters.growth).toBeGreaterThanOrEqual(0.3);
   });
 
-  it('refuse une autre Coco (fusion), un autre rang et le rang 7', () => {
+  it('refuse un autre rang et le rang 7', () => {
     const e = quiet(DECK);
     debugPlace(e, 0, 0, 'coco', 7);
     debugPlace(e, 0, 1, 'widow', 7);
     debugPlace(e, 0, 2, 'coco', 2);
-    debugPlace(e, 0, 3, 'coco', 2);
     debugPlace(e, 0, 4, 'tiana', 3);
     expect(dropAction(grid(e)[0], grid(e)[1])).toBeNull();
-    expect(dropAction(grid(e)[2], grid(e)[3])).toBe('merge');
     e.apply({ type: 'promote', player: 'p1', from: 0, to: 1 });
-    e.apply({ type: 'promote', player: 'p1', from: 2, to: 3 });
     e.apply({ type: 'promote', player: 'p1', from: 2, to: 4 });
     const r = ofType(step(e), 'rejected').map((x) => x.reason);
-    expect(r).toHaveLength(3);
+    expect(r).toHaveLength(2);
     expect(r[0]).toMatch(/Rang maximal/);
-    expect(r[1]).toMatch(/fusionnent/);
-    expect(r[2]).toMatch(/même rang/);
+    expect(r[1]).toMatch(/même rang/);
+  });
+
+  it('glissé sur un autre Coco, il le fait monter d’un rang (il reste Coco)', () => {
+    const e = quiet(DECK);
+    debugPlace(e, 0, 2, 'coco', 2);
+    debugPlace(e, 0, 3, 'coco', 2);
+    expect(dropAction(grid(e)[2], grid(e)[3])).toBe('promote');
+    e.apply({ type: 'promote', player: 'p1', from: 2, to: 3 });
+    step(e);
+    expect(grid(e)[2]).toBeNull();
+    expect(grid(e)[3]?.unit).toBe('coco');
+    expect(grid(e)[3]?.rank).toBe(3);
   });
 });
 

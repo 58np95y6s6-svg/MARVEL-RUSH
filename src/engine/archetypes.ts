@@ -55,8 +55,9 @@ export const BOSS_KILL_REWARD = { lieutenant: 2.5, boss: 5.5, thanos: 8 } as con
  */
 export function dropAction(a: UnitInstance | null | undefined, b: UnitInstance | null | undefined): DropAction | null {
   if (!a || !b || a === b || a.rank !== b.rank) return null;
-  if (a.unit === b.unit) return a.rank < MAX_RANK ? 'merge' : null;
   const prm = UNITS[a.unit].ability.params;
+  // Booster de fusion (Coco) : glissé sur un autre Coco, il le fait monter d'un rang (il reste Coco).
+  if (a.unit === b.unit) return a.rank < MAX_RANK ? (prm.promoteAlly ? 'promote' : 'merge') : null;
   if ((prm.copyDamageMul ?? 0) > 0) return 'copy';
   if (prm.promoteAlly && b.rank < MAX_RANK) return 'promote';
   if (prm.swapAlly) return 'swap';

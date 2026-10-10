@@ -277,7 +277,7 @@ export const MARVEL_B: CharDef[] = [
 },
 {
   id:'shangchi',name:'Shang-Chi',role:'Combo',rarity:'Épique',rar:'var(--epi)',tint:'#d9f1ee',tint2:'#86ccc4',stats:[4,4,2],
-  atk:'Enchaînement d’arts martiaux.',skill:'Dix Anneaux : des anneaux frappent jusqu’à 10 ennemis.',
+  atk:'Lancer des Dix Anneaux.',skill:'Dix Anneaux : des anneaux frappent jusqu’à 10 ennemis.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:24,R:-96,body:[-3,0,-3,1,1]},{L:128,R:-128,body:[0,-8,0,1,1.02]},{L:96,R:-96,body:[0,2,0,1.06,.96]}],
   draw(this: CharDef, x: Ctx): string {

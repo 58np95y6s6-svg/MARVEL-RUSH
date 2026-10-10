@@ -32,7 +32,7 @@ export const CHANGELOG: ReleaseNote[] = [
       '15 héros DC : Batman, Superman, Wonder Woman, Green Lantern, Flash, Aquaman, Cyborg, Supergirl, Shazam, Martian Manhunter, Robin, Batgirl, Catwoman, Harley Quinn et Green Arrow, chacun avec sa compétence, ses talents et ses 5 passifs d’éveil.',
       'Copie Rush Royale chez DC aussi : chaque héros reprend le profil d’une unité de Rush Royale encore libre. Batman le Bourreau, Superman le Givre, Wonder Woman le Moine, Green Lantern le Cultiste, Flash le Cogneur, Aquaman la Faucheuse, Cyborg le Génie, Supergirl le Barde, Shazam le Météore…',
       'Les stratégies restent : Harley Quinn (le Clown) se sacrifie pour du mana, Martian Manhunter (le Mime) copie un allié, Robin (le Ferrailleur) fait monter un allié d’un rang, parfois de deux, Supergirl grandit sans limite, Catwoman (la Démonologue) rapporte du mana sur chaque ennemi touché, Cyborg accélère ses voisins, Flash échange sa place et les Green Lantern reliés tirent sur plus d’ennemis.',
-      'Chaque héros DC garde sa portée (toute la map, longue, moyenne ou courte), sa couleur de jeton et ses effets d’attaque.',
+      'Chaque héros DC a une portée qui lui ressemble (toute la map, longue, moyenne ou courte) : la foudre de Shazam tombe de loin, les batarangs de Batgirl volent loin ; Flash, Robin, Catwoman et Harley frappent au contact.',
       'Nouvelles équipes : Justice League, Trinité, Bat-famille, Lanternes et cosmiques, Sirènes de Gotham, et deux équipes entre univers, Les Riches (Iron Man et Batman) et Les Archers (Œil de faucon, Green Arrow et Rebelle).',
       'Cinq nouveaux méchants : le Joker, Lex Luthor, Bane, Sinestro et Black Adam, avec leurs lieutenants et leurs sbires (clowns, robots LexCorp, mercenaires, Corps Sinestro, soldats de Kahndaq).',
       'Darkseid, boss final de l’extension : Rayons Oméga, Boom Tube et Équation d’Anti-Vie.',
@@ -40,6 +40,24 @@ export const CHANGELOG: ReleaseNote[] = [
       '30 nouveaux niveaux, des parties longues comme le reste de la campagne : chapitre 7 (Gotham) de 50 à 60 vagues, chapitre 8 (Metropolis et Themyscira) de 60 à 75, chapitre 9 (Apokolips) de 75 à 100, avec Darkseid à la vague 100. Ouverts après Thanos, en Solo et en Coop.',
       'Modes infinis prolongés : les boss DC rejoignent la rotation, Darkseid arrive à la vague 100, et deux nouveaux paliers attendent aux vagues 75 et 100 (coffres légendaires, parchemins et un Légendaire garanti).',
       'Nouvelle option de rotation des boss en mode infini : tous les univers, Marvel et Disney, ou DC seul.',
+    ],
+  },
+  {
+    id: '2026-10-10s',
+    title: 'Portées revues',
+    date: '10 octobre 2026',
+    items: [
+      'Shang-Chi lance maintenant ses Dix Anneaux au loin (portée longue), comme les lames du Danse-lames : moins de dégâts par coup, mais il touche bien plus souvent.',
+      'Portées revues selon chaque héros : la fusée de Mushu porte loin (Mulan & Mushu : longue) et le Soldat de l’hiver tire en sniper sur toute la map.',
+      'Les dégâts de ces trois héros sont ajustés à leur nouvelle portée pour garder l’équilibre.',
+    ],
+  },
+  {
+    id: '2026-10-10r2',
+    title: 'Coco booste Coco',
+    date: '10 octobre 2026',
+    items: [
+      'Glisse un Coco sur un autre Coco du même rang : il disparaît et l’autre Coco monte d’un rang (il reste Coco), au lieu d’une fusion au hasard.',
     ],
   },
   {
