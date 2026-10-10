@@ -245,7 +245,7 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
       boss.x.powerUses = (boss.x.powerUses ?? 0) + 1;
       if (!call) {
         const slots = pickMany(ctx, candidates(ctx, player), prm.ionUnits ?? 2);
-        for (const sl of slots) if (prm.ionRankLoss) downgrade(ctx, player, sl, p.grid[sl]!.rank - prm.ionRankLoss, lost);
+        slots.slice(0, Math.round(prm.ionRankUnits ?? slots.length)).forEach((sl) => { if (prm.ionRankLoss) downgrade(ctx, player, sl, p.grid[sl]!.rank - prm.ionRankLoss, lost); });
         disable(ctx, player, slots, 'stunnedFor', prm.ionStun ?? 1.5);
         powerEvent(ctx, id, player, slots, def.power.name);
       } else {

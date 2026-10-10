@@ -28,7 +28,7 @@ export const PIXAR_BOSSES: CharDef[] = [
 /* ---------- Syndrome ---------- */
 {
   id: 'syndrome', name: 'Syndrome', stats: [4, 4, 3], tint: '#5a6aa8', tint2: '#141a3a', glow: '#7ad8ff',
-  power: 'Rayon à point zéro : 2 unités figées ; armure 25 %.', minionTxt: 'Robots de Syndrome : blindés, en duo.',
+  power: 'Rayon à point zéro : 2 unités figées ; armure 15 %.', minionTxt: 'Robots de Syndrome : blindés, en duo.',
   sh: { L: [46, 152], R: [154, 152] },
   poses: [{ L: 18, R: -18 }, { L: 30, R: -150, body: [2, -6, 4, 1, 1.03] }, { L: 40, R: -96, body: [-6, -2, -6, 1, 1] }],
   bg() { return stars(5, '#bfefff') + `<path d="M-30 196 L40 150 L90 180 L150 140 L250 190" stroke="#2a3466" stroke-width="16" fill="none" opacity=".5"/>`; },
@@ -106,7 +106,7 @@ export const PIXAR_BOSSES: CharDef[] = [
 /* ---------- Le Borgne (Hopper) ---------- */
 {
   id: 'hopper', name: 'Le Borgne', stats: [4, 4, 3], tint: '#7a8a5a', tint2: '#1a2010', glow: '#d8e04a',
-  power: 'Nuée : il appelle 4 sauterelles et étourdit une unité.', minionTxt: 'Sauterelles : volent vite, en essaim.',
+  power: 'Nuée : il appelle 3 sauterelles et étourdit une unité.', minionTxt: 'Sauterelles : volent vite, en essaim.',
   sh: { L: [46, 150], R: [154, 150] },
   poses: [{ L: 18, R: -18 }, { L: 40, R: -150, body: [0, -6, 0, 1, 1.03] }, { L: 60, R: -60, body: [-4, 2, -4, 1, 1] }],
   bg() { return `<g opacity=".4"><path d="M-30 206 Q20 140 60 206 M40 206 Q90 120 130 206 M150 206 Q190 150 230 206" stroke="#3a4a1a" stroke-width="10" fill="none"/></g>` + stars(17, '#e8f0a0'); },

@@ -12,6 +12,7 @@
 // d'attaque »), améliore quand le plateau est plein. Affiche la vague moyenne atteinte et sa distribution.
 
 import { createEngine } from '../src/engine/index';
+import { simState } from '../src/engine/debug';
 import type { GameConfig, PlayerId, PlayerState } from '../src/engine/types';
 import type { UnitId } from '../src/data/types';
 import { UNITS } from '../src/data/units';
@@ -232,6 +233,10 @@ if (campaignArg) {
         tr.after(engine.state, engine.drainEvents());
       }
       const res = engine.state.result!;
+      if (process.env.SIM_TRACE) {
+        const boss = simState(engine).enemies.find((e) => e.bossId && e.hp > 0);
+        console.log(`  graine ${seed} : ${res.outcome} vague ${res.wave}, vies ${engine.state.lives}${boss ? `, boss ${boss.bossId} à ${Math.round((100 * boss.hp) / boss.maxHp)} %` : ''}`);
+      }
       const stars = evaluateStars(lv, { ...tr.stats(engine.state), won: res.outcome === 'victoire', wave: res.wave, livesLeft: engine.state.lives, deck: d, seed });
       waveSum += res.wave;
       if (stars[0]) wins++;

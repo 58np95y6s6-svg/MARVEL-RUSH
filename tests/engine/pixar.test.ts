@@ -176,16 +176,16 @@ describe('méchants Pixar', () => {
     expect(grid(e)[3]!.rank).toBe(3);
   });
 
-  it('Le Borgne : 4 sauterelles en renfort et 1 unité étourdie', () => {
+  it('Le Borgne : 3 sauterelles en renfort et 1 unité étourdie', () => {
     const { ev } = withBoss('hopper', [[0, 'cmarvel', 1], [1, 'falcon', 1]]);
     expect(ofType(ev, 'bossPower')[0]!.slots).toHaveLength(1);
-    expect(ofType(ev, 'enemySpawn').filter((s) => s.kind === 'sbire')).toHaveLength(4);
+    expect(ofType(ev, 'enemySpawn').filter((s) => s.kind === 'sbire')).toHaveLength(3);
   });
 
   it('Muntz : la meute puis le dirigeable, en alternance', () => {
     const { e, ev } = withBoss('muntz', [[0, 'cmarvel', 1], [5, 'falcon', 1], [1, 'widow', 1]]);
     expect(ofType(ev, 'bossPower')[0]!.name).toBe(DOGS_NAME);
-    expect(ofType(ev, 'enemySpawn').filter((s) => s.kind === 'sbire')).toHaveLength(3);
+    expect(ofType(ev, 'enemySpawn').filter((s) => s.kind === 'sbire')).toHaveLength(2);
     const ev2 = step(e, 20 * 7);
     const p2 = ofType(ev2, 'bossPower')[0]!;
     expect(p2.name).not.toBe(DOGS_NAME);
