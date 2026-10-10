@@ -47,6 +47,15 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
 
+## Extension DC — branche `extension/dc`
+
+Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-dc`. Contenu : la liste de `docs/roadmap.md`, validée par le joueur le 09/10.
+- Héros (15) : batman, superman, wonderwoman, flash, aquaman, greenlantern, cyborg, supergirl, shazam, robin, batgirl, catwoman, harley, martian, greenarrow.
+- Gros boss (5) : joker, luthor, bane, sinestro, blackadam. Boss final : darkseid.
+- Agents : DC Contenu et moteur, DC Dessins, DC Maps.
+
+État : en préparation.
+
 ## Extension Transformers — branche `extension/transformers`
 
 Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-tf`, à partir de `main` (sans l'extension DC). Contenu : la liste définitive de `docs/roadmap.md`.

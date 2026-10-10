@@ -15,8 +15,13 @@ export const FRAMES: Record<number, Frame> = {
   30: { id: 'diamant', name: 'Cadre diamant', color: '#7ff0ff' },
   50: { id: 'legende', name: 'Cadre légende', color: '#ff7a2a' },
 };
+/** Cadres spéciaux gagnés en jeu (Coop Infini : Thanos vaincu ; campagne Coop terminée). */
+export const SPECIAL_FRAMES: Frame[] = [
+  { id: 'thanos', name: 'Vainqueur de Thanos', color: '#b06cff' },
+  { id: 'duo', name: 'Duo invincible', color: '#ff7ab8' },
+];
 export const frameColor = (id: string | undefined): string | null =>
-  Object.values(FRAMES).find((f) => f.id === id)?.color ?? null;
+  [...Object.values(FRAMES), ...SPECIAL_FRAMES].find((f) => f.id === id)?.color ?? null;
 
 export interface RoadReward {
   level: number;

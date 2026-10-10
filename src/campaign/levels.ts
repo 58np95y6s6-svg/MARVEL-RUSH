@@ -1,4 +1,4 @@
-// Campagne Solo : 6 chapitres × 10 niveaux, plus les chapitres des extensions (Transformers : 10 à 12)
+// Campagne Solo : 6 chapitres × 10 niveaux, plus les chapitres des extensions (DC : 7 à 9, Transformers : 10 à 12)
 // (docs/campagne.md), en données, et construction de la
 // configuration moteur d'un niveau. Module pur (aucun accès au DOM ni au stockage).
 
@@ -69,6 +69,10 @@ export const CHAPTERS: ChapterDef[] = [
   { n: 4, name: 'L’Empire', zone: 'Palais impérial et Zootopie', boss: 'jafar', lieutenant: 'Cobra royal', lieutenantOf: 'jafar', bossLieutenant: 'Cobra royal', hero: 'mulan', unlockStars: 60, artMap: 'palais-imperial' },
   { n: 5, name: 'Le Monde des jouets', zone: 'Chambre d’Andy et Sugar Rush', boss: 'cruella', lieutenant: 'Jasper, l’homme de main', lieutenantOf: 'cruella', bossLieutenant: 'Jasper, l’homme de main', hero: 'buzzwoody', unlockStars: 95, artMap: 'chambre-andy' },
   { n: 6, name: 'Le Royaume des morts', zone: 'Royaume des morts, tour de Raiponce et Highlands', boss: 'thanos', lieutenant: 'Capitaine gobelin', lieutenantOf: 'malefique', bossLieutenant: 'Outrider alpha', hero: 'coco', unlockStars: 130, artMap: 'royaume-des-morts', midBoss: 'malefique' },
+  // ───────────── Extension DC (docs/campagne.md §3 bis) : 50 → 100 vagues, Darkseid à la vague 100 ─────────────
+  { n: 7, name: 'Gotham', zone: 'Gotham City la nuit et la Batcave', boss: 'joker', lieutenant: 'Clown géant', lieutenantOf: 'joker', bossLieutenant: 'Clown géant', hero: 'batman', unlockStars: 165, artMap: 'gotham-nuit', midBoss: 'bane', bossPool: 'tous' },
+  { n: 8, name: 'Metropolis et Themyscira', zone: 'Metropolis, Themyscira et Atlantis', boss: 'luthor', lieutenant: 'Robot LexCorp géant', lieutenantOf: 'luthor', bossLieutenant: 'Robot LexCorp géant', hero: 'superman', unlockStars: 195, artMap: 'metropolis', midBoss: 'blackadam', bossPool: 'tous' },
+  { n: 9, name: 'Apokolips', zone: 'Oa et Apokolips', boss: 'darkseid', lieutenant: 'Soldat Sinestro géant', lieutenantOf: 'sinestro', bossLieutenant: 'Parademon géant', hero: 'greenlantern', unlockStars: 225, artMap: 'oa', midBoss: 'sinestro', bossPool: 'tous' },
   // ───────────── Extension Transformers (docs/campagne.md §3 ter) : 100 → 150 vagues, Megatron à la vague 150 ─────────────
   // Numérotés 10 à 12 (les chapitres 7 à 9 sont ceux de l'extension DC) : ils suivent le dernier chapitre installé.
   { n: 10, name: 'Cybertron', zone: 'Cybertron et la Lune de Cybertron', boss: 'soundwave', lieutenant: 'Insecticon géant', lieutenantOf: 'soundwave', bossLieutenant: 'Insecticon géant', hero: 'optimus', unlockStars: 0, unlockSlack: 15, artMap: 'cybertron', midBoss: 'starscream', bossPool: 'tous' },
@@ -127,9 +131,10 @@ type Row = [map: string, waves: number, bonus: Constraint];
 const NO_LIFE: Constraint = { kind: 'noLifeLost' };
 
 /**
- * Vagues : 10 → 15 au chapitre 1, puis de plus en plus (15-20, 20-25, 25-30, 30-40, 40-50). Dans un
- * chapitre, les vagues montent de niveau en niveau ; les niveaux de boss (5 et 10) sont en haut de la
- * fourchette du chapitre. Le dernier niveau de la campagne finit sur Thanos à la vague 50.
+ * Vagues : 10 → 15 au chapitre 1, puis de plus en plus (15-20, 20-25, 25-30, 30-40, 40-50 ; extension DC :
+ * 50-60, 60-75, 75-100). Dans un chapitre, les vagues montent de niveau en niveau ; les niveaux de boss
+ * (5 et 10) sont en haut de la fourchette du chapitre. Le chapitre 6 finit sur Thanos à la vague 50, le
+ * chapitre 9 (dernier de l'extension DC) sur Darkseid à la vague 100.
  */
 const ROWS: Row[][] = [
   [ // Chapitre 1 — New York
@@ -204,6 +209,42 @@ const ROWS: Row[][] = [
     ['royaume-des-morts', 48, { kind: 'team', min: 2 }],
     ['royaume-des-morts', 50, NO_LIFE],
   ],
+  [ // Chapitre 7 — Gotham (extension DC) : 50 → 60 vagues
+    ['gotham-nuit', 50, { kind: 'packCount', pack: 'dc', min: 2 }],
+    ['gotham-nuit', 51, NO_LIFE],
+    ['batcave', 52, { kind: 'noLeak', enemy: 'bouclier' }],
+    ['batcave', 54, { kind: 'rank', min: 6 }],
+    ['gotham-nuit', 55, { kind: 'bossTime', max: 25 }],
+    ['batcave', 54, { kind: 'summonsBelow', max: 100 }],
+    ['gotham-nuit', 56, { kind: 'team', teams: ['batfamille'] }],
+    ['batcave', 58, { kind: 'bossTime', max: 40 }],
+    ['gotham-nuit', 58, { kind: 'noRankLoss' }],
+    ['gotham-nuit', 60, { kind: 'bossTime', max: 40 }],
+  ],
+  [ // Chapitre 8 — Metropolis et Themyscira : 60 → 75 vagues
+    ['metropolis', 60, NO_LIFE],
+    ['metropolis', 62, { kind: 'noLeak', enemy: 'blinde' }],
+    ['themyscira', 64, { kind: 'deckHasAny', units: ['wonderwoman'] }],
+    ['atlantis', 67, { kind: 'rank', min: 7 }],
+    ['metropolis', 70, { kind: 'bossTime', max: 25 }],
+    ['themyscira', 67, { kind: 'summonsBelow', max: 120 }],
+    ['atlantis', 69, NO_LIFE],
+    ['themyscira', 72, { kind: 'bossTime', max: 40 }],
+    ['metropolis', 73, { kind: 'team', teams: ['justiceleague'] }],
+    ['metropolis', 75, { kind: 'bossTime', max: 45 }],
+  ],
+  [ // Chapitre 9 — Apokolips : 75 → 100 vagues, Darkseid à la vague 100
+    ['oa', 75, NO_LIFE],
+    ['oa', 80, { kind: 'rank', min: 7 }],
+    ['gotham-nuit', 85, { kind: 'noLeak', enemy: 'bouclier' }],
+    ['metropolis', 90, { kind: 'team', min: 2 }],
+    ['oa', 95, { kind: 'bossTime', max: 25 }],
+    ['themyscira', 85, { kind: 'summonsBelow', max: 150 }],
+    ['atlantis', 90, NO_LIFE],
+    ['oa', 94, { kind: 'bossTime', max: 40 }],
+    ['batcave', 97, { kind: 'packEach', packs: ['marvel', 'disney', 'dc'] }],
+    ['oa', 100, NO_LIFE],
+  ],
 ];
 
 /**
@@ -251,8 +292,9 @@ const EXT_ROWS: Record<number, Row[]> = {
 
 /**
  * Difficulté (docs/campagne.md §2) : le nombre d'ennemis (`countMul`) et leurs PV (`hpMul`, et
- * `bossHpMul` pour les boss et lieutenants) montent régulièrement sur les 60 niveaux. La croissance
- * des PV d'une vague à l'autre (`growth`) est plus douce dans les chapitres longs, pour que la 50e
+ * `bossHpMul` pour les boss et lieutenants) montent régulièrement sur les 60 niveaux, et la même pente
+ * continue sur les 30 niveaux DC (interpolation prolongée au-delà de 6-10). La croissance des PV d'une
+ * vague à l'autre (`growth`) est plus douce dans les chapitres longs, pour que la 50e (et la 100e)
  * vague reste à la portée d'une collection de fin de campagne.
  */
 export const DIFFICULTY = {
@@ -284,8 +326,8 @@ function buildLevels(): CampaignLevel[] {
       // Niveau 8 : boss intermédiaire dans son arène (ch. 6 : Maléfique ; extensions : voir CHAPTERS).
       if (ch.midBoss && n === 8) lvl.boss = { kind: 'boss', id: ch.midBoss, wave: waves, name: bossDisplayName(ch.midBoss) };
       if (ch.bossPool === 'tous') {
-        // Chapitres d'extension : rotation complète, sans le boss intermédiaire ni le boss du chapitre.
-        lvl.exclude = ch.midBoss && ch.midBoss !== ch.boss ? [ch.midBoss, ch.boss] : [ch.boss];
+        // Chapitres d'extension : rotation complète sans le boss intermédiaire ni le boss du chapitre.
+        lvl.exclude = ch.midBoss && ch.midBoss !== ch.boss ? [ch.midBoss, ch.boss].filter((b) => b !== 'darkseid') : [ch.boss];
       } else {
         // Le boss du chapitre n'apparaît pas avant son niveau ni avant la dernière vague de ce niveau
         // (rotation sans lui ; au ch. 6, sans Maléfique jusqu'au niveau 8, Thanos étant hors rotation).
@@ -331,7 +373,7 @@ export function guaranteedHero(ch: ChapterDef, profile: Profile | null): UnitId 
 export function constraintLabel(c: Constraint, level?: CampaignLevel): string {
   switch (c.kind) {
     case 'merges': return `Fusionner au moins ${c.min} fois`;
-    case 'noLifeLost': return level?.boss?.id === 'thanos' || level?.boss?.id === 'megatron' ? `${bossDisplayName(level.boss.id)} tué sans perdre de vie` : 'Sans perdre de vie';
+    case 'noLifeLost': return level?.boss?.id === 'thanos' || level?.boss?.id === 'darkseid' || level?.boss?.id === 'megatron' ? `${bossDisplayName(level.boss.id)} tué sans perdre de vie` : 'Sans perdre de vie';
     case 'powerup': return `Améliorer une unité au niveau ${c.min}`;
     case 'maxPowerup': return `Aucune amélioration au-delà du niveau ${c.max}`;
     case 'rank': return c.min === 3 ? 'Atteindre une unité de rang 3' : `Une unité de rang ${c.min}`;
@@ -340,13 +382,13 @@ export function constraintLabel(c: Constraint, level?: CampaignLevel): string {
       return `${who} tué en moins de ${c.max} s`;
     }
     case 'summonsBelow': return `Moins de ${c.max} invocations`;
-    case 'packCount': return `Avec au moins ${c.min} ${c.pack === 'transformers' ? 'Autobots' : `unités ${c.pack === 'marvel' ? 'Marvel' : 'Disney'}`}`;
+    case 'packCount': return `Avec au moins ${c.min} ${c.pack === 'dc' ? 'héros DC' : c.pack === 'transformers' ? 'Autobots' : `unités ${c.pack === 'marvel' ? 'Marvel' : 'Disney'}`}`;
     case 'packEach': return (c.packs?.length ?? 2) > 2 ? `Avec au moins 1 héros de chaque pack (${c.packs!.map((p) => PACK_NAMES[p] ?? p).join(', ')})` : 'Avec au moins 1 unité de chaque pack';
     case 'emptyCells': return `Garder ${c.min} cases vides à la fin`;
-    case 'deckHasAny': return c.units.length === 2 && c.units.includes('strange') ? 'Avec Doctor Strange ou Loki dans le deck' : c.units.length === 1 && c.units[0] === 'grimlock' ? 'Avec Grimlock dans le deck' : 'Avec une unité imposée';
+    case 'deckHasAny': return c.units.length === 2 && c.units.includes('strange') ? 'Avec Doctor Strange ou Loki dans le deck' : c.units.length === 1 && c.units[0] === 'wonderwoman' ? 'Avec Wonder Woman dans le deck' : c.units.length === 1 && c.units[0] === 'grimlock' ? 'Avec Grimlock dans le deck' : 'Avec une unité imposée';
     case 'team': {
       if (c.teams?.length) {
-        const names: Record<string, string> = { ocean: 'Océan', princesses: 'Princesses', pixar: 'Duos Pixar', animaux: 'Animaux', autobots: 'Autobots', dinobots: 'Dinobots' };
+        const names: Record<string, string> = { ocean: 'Océan', princesses: 'Princesses', pixar: 'Duos Pixar', animaux: 'Animaux', batfamille: 'Bat-famille', justiceleague: 'Justice League', autobots: 'Autobots', dinobots: 'Dinobots' };
         return `Bonus d’équipe ${c.teams.map((t) => names[t] ?? t).join(' ou ')} actif`;
       }
       return (c.min ?? 1) >= 2 ? 'Deux bonus d’équipe actifs' : 'Un bonus d’équipe actif';
@@ -360,14 +402,14 @@ export function constraintLabel(c: Constraint, level?: CampaignLevel): string {
   }
 }
 
-const PACK_NAMES: Partial<Record<Pack, string>> = { marvel: 'Marvel', disney: 'Disney', transformers: 'Transformers' };
+const PACK_NAMES: Partial<Record<Pack, string>> = { marvel: 'Marvel', disney: 'Disney', dc: 'DC', transformers: 'Transformers' };
 
 /** « Flotsam, la murène » → « Flotsam » ; « Cobra royal » → « Cobra » (libellé court de contrainte). */
 function shortName(name: string): string {
   if (name.includes(',')) return name.split(',')[0]!;
   if (name.startsWith('Citrouille')) return 'Lieutenant';
   if (name.startsWith('Drone')) return 'Lieutenant';
-  if (/géant$/.test(name)) return name.split(' ')[0]!;
+  if (/géant$/.test(name)) return name.split(' ')[0] === 'Soldat' ? 'Soldat' : name.split(' ')[0]!;
   return name.split(' ')[0]!;
 }
 

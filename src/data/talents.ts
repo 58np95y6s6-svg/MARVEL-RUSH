@@ -1,4 +1,4 @@
-// Talents des 43 unités (28 Marvel et Disney, 15 Transformers) (§5.1 du prompt) : 3 paliers (niveaux de collection 5, 7, 9) × 2 options.
+// Talents des 58 unités (28 Marvel et Disney, 15 DC, 15 Transformers) (§5.1 du prompt) : 3 paliers (niveaux de collection 5, 7, 9) × 2 options.
 // Auteur : agent Game design. Valeurs de départ, à équilibrer avec scripts/simulate.ts (voir docs/equilibrage.md).
 //
 // Convention des paramètres (lus par le moteur) :
@@ -268,6 +268,129 @@ export const TALENTS: TalentDef[] = [
     ['Reine de Sugar Rush', 'Vanellope ne bugue plus après un échange.', { swapSleepAdd: -2 }],
     ['Fix-it Félix', 'Après un échange, l’alliée échangée et les nouvelles voisines gagnent +30 % de vitesse d’attaque pendant 5 s.', { swapBoostPartner: 1, boost: 0.3, boostDuration: 5 }],
   ),
+
+  // ───────────── Pack DC (extension) : talents de même famille que l’unité Rush Royale (C) ─────────────
+  ...u('batman', // Bourreau
+    ['Interrogatoire', 'Seuil d’exécution +5 points.', { executeThresholdAdd: 0.05 }],
+    ['Entraînement de la Ligue des Ombres', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Le plus grand détective', 'Contre les boss et les lieutenants, le seuil n’est réduit que d’un quart.', { executeBossFactorAdd: 0.25 }],
+    ['Batarangs affûtés', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Bat-signal', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+    ['Gaz incapacitant', 'Chaque coup a 10 % de chance d’étourdir 0,5 s.', { stunChance: 0.1, stunDuration: 0.5 }],
+  ),
+  ...u('superman', // Givre
+    ['Souffle arctique', 'Le souffle ralentit de 5 % par rang au lieu de 4 %.', { blizzardSlowPerRankAdd: 0.01 }],
+    ['Plus rapide qu’une balle', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Blizzard', 'Le ralentissement dure 9 s au lieu de 7 s.', { blizzardDurationAdd: 2 }],
+    ['Vision thermique', 'Chaque coup brûle 15 % des dégâts par seconde pendant 2 s.', { burnPerSecond: 0.15, burnDuration: 2 }],
+    ['Hiver éternel', 'Le souffle se cumule 5 fois au lieu de 3.', { blizzardStacksAdd: 2 }],
+    ['Fils de Krypton', 'Le souffle inflige aussi 100 % des dégâts à tous les ennemis.', { blizzardDamage: 1 }],
+  ),
+  ...u('wonderwoman', // Moine
+    ['Bracelets de la soumission', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Endurance amazone', 'La Fureur dure 7 s au lieu de 5 s.', { powerDurationAdd: 2 }],
+    ['Épée de Héphaïstos', 'En Fureur, l’éclaboussure passe à 75 %.', { powerSplashAdd: 0.25 }],
+    ['Princesse amazone', 'Fureur toutes les 9 s au lieu de 12 s.', { abilityCooldownAdd: -3 }],
+    ['Déesse de la guerre', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+    ['Lasso de vérité', 'En Fureur, +100 % de vitesse d’attaque au lieu de +60 %.', { powerSpeedAdd: 0.4 }],
+  ),
+  ...u('greenlantern', // Cultiste
+    ['Serment du Corps', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Batterie chargée', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Mitrailleuse d’émeraude', 'Jusqu’à 5 cibles de plus au lieu de 3.', { formationTargetsMaxAdd: 2 }],
+    ['Corps uni', 'Les dégâts doublent dès 4 Green Lantern reliés.', { formationDoubleAtAdd: -1 }],
+    ['Volonté inébranlable', 'Groupe complet : dégâts ×2,5 au lieu de ×2.', { formationDoubleMulAdd: 0.5 }],
+    ['Lumière d’Oa', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+  ),
+  ...u('flash', // Cogneur
+    ['Force véloce', 'La rage dure 7 s au lieu de 5 s.', { rageDurationAdd: 2 }],
+    ['Course-poursuite', 'La rage peut se déclencher dès 6 ennemis sur le chemin.', { rageFromAdd: -2 }],
+    ['Coup de foudre', 'En rage, +80 % de dégâts au lieu de +50 %.', { rageDamageAdd: 0.3 }],
+    ['Relais', 'Chaque échange rapporte 15 de mana.', { swapMana: 15 }],
+    ['Tornade', 'En rage, les coups de zone frappent à 80 %.', { rageSplashAdd: 0.3 }],
+    ['Vitesse partagée', 'Après un échange, +35 % de cadence au lieu de +20 %, à l’alliée échangée aussi.', { boostAdd: 0.15, swapBoostPartner: 1 }],
+  ),
+  ...u('aquaman', // Faucheuse
+    ['Kraken affamé', '+2 points de chance d’engloutir.', { reapChanceAdd: 0.02 }],
+    ['Force des abysses', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Trident de Poséidon', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Marée montante', 'Les coups ralentissent de 15 % pendant 1,5 s.', { slow: 0.15, slowDuration: 1.5 }],
+    ['Roi des sept mers', '+3 points de chance d’engloutir.', { reapChanceAdd: 0.03 }],
+    ['Atlante', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+  ),
+  ...u('cyborg', // Génie
+    ['Batterie étendue', 'Le vortex garde jusqu’à 15 charges.', { vortexMaxAdd: 5 }],
+    ['Overclocking', 'Le réseau donne +25 % de vitesse d’attaque aux voisines au lieu de +15 %.', { auraAttackSpeedAdd: 0.1 }],
+    ['Processeur quantique', 'Chaque charge donne +7 % de vitesse d’attaque au lieu de +5 %.', { vortexSpeedAdd: 0.02 }],
+    ['Canon amélioré', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Wi-Fi de la Tour', 'Le réseau touche aussi les cases en diagonale.', { auraDiagonal: 1 }],
+    ['Arsenal de S.T.A.R. Labs', '+35 % de dégâts contre les boss.', { bossDamageMul: 1.35 }],
+  ),
+  ...u('supergirl', // Barde
+    ['Fille d’Argo', 'Sa croissance avec le temps va deux fois plus vite.', { growthPerSecondAdd: 0.004 }],
+    ['Vol supersonique', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Surcharge solaire', 'Quand l’énergie déborde, +35 % de vitesse d’attaque au lieu de +20 %.', { hasteAdd: 0.15 }],
+    ['Soleil de midi', 'L’énergie déborde toutes les 14 s au lieu de 20 s.', { abilityCooldownAdd: -6 }],
+    ['Éruption solaire', 'Quand l’énergie déborde, 400 % des dégâts autour de l’ennemi de tête.', { flareDamage: 4 }],
+    ['Kryptonienne', '+35 % de dégâts contre les boss.', { bossDamageMul: 1.35 }],
+  ),
+  ...u('shazam', // Météore
+    ['Puissance de Zeus', 'La foudre frappe à 400 % au lieu de 300 %.', { meteorDamageAdd: 1 }],
+    ['Force d’Hercule', '+20 % de dégâts.', { damageMul: 1.2 }],
+    ['Sagesse de Salomon', 'La foudre touche 1,5 case autour au lieu de 1.', { meteorRadiusAdd: 0.5 }],
+    ['Endurance d’Atlas', 'La foudre étourdit 1,5 s au lieu de 1 s.', { meteorStunAdd: 0.5 }],
+    ['Courage d’Achille', 'Deux éclairs tombent à chaque fois.', { meteors: 2 }],
+    ['Vitesse de Mercure', 'SHAZAM ! 2 s plus tôt.', { abilityCooldownAdd: -2 }],
+  ),
+  ...u('martian', // Mime
+    ['Forme parfaite', 'La copie garde 85 % des dégâts au lieu de 75 %.', { copyDamageMulAdd: 0.1 }],
+    ['J’onn J’onzz', '+30 % de dégâts.', { damageMul: 1.3 }],
+    ['Esprit collectif', 'Chaque copie rapporte 20 de mana.', { copyMana: 20 }],
+    ['Instinct martien', 'La copie a sa compétence prête tout de suite.', { copyReady: 1 }],
+    ['Lien psychique', 'La copie garde 100 % des dégâts.', { copyDamageMulAdd: 0.25 }],
+    ['Dernier fils de Mars', 'La copie gagne 1 rang (au plus 7).', { copyRankBonus: 1 }],
+  ),
+  ...u('robin', // Ferrailleur
+    ['Passer le relais', 'Chaque fois que Robin fait monter une alliée, il rapporte 25 de mana.', { promoteMana: 25 }],
+    ['Acrobaties', '+20 % de vitesse d’attaque.', { attackSpeedMul: 1.2 }],
+    ['Double salto', '+10 points de chance de faire monter l’alliée de 2 rangs.', { promoteDoubleChanceAdd: 0.1 }],
+    ['Bâton télescopique', '+30 % de dégâts.', { damageMul: 1.3 }],
+    ['Fils de la nuit', 'L’alliée promue gagne +30 % de vitesse d’attaque pendant 10 s.', { promoteBoost: 0.3 }],
+    ['Nightwing', '+20 points de chance de faire monter l’alliée de 2 rangs.', { promoteDoubleChanceAdd: 0.2 }],
+  ),
+  ...u('batgirl', // Bombardier
+    ['Charge renforcée', 'L’explosion frappe à 80 % au lieu de 60 %.', { splashAdd: 0.2 }],
+    ['Coups de pied rapides', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Souffle large', 'L’explosion touche 1,5 case autour au lieu de 1.', { splashRadiusAdd: 0.5 }],
+    ['Faille de sécurité', 'Les coups ignorent 50 % de l’armure.', { armorPierce: 0.5 }],
+    ['Flash aveuglant', 'Chaque coup a 10 % de chance d’étourdir 0,5 s.', { stunChance: 0.1, stunDuration: 0.5 }],
+    ['Oracle', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
+  ),
+  ...u('catwoman', // Démonologue
+    ['Neuf vies', '+15 % de dégâts.', { damageMul: 1.15 }],
+    ['Doigts de fée', 'Les ennemis touchés rapportent 50 % de mana en plus.', { manaPerKillMul: 1.5 }],
+    ['Butin de choix', 'Un boss ou un lieutenant touché par Catwoman rapporte 50 de mana en plus.', { bossKillMana: 50 }],
+    ['Fouet', 'Les coups ralentissent de 20 % pendant 2 s.', { slow: 0.2, slowDuration: 2 }],
+    ['Griffes', '+20 % de vitesse d’attaque.', { attackSpeedMul: 1.2 }],
+    ['Vol du siècle', 'Les ennemis touchés rapportent encore 1 de mana de plus par rang.', { manaPerKillAdd: 1 }],
+  ),
+  ...u('harley', // Clown
+    ['Grand final', 'Le sacrifice rapporte 30 % de mana en plus.', { sacrificeManaMul: 1.3 }],
+    ['Ma batte préférée', '+25 % de dégâts.', { damageMul: 1.25 }],
+    ['Folie douce', '+20 % de vitesse d’attaque.', { attackSpeedMul: 1.2 }],
+    ['Tour de magie', '25 % de chance que le sacrifice rapporte deux fois plus de mana.', { sacrificeDoubleChance: 0.25 }],
+    ['Rideau !', 'Son sacrifice donne +15 % de vitesse d’attaque à toutes tes unités pendant 6 s.', { sacrificeHaste: 0.15, sacrificeHasteDuration: 6 }],
+    ['Tarte à la crème', 'Chaque coup a 15 % de chance d’étourdir 0,8 s.', { stunChance: 0.15, stunDuration: 0.8 }],
+  ),
+  ...u('greenarrow', // Mage de glace
+    ['Givre', 'Chaque flèche ralentit de 9 % de plus au lieu de 6 %.', { coldSlowPerHitAdd: 0.03 }],
+    ['Tir rapide', '+15 % de vitesse d’attaque.', { attackSpeedMul: 1.15 }],
+    ['Flèche-glaçon', 'Ralentissement de 45 % au plus au lieu de 30 %.', { coldMaxSlowAdd: 0.15 }],
+    ['Flèches perforantes', 'Les flèches ignorent 50 % de l’armure.', { armorPierce: 0.5 }],
+    ['Gel durable', 'Le ralentissement dure 3,5 s au lieu de 2 s.', { coldDurationAdd: 1.5 }],
+    ['Archer émérite', '+30 % de dégâts.', { damageMul: 1.3 }],
+  ),
+
   // ───────────── Pack Transformers (extension) : talents de même famille que l’unité Rush Royale (C) ─────────────
   ...u('optimus', // Banshee
     ['Matrice du commandement', '+20 % de dégâts.', { damageMul: 1.2 }],

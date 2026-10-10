@@ -178,6 +178,9 @@ export const INFINITE_TIERS: readonly TierChest[] = [
   { wave: 30, name: 'Palier 30', chest: 'or', crystals: 20, scrolls: 2, guaranteed: 'epique' },
   { wave: 40, name: 'Palier 40', chest: 'heroique', crystals: 30, scrolls: 3 },
   { wave: 50, name: 'Palier 50', chest: 'legendaire', crystals: 60, scrolls: 0, guaranteed: 'legendaire' },
+  // Extension DC : paliers prolongés jusqu'à Darkseid (vague 100, src/data/milestones.ts).
+  { wave: 75, name: 'Palier 75', chest: 'legendaire', crystals: 80, scrolls: 4, guaranteed: 'legendaire' },
+  { wave: 100, name: 'Palier 100', chest: 'legendaire', crystals: 150, scrolls: 5, guaranteed: 'legendaire' },
   // Extension Transformers : Unicron, boss cosmique des modes infinis, à la vague 150.
   { wave: 150, name: 'Palier 150 · Unicron', chest: 'legendaire', crystals: 200, scrolls: 6, guaranteed: 'legendaire' },
 ];
@@ -286,7 +289,7 @@ export function applyInfiniteGame(
   for (const b of game.bigBosses) bossCrystals += bigBossDailyBonus(p, b);
   if (bossCrystals > 0) {
     res.total.crystals += bossCrystals;
-    res.lines.splice(1, 0, { icon: 'cristaux', label: `+${bossCrystals} ✦`, detail: game.bigBosses.includes('unicron') ? 'Unicron vaincu !' : game.bigBosses.includes('thanos') ? 'Thanos vaincu !' : 'Premier gros boss du jour' });
+    res.lines.splice(1, 0, { icon: 'cristaux', label: `+${bossCrystals} ✦`, detail: game.bigBosses.includes('unicron') ? 'Unicron vaincu !' : game.bigBosses.includes('darkseid') ? 'Darkseid vaincu !' : game.bigBosses.includes('thanos') ? 'Thanos vaincu !' : 'Premier gros boss du jour' });
   }
   if (game.bossGold) {
     p.gold += game.bossGold;

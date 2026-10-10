@@ -1,11 +1,12 @@
-// Pouvoirs des boss (§4.4) : 6 boss en rotation (toutes les 6 s) et Thanos (Gant de l'infini
-// toutes les 8 s, Claquement de doigts à 30 % de PV). Remember Me (Coco) réagit ici.
+// Pouvoirs des boss (§4.4) : 11 boss en rotation (toutes les 6 s, dont les 5 de l'extension DC),
+// Thanos (Gant de l'infini toutes les 8 s, Claquement de doigts à 30 % de PV) et Darkseid (Rayons
+// Oméga / Boom Tube toutes les 8 s, Équation d'Anti-Vie à 30 % de PV). Remember Me (Coco) réagit ici.
 
 import {
-  BLIZZARD_NAME, BOSSES, BOSS_STATS, CHAOS_NAME, DECEPTICON_CALL_NAME, DEVOUR_NAME, FIRE_CANNON_NAME, HUNGER_NAME,
-  LIEUTENANTS, SNAP_NAME, THANOS_STONES, TYRANNY_NAME,
+  ANTI_LIFE_NAME, BLIZZARD_NAME, BOOM_TUBE_NAME, BOSSES, BOSS_STATS, CHAOS_NAME, DECEPTICON_CALL_NAME, DEVOUR_NAME,
+  FIRE_CANNON_NAME, HUNGER_NAME, LIEUTENANTS, OMEGA_NAME, SNAP_NAME, THANOS_STONES, TYRANNY_NAME, VENOM_NAME,
 } from '../data/bosses';
-import { waveHp } from '../data/enemies';
+import { WAVE_RULES, waveHp } from '../data/enemies';
 import type { BossId } from '../data/types';
 import { GRID_COLS, GRID_SIZE } from './types';
 import {
@@ -30,6 +31,8 @@ function candidates(ctx: Ctx, player: number, filter?: (u: SimUnit) => boolean):
     const u = grid[i];
     if (!u) continue;
     if ((u.counters.immuneFor ?? 0) > EPS) continue;
+    // Martian Manhunter (Intangibilité) échappe à tous les pouvoirs de boss.
+    if (unitParams(ctx, player, effectiveId(u)).intangible) continue;
     if (unitParams(ctx, player, effectiveId(u)).immuneBossControl) continue;
     if (filter && !filter(u)) continue;
     out.push(i);
@@ -182,6 +185,102 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
       powerEvent(ctx, id, player, slots, stone.name);
       break;
     }
+    // ───────────── Extension DC ─────────────
+    case 'joker': {
+      // Rire du Joker : échange les rangs de 2 unités de rangs différents (au plus maxRankGap d'écart).
+      const all = candidates(ctx, player, () => true);
+      const gap = prm.maxRankGap ?? Infinity;
+      const pairs: [number, number][] = [];
+      for (let i = 0; i < all.length; i++) {
+        for (let j = i + 1; j < all.length; j++) {
+          const d = Math.abs(p.grid[all[i]!]!.rank - p.grid[all[j]!]!.rank);
+          if (d > 0 && d <= gap) pairs.push([all[i]!, all[j]!]);
+        }
+      }
+      const pair = pick(ctx, pairs);
+      if (pair) {
+        const [a, b] = pair.map((x) => p.grid[x]!) as [SimUnit, SimUnit];
+        const [ra, rb] = [a.rank, b.rank];
+        // La plus haute est « rétrogradée » (Coco peut la restaurer) ; la plus basse monte.
+        if (ra > rb) downgrade(ctx, player, pair[0], rb, lost); else downgrade(ctx, player, pair[1], ra, lost);
+        if (ra > rb) b.rank = ra; else a.rank = rb;
+      }
+      powerEvent(ctx, id, player, pair ? [pair[0], pair[1]] : [], def.power.name);
+      break;
+    }
+    case 'luthor': {
+      // Rayon de kryptonite : l'unité de plus haut rang (ou une au hasard pour le lieutenant) est affaiblie.
+      const all = candidates(ctx, player, () => true);
+      let slots: number[];
+      if (prm.highest) {
+        const top = Math.max(0, ...all.map((x) => p.grid[x]!.rank));
+        slots = pickMany(ctx, all.filter((x) => p.grid[x]!.rank === top), prm.units ?? 1);
+      } else {
+        slots = pickMany(ctx, all, prm.units ?? 1);
+      }
+      const d = effectDuration(ctx, player, prm.duration ?? 6);
+      for (const x of slots) {
+        const u = p.grid[x]!;
+        u.counters.weaken = Math.max((u.counters.weakenFor ?? 0) > EPS ? u.counters.weaken ?? 0 : 0, prm.weaken ?? 0.5);
+        u.counters.weakenFor = Math.max(u.counters.weakenFor ?? 0, d);
+      }
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'bane': {
+      // Brise-échine : l'unité de plus haut rang perd des rangs.
+      const all = candidates(ctx, player, (u) => u.rank >= Math.max(2, prm.minRank ?? 2));
+      const top = Math.max(0, ...all.map((x) => p.grid[x]!.rank));
+      const slots = pickMany(ctx, all.filter((x) => p.grid[x]!.rank === top), 1);
+      for (const x of slots) downgrade(ctx, player, x, p.grid[x]!.rank - (prm.rankLoss ?? 2), lost);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'sinestro': {
+      // Cage de la peur : une colonne entière (ou `units` unités d'une colonne) emprisonnée.
+      const all = candidates(ctx, player);
+      const cols = [...new Set(all.map((x) => x % GRID_COLS))].sort((a, b) => a - b);
+      const col = pick(ctx, cols);
+      let slots = col === undefined ? [] : all.filter((x) => x % GRID_COLS === col);
+      if (prm.units) slots = pickMany(ctx, slots, prm.units).sort((a, b) => a - b);
+      disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 3);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'blackadam': {
+      // Foudre de Kahndaq : une unité étourdie, la foudre rebondit sur ses voisines.
+      const all = candidates(ctx, player);
+      const main = pick(ctx, all);
+      const slots: number[] = [];
+      if (main !== undefined) {
+        disable(ctx, player, [main], 'stunnedFor', prm.duration ?? 3);
+        slots.push(main);
+        if (prm.chainDuration) {
+          const side = orthogonal(main).filter((x) => all.includes(x));
+          disable(ctx, player, side, 'stunnedFor', prm.chainDuration);
+          slots.push(...side);
+        }
+      }
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'darkseid': {
+      const uses = boss.x.powerUses ?? 0;
+      boss.x.powerUses = uses + 1;
+      if (uses % 2 === 0) {
+        // Rayons Oméga : des unités perdent un rang et sont étourdies.
+        const slots = pickMany(ctx, candidates(ctx, player, () => true), prm.omegaUnits ?? 2);
+        for (const x of slots) {
+          if (prm.omegaRankLoss) downgrade(ctx, player, x, p.grid[x]!.rank - prm.omegaRankLoss, lost);
+        }
+        disable(ctx, player, slots.filter((x) => !unitParams(ctx, player, effectiveId(p.grid[x]!)).immuneBossControl), 'stunnedFor', prm.omegaStun ?? 2);
+        powerEvent(ctx, id, player, slots, OMEGA_NAME);
+      } else {
+        boomTube(ctx, boss, prm.boomTubeCount ?? 4);
+        powerEvent(ctx, id, player, [], BOOM_TUBE_NAME);
+      }
+      break;
+    }
     // ───────────── Extension Transformers (Decepticons) ─────────────
     case 'starscream': {
       const slots = pickMany(ctx, candidates(ctx, player), prm.units ?? 2);
@@ -327,6 +426,49 @@ function hunger(ctx: Ctx, boss: SimEnemy): void {
   if (lost.length) rememberMe(ctx, player, lost);
 }
 
+/** Voisines orthogonales d'une case de la grille. */
+function orthogonal(slot: number): number[] {
+  const c = slot % GRID_COLS, r = Math.floor(slot / GRID_COLS);
+  const out: number[] = [];
+  for (const [dc, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+    const nc = c + dc, nr = r + dr;
+    if (nc >= 0 && nc < GRID_COLS && nr >= 0 && nr < GRID_SIZE / GRID_COLS) out.push(nr * GRID_COLS + nc);
+  }
+  return out;
+}
+
+/** Boom Tube (Darkseid) : des Parademons surgissent derrière lui sur le chemin. */
+function boomTube(ctx: Ctx, boss: SimEnemy, count: number): void {
+  const prm = BOSSES.darkseid.minion.params;
+  const hp = WAVE_RULES.baseHp * Math.pow(WAVE_RULES.hpGrowth, Math.max(0, ctx.st.wave - 1))
+    * (ctx.cfg.script?.enemyHpMultiplier ?? 1) * (prm.hpMul ?? 1);
+  for (let k = 0; k < Math.max(0, Math.round(count)); k++) {
+    const e: SimEnemy = {
+      uid: ctx.st.nextUid++, kind: 'sbire', lane: boss.lane, distance: Math.max(0, boss.distance - 0.4 * (k + 1)),
+      speed: WAVE_RULES.baseSpeed * (prm.speedMul ?? 1), hp, maxHp: hp, armor: prm.armor ?? 0, shieldHits: prm.shieldHits ?? 0,
+      effects: {}, minionOf: 'darkseid', x: { flying: prm.flying ? 1 : undefined },
+    };
+    if (boss.x.from) e.x.from = boss.x.from;
+    if (boss.x.owner !== undefined) e.x.owner = boss.x.owner;
+    ctx.st.enemies.push(e);
+    emit(ctx, { type: 'enemySpawn', enemy: e.uid, kind: 'sbire', lane: e.lane });
+  }
+}
+
+/** Équation d'Anti-Vie (Darkseid) : les meilleures unités perdent un rang, tout le plateau est hypnotisé. */
+function antiLife(ctx: Ctx): void {
+  const prm = BOSSES.darkseid.power.params;
+  const player = targetPlayer(ctx);
+  const grid = ctx.st.players[player]!.grid;
+  const all = candidates(ctx, player, () => true);
+  const lost: LostUnit[] = [];
+  const top = all.slice().sort((a, b) => grid[b]!.rank - grid[a]!.rank || a - b).slice(0, prm.antiLifeUnits ?? 3);
+  for (const x of top) downgrade(ctx, player, x, grid[x]!.rank - (prm.antiLifeRankLoss ?? 1), lost);
+  disable(ctx, player, all, 'hypnotizedFor', prm.antiLifeDuration ?? 2);
+  powerEvent(ctx, 'darkseid', player, all, ANTI_LIFE_NAME);
+  if (lost.length) rememberMe(ctx, player, lost);
+}
+
 /** Claquement de doigts : 3 unités perdent la moitié de leurs rangs (au moins 1 rang). */
 function snap(ctx: Ctx): void {
   const prm = BOSSES.thanos.power.params;
@@ -399,6 +541,33 @@ export function updateBosses(ctx: Ctx): void {
     }
     if (!e.bossId && !e.x.master) continue;
     const interval = e.bossId ? BOSSES[e.bossId].power.interval : LIEUTENANTS[e.x.master!].power.interval;
+    // Venin (Bane) : une fois, sous le seuil de PV, il se soigne et accélère.
+    if (e.bossId === 'bane' && !e.x.venom) {
+      const prm = BOSSES.bane.power.params;
+      if (e.hp <= e.maxHp * (prm.venomThreshold ?? 0.5)) {
+        e.x.venom = 1;
+        e.hp = Math.min(e.maxHp, e.hp + e.maxHp * (prm.venomHeal ?? 0.15));
+        e.speed *= prm.venomSpeedMul ?? 1;
+        powerEvent(ctx, 'bane', targetPlayer(ctx), [], VENOM_NAME);
+      }
+    }
+    // Équation d'Anti-Vie (Darkseid) : annonce à 30 % de PV, effet après un délai.
+    if (e.bossId === 'darkseid') {
+      const prm = BOSSES.darkseid.power.params;
+      if (!e.x.antiLife && e.hp <= e.maxHp * (prm.antiLifeThreshold ?? 0.3)) {
+        e.x.antiLife = 1;
+        e.x.antiLifeIn = prm.antiLifeDelay ?? 1;
+        powerEvent(ctx, 'darkseid', targetPlayer(ctx), [], ANTI_LIFE_NAME);
+      }
+      if (e.x.antiLifeIn !== undefined && e.x.antiLifeIn > 0) {
+        e.x.antiLifeIn = Math.max(0, e.x.antiLifeIn - DT);
+        if (e.x.antiLifeIn <= EPS) {
+          e.x.antiLifeIn = 0;
+          antiLife(ctx);
+        }
+        continue; // les autres pouvoirs se taisent pendant l'Équation
+      }
+    }
     // Claquement de doigts (Thanos)
     if (e.bossId === 'thanos') {
       const prm = BOSSES.thanos.power.params;

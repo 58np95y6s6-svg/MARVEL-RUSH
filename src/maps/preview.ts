@@ -2,7 +2,7 @@
 // avec la grille et le chemin dessinés par-dessus, les animations d'ambiance et la
 // transition vers l'arène du boss.
 
-import { ARENAS, MAPS, TF_ARENAS, arenaForBoss, getMap } from './index';
+import { ARENAS, DC_ARENAS, MAPS, TF_ARENAS, arenaForBoss, getMap } from './index';
 import type { AmbientAnim, MapDefX } from './kit';
 import { type AnyLayout, type LayoutMode, type PathShape, boardsOf, lanePoint, layoutFor } from './layout';
 
@@ -120,11 +120,13 @@ export function animate(a: AmbientAnim, img: HTMLElement, t: number): void {
   }
 }
 
-/** Arène montée pour la transition : une arène Transformers pour une map Transformers, sinon Marvel ou Disney. */
+/** Arène montée pour la transition : une arène de l'extension pour une map DC ou Transformers, sinon Marvel ou Disney. */
 function previewArena(map: MapDefX): MapDefX | null {
-  const tf = map.universe === 'transformers';
-  const pool = tf ? TF_ARENAS : ARENAS.filter((a) => !TF_ARENAS.includes(a));
-  const list = MAPS.filter((m) => (m.universe === 'transformers') === tf);
+  const hash = location.hash.match(/#dev\/maps\/[\w-]+\/(?:solo|coop)\/([\w-]+)/);
+  if (hash?.[1]) return getMap(hash[1]);
+  const ext = map.universe === 'dc' ? DC_ARENAS : map.universe === 'transformers' ? TF_ARENAS : null;
+  const pool = ext ?? ARENAS.filter((a) => !DC_ARENAS.includes(a) && !TF_ARENAS.includes(a));
+  const list = MAPS.filter((m) => m.universe === map.universe || (!ext && (m.universe === 'marvel' || m.universe === 'disney')));
   return pool[Math.max(0, list.indexOf(map)) % pool.length] ?? arenaForBoss('thanos');
 }
 

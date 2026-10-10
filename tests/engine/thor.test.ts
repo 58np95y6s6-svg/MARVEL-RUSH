@@ -16,7 +16,7 @@ function thor(talents: ('a' | 'b')[], level = 9): Engine {
   debugNoRange(e);
   return e;
 }
-const lv = (level: number) => D * (1 + 0.1 * (level - 1));
+const lv = (level: number) => D + 129 * (level - 1); // fiche de l'Inquisiteur : +129 par niveau
 
 describe('Thor (Inquisiteur) : talents', () => {
   it('Chevalier de lumière : +6,5 % de dégâts par boss éliminé, et mode actif 10 s après une fusion', () => {

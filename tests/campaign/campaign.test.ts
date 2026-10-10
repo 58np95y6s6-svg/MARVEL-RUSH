@@ -35,10 +35,10 @@ const winAll = (chapters: number[], stars: Stars = ALL3): [string, Stars][] =>
   chapters.flatMap((c) => chapterLevels(c).map((l): [string, Stars] => [l.id, stars]));
 
 describe('données de la campagne', () => {
-  it('9 chapitres × 10 niveaux (6 + 3 Transformers, numérotés 10 à 12), identifiants c<ch>-n<n>', () => {
-    expect(CHAPTERS).toHaveLength(9);
-    expect(LEVELS).toHaveLength(90);
-    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 10, 11, 12]);
+  it('12 chapitres × 10 niveaux (6 + 3 DC, numérotés 7 à 9, + 3 Transformers, numérotés 10 à 12), identifiants c<ch>-n<n>', () => {
+    expect(CHAPTERS).toHaveLength(12);
+    expect(LEVELS).toHaveLength(120);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     for (const ch of CHAPTERS) {
       const ls = chapterLevels(ch.n);
       expect(ls.map((l) => l.id)).toEqual(Array.from({ length: 10 }, (_, i) => `c${ch.n}-n${i + 1}`));
@@ -59,7 +59,8 @@ describe('données de la campagne', () => {
 
   it('courbe du doc : 10 à 15 vagues au chapitre 1, puis de plus en plus ; effectif et PV en hausse régulière', () => {
     const ranges: Record<number, [number, number]> = {
-      1: [10, 15], 2: [15, 20], 3: [20, 25], 4: [25, 30], 5: [30, 40], 6: [40, 50], 10: [100, 110], 11: [110, 125], 12: [125, 150],
+      1: [10, 15], 2: [15, 20], 3: [20, 25], 4: [25, 30], 5: [30, 40], 6: [40, 50], 7: [50, 60], 8: [60, 75], 9: [75, 100],
+      10: [100, 110], 11: [110, 125], 12: [125, 150],
     };
     for (const ch of CHAPTERS) {
       const [w0, w1] = ranges[ch.n]!;
@@ -134,6 +135,14 @@ describe('données de la campagne', () => {
     }
     for (const n of [1, 7, 8]) expect(getLevel(`c6-n${n}`)!.exclude).toEqual(['malefique']);
     expect(getLevel('c6-n9')!.exclude).toBeUndefined();
+    // Chapitres DC : rotation complète, sans le boss intermédiaire ni le boss du chapitre.
+    expect(getLevel('c7-n3')!.exclude).toEqual(['bane', 'joker']);
+    expect(getLevel('c8-n10')!.exclude).toEqual(['blackadam', 'luthor']);
+    expect(getLevel('c9-n1')!.exclude).toEqual(['sinestro']);
+    expect(levelConfig(getLevel('c7-n1')!, DECK, null, 1).bossPool).toBe('tous');
+    expect(levelConfig(getLevel('c1-n1')!, DECK, null, 1).bossPool).toBe('marvel-disney');
+    expect(getLevel('c9-n10')!.boss).toMatchObject({ id: 'darkseid', wave: 100 });
+    expect(getLevel('c7-n8')!.boss).toMatchObject({ id: 'bane', wave: 58 });
     expect(ROTATING_BOSSES).not.toContain('thanos');
     // Chapitres Transformers : rotation complète, sans le boss intermédiaire ni le boss du chapitre.
     expect(getLevel('c10-n3')!.exclude).toEqual(['starscream', 'soundwave']);
@@ -147,8 +156,9 @@ describe('données de la campagne', () => {
   it('nextLevel enchaîne les chapitres', () => {
     expect(nextLevel(getLevel('c1-n9')!)!.id).toBe('c1-n10');
     expect(nextLevel(getLevel('c1-n10')!)!.id).toBe('c2-n1');
-    // Extension Transformers : le chapitre 10 suit le dernier chapitre installé (6 sans l'extension DC).
-    expect(nextLevel(getLevel('c6-n10')!)!.id).toBe('c10-n1');
+    expect(nextLevel(getLevel('c6-n10')!)!.id).toBe('c7-n1');
+    // Extension Transformers : le chapitre 10 suit le dernier chapitre installé (9 avec l'extension DC).
+    expect(nextLevel(getLevel('c9-n10')!)!.id).toBe('c10-n1');
     expect(nextLevel(getLevel('c10-n10')!)!.id).toBe('c11-n1');
     expect(nextLevel(getLevel('c12-n10')!)).toBeNull();
   });
@@ -221,10 +231,10 @@ describe('déblocage', () => {
     expect(isLevelUnlocked(progress([]), 'c2-n1')).toBe(false);
   });
   it('seuils d’étoiles 0 / 30 / 60 / 95 / 130 et niveau 10 précédent gagné', () => {
-    // Chapitres Transformers : étoiles des chapitres d'avant − 15 (165 après Thanos sans l'extension DC).
-    expect(CHAPTERS.map((c) => c.unlockStars)).toEqual([0, 0, 30, 60, 95, 130, 165, 195, 225]);
-    expect(isChapterUnlocked(progress(winAll([1, 2, 3, 4, 5, 6])), 10)).toBe(true);
-    expect(isChapterUnlocked(progress(winAll([1, 2, 3, 4, 5, 6], [true, false, false])), 10)).toBe(false);
+    // Chapitres Transformers : étoiles des chapitres d'avant − 15 (255 après Darkseid avec l'extension DC).
+    expect(CHAPTERS.map((c) => c.unlockStars)).toEqual([0, 0, 30, 60, 95, 130, 165, 195, 225, 255, 285, 315]);
+    expect(isChapterUnlocked(progress(winAll([1, 2, 3, 4, 5, 6, 7, 8, 9])), 10)).toBe(true);
+    expect(isChapterUnlocked(progress(winAll([1, 2, 3, 4, 5, 6, 7, 8, 9], [true, false, false])), 10)).toBe(false);
     // Chapitre 2 : niveau 10 du ch. 1 suffit (même à 1 étoile).
     const ch1min = progress(winAll([1], [true, false, false]));
     expect(isChapterUnlocked(ch1min, 2)).toBe(true);
@@ -284,6 +294,11 @@ describe('récompenses', () => {
     expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
     expect(levelRewards(l('c3-n10'), [true, false, false], progress([]), DECK).total.heroes).toEqual(['moana']);
     expect(levelRewards(l('c6-n10'), [true, false, false], progress([]), DECK).total).toMatchObject({ heroes: ['coco'], crystals: 100 });
+    // Extension DC : coffres héroïques, Darkseid donne aussi 100 ✦.
+    expect(levelRewards(l('c7-n1'), [true, false, false], progress([]), DECK).chest?.tier).toBe('heroique');
+    const dk = levelRewards(l('c9-n10'), [true, false, false], progress([]), DECK);
+    expect(dk.total).toMatchObject({ heroes: ['greenlantern'], crystals: 100 });
+    expect(dk.chest).toEqual({ tier: 'legendaire', scale: 1, crystals: 20 });
     // Extension Transformers : coffres héroïques, Megatron donne aussi 100 ✦.
     expect(levelRewards(l('c10-n1'), [true, false, false], progress([]), DECK).chest?.tier).toBe('heroique');
     const mg = levelRewards(l('c12-n10'), [true, false, false], progress([]), DECK);
@@ -307,19 +322,19 @@ describe('récompenses', () => {
     expect(p.campaignChests['c1-10']).toBe(true);
     expect(levelRewards(l('c1-n5'), [true, false, false], p, DECK).chests).toEqual([]);
   });
-  it('campagne complète à 3 étoiles : 63 parchemins (7 par chapitre), 27 coffres, cristaux', () => {
+  it('campagne complète à 3 étoiles : 84 parchemins (7 par chapitre), 36 coffres, cristaux', () => {
     const t = campaignTotals();
-    expect(t.scrolls).toBe(63);
-    expect(t.heroes).toEqual(['spiderman', 'thor', 'moana', 'mulan', 'buzzwoody', 'coco', 'optimus', 'grimlock', 'ultramagnus']);
-    expect(t.freePulls?.length).toBe(9);
-    // 25 ✦ × 22 niveaux de boss (5 et 10 de chaque chapitre, + 8 du ch. 6 et des ch. 10 à 12) + 100 (Thanos) + 100 (Megatron)
-    expect(t.crystals).toBe(25 * 22 + 200);
-    // Or : 3 × 20 × (vagues / 10) par niveau + 90 × 150 (3 étoiles) + 9 × (400 + 800 + 1 200)
+    expect(t.scrolls).toBe(84);
+    expect(t.heroes).toEqual(['spiderman', 'thor', 'moana', 'mulan', 'buzzwoody', 'coco', 'batman', 'superman', 'greenlantern', 'optimus', 'grimlock', 'ultramagnus']);
+    expect(t.freePulls?.length).toBe(12);
+    // 25 ✦ × 31 niveaux de boss (5 et 10 de chaque chapitre, + 8 des ch. 6 à 12) + 100 (Thanos) + 100 (Darkseid) + 100 (Megatron)
+    expect(t.crystals).toBe(25 * 31 + 300);
+    // Or : 3 × 20 × (vagues / 10) par niveau + 120 × 150 (3 étoiles) + 12 × (400 + 800 + 1 200)
     const stars = LEVELS.reduce((n, lv) => n + Math.round(60 * lv.waves / 10), 0);
-    expect(t.gold).toBe(stars + 90 * 150 + 9 * 2400);
-    // Gemmes : 270 × 2 + 3 ★ (20 × 30 + 10 × 15 + 60 × 5) + 9 × 100 (boss) + 9 × (40 + 60 + 80)
+    expect(t.gold).toBe(stars + 120 * 150 + 12 * 2400);
+    // Gemmes : 360 × 2 + 3 ★ (20 × 30 + 10 × 15 + 90 × 5) + 12 × 100 (boss) + 12 × (40 + 60 + 80)
     // + premières victoires des chapitres 1 à 3 (10 × 400 + 10 × 300 + 10 × 150)
-    expect(t.shards).toBe(540 + 1050 + 900 + 1620 + 8500);
+    expect(t.shards).toBe(720 + 1200 + 1200 + 2160 + 8500);
     expect(t.xp).toBe(LEVELS.reduce((n, lv) => n + Math.round(50 * lv.waves / 10) * (lv.n === 10 ? 2 : 1), 0));
   });
 });

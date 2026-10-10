@@ -1,5 +1,5 @@
 import { createEngine } from '../../src/engine';
-import { debugQuiet, simState } from '../../src/engine/debug';
+import { debugNoCrit, debugQuiet, simState } from '../../src/engine/debug';
 import type { Engine, EngineEvent, GameConfig, PlayerSetup } from '../../src/engine/types';
 import type { UnitId } from '../../src/data/types';
 
@@ -21,6 +21,7 @@ export function coop(cfg: Partial<GameConfig> = {}, d1: UnitId[] = MARVEL, d2: U
 export function quiet(deck: UnitId[] = MARVEL, cfg: Partial<GameConfig> = {}, extra: Partial<PlayerSetup> = {}): Engine {
   const e = cfg.mode === 'coop' ? coop(cfg, deck, deck) : solo(deck, cfg, extra);
   debugQuiet(e);
+  debugNoCrit(e); // dégâts exacts : sans les 5 % de critiques par défaut
   e.drainEvents();
   return e;
 }

@@ -6,7 +6,8 @@
 //                         sacrificeManaPerRank : mana de base × rang à la place du barème (Prêtresse)
 //   Copieur               copyDamageMul      dégâts gardés par la copie (0.75 = −25 %)
 //                         copyRankBonus, copyReady, copyMana  (talents et éveils)
-//   Booster de fusion     promoteAlly        1 = glissée sur une alliée de même rang, la fait monter d'un rang
+//   Booster de fusion     promoteAlly        1 = glissée sur une alliée de même rang, la fait monter d'un rang ;
+//                         promoteMana : mana gagné à chaque promotion (talents et éveils, Robin)
 //   Croissance            growthPerHit (par coup ; growthResetOnRetarget = remis à zéro au changement de
 //                         cible), growthPerSecond, growthPerKill : points (counters.growth) ;
 //                         bonus de dégâts = growthScale × points^growthExponent (rendements décroissants,
@@ -22,7 +23,9 @@
 //   Formation             formationDamagePerAlly (+x par autre unité identique du groupe relié par des cases
 //                         voisines, comme les Ingénieurs de Rush Royale),
 //                         formationMax (longueur comptée au plus), formationSplashAt / formationSplash
-//                         (ligne complète : éclaboussure autour de la cible, rayon 1,5)
+//                         (ligne complète : éclaboussure autour de la cible, rayon 1,5) ;
+//                         formationTargetsPerAlly / formationTargetsMax (cibles en plus par alliée reliée) et
+//                         formationDoubleAt / formationDoubleMul (groupe complet : dégâts ×), Cultiste de Green Lantern
 //
 // Récompense de boss (tous les joueurs, × rendement du mana) : BOSS_KILL_REWARD × coût d'invocation actuel.
 
@@ -234,7 +237,8 @@ export function formationLength(grid: readonly (UnitInstance | null)[], slot: nu
 /** Cases des partenaires de formation de `slot` (même unité, groupe relié), pour l'appui long. */
 export function formationPartners(grid: readonly (UnitInstance | null)[], slot: number): number[] {
   const u = grid[slot];
-  if (!u || !(UNITS[u.unit].ability.params.formationDamagePerAlly ?? 0)) return [];
+  const fp = u ? UNITS[u.unit].ability.params : undefined;
+  if (!u || !fp || !((fp.formationDamagePerAlly ?? 0) || (fp.formationTargetsPerAlly ?? 0))) return [];
   return formationGroup(grid, slot).filter((j) => j !== slot);
 }
 

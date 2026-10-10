@@ -27,6 +27,14 @@ describe('catégories de héros', () => {
     expect(UNIT_CATEGORIES.coco).toContain('manipulation');
     expect(UNIT_CATEGORIES.vanralph).toContain('manipulation');
     expect(UNIT_CATEGORIES.venom).toContain('croissance');
+    // Extension DC
+    expect(UNIT_CATEGORIES.harley).toContain('mana');
+    expect(UNIT_CATEGORIES.catwoman).toContain('mana');
+    expect(UNIT_CATEGORIES.martian).toContain('manipulation');
+    expect(UNIT_CATEGORIES.robin).toContain('manipulation');
+    expect(UNIT_CATEGORIES.flash).toContain('manipulation');
+    expect(UNIT_CATEGORIES.supergirl).toContain('croissance');
+    expect(UNIT_CATEGORIES.cyborg).toContain('soutien');
   });
 
   it('un héros inconnu reçoit des catégories déduites', () => {

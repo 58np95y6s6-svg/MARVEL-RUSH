@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { BOSS_STATS } from '../../src/data/bosses';
 import { createEngine, bossWaveKind } from '../../src/engine';
 import { spawnInterval } from '../../src/engine/engine';
 import { STARTER_DECKS, UNITS } from '../../src/data/units';
@@ -79,7 +80,7 @@ describe('difficulté de campagne : effectif et PV (script)', () => {
     const ev = reachWave(e, 5);
     const mini = ofType(ev, 'miniBossSpawn')[0]!;
     const lieut = simState(e).enemies.find((x) => x.uid === mini.enemy)!;
-    expect(lieut.maxHp).toBeCloseTo(waveHp(5) * 0.5 * 3 * 12);
+    expect(lieut.maxHp).toBeCloseTo(waveHp(5) * 0.5 * 3 * BOSS_STATS.smallHpMul);
     const ev2 = reachWave(e, 10);
     const big = ofType(ev2, 'bossSpawn')[0]!;
     const boss = simState(e).enemies.find((x) => x.uid === big.enemy)!;

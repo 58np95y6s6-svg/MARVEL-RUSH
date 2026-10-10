@@ -141,11 +141,15 @@ export function rankShapePath(rank: number): string {
  */
 export const TOKEN_COLORS: Record<string, string> = {
   ironman: '#3fc9e8', spiderman: '#ffd23f', hulk: '#d94fd0', thor: '#22b5a0', strange: '#5fd068',
-  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#e8414b', bucky: '#f2b632',
+  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#f4f4f8', bucky: '#f2b632',
   hawkeye: '#46d6a8', falcon: '#59b8ff', widow: '#3ee0e0', shangchi: '#3b62e0',
   moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
-  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
+  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#a6ef9a',
   nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
+  // Extension DC : couleurs contrastées avec le costume de chaque héros, distinctes de toutes les autres.
+  batman: '#f7e27a', superman: '#ff4a3d', wonderwoman: '#a8f0ff', greenlantern: '#e6e6f2', flash: '#8ff7e0',
+  aquaman: '#c48bff', cyborg: '#ff3d6e', supergirl: '#ffe9b0', shazam: '#2f6bff', martian: '#ff8fd1',
+  robin: '#fff36b', batgirl: '#ffab6b', catwoman: '#d8ff8a', harley: '#7df0b0', greenarrow: '#ffc2f0',
   // Extension Transformers : couleurs contrastées avec le métal de chaque Autobot, distinctes des autres.
   optimus: '#ffb03a', bumblebee: '#4a5aa8', ironhide: '#9ad0e8', ratchet: '#ff8a8a', jazz: '#c8f04a',
   arcee: '#5ae0c8', grimlock: '#e05a3a', wheeljack: '#ff6ad0', hotrod: '#6ac8ff', elita: '#9af0a0',
@@ -235,6 +239,7 @@ export function bossTint(id: BossId): readonly [string, string] {
 /* ---------- sbires ---------- */
 const MOTION: Record<BossId, 'walk' | 'float'> = {
   jafar: 'walk', cruella: 'walk', ursula: 'float', malefique: 'walk', galactus: 'float', bouffon: 'float', thanos: 'walk',
+  joker: 'walk', luthor: 'walk', bane: 'walk', sinestro: 'float', blackadam: 'walk', darkseid: 'float',
   starscream: 'float', soundwave: 'float', shockwave: 'walk', devastator: 'walk', blitzwing: 'float', megatron: 'walk', unicron: 'walk',
 };
 /** Pas de marche : jambes « legA » / « legB » inclinées, pivot en haut de la jambe. */

@@ -36,12 +36,17 @@ export interface GameConfig {
   players: PlayerSetup[];                 // 1 joueur (solo, tutoriel) ou 2
   /** Niveaux (Solo ou Coop) : nombre de vagues à tenir pour gagner. Absent = mode infini. */
   targetWaves?: number;
-  /** Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3). */
-  bossRhythm?: { small: number; big: number; thanos: number; unicron?: number };
   /**
-   * Rotation des gros boss (extension Transformers) : 'tous' (par défaut), 'marvel-disney' (campagne,
-   * chapitres 1 à 6) ou 'transformers'. Modes infinis : Unicron aux vagues 150, 300… (rythme `unicron`,
-   * absent = 150, 0 = jamais), prioritaire sur Thanos.
+   * Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3) et,
+   * avec les extensions, Darkseid à la 100 (DC) et Unicron à la 150 (Transformers), en modes infinis
+   * (`darkseid` absent = 100, `unicron` absent = 150 ; 0 = jamais).
+   */
+  bossRhythm?: { small: number; big: number; thanos: number; darkseid?: number; unicron?: number };
+  /**
+   * Rotation des gros boss : 'tous' (par défaut), 'marvel-disney' (campagne, chapitres 1 à 6 ; Thanos à
+   * chaque palier final), 'dc' (Darkseid à chaque palier final) ou 'transformers' (Unicron seul, pas de
+   * Thanos). Boss finaux des modes infinis, par ordre de priorité : Unicron (150, 300…) > Darkseid
+   * (100, 200…) > Thanos (50, 150…) ; voir `finalBossAt`.
    */
   bossPool?: BossPool;
   /** Compte à rebours avant la 1re vague (s) : on peut déjà invoquer et fusionner. Absent = 0. */
@@ -170,7 +175,7 @@ export type EngineEvent =
    * Mana gagné hors élimination ordinaire : archétypes (sacrifice, copie, échange) ou victoire sur un boss.
    * `slot` = case d'où part le gain (-1 pour un boss : `enemy` = boss vaincu).
    */
-  | { type: 'mana'; player: PlayerId; slot: number; amount: number; reason: 'sacrifice' | 'copie' | 'echange' | 'boss'; enemy?: number }
+  | { type: 'mana'; player: PlayerId; slot: number; amount: number; reason: 'sacrifice' | 'copie' | 'echange' | 'promotion' | 'boss'; enemy?: number }
   | { type: 'powerup'; player: PlayerId; unit: UnitId; level: number }
   | { type: 'manaUpgrade'; player: PlayerId; level: number }
   | { type: 'attack'; player: PlayerId; slot: number; unit: UnitId; targets: number[]; fx: string }
@@ -183,7 +188,8 @@ export type EngineEvent =
   | { type: 'bossRage'; boss: BossId }
   | { type: 'lifeLost'; lives: number }
   | { type: 'miniBossSpawn'; enemy: number; boss: BossId }
-  | { type: 'milestone'; wave: number }
+  /** Palier franchi (tous les 10, plus les paliers de src/data/milestones.ts comme la 75) ; `chest` : coffre du palier s'il y en a un. */
+  | { type: 'milestone'; wave: number; chest?: string }
   | { type: 'gift'; from: PlayerId; to: PlayerId; slot: number; unit: UnitId; rank: number }
   | { type: 'rejected'; command: Command['type']; reason: string }
   | { type: 'gameOver'; outcome: 'victoire' | 'defaite'; winner?: PlayerId; wave: number };

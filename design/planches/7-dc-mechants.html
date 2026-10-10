@@ -1,0 +1,1626 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marvel Rush · Méchants DC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout : codex des menaces — une carte par boss : grande scène de pouvoir à gauche, fiche + scène du sbire + 4 poses clés à droite */
+:root{
+  --sheet:#e2e2e8;
+  --card:#f4f4f8;
+  --edge:#d2d1dc;
+  --ink:#1d1733;
+  --muted:#5e5976;
+  --gold:#f6c64a;
+  --boss:#d2324a; --bossD:#8f1f33;
+  --rare:#3c8bf0;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+  --body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --dur:2.6s;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sheet);color:var(--ink);font-family:var(--body);font-weight:600;line-height:1.45;
+  background-image:radial-gradient(circle,rgba(29,23,51,.06) 1.2px,transparent 1.3px);background-size:14px 14px}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-inline:16px}
+
+/* En-tête */
+header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:end;margin-bottom:26px}
+.logo{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,8vw,4.4rem);line-height:.9;margin:0;color:var(--gold);letter-spacing:.01em;
+  text-shadow:3px 0 var(--ink),-3px 0 var(--ink),0 3px var(--ink),0 -3px var(--ink),2px 2px var(--ink),-2px -2px var(--ink),2px -2px var(--ink),-2px 2px var(--ink),0 7px 0 #b8322f,3px 7px 0 var(--ink),-3px 7px 0 var(--ink),0 10px 0 var(--ink)}
+.logo span{color:#e8413b}
+.sub{font-family:var(--display);font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 0}
+.controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.legend{font-size:.84rem;color:var(--muted);max-width:34ch;text-align:right;margin:0}
+button{font:inherit;font-family:var(--display);letter-spacing:.05em;text-transform:uppercase;font-size:.85rem;background:var(--ink);color:var(--gold);border:0;border-radius:999px;padding:9px 18px;cursor:pointer;box-shadow:0 3px 0 #000}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
+button:focus-visible{outline:3px solid var(--rare);outline-offset:3px}
+
+/* Cartes */
+.cards{display:grid;gap:22px}
+.card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:22px;background:var(--card);border:2px solid var(--edge);border-radius:28px;padding:18px;box-shadow:0 6px 0 var(--edge)}
+.stageWrap,.miniWrap{position:relative;min-width:0}
+.stage{display:block;width:100%;max-width:100%;aspect-ratio:1/1;border-radius:22px;border:4px solid var(--boss)}
+.stage.boss{background:radial-gradient(circle at 50% 40%,var(--tint) 0,var(--tint2) 54%,#0c0817 100%);
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.1),inset 0 0 70px rgba(4,2,12,.75),0 4px 0 var(--ink)}
+.stage.mini{border-width:3px;border-color:var(--bossD);border-radius:18px;background:radial-gradient(circle at 50% 40%,#fff 0,var(--mt) 62%,var(--mt2) 100%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.55),0 3px 0 var(--ink)}
+.badge{position:absolute;left:14px;top:14px;font-family:var(--display);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:#fff;padding:4px 10px;border-radius:999px;display:flex;gap:6px;align-items:center;box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.badge.sm{left:9px;top:9px;font-size:.66rem;padding:3px 8px}
+.badge i{width:8px;height:8px;border-radius:50%;background:#ff4f4f;box-shadow:0 0 0 0 rgba(255,79,79,.6);animation:rec 1.4s infinite}
+@keyframes rec{50%{box-shadow:0 0 0 5px rgba(255,79,79,0)}}
+.side{min-width:0;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.num{font-family:var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,4vw,2.3rem);line-height:1;margin:0;text-wrap:balance}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--display);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--ink);color:var(--gold)}
+.chip.r{background:var(--boss);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.mid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,172px);gap:14px;align-items:start}
+.info{min-width:0;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 10px;margin:0;font-size:.8rem;align-items:center}
+.stats dt{font-family:var(--display);letter-spacing:.04em;color:var(--muted);text-transform:uppercase;font-size:.72rem}
+.stats dd{margin:0;display:flex;gap:4px}
+.stats dd span{flex:1;max-width:34px;height:10px;border-radius:4px;background:#dcdbe5;border:2px solid transparent}
+.stats dd span.on{background:var(--boss);border-color:var(--ink)}
+.desc{display:grid;gap:6px;font-size:.88rem}
+.desc p{margin:0}
+.desc b{font-family:var(--display);font-weight:400;letter-spacing:.03em}
+.poses{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:auto}
+figure{margin:0;display:flex;flex-direction:column;gap:5px;align-items:center;min-width:0}
+.tile{display:block;width:100%;max-width:100%;aspect-ratio:1/1;border-radius:16px;border:2px solid var(--edge)}
+.tile.b{border-color:var(--bossD);background:radial-gradient(circle at 50% 40%,var(--tint) 0,var(--tint2) 60%,#0c0817 100%)}
+.tile.m{background:radial-gradient(circle at 50% 40%,#fff 0,var(--mt) 85%)}
+figcaption{font-family:var(--display);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.15}
+footer{margin-top:26px;font-size:.8rem;color:var(--muted);max-width:70ch}
+
+@media (max-width:760px){.card{grid-template-columns:minmax(0,1fr)}header{grid-template-columns:minmax(0,1fr)}.controls{align-items:flex-start}.legend{text-align:left}}
+@media (max-width:440px){.card{padding:12px;gap:14px}.mid{grid-template-columns:minmax(0,1fr) minmax(0,128px);gap:10px}.poses{gap:6px}figcaption{font-size:.6rem}}
+
+/* ---- Moteur d'animation ---- */
+.arm,.body,.headT,.grow,.part{transform-box:view-box}
+.fx,.pop,.ring,.wig,.boom,.throw,.suck,.gather{transform-box:fill-box;transform-origin:center}
+.fx{animation:pulse .5s ease-in-out infinite alternate}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 5s linear infinite}
+.spin.fast{animation-duration:1.6s}
+.wig{transform-origin:50% 100%;animation:wig .45s ease-in-out infinite alternate}
+@keyframes pulse{from{transform:scale(.9);opacity:.85}to{transform:scale(1.07);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+
+.anim .w-wind,.anim .w-rel,.anim .w-act{opacity:0}
+.anim .w-rest{animation:wRest var(--dur) infinite step-end}
+.anim .w-wind{animation:wWind var(--dur) infinite step-end}
+.anim .w-rel{animation:wRel var(--dur) infinite step-end}
+.anim .w-act{animation:wAct var(--dur) infinite step-end}
+.anim .w-notrel{animation:wNot var(--dur) infinite step-end}
+@keyframes wRest{0%{opacity:1}16%{opacity:0}82%{opacity:1}}
+@keyframes wWind{0%{opacity:0}16%{opacity:1}49%{opacity:0}}
+@keyframes wRel{0%{opacity:0}49%{opacity:1}82%{opacity:0}}
+@keyframes wAct{0%{opacity:0}16%{opacity:1}82%{opacity:0}}
+@keyframes wNot{0%{opacity:1}49%{opacity:0}82%{opacity:1}}
+.anim .grow{animation:grow var(--dur) infinite}
+@keyframes grow{0%,49%{transform:scaleX(0)}55%,100%{transform:scaleX(1)}}
+.anim .pop{animation:pop var(--dur) infinite}
+@keyframes pop{0%,49%{transform:scale(.3)}54%{transform:scale(1.18)}60%,100%{transform:scale(1)}}
+.anim .ring{animation:ring var(--dur) infinite ease-out}
+@keyframes ring{0%,49%{transform:scale(.2);opacity:1}78%,100%{transform:scale(1.35);opacity:0}}
+.anim.shake .scene{animation:shake var(--dur) infinite}
+@keyframes shake{0%,50%{transform:translate(0,0)}52%{transform:translate(-5px,3px)}54%{transform:translate(5px,-2px)}56%{transform:translate(-4px,1px)}58%{transform:translate(3px,-1px)}61%,100%{transform:translate(0,0)}}
+
+/* propres aux boss et aux sbires */
+.anim .gather{animation:gather var(--dur) infinite ease-in}
+@keyframes gather{0%,16%{transform:scale(1.8);opacity:0}22%{opacity:1}46%,100%{transform:scale(.35);opacity:1}}
+.anim .throw{animation:throw var(--dur) infinite}
+@keyframes throw{0%,49%{transform:translate(0,0) rotate(0);opacity:1}53%{transform:translate(calc(var(--tx)*.5),calc(var(--ty)*.5 - 34px)) rotate(200deg)}58%{transform:translate(var(--tx),var(--ty)) rotate(400deg);opacity:1}58.5%,100%{transform:translate(var(--tx),var(--ty));opacity:0}}
+.anim .boom{animation:boom var(--dur) infinite}
+@keyframes boom{0%,57%{transform:scale(0)}62%{transform:scale(1.22)}68%,100%{transform:scale(1)}}
+.anim .suck{animation:suck var(--dur) infinite ease-in}
+@keyframes suck{0%,52%{transform:translate(0,0) scale(1) rotate(0)}80%,100%{transform:translate(var(--tx),var(--ty)) scale(0) rotate(540deg)}}
+.walk{transform-box:fill-box;transform-origin:50% 100%}
+.anim .walk{animation:walk .44s ease-in-out infinite alternate}
+@keyframes walk{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-5px) rotate(3deg)}}
+.anim .float{animation:float 1.3s ease-in-out infinite alternate}
+@keyframes float{from{transform:translateY(-4px)}to{transform:translateY(4px)}}
+.legA,.legB{transform-box:fill-box;transform-origin:50% 0}
+.anim .legA{animation:step .44s ease-in-out infinite alternate}
+.anim .legB{animation:step .44s ease-in-out infinite alternate-reverse}
+@keyframes step{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+.flap{transform-box:fill-box}
+.anim .flap{animation:flap .24s ease-in-out infinite alternate}
+@keyframes flap{from{transform:scaleY(1)}to{transform:scaleY(.5)}}
+
+.paused *{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){.anim *,.fx,.spin,.wig,.badge i{animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1 class="logo">MARVEL <span>RUSH</span></h1>
+      <p class="sub">Codex des menaces · Extension DC · Boss &amp; sbires</p>
+    </div>
+    <div class="controls">
+      <button id="toggle" type="button" aria-pressed="false">Pause</button>
+      <p class="legend">La grande scène joue la boucle de pouvoir du boss : repos, préparation, déchaînement. La petite scène montre son sbire en marche puis à l’attaque. Le lieutenant (petit boss) est ce même sbire en géant.</p>
+    </div>
+  </header>
+  <main class="cards" id="sheet"></main>
+  <footer>Extension DC Comics · visuels de prototype dessinés en SVG, avec le code de dessin du jeu (src/art/bosses). Darkseid est le boss final de l’extension. Statistiques, cadences de pouvoir et comportements des sbires sont des propositions à équilibrer en test.</footer>
+</div>
+
+<script>
+/* ---------- code de dessin du jeu (src/art, compilé) ---------- */
+var ART = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // planche-entry.ts
+  var planche_entry_exports = {};
+  __export(planche_entry_exports, {
+    DC_A: () => DC_A,
+    DC_B: () => DC_B,
+    DC_BOSSES: () => DC_BOSSES,
+    DC_MINIONS: () => DC_MINIONS,
+    ctx: () => ctx
+  });
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/primitives.ts
+  var O = "#1d1733";
+  var SK = "#ffd3ad";
+  var SKD = "#e9a982";
+  var f = (v) => (+v).toFixed(1);
+  var idPrefix = "mr";
+  var n = 0;
+  function uid(kind) {
+    return `${idPrefix}${kind}${n++}`;
+  }
+  function shaded(shape, base, dark, dx = -8, dy = -7) {
+    const id = uid("c");
+    return `<clipPath id="${id}">${shape("")}</clipPath>${shape(`fill="${dark}"`)}<g clip-path="url(#${id})"><g transform="translate(${dx} ${dy})">${shape(`fill="${base}"`)}</g></g>${shape(`fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"`)}`;
+  }
+  function clip(shape, content) {
+    const id = uid("k");
+    return `<clipPath id="${id}">${shape("")}</clipPath><g clip-path="url(#${id})">${content}</g>`;
+  }
+  var gloss = (x, y, rx, ry, r = -35, o = 0.55) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${r} ${x} ${y})" fill="#fff" opacity="${o}"/>`;
+  var limb = (x1, y1, x2, y2, c, w) => `<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${O}" stroke-width="${w + 9}" stroke-linecap="round"/><path d="M${x1} ${y1}L${x2} ${y2}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/><path d="M${f(x1 - w * 0.22)} ${y1}L${f(x2 - w * 0.22)} ${y2}" stroke="#fff" stroke-width="${f(w * 0.18)}" stroke-linecap="round" opacity=".28"/>`;
+  var hand = (x, y, c, r = 11) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${O}" stroke-width="4.5"/><circle cx="${f(x - r * 0.35)}" cy="${f(y - r * 0.35)}" r="${f(r * 0.3)}" fill="#fff" opacity=".5"/>`;
+  function star(x, y, R, r, k, rot3 = 0) {
+    const X = +x, Y = +y;
+    const a = [];
+    for (let i = 0; i < k * 2; i++) {
+      const t = rot3 + Math.PI * i / k, rr = i % 2 ? r : R;
+      a.push(f(X + Math.cos(t) * rr) + "," + f(Y + Math.sin(t) * rr));
+    }
+    return a.join(" ");
+  }
+  var glow = (x, y, r, c) => `<g class="fx"><circle cx="${f(x)}" cy="${f(y)}" r="${r}" fill="${c}" opacity=".22"/><circle cx="${f(x)}" cy="${f(y)}" r="${f(r * 0.62)}" fill="${c}" opacity=".5"/><circle cx="${f(x)}" cy="${f(y)}" r="${f(r * 0.3)}" fill="#fff"/></g>`;
+  var burst = (x, y, R, c, c2 = "#fff") => `<g class="fx"><polygon points="${star(x, y, R, R * 0.5, 9)}" fill="${c}" stroke="${O}" stroke-width="4" stroke-linejoin="round"/><polygon points="${star(x, y, R * 0.58, R * 0.3, 9, 0.35)}" fill="${c2}"/></g>`;
+  var beam = (x1, y1, x2, y2, w, c) => {
+    const d = `M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}`;
+    return `<g class="fx"><path d="${d}" stroke="${c}" stroke-width="${w + 18}" stroke-linecap="round" opacity=".25"/><path d="${d}" stroke="${O}" stroke-width="${w + 8}" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/><path d="${d}" stroke="#fff" stroke-width="${f(w * 0.38)}" stroke-linecap="round"/></g>`;
+  };
+  var bolt = (pts, c = "#7fd8ff") => {
+    const d = "M" + pts.map((p) => p.map(f).join(" ")).join(" L");
+    return `<g class="fx"><path d="${d}" stroke="${O}" stroke-width="10" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="6" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round"/></g>`;
+  };
+  function sparks(x, y, r, c, k = 8) {
+    const X = +x, Y = +y;
+    let s = "";
+    for (let i = 0; i < k; i++) {
+      const a = i * 2 * Math.PI / k + 0.2;
+      const d = `M${f(X + Math.cos(a) * r * 0.6)} ${f(Y + Math.sin(a) * r * 0.6)}L${f(X + Math.cos(a) * r)} ${f(Y + Math.sin(a) * r)}`;
+      s += `<path d="${d}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    }
+    return `<g class="fx">${s}</g>`;
+  }
+  var torsoD = "M58 202 C56 160 70 138 100 136 C130 138 144 160 142 202Z";
+  var torso = (c, d, path = torsoD) => shaded((a) => `<path d="${path}" ${a}/>`, c, d, -10, -4);
+  var headS = (a) => `<circle cx="100" cy="84" r="56" ${a}/>`;
+  var head = (c, d) => shaded(headS, c, d) + gloss(76, 50, 14, 8);
+  var cheeks = `<ellipse cx="70" cy="108" rx="8" ry="5" fill="#ff7c7c" opacity=".38"/><ellipse cx="130" cy="108" rx="8" ry="5" fill="#ff7c7c" opacity=".38"/>`;
+  var mirror = (s) => `<g transform="translate(200 0) scale(-1 1)">${s}</g>`;
+  var shadow = (rx = 60, cy = 207, o = 0.16) => `<ellipse cx="100" cy="${cy}" rx="${rx}" ry="8" fill="${O}" opacity="${o}"/>`;
+  function face(p, o = {}) {
+    let s = "";
+    const ec = o.eye || O, br = o.brow || O;
+    for (const [x, d] of [[80, 1], [120, -1]]) {
+      const ry = p == 2 ? 8.5 : 10;
+      s += `<ellipse cx="${x}" cy="95" rx="7.5" ry="${ry}" fill="${ec}"/>`;
+      if (ec !== O) s += `<ellipse cx="${x}" cy="${f(95 - ry * 0.45)}" rx="6.5" ry="${f(ry * 0.45)}" fill="${O}" opacity=".45"/>`;
+      s += `<circle cx="${x + 2.5}" cy="${p == 2 ? 91 : 90}" r="3.2" fill="#fff"/><circle cx="${x - 2.5}" cy="99" r="1.5" fill="#fff" opacity=".85"/>`;
+      s += p > 0 ? `<path d="M${x - 11 * d} 78 L${x + 9 * d} 85" stroke="${br}" stroke-width="5.5" stroke-linecap="round"/>` : `<path d="M${x - 9} 80 Q${x} 74 ${x + 9} 80" stroke="${br}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`;
+    }
+    if (!o.noMouth) {
+      if (p == 0) s += `<path d="M92 115 Q100 121 108 115" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+      else if (p == 1) s += `<path d="M91 117 Q100 114 109 116" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+      else s += `<path d="M89 111 Q100 109 111 111 Q109 128 100 129 Q91 128 89 111Z" fill="#7a1f2b" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M91 112 H109" stroke="#fff" stroke-width="3"/><path d="M94 123 Q100 120 106 123" stroke="#e85a6e" stroke-width="3" fill="none"/>`;
+    }
+    return s + (o.noCheeks ? "" : cheeks);
+  }
+  function poseOf(c, p) {
+    return c.poses[p] ?? c.poses[0] ?? {};
+  }
+  function poseNum(c, p, key) {
+    const v = poseOf(c, p)[key];
+    return typeof v === "number" ? v : 0;
+  }
+  function shoulder(c, side) {
+    return c.sh?.[side] ?? [100, 150];
+  }
+  function tip(c, side, p, d) {
+    const [sx, sy] = shoulder(c, side);
+    const a = poseNum(c, p, side) * Math.PI / 180;
+    return [sx - Math.sin(a) * d, sy + Math.cos(a) * d];
+  }
+  function dirOf(c, side, p) {
+    const a = poseNum(c, p, side) * Math.PI / 180;
+    return [-Math.sin(a), Math.cos(a)];
+  }
+  var r3 = (v) => String(Math.round(v * 1e3) / 1e3);
+  function bodyAttr(b, ox, oy) {
+    const [tx = 0, ty = 0, r = 0, sx = 1, sy = 1] = b ?? [];
+    if (!tx && !ty && !r && sx === 1 && sy === 1) return "";
+    return ` transform="translate(${r3(ox + tx)} ${r3(oy + ty)}) rotate(${r}) scale(${sx} ${sy}) translate(${-ox} ${-oy})"`;
+  }
+  function headAttr(h, ox, oy) {
+    const [tx = 0, ty = 0, s = 1] = h ?? [];
+    if (!tx && !ty && s === 1) return "";
+    return ` transform="translate(${r3(ox + tx)} ${r3(oy + ty)}) scale(${s}) translate(${-ox} ${-oy})"`;
+  }
+  function partTAttr(v, ox, oy) {
+    if (v == null) return "";
+    if (typeof v === "number") return v ? ` transform="rotate(${v} ${ox} ${oy})"` : "";
+    const [r = 0, sx = 1, sy = sx] = v;
+    return ` transform="translate(${ox} ${oy}) rotate(${r}) scale(${sx} ${sy}) translate(${-ox} ${-oy})"`;
+  }
+  function ctx(c, mode, opts = {}) {
+    const P = poseOf(c, mode);
+    const arr = (k) => {
+      const v = P[k];
+      return v == null ? void 0 : typeof v === "number" ? [v] : v;
+    };
+    return {
+      A: false,
+      mode,
+      when: (list, svg) => list.includes(mode) ? svg : "",
+      byPose: (fn) => fn(mode),
+      arm: (side, inner) => {
+        const [sx, sy] = shoulder(c, side);
+        const a = poseNum(c, mode, side);
+        return `<g class="arm arm${side}"${a ? ` transform="rotate(${a} ${sx} ${sy})"` : ""}>${inner(sx, sy)}</g>`;
+      },
+      body: (svg) => `<g class="body"${bodyAttr(arr("body"), 100, 206)}>${svg}</g>`,
+      head: (svg) => `<g class="headT"${headAttr(arr("head"), 100, 132)}>${svg}</g>`,
+      part: (key, ox, oy, svg) => `<g class="part p-${key}"${opts.partMode === "bodyT" ? bodyAttr(arr(key), +ox, +oy) : partTAttr(P[key], +ox, +oy)}>${svg}</g>`,
+      kick: (svg, ox = 100, oy = 206) => `<g class="kick"${bodyAttr(arr("sk"), ox, oy)}>${svg}</g>`,
+      mv: (_cls, T, svg) => `<g style="transform-box:fill-box;transform-origin:center;transform:${T[mode] ?? "none"}">${svg}</g>`
+    };
+  }
+  function beamFrom(c, side, d, len, w, col) {
+    const [x0, y0] = tip(c, side, 2, d), [dx, dy] = dirOf(c, side, 2);
+    return `<g class="grow">${beam(x0, y0, x0 + dx * len, y0 + dy * len, w, col)}</g><g class="pop">${burst(f(x0), f(y0), 19, col)}</g>`;
+  }
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/kits/dc.ts
+  var SKT = "#e8b48a";
+  var SKTD = "#c2855d";
+  var SKB = "#8a5636";
+  var SKBD = "#5f3620";
+  function cape(c, d, spread = 0, top = 140) {
+    const l = 28 - spread, r = 172 + spread;
+    return shaded((a) => `<path d="M56 ${top} Q${l - 2} ${top + 36} ${l} 204 L${r} 204 Q${r + 2} ${top + 36} 144 ${top}Z" ${a}/>`, c, d, 8, -4) + `<path d="M${l + 16} 170 Q${l + 12} 190 ${l + 14} 204 M${r - 16} 170 Q${r - 12} 190 ${r - 14} 204" stroke="${d}" stroke-width="3" fill="none"/>`;
+  }
+  var clasps = (c) => `<circle cx="72" cy="140" r="6" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="128" cy="140" r="6" fill="${c}" stroke="${O}" stroke-width="3"/>`;
+  var cowlS = (a) => `<path d="M44 86 Q44 28 100 28 Q156 28 156 86 L154 104 Q150 118 134 121 Q120 108 100 110 Q80 108 66 121 Q50 118 46 104Z" ${a}/>`;
+  function cowl(c, d) {
+    return shaded(cowlS, c, d) + gloss(76, 50, 14, 7, -35, 0.4);
+  }
+  function ears(c, d, kind = "bat") {
+    const e = kind === "bat" ? shaded((a) => `<path d="M58 54 L60 8 L84 36Z" ${a}/>`, c, d, -2, -2) : shaded((a) => `<path d="M52 62 L56 18 L86 40Z" ${a}/>`, c, d, -2, -2) + `<path d="M59 50 L61 30 L74 40Z" fill="#e88aa8" stroke="${O}" stroke-width="2"/>`;
+    return e + mirror(e);
+  }
+  function lenses(p, glowC) {
+    const e = p === 2 ? `<path d="M66 90 L94 98 Q92 104 84 104 Q70 102 66 90Z"/>` : p === 1 ? `<path d="M67 90 L94 96 Q93 104 84 104 Q70 103 67 90Z"/>` : `<path d="M68 88 L94 95 Q94 105 84 105 Q70 104 68 88Z"/>`;
+    const g = glowC ? `<g class="fx"><ellipse cx="82" cy="98" rx="16" ry="9" fill="${glowC}" opacity=".45"/>${mirror(`<ellipse cx="82" cy="98" rx="16" ry="9" fill="${glowC}" opacity=".45"/>`)}</g>` : "";
+    return g + `<g fill="#fbfdff" stroke="${O}" stroke-width="3.5" stroke-linejoin="round">${e}${mirror(e)}</g>`;
+  }
+  function jaw(p, y = 126) {
+    if (p == 0) return `<path d="M90 ${y} Q100 ${y - 3} 110 ${y}" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+    if (p == 1) return `<rect x="89" y="${y - 4}" width="22" height="8" rx="3" fill="#fff" stroke="${O}" stroke-width="3"/><path d="M96 ${y - 4} V${y + 4} M104 ${y - 4} V${y + 4}" stroke="${O}" stroke-width="1.6"/>`;
+    return `<path d="M88 ${y - 4} Q100 ${y - 6} 112 ${y - 4} Q110 ${y + 9} 100 ${y + 10} Q90 ${y + 9} 88 ${y - 4}Z" fill="#7a1f2b" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M90 ${y - 3} H110" stroke="#fff" stroke-width="3"/>`;
+  }
+  function domino(c, d) {
+    const m = `<path d="M62 86 Q80 78 98 90 Q101 98 98 104 Q84 110 66 106 Q58 96 62 86Z"/>`;
+    return `<g fill="${c}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round">${m}${mirror(m)}</g><path d="M66 90 Q78 85 90 90" stroke="${d}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  }
+  function sShield(x, y, s = 1, r = "#d42e35", bg = "#f6c64a") {
+    return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-17 -12 H17 L22 -5 L0 18 L-22 -5Z" fill="${r}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M-12 -8 H12 L15 -4 L0 12 L-15 -4Z" fill="${bg}"/><path d="M9 -5 H-5 Q-10 -5 -9 -1 Q-8 2 -3 2 H4 Q8 2 6 6 L1 10 M-12 -1 L-8 4" stroke="${r}" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  }
+  var batPath = "M-20 0 Q-14 -7 -7 -5 L-5 -10 L-2.5 -5 H2.5 L5 -10 L7 -5 Q14 -7 20 0 Q13 -1 11 5 Q7 1 3 5 L0 10 L-3 5 Q-7 1 -11 5 Q-13 -1 -20 0Z";
+  var batSym = (x, y, s, c, sw = 2) => `<path d="${batPath}" transform="translate(${x} ${y}) scale(${s})" fill="${c}" stroke="${O}" stroke-width="${f(sw / s)}" stroke-linejoin="round"/>`;
+  var boltPath = "M3 -18 L-10 2 H-1 L-6 18 L11 -4 H2 L8 -18Z";
+  var boltSym = (x, y, s, c, sw = 3) => `<path d="${boltPath}" transform="translate(${x} ${y}) scale(${s})" fill="${c}" stroke="${O}" stroke-width="${f(sw / s)}" stroke-linejoin="round"/>`;
+  function speedLines(x, y, len, c = "#fff", k = 3, gap = 9) {
+    let s = "";
+    for (let i = 0; i < k; i++) {
+      const yy = y + (i - (k - 1) / 2) * gap, l = len * (i % 2 ? 0.7 : 1);
+      s += `<path d="M${f(x)} ${f(yy)} H${f(x - l)}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${f(x)} ${f(yy)} H${f(x - l)}" stroke="${c}" stroke-width="3.4" stroke-linecap="round"/>`;
+    }
+    return s;
+  }
+  function swoosh(d, c = "#fff", w = 12) {
+    return `<path d="${d}" stroke="${c}" stroke-width="${w + 10}" fill="none" stroke-linecap="round" opacity=".22"/><path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round" opacity=".55"/><path d="${d}" stroke="#fff" stroke-width="${f(w * 0.35)}" fill="none" stroke-linecap="round"/>`;
+  }
+  var shock = (x, y, rx, ry, c) => `<g class="ring"><ellipse cx="${f(x)}" cy="${f(y)}" rx="${rx}" ry="${ry}" fill="none" stroke="${O}" stroke-width="9"/><ellipse cx="${f(x)}" cy="${f(y)}" rx="${rx}" ry="${ry}" fill="none" stroke="${c}" stroke-width="5"/></g>`;
+  var drops = (pts, c = "#7fd4ff") => `<g class="fx">${pts.map(([x, y, r]) => `<path d="M${x} ${f(y - r * 1.6)} Q${f(x + r)} ${f(y - r * 0.2)} ${x} ${f(y + r)} Q${f(x - r)} ${f(y - r * 0.2)} ${x} ${f(y - r * 1.6)}Z" fill="${c}" stroke="${O}" stroke-width="2.5"/><circle cx="${f(x - r * 0.3)}" cy="${f(y - r * 0.2)}" r="${f(r * 0.28)}" fill="#fff"/>`).join("")}</g>`;
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/heroes/dcA.ts
+  var DC_A = [
+    {
+      id: "batman",
+      name: "Batman",
+      role: "Ex\xE9cution",
+      rarity: "L\xE9gendaire",
+      rar: "var(--leg)",
+      tint: "#d6dbe8",
+      tint2: "#8e97b3",
+      stats: [4, 3, 4],
+      atk: "Batarang qui file vers l\u2019ennemi le plus avanc\xE9.",
+      skill: "Chevalier noir : coups critiques garantis contre les ennemis \xE9tourdis ou ralentis.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 22, R: -162, body: [-3, -3, -6, 1, 1.02] }, { L: 30, R: -98, body: [7, 0, 7, 1, 1] }],
+      draw(x) {
+        const G = "#7d8398", GD = "#555a6f", K = "#2c2b40", KD = "#17162a", Y = "#f6c64a", YD = "#cf962a", BR = "#3a3a52";
+        const rang = (s) => `<g transform="scale(${s})"><path d="${batPath}" fill="${BR}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M-13 -2 Q-6 -5 -2 -3" stroke="#8d8fb0" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, G, 15) + shaded((a) => `<rect x="${sx - 10}" y="${sy + 19}" width="20" height="16" rx="5" ${a}/>`, K, KD, -2, -2) + `<path d="M${sx + 9} ${sy + 21} l7 2 l-7 3 l7 2 l-7 3" fill="${K}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>` + hand(sx, sy + 38, K);
+        const armR = (sx, sy) => armIn(sx, sy) + x.when([1], `<g transform="translate(${sx} ${sy + 46}) rotate(90)">${rang(1.05)}</g>`);
+        let b = cape(K, KD, 8);
+        b += torso(G, GD);
+        b += `<path d="M70 160 Q84 168 98 160 M102 160 Q116 168 130 160" stroke="${GD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += batSym(100, 160, 1.35, K, 3);
+        b += shaded((a) => `<path d="M58 184 Q100 194 142 184 L142 198 Q100 208 58 198Z" ${a}/>`, Y, YD, -3, -3);
+        b += `<g fill="${YD}" stroke="${O}" stroke-width="2.5">${[70, 86, 114, 130].map((cx) => `<rect x="${cx - 5}" y="${cx < 100 ? 188 : 188}" width="10" height="11" rx="2"/>`).join("")}</g><rect x="93" y="188" width="14" height="12" rx="3" fill="${Y}" stroke="${O}" stroke-width="3"/>`;
+        b += head(SK, SKD) + ears(K, KD, "bat") + cowl(K, KD);
+        b += x.byPose((p) => lenses(p) + jaw(p, 127) + `<path d="M84 ${p ? 84 : 86} L96 ${p ? 92 : 90} M116 ${p ? 84 : 86} L104 ${p ? 92 : 90}" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`);
+        b += clasps(Y);
+        b += x.arm("L", armIn) + x.arm("R", armR);
+        const [hx, hy] = tip(this, "R", 2, 40);
+        const tx = 198, ty = 118;
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px"><path d="M${f(hx)} ${f(hy)} Q${f((hx + tx) / 2)} ${f(Math.min(hy, ty) - 26)} ${tx} ${ty}" stroke="#fff" stroke-width="4" fill="none" stroke-dasharray="7 7" stroke-linecap="round" opacity=".85"/></g><g class="pop"><g transform="translate(${tx} ${ty})"><g class="spin fast">${rang(1.35)}</g></g></g><g class="pop">${sparks(tx, ty, 30, "#fff", 8)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "superman",
+      name: "Superman",
+      role: "D\xE9g\xE2ts",
+      rarity: "L\xE9gendaire",
+      rar: "var(--leg)",
+      tint: "#d5e2ff",
+      tint2: "#8eaaf0",
+      stats: [5, 3, 4],
+      atk: "Vision thermique sur l\u2019ennemi le plus r\xE9sistant.",
+      skill: "Homme d\u2019acier : rayon thermique qui balaie toute la ligne et la fait br\xFBler.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 30, R: -30, body: [0, -6, 0, 1, 1.03] }, { L: 40, R: -40, body: [-3, -9, -5, 1, 1] }],
+      draw(x) {
+        const B = "#2f5fd0", BD = "#1f3f95", R = "#d42e35", RD = "#9b1d27", Y = "#f6c64a", YD = "#cf962a", H = "#262035", HD = "#13101d", HV = "#ff3b3b";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, B, 15) + `<path d="M${sx - 1} ${sy + 6} V${sy + 28}" stroke="${BD}" stroke-width="2.5" stroke-linecap="round"/>` + hand(sx, sy + 38, B) + x.when([1, 2], `<path d="M${sx - 7} ${sy + 34} H${sx + 7} M${sx - 7} ${sy + 40} H${sx + 7}" stroke="${BD}" stroke-width="2" stroke-linecap="round"/>`);
+        let b = cape(R, RD, 10);
+        b += torso(B, BD);
+        b += `<path d="M66 172 Q84 180 98 172 M102 172 Q116 180 134 172" stroke="${BD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += sShield(100, 158, 1.15, R, Y);
+        b += shaded((a) => `<path d="M58 188 Q100 196 142 188 L142 200 Q100 208 58 200Z" ${a}/>`, R, RD, -3, -3) + `<rect x="92" y="189" width="16" height="12" rx="3" fill="${Y}" stroke="${O}" stroke-width="3"/>`;
+        b += shaded((a) => `<path d="M60 140 Q66 132 80 136 L74 150Z" ${a}/>`, R, RD, -2, -2) + mirror(shaded((a) => `<path d="M60 140 Q66 132 80 136 L74 150Z" ${a}/>`, R, RD, -2, -2));
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M46 90 Q38 30 100 24 Q162 30 154 90 Q150 64 134 58 Q116 68 100 60 Q80 68 64 62 Q52 70 46 90Z" ${a}/>`, "#3b3352", H, -4, -4) + gloss(80, 36, 13, 5, -20, 0.35);
+        b += `<path d="M98 58 Q88 64 92 74 Q98 80 103 72" stroke="${O}" stroke-width="7.5" fill="none" stroke-linecap="round"/><path d="M98 58 Q88 64 92 74 Q98 80 103 72" stroke="#3b3352" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+        b += x.byPose((p) => {
+          let s = face(p, { eye: p ? HV : "#2d5bb5", noCheeks: p == 2 });
+          if (p) s += `<g class="fx"><circle cx="80" cy="95" r="${p == 2 ? 16 : 12}" fill="${HV}" opacity=".35"/><circle cx="120" cy="95" r="${p == 2 ? 16 : 12}" fill="${HV}" opacity=".35"/></g>`;
+          return s;
+        });
+        b += x.arm("L", armIn) + x.arm("R", armIn);
+        b += x.when([1], glow(80, 95, 13, HV) + glow(120, 95, 13, HV));
+        const T = [232, 150];
+        b += x.when([2], `<g class="grow" style="transform-origin:80px 95px">${beam(80, 95, T[0] - 6, T[1] - 4, 5, HV)}</g><g class="grow" style="transform-origin:120px 95px">${beam(120, 95, T[0], T[1] + 4, 5, HV)}</g><g class="pop">${burst(T[0], T[1], 22, "#ff8a3a", "#ffe27a")}</g><g class="pop"><path d="M${T[0] - 18} ${T[1] + 22} q4 -10 0 -18 M${T[0]} ${T[1] + 26} q5 -12 0 -22 M${T[0] + 16} ${T[1] + 22} q4 -10 0 -18" stroke="#ff8a3a" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "wonderwoman",
+      name: "Wonder Woman",
+      role: "Contr\xF4le",
+      rarity: "L\xE9gendaire",
+      rar: "var(--leg)",
+      tint: "#ffdcd4",
+      tint2: "#ef9a8a",
+      stats: [4, 3, 3],
+      atk: "Lasso de v\xE9rit\xE9 qui frappe et ralentit.",
+      skill: "Lasso de Hestia : attache 3 ennemis, qui restent immobiles 2 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 14, R: -14 }, { L: 30, R: -160, body: [-2, -4, -4, 1, 1.02] }, { L: 28, R: -96, body: [6, 0, 6, 1, 1] }],
+      draw(x) {
+        const R = "#d42e35", RD = "#9b1d27", G = "#f6c64a", GD = "#cf962a", B = "#2f55b8", BD = "#1f3a85", H = "#2a2033", HD = "#160f1e", S = "#dfe4ee", SD = "#a3acbd", LS = "#ffd34a";
+        const cuff = (sx, sy) => shaded((a) => `<rect x="${sx - 10}" y="${sy + 22}" width="20" height="12" rx="4" ${a}/>`, S, SD, -2, -2) + `<path d="M${sx - 10} ${sy + 28} H${sx + 10}" stroke="${SD}" stroke-width="2"/>`;
+        const coil = (cx, cy) => `<g fill="none" stroke-linecap="round"><ellipse cx="${cx}" cy="${cy}" rx="14" ry="9" stroke="${O}" stroke-width="7"/><ellipse cx="${cx}" cy="${cy}" rx="14" ry="9" stroke="${LS}" stroke-width="3.5"/><ellipse cx="${cx + 3}" cy="${cy + 3}" rx="12" ry="7" stroke="${O}" stroke-width="7"/><ellipse cx="${cx + 3}" cy="${cy + 3}" rx="12" ry="7" stroke="${G}" stroke-width="3.5"/></g>`;
+        const armL = (sx, sy) => limb(sx, sy, sx, sy + 38, SK, 14) + cuff(sx, sy) + coil(sx, sy + 48) + hand(sx, sy + 38, SK);
+        const armR = (sx, sy) => limb(sx, sy, sx, sy + 38, SK, 14) + cuff(sx, sy) + hand(sx, sy + 38, SK);
+        let b = "";
+        b += shaded((a) => `<path d="M42 86 Q30 150 46 186 L154 186 Q170 150 158 86Z" ${a}/>`, "#3b3046", HD, -4, -4);
+        b += torso(SK, SKD);
+        b += shaded((a) => `<path d="M58 202 C57 172 61 156 68 148 Q84 156 100 150 Q116 156 132 148 C139 156 143 172 142 202Z" ${a}/>`, R, RD, -6, -3);
+        b += shaded((a) => `<path d="M66 150 Q80 160 92 152 L100 164 L108 152 Q120 160 134 150 L128 166 Q114 172 106 164 L100 174 L94 164 Q86 172 72 166Z" ${a}/>`, G, GD, -2, -2);
+        b += shaded((a) => `<path d="M58 182 Q100 190 142 182 L142 192 Q100 200 58 192Z" ${a}/>`, G, GD, -2, -2);
+        b += clip((a) => `<path d="${torsoD}" ${a}/>`, `<path d="M50 190 Q100 200 150 190 V210 H50Z" fill="${B}"/>${[74, 100, 126].map((cx) => `<polygon points="${star(cx, 201, 4.5, 2, 5, -Math.PI / 2)}" fill="#fff"/>`).join("")}`) + `<path d="M58 191 Q100 200 142 191" stroke="${O}" stroke-width="3" fill="none"/><path d="${torsoD}" fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>`;
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M44 96 Q34 28 100 24 Q166 28 156 96 Q152 66 134 60 Q112 70 100 58 Q88 70 66 60 Q48 68 44 96Z" ${a}/>`, "#3b3046", H, -4, -4) + gloss(78, 36, 13, 5, -20, 0.35);
+        b += shaded((a) => `<path d="M58 66 Q100 50 142 66 L139 75 Q100 62 61 75Z" ${a}/>`, G, GD, -2, -2);
+        b += `<polygon points="${star(100, 60, 9, 4, 5, -Math.PI / 2)}" fill="${R}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+        b += x.byPose((p) => face(p, { eye: "#3a5fb0" }) + (p == 0 ? `<path d="M94 116 Q100 119 106 116" stroke="#d24a5a" stroke-width="2.5" fill="none" stroke-linecap="round"/>` : ""));
+        b += x.arm("L", armL) + x.arm("R", armR);
+        const [wx, wy] = tip(this, "R", 1, 44);
+        b += x.when([1], `<g class="fx"><ellipse cx="${f(wx)}" cy="${f(wy - 14)}" rx="30" ry="11" fill="${LS}" opacity=".25"/></g><ellipse cx="${f(wx)}" cy="${f(wy - 14)}" rx="30" ry="11" fill="none" stroke="${O}" stroke-width="8"/><ellipse cx="${f(wx)}" cy="${f(wy - 14)}" rx="30" ry="11" fill="none" stroke="${LS}" stroke-width="4"/>${sparks(wx, wy - 14, 40, "#fff2a0", 6)}`);
+        const [hx, hy] = tip(this, "R", 2, 40), T = [210, 160];
+        const rope = `M${f(hx)} ${f(hy)} Q${f((hx + T[0]) / 2)} ${f(hy - 40)} ${T[0] - 20} ${T[1] - 4}`;
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px"><path d="${rope}" stroke="${LS}" stroke-width="16" fill="none" opacity=".3" stroke-linecap="round"/><path d="${rope}" stroke="${O}" stroke-width="8" fill="none" stroke-linecap="round"/><path d="${rope}" stroke="${LS}" stroke-width="4" fill="none" stroke-linecap="round"/></g><g class="pop"><ellipse cx="${T[0]}" cy="${T[1]}" rx="24" ry="30" fill="${LS}" opacity=".25"/><ellipse cx="${T[0]}" cy="${T[1]}" rx="22" ry="28" fill="none" stroke="${O}" stroke-width="8"/><ellipse cx="${T[0]}" cy="${T[1]}" rx="22" ry="28" fill="none" stroke="${LS}" stroke-width="4"/>${sparks(T[0], T[1], 40, "#fff2a0", 8)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "flash",
+      name: "Flash",
+      role: "Vitesse",
+      rarity: "\xC9pique",
+      rar: "var(--epi)",
+      tint: "#ffe1cc",
+      tint2: "#f6a77a",
+      stats: [2, 5, 3],
+      atk: "Rafale de coups ultra-rapides.",
+      skill: "Force v\xE9loce : acc\xE9l\xE8re tous les h\xE9ros adjacents de 25 % pendant 4 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 46, R: 34, body: [-12, 6, -10, 1.04, 0.94] }, { L: 22, R: -100, body: [18, -2, 10, 1, 1] }],
+      draw(x) {
+        const R = "#d8312f", RD = "#9c1b24", Y = "#f6c64a", YD = "#cf962a", LT = "#ffe066";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, R, 15) + `<path d="M${sx - 8} ${sy + 26} l6 -4 l2 5 l7 -5" stroke="${Y}" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` + hand(sx, sy + 38, R);
+        let b = "";
+        const ghost = (dx, o) => `<g opacity="${o}" transform="translate(${dx} 6)"><path d="${torsoD}" fill="${R}"/><circle cx="100" cy="84" r="56" fill="${R}"/></g>`;
+        b += x.when([2], `<g class="pop">${ghost(-46, 0.18)}${ghost(-24, 0.3)}</g>`);
+        b += torso(R, RD);
+        b += `<circle cx="100" cy="162" r="15" fill="#fff" stroke="${O}" stroke-width="4"/>` + boltSym(100, 162, 0.85, Y, 3);
+        b += shaded((a) => `<path d="M58 188 L80 192 L84 186 L100 194 L116 186 L120 192 L142 188 L142 200 Q100 208 58 200Z" ${a}/>`, Y, YD, -2, -2);
+        b += head(SK, SKD) + cowl(R, RD);
+        const wing = `<path d="M48 76 L24 62 L38 78 L20 82 L44 92Z" fill="${Y}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>`;
+        b += wing + mirror(wing);
+        b += `<path d="M70 40 Q100 30 130 40" stroke="${RD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += x.byPose((p) => {
+          const hole = `<path d="M64 90 Q80 80 96 92 Q96 104 82 106 Q66 104 64 90Z" fill="${SK}" stroke="${O}" stroke-width="3"/>`;
+          return hole + mirror(hole) + face(p, { noMouth: true, noCheeks: true, eye: "#3a7ad0" }) + (p == 2 ? jaw(2, 127) : p == 1 ? jaw(1, 127) : `<path d="M90 124 Q100 130 110 124" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`);
+        });
+        b += x.arm("L", armIn) + x.arm("R", armIn);
+        b += x.when([1], `<g class="fx">${bolt([[44, 190], [30, 170], [40, 166], [26, 146]], LT)}${bolt([[160, 196], [176, 178], [166, 174], [182, 156]], LT)}</g>`);
+        const [hx, hy] = tip(this, "R", 2, 44);
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px">${speedLines(hx - 10, hy, 70, LT, 3, 10)}</g><g class="pop">${burst(f(hx + 8), f(hy), 22, LT, "#fff")}</g><g class="pop">${bolt([[hx + 10, hy - 14], [hx + 24, hy - 30], [hx + 20, hy - 16], [hx + 36, hy - 26]], LT)}${bolt([[hx + 10, hy + 14], [hx + 22, hy + 30], [hx + 30, hy + 20], [hx + 38, hy + 34]], LT)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "aquaman",
+      name: "Aquaman",
+      role: "D\xE9g\xE2ts de zone",
+      rarity: "\xC9pique",
+      rar: "var(--epi)",
+      tint: "#cdf0ee",
+      tint2: "#6cc6c8",
+      stats: [4, 2, 3],
+      atk: "Trident qui projette un jet d\u2019eau.",
+      skill: "Raz-de-mar\xE9e : une vague repousse tous les ennemis de la ligne.",
+      sh: { L: [68, 150], R: [132, 150] },
+      parts: ["tr"],
+      poses: [{ L: 14, R: -14, tr: 200 }, { L: 24, R: -172, tr: 0, body: [-3, -4, -5, 1, 1.02] }, { L: 26, R: -128, tr: 0, body: [7, 0, 6, 1, 1] }],
+      draw(x) {
+        const OR = "#f28a2a", ORD = "#c45e14", G = "#3f9a52", GD = "#2a6e38", GO = "#f6c64a", GOD = "#cf962a", H = "#6b4a2a", HD = "#47301a", W = "#5ad0ff";
+        const trident = (sx, y) => `<rect x="${sx - 4}" y="${y - 30}" width="8" height="104" rx="4" fill="${GO}" stroke="${O}" stroke-width="3.5"/><path d="M${sx - 1.5} ${y - 20} V${y + 60}" stroke="#fff3b0" stroke-width="2" opacity=".7"/>` + shaded((a) => `<path d="M${sx - 20} ${y + 66} Q${sx - 20} ${y + 80} ${sx} ${y + 80} Q${sx + 20} ${y + 80} ${sx + 20} ${y + 66} L${sx + 14} ${y + 66} Q${sx + 12} ${y + 74} ${sx} ${y + 74} Q${sx - 12} ${y + 74} ${sx - 14} ${y + 66}Z" ${a}/>`, GO, GOD, -2, -2) + `<g fill="${GO}" stroke="${O}" stroke-width="3" stroke-linejoin="round"><polygon points="${sx - 17},${y + 78} ${sx - 22},${y + 102} ${sx - 11},${y + 80}"/><polygon points="${sx + 17},${y + 78} ${sx + 22},${y + 102} ${sx + 11},${y + 80}"/><polygon points="${sx - 5},${y + 78} ${sx},${y + 108} ${sx + 5},${y + 78}"/></g>`;
+        const glove = (sx, sy) => shaded((a) => `<rect x="${sx - 10}" y="${sy + 20}" width="20" height="16" rx="5" ${a}/>`, G, GD, -2, -2) + `<path d="M${sx + 9} ${sy + 22} l7 3 l-7 3 l7 3 l-7 3" fill="${G}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+        const armL = (sx, sy) => limb(sx, sy, sx, sy + 38, OR, 15) + glove(sx, sy) + hand(sx, sy + 38, G);
+        const armR = (sx, sy) => limb(sx, sy, sx, sy + 38, OR, 15) + glove(sx, sy) + x.part("tr", sx, sy + 38, trident(sx, sy + 38)) + hand(sx, sy + 38, G);
+        let b = "";
+        b += shaded((a) => `<path d="M40 88 Q30 150 50 172 L150 172 Q170 150 160 88Z" ${a}/>`, "#7d5834", HD, -4, -4);
+        b += torso(OR, ORD);
+        let sc = "";
+        for (let r = 0; r < 6; r++) for (let i = 0; i < 10; i++) {
+          const cx = 50 + i * 11 + r % 2 * 5.5, cy = 142 + r * 10;
+          sc += `<path d="M${cx - 5.5} ${cy} Q${cx} ${cy + 8} ${cx + 5.5} ${cy}"/>`;
+        }
+        b += clip((a) => `<path d="${torsoD}" ${a}/>`, `<g stroke="${ORD}" stroke-width="2.2" fill="none">${sc}</g>`) + `<path d="${torsoD}" fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M58 188 Q100 196 142 188 L142 200 Q100 208 58 200Z" ${a}/>`, G, GD, -3, -3) + shaded((a) => `<path d="M90 187 H110 L106 202 H94Z" ${a}/>`, GO, GOD, -2, -2) + `<path d="M96 199 L100 190 L104 199 M97.5 196 H102.5" stroke="${O}" stroke-width="2" fill="none"/>`;
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M54 90 Q54 128 74 142 Q88 152 100 152 Q112 152 126 142 Q146 128 146 90 Q140 110 126 116 Q114 110 100 112 Q86 110 74 116 Q60 110 54 90Z" ${a}/>`, "#7d5834", HD, -3, -4);
+        b += x.byPose((p) => face(p, { eye: "#3a8a8a", noCheeks: true }));
+        b += `<path d="M78 114 Q88 104 100 110 Q112 104 122 114 Q110 118 100 115 Q90 118 78 114Z" fill="#7d5834" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M44 96 Q34 28 100 22 Q166 28 156 96 Q154 70 140 60 Q120 70 102 54 Q84 70 62 62 Q48 72 44 96Z" ${a}/>`, "#7d5834", HD, -4, -4) + `<path d="M60 50 Q76 36 96 40 M112 40 Q130 38 142 52" stroke="#a07848" stroke-width="3" fill="none" stroke-linecap="round"/>` + gloss(80, 34, 13, 5, -20, 0.3);
+        b += x.arm("L", armL) + x.arm("R", armR);
+        const [px, py] = tip(this, "R", 1, 146);
+        b += x.when([1], `<g class="spin"><g fill="none" stroke-linecap="round"><path d="M${f(px - 22)} ${f(py)} A22 12 0 1 1 ${f(px + 22)} ${f(py)}" stroke="${O}" stroke-width="9"/><path d="M${f(px - 22)} ${f(py)} A22 12 0 1 1 ${f(px + 22)} ${f(py)}" stroke="${W}" stroke-width="5"/></g></g>` + drops([[px - 24, py + 12, 5], [px + 24, py + 6, 6], [px + 6, py - 18, 5]], W));
+        const [qx, qy] = tip(this, "R", 2, 146);
+        const wave = `<path d="M136 208 C140 172 160 132 196 118 C224 108 240 124 238 146 C230 134 214 134 208 146 C202 160 214 172 228 166 C234 182 236 196 238 208Z" fill="${W}" stroke="${O}" stroke-width="5" stroke-linejoin="round"/><path d="M152 206 C154 178 170 156 196 144" stroke="#2f9ad8" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M176 196 C178 182 186 172 198 166" stroke="#2f9ad8" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M186 134 C206 124 226 126 234 138" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="214" cy="158" r="5" fill="#fff" opacity=".85"/>`;
+        b += x.when([2], `<g class="pop">${glow(qx, qy, 18, W)}</g>`);
+        const fxw = x.when([2], `<g class="pop">${wave}</g><g class="pop">${drops([[214, 100, 6], [194, 108, 5], [232, 112, 4], [170, 120, 4]], W)}</g>`);
+        return shadow() + x.body(b) + fxw;
+      }
+    },
+    {
+      id: "greenlantern",
+      name: "Green Lantern",
+      role: "Soutien \xB7 bouclier",
+      rarity: "L\xE9gendaire",
+      rar: "var(--leg)",
+      tint: "#d6f4d2",
+      tint2: "#86d17c",
+      stats: [3, 3, 4],
+      atk: "Poing-construction vert.",
+      skill: "Serment : une bulle verte prot\xE8ge un h\xE9ros des pouvoirs de boss pendant 6 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 20, R: -150, body: [-2, -4, -4, 1, 1.02] }, { L: 24, R: -122, body: [4, 0, 4, 1, 1] }],
+      draw(x) {
+        const G = "#3fae4a", GD = "#25803a", K = "#2a2636", KD = "#16131f", H = "#5a3a22", HD = "#3a2414", GL = "#7dff7a";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, K, 15) + shaded((a) => `<rect x="${sx - 9}" y="${sy + 22}" width="18" height="12" rx="4" ${a}/>`, G, GD, -2, -2) + hand(sx, sy + 38, G);
+        const armR = (sx, sy) => armIn(sx, sy) + x.when([1, 2], glow(sx, sy + 44, 14, GL)) + `<circle cx="${sx}" cy="${sy + 44}" r="5" fill="${GL}" stroke="${O}" stroke-width="2.5"/>`;
+        let b = torso(K, KD);
+        b += shaded((a) => `<path d="M78 138 Q100 146 122 138 L134 203 L66 203Z" ${a}/>`, G, GD, -4, -3);
+        b += `<circle cx="100" cy="162" r="15" fill="#fff" stroke="${O}" stroke-width="4"/><circle cx="100" cy="162" r="8.5" fill="none" stroke="${G}" stroke-width="4"/><path d="M89 154 H111 M89 170 H111" stroke="${G}" stroke-width="3.5" stroke-linecap="round"/>`;
+        b += x.when([1, 2], glow(100, 162, 26, GL));
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M46 90 Q40 30 100 26 Q160 30 154 90 Q150 62 132 56 Q120 66 100 56 Q82 64 66 58 Q50 68 46 90Z" ${a}/>`, "#6e4a2c", HD, -4, -4) + `<path d="M78 40 Q92 30 106 34" stroke="#94683e" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += domino(G, GD);
+        b += x.byPose((p) => face(p, { eye: p ? "#9dffa0" : "#fbfdff" }));
+        b += x.arm("L", armIn) + x.arm("R", armR);
+        const [rx, ry] = tip(this, "R", 1, 46);
+        b += x.when([1], sparks(rx, ry, 26, GL, 8));
+        const [hx, hy] = tip(this, "R", 2, 46), [dx, dy] = dirOf(this, "R", 2), cx = hx + dx * 34 + 8, cy = hy + dy * 34 + 8;
+        const fist = `<g transform="translate(${f(cx)} ${f(cy)}) rotate(-20)" stroke="${O}" stroke-linejoin="round"><rect x="-30" y="-22" width="44" height="44" rx="12" fill="${GL}" fill-opacity=".6" stroke-width="5"/>${[-16.5, -5.5, 5.5, 16.5].map((yy) => `<rect x="6" y="${yy - 5.5}" width="20" height="11" rx="5.5" fill="${GL}" fill-opacity=".75" stroke-width="3.5"/>`).join("")}<path d="M-20 -22 Q-4 -32 8 -20" fill="${GL}" fill-opacity=".75" stroke-width="3.5"/><path d="M-22 -12 Q-24 0 -20 10" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".85"/></g>`;
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px">${beam(hx, hy, cx - dx * 30, cy - dy * 30, 8, GL)}</g><g class="pop">${fist}</g><g class="pop">${sparks(cx + 20, cy - 14, 30, GL, 7)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "cyborg",
+      name: "Cyborg",
+      role: "D\xE9g\xE2ts",
+      rarity: "\xC9pique",
+      rar: "var(--epi)",
+      tint: "#dfe5f0",
+      tint2: "#98a7c2",
+      stats: [4, 3, 4],
+      atk: "Canon sonique sur l\u2019ennemi le plus proche.",
+      skill: "Piratage : d\xE9sactive le pouvoir du boss pendant 5 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -14 }, { L: 20, R: -58, body: [-2, -2, -3, 1, 1] }, { L: 24, R: -96, body: [-6, 0, -5, 1, 1] }],
+      draw(x) {
+        const M = "#d3d9e5", MD = "#8f99b0", DK = "#3a3f55", DKD = "#232636", RE = "#ff3b3b", C = "#7fe8ff";
+        const armL = (sx, sy) => limb(sx, sy, sx, sy + 38, M, 16) + `<path d="M${sx - 8} ${sy + 16} H${sx + 8}" stroke="${MD}" stroke-width="2.5"/>` + hand(sx, sy + 38, DK);
+        const armR = (sx, sy) => limb(sx, sy, sx, sy + 30, M, 16) + shaded((a) => `<rect x="${sx - 15}" y="${sy + 18}" width="30" height="40" rx="8" ${a}/>`, M, MD, -3, -3) + `<path d="M${sx - 15} ${sy + 30} H${sx + 15} M${sx - 15} ${sy + 42} H${sx + 15}" stroke="${MD}" stroke-width="2.5"/>` + shaded((a) => `<rect x="${sx - 11}" y="${sy + 56}" width="22" height="10" rx="3" ${a}/>`, DK, DKD, -2, -2) + x.byPose((p) => p ? glow(sx, sy + 66, p == 2 ? 18 : 13, C) : "") + x.byPose((p) => `<ellipse cx="${sx}" cy="${sy + 66}" rx="8" ry="4" fill="${p ? "#e8fdff" : DKD}" stroke="${O}" stroke-width="2.5"/>`);
+        let b = torso(M, MD);
+        b += `<path d="M60 172 Q100 182 140 172 M100 138 V150 M76 150 L66 196 M124 150 L134 196" stroke="${MD}" stroke-width="3" fill="none"/>`;
+        b += shaded((a) => `<path d="M78 148 Q100 140 122 148 L118 178 Q100 186 82 178Z" ${a}/>`, DK, DKD, -3, -3);
+        b += x.when([1, 2], glow(100, 162, 22, RE));
+        b += `<circle cx="100" cy="162" r="9" fill="${RE}" stroke="${O}" stroke-width="3.5"/><circle cx="97" cy="159" r="3" fill="#fff" opacity=".8"/>`;
+        b += shaded((a) => `<path d="M58 190 Q100 198 142 190 L142 202 Q100 208 58 202Z" ${a}/>`, DK, DKD, -2, -2);
+        b += shaded(headS, M, MD) + gloss(76, 50, 14, 8);
+        b += `<path d="M72 36 Q100 26 128 36 M100 28 V54 M138 60 Q150 72 152 92" stroke="${MD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += shaded((a) => `<path d="M54 82 Q60 66 82 66 Q98 68 100 80 L100 140 Q70 138 56 118 Q50 100 54 82Z" ${a}/>`, SKB, SKBD, -3, -3);
+        b += `<path d="M54 82 Q60 66 82 66 Q98 68 100 80 L100 140" fill="none" stroke="${O}" stroke-width="3.5"/><circle cx="100" cy="86" r="2.5" fill="${MD}" stroke="${O}" stroke-width="1.5"/><circle cx="100" cy="128" r="2.5" fill="${MD}" stroke="${O}" stroke-width="1.5"/>`;
+        b += x.byPose((p) => {
+          let s = face(p, { eye: "#3a2418", noCheeks: true });
+          s += `<g class="fx"><circle cx="120" cy="95" r="${p ? 16 : 12}" fill="${RE}" opacity=".35"/></g><circle cx="120" cy="95" r="11" fill="${DK}" stroke="${O}" stroke-width="3.5"/><circle cx="120" cy="95" r="6.5" fill="${RE}"/><circle cx="118" cy="93" r="2.2" fill="#fff"/>`;
+          return s + `<path d="M108 82 L132 86" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`;
+        });
+        b += x.arm("L", armL) + x.arm("R", armR);
+        b += shaded((a) => `<circle cx="136" cy="147" r="15" ${a}/>`, M, MD, -4, -4) + gloss(132, 141, 5, 3, -30, 0.6);
+        b += x.when([2], beamFrom(this, "R", 68, 118, 22, C) + `<g class="ring"><circle cx="${f(tip(this, "R", 2, 140)[0])}" cy="${f(tip(this, "R", 2, 140)[1])}" r="20" fill="none" stroke="${C}" stroke-width="5"/></g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "supergirl",
+      name: "Supergirl",
+      role: "D\xE9g\xE2ts",
+      rarity: "Rare",
+      rar: "var(--rare)",
+      tint: "#dbe6ff",
+      tint2: "#f0a3a8",
+      stats: [4, 4, 2],
+      atk: "Coup de poing supersonique.",
+      skill: "Fille d\u2019acier : chaque 5e coup projette une onde de choc qui \xE9tourdit.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 26, R: 44, body: [-8, -4, -8, 1, 1.02] }, { L: 24, R: -98, body: [8, -6, 7, 1, 1] }],
+      draw(x) {
+        const B = "#3a6be0", BD = "#244aa6", R = "#d42e35", RD = "#9b1d27", Y = "#f6c64a", YD = "#cf962a", HR = "#f6d26a", HRD = "#d6a636";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, B, 14) + hand(sx, sy + 38, SK);
+        const armR = (sx, sy) => armIn(sx, sy) + x.when([1], glow(sx, sy + 40, 15, "#9fd0ff"));
+        let b = cape(R, RD, 8);
+        b += shaded((a) => `<path d="M40 88 Q28 150 50 180 L150 180 Q172 150 160 88Z" ${a}/>`, HR, HRD, -4, -4);
+        b += torso(B, BD);
+        b += sShield(100, 160, 1, R, Y);
+        b += shaded((a) => `<path d="M58 186 Q100 194 142 186 L143 203 L57 203Z" ${a}/>`, R, RD, -3, -3) + shaded((a) => `<path d="M58 182 Q100 190 142 182 L142 189 Q100 197 58 189Z" ${a}/>`, Y, YD, -2, -2);
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M44 98 Q34 28 100 24 Q166 28 156 98 Q152 66 132 58 Q122 70 104 62 Q96 74 76 66 Q54 70 44 98Z" ${a}/>`, HR, HRD, -4, -4) + gloss(82, 36, 14, 5, -20, 0.45);
+        b += x.byPose((p) => face(p, { eye: "#3a6be0" }) + (p == 0 ? `<path d="M94 116 Q100 119 106 116" stroke="#d24a5a" stroke-width="2.5" fill="none" stroke-linecap="round"/>` : ""));
+        b += x.arm("L", armIn) + x.arm("R", armR);
+        const [hx, hy] = tip(this, "R", 2, 44);
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px">${speedLines(hx - 24, hy, 60, "#cfe2ff", 3, 11)}</g>` + shock(hx + 16, hy, 12, 24, "#fff") + `<g class="ring" style="animation-delay:.12s"><ellipse cx="${f(hx + 30)}" cy="${f(hy)}" rx="14" ry="34" fill="none" stroke="${O}" stroke-width="9"/><ellipse cx="${f(hx + 30)}" cy="${f(hy)}" rx="14" ry="34" fill="none" stroke="#9fd0ff" stroke-width="5"/></g><g class="pop">${burst(f(hx + 8), f(hy), 20, "#fff", "#cfe2ff")}</g>`);
+        return shadow() + x.body(b);
+      }
+    }
+  ];
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/kits/villain.ts
+  var rot = (p, c, deg) => {
+    const a = deg * Math.PI / 180, px = p[0] ?? 0, py = p[1] ?? 0, cx = c[0] ?? 0, cy = c[1] ?? 0;
+    const dx = px - cx, dy = py - cy;
+    return [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
+  };
+  function held(c, side, key, p, ptIn, origin) {
+    const v = poseOf(c, p)[key];
+    const pr = Array.isArray(v) ? v[2] ?? 0 : 0;
+    return rot(rot(ptIn, origin, pr), shoulder(c, side), poseNum(c, p, side));
+  }
+  function hoodShade(shape, y0, y1, o = 0.7, col = "#0a0716") {
+    const g = uid("g");
+    return `<linearGradient id="${g}" gradientUnits="userSpaceOnUse" x1="0" y1="${y0}" x2="0" y2="${y1}"><stop offset="0" stop-color="${col}" stop-opacity="${o}"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient>` + clip(shape, `<rect x="-60" y="${y0 - 200}" width="320" height="${y1 - y0 + 200}" fill="url(#${g})"/>`);
+  }
+  function geyes(c, o = {}) {
+    const x = o.x || 82, y = o.y || 96, s = o.s || 1, sq = o.sq || 1;
+    const e = `<g transform="translate(${x} ${y}) scale(${s} ${f(s * sq)})"><path d="M-12 -6 L11 1 Q9 9 0 9 Q-11 8 -12 -6Z" fill="${c}"/><path d="M-12 -6 L11 1" stroke="${o.lid || O}" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="-1" cy="3.5" rx="4.6" ry="2.6" fill="#fffbe6"/></g>`;
+    const h = `<ellipse cx="${x}" cy="${y + 2}" rx="${f(19 * s)}" ry="${f(13 * s * sq)}" fill="${c}" opacity=".32"/>`;
+    return `<g class="fx">${h}${mirror(h)}</g>` + e + mirror(e);
+  }
+  function evilMouth(p, cx = 100, cy = 120, w = 12) {
+    if (p == 0) return `<path d="M${cx - w} ${cy} Q${cx - 2} ${cy + 6} ${cx + w} ${cy - 5}" stroke="${O}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    if (p == 1)
+      return `<path d="M${cx - w} ${cy - 3} Q${cx} ${cy + 11} ${cx + w} ${cy - 3} Q${cx} ${cy + 3} ${cx - w} ${cy - 3}Z" fill="#fff" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M${f(cx - w * 0.5)} ${cy + 1} V${cy + 4.5} M${cx} ${cy + 2} V${cy + 6.5} M${f(cx + w * 0.5)} ${cy + 1} V${cy + 4.5}" stroke="${O}" stroke-width="1.6"/>`;
+    return `<path d="M${cx - w} ${cy - 3} Q${cx} ${cy - 5} ${cx + w} ${cy - 3} Q${f(cx + w * 0.75)} ${cy + 15} ${cx} ${cy + 16} Q${f(cx - w * 0.75)} ${cy + 15} ${cx - w} ${cy - 3}Z" fill="#5c0f22" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M${cx - w + 3} ${cy - 2} Q${cx} ${cy - 3} ${cx + w - 3} ${cy - 2} L${cx + w - 5} ${cy + 3} Q${cx} ${cy + 1} ${cx - w + 5} ${cy + 3}Z" fill="#fff"/><path d="M${cx - 5} ${cy + 12} Q${cx} ${cy + 8} ${cx + 5} ${cy + 12}" stroke="#e85a6e" stroke-width="3" fill="none"/>`;
+  }
+  var txt = (x, y, s, c, t, r = 0) => `<text x="${x}" y="${y}" transform="rotate(${r} ${x} ${y})" text-anchor="middle" font-family="Lilita One, Arial Rounded MT Bold, sans-serif" font-size="${s}" fill="${c}" stroke="${O}" stroke-width="5" stroke-linejoin="round" paint-order="stroke">${t}</text>`;
+  var twinkle = (x, y, r, c, o = 0.8) => `<polygon points="${star(x, y, +r, +r * 0.28, 4)}" fill="${c}" opacity="${o}"/>`;
+  function rnd(seed) {
+    let s = seed;
+    return () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+  }
+  var token = (x, y, r, c, eyes = "") => `<circle cx="${x}" cy="${y}" r="${r + 5}" fill="#fff" stroke="${O}" stroke-width="4"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>${gloss(x - r * 0.35, y - r * 0.45, r * 0.35, r * 0.2, -30, 0.6)}${eyes}`;
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/heroes/dcB.ts
+  var DC_B = [
+    {
+      id: "shazam",
+      name: "Shazam",
+      role: "D\xE9g\xE2ts en cha\xEEne",
+      rarity: "\xC9pique",
+      rar: "var(--epi)",
+      tint: "#ffe6c2",
+      tint2: "#f4b65a",
+      stats: [4, 3, 3],
+      atk: "\xC9clair magique qui tombe du ciel.",
+      skill: "SHAZAM ! : un \xE9clair g\xE9ant frappe 5 ennemis et les \xE9tourdit 1 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 14, R: -14 }, { L: 30, R: -172, body: [-2, -6, -3, 1, 1.03] }, { L: 28, R: -136, body: [5, -2, 5, 1, 1] }],
+      draw(x) {
+        const R = "#d8312f", RD = "#9c1b24", G = "#f6c64a", GD = "#cf962a", W = "#f6f2e8", WD = "#cfc6b0", H = "#262035", LT = "#ffe066";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, R, 15) + shaded((a) => `<rect x="${sx - 10}" y="${sy + 20}" width="20" height="15" rx="5" ${a}/>`, G, GD, -2, -2) + `<path d="M${sx - 10} ${sy + 27} H${sx + 10}" stroke="${GD}" stroke-width="2"/>` + hand(sx, sy + 38, SK);
+        const armR = (sx, sy) => armIn(sx, sy) + x.when([1, 2], glow(sx, sy + 42, 15, LT));
+        let b = cape(W, WD, 6) + `<path d="M30 204 Q28 176 54 142 M170 204 Q172 176 146 142" stroke="${G}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        b += torso(R, RD);
+        b += x.when([1, 2], glow(100, 164, 30, LT));
+        b += boltSym(100, 166, 1.55, G, 4.5);
+        b += shaded((a) => `<path d="M58 186 Q100 194 142 186 L142 198 Q100 206 58 198Z" ${a}/>`, G, GD, -2, -2) + `<path d="M60 192 Q100 200 140 192" stroke="${GD}" stroke-width="2" fill="none"/>`;
+        b += shaded((a) => `<path d="M58 142 Q70 132 84 138 L78 152Z" ${a}/>`, W, WD, -2, -2) + mirror(shaded((a) => `<path d="M58 142 Q70 132 84 138 L78 152Z" ${a}/>`, W, WD, -2, -2));
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M46 92 Q38 28 100 22 Q162 28 154 92 Q150 64 134 56 Q118 68 100 58 Q80 68 64 60 Q50 70 46 92Z" ${a}/>`, "#3b3352", H, -4, -4) + gloss(80, 34, 13, 5, -20, 0.35);
+        b += `<path d="M104 56 Q96 70 102 78 Q108 72 106 66" stroke="${O}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M104 56 Q96 70 102 78" stroke="#3b3352" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += x.byPose((p) => face(p, { eye: p ? "#ffcf3a" : "#3a5fb0" }) + (p == 0 ? `<path d="M88 114 Q100 126 112 114" stroke="${O}" stroke-width="3.5" fill="#fff" stroke-linejoin="round"/>` : ""));
+        b += x.arm("L", armIn) + x.arm("R", armR);
+        const [hx, hy] = tip(this, "R", 1, 44);
+        b += x.when([1], `<g class="pop">${bolt([[hx + 10, -6], [hx - 4, 18], [hx + 8, 22], [hx, hy - 14]], LT)}</g>` + sparks(hx, hy, 24, LT, 7));
+        const T = [194, 170], [gx, gy] = tip(this, "R", 2, 44);
+        b += x.when([2], `<g class="pop">${bolt([[T[0] + 12, -8], [T[0] - 6, 40], [T[0] + 10, 46], [T[0] - 8, 104], [T[0] + 8, 110], [T[0], T[1] - 10]], LT)}</g><g class="pop">${bolt([[gx, gy], [gx + 16, gy + 14], [gx + 10, gy + 24], [T[0] - 14, T[1] - 8]], LT)}</g><g class="pop">${burst(T[0], T[1], 26, LT, "#fff")}</g>` + shock(T[0], T[1] + 20, 34, 8, LT));
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "robin",
+      name: "Robin",
+      role: "Combo",
+      rarity: "Rare",
+      rar: "var(--rare)",
+      tint: "#ffe0d0",
+      tint2: "#9fd48a",
+      stats: [3, 5, 2],
+      atk: "Coup de b\xE2ton rapide.",
+      skill: "Acolyte : +20 % de d\xE9g\xE2ts \xE0 Batman et Batgirl s\u2019ils sont adjacents.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -26 }, { L: 26, R: -168, body: [-3, -4, -6, 1, 1.02] }, { L: 24, R: -58, body: [6, 2, 6, 1.02, 0.97] }],
+      draw(x) {
+        const R = "#d8312f", RD = "#9c1b24", G = "#3a9a4a", GD = "#25703a", Y = "#f6c64a", YD = "#cf962a", K = "#262035", KD = "#120e1a", ST = "#8a5a32", STD = "#5b3a1e";
+        const sleeve = (sx, sy) => limb(sx, sy, sx, sy + 38, SK, 14) + shaded((a) => `<path d="M${sx - 11} ${sy - 4} Q${sx} ${sy - 12} ${sx + 11} ${sy - 4} L${sx + 10} ${sy + 14} Q${sx} ${sy + 18} ${sx - 10} ${sy + 14}Z" ${a}/>`, G, GD, -2, -2) + shaded((a) => `<rect x="${sx - 9}" y="${sy + 24}" width="18" height="12" rx="4" ${a}/>`, G, GD, -2, -2);
+        const staff = (sx, sy) => `<rect x="${sx - 4.5}" y="${sy + 20}" width="9" height="78" rx="4.5" fill="${ST}" stroke="${O}" stroke-width="3.5"/><path d="M${sx - 1.5} ${sy + 30} V${sy + 88}" stroke="#c49060" stroke-width="2" opacity=".7"/><rect x="${sx - 5.5}" y="${sy + 86}" width="11" height="12" rx="4" fill="#c9ced8" stroke="${O}" stroke-width="2.5"/>`;
+        const armL = (sx, sy) => sleeve(sx, sy) + hand(sx, sy + 38, G);
+        const armR = (sx, sy) => sleeve(sx, sy) + staff(sx, sy) + hand(sx, sy + 38, G);
+        let b = cape(Y, YD, 6);
+        b += `<path d="M30 204 Q28 176 54 142 M170 204 Q172 176 146 142" stroke="${K}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+        b += torso(R, RD);
+        b += `<path d="M100 140 V184" stroke="${RD}" stroke-width="2.5"/><circle cx="100" cy="150" r="2.4" fill="${Y}" stroke="${O}" stroke-width="1.5"/><circle cx="100" cy="166" r="2.4" fill="${Y}" stroke="${O}" stroke-width="1.5"/>`;
+        b += `<circle cx="80" cy="160" r="11" fill="${Y}" stroke="${O}" stroke-width="3.5"/><path d="M76 166 V154 H81.5 Q86 154 86 158 Q86 161.5 81.5 161.5 H76 M81 161.5 L85.5 166" stroke="${K}" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M58 184 Q100 192 142 184 L142 196 Q100 204 58 196Z" ${a}/>`, Y, YD, -2, -2) + `<g fill="${YD}" stroke="${O}" stroke-width="2">${[74, 88, 112, 126].map((cx) => `<rect x="${cx - 4}" y="188" width="8" height="10" rx="2"/>`).join("")}</g>`;
+        b += head(SK, SKD);
+        b += shaded((a) => `<path d="M44 94 Q40 64 50 52 L42 38 L60 42 L60 24 L76 34 L84 16 L98 30 L112 14 L120 32 L138 22 L140 40 L158 40 L150 54 Q160 70 156 94 Q150 68 132 62 Q114 68 100 60 Q82 70 66 62 Q50 72 44 94Z" ${a}/>`, "#3b3352", K, -4, -4) + gloss(84, 38, 12, 4, -20, 0.35);
+        b += domino(K, "#4a4466");
+        b += x.byPose((p) => lenses(p) + (p == 0 ? `<path d="M90 118 Q100 126 110 118" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>` : jaw(p, 120)) + (p ? `<path d="M64 84 L92 90 M136 84 L108 90" stroke="${O}" stroke-width="5" stroke-linecap="round"/>` : ""));
+        b += clasps(Y);
+        b += x.arm("L", armL) + x.arm("R", armR);
+        const [ex, ey] = tip(this, "R", 2, 96);
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(ex)}px ${f(ey)}px">${swoosh(`M${f(ex - 50)} ${f(ey - 110)} Q${f(ex + 26)} ${f(ey - 90)} ${f(ex + 2)} ${f(ey - 4)}`, "#ffe9a8", 12)}</g><g class="pop">${burst(f(ex + 4), f(ey + 2), 22, "#ffd34a", "#fff")}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "batgirl",
+      name: "Batgirl",
+      role: "Ciblage",
+      rarity: "Rare",
+      rar: "var(--rare)",
+      tint: "#e6defa",
+      tint2: "#a593d8",
+      stats: [3, 4, 4],
+      atk: "Grappin qui frappe l\u2019ennemi le plus avanc\xE9.",
+      skill: "Analyse : marque un ennemi, qui subit +25 % de d\xE9g\xE2ts de toute l\u2019\xE9quipe.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 20, R: -118, body: [-2, -2, -3, 1, 1] }, { L: 24, R: -112, body: [-6, 0, -4, 1, 1] }],
+      draw(x) {
+        const P = "#4a3f7a", PD = "#2e2754", Y = "#f6c64a", YD = "#cf962a", HR = "#e0522f", HRD = "#a8341c", GY = "#9aa3b5", GYD = "#646c80";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, P, 14) + shaded((a) => `<rect x="${sx - 10}" y="${sy + 20}" width="20" height="15" rx="5" ${a}/>`, Y, YD, -2, -2) + `<path d="M${sx + 9} ${sy + 22} l7 2 l-7 3 l7 2 l-7 3" fill="${Y}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>` + hand(sx, sy + 38, Y);
+        const gun = (sx, sy) => shaded((a) => `<rect x="${sx - 7}" y="${sy + 36}" width="14" height="30" rx="4" ${a}/>`, GY, GYD, -2, -2) + `<rect x="${sx - 4}" y="${sy + 64}" width="8" height="6" rx="2" fill="#3a3f55" stroke="${O}" stroke-width="2"/>`;
+        const armR = (sx, sy) => armIn(sx, sy) + x.when([1, 2], gun(sx, sy)) + hand(sx, sy + 38, Y);
+        let b = cape(P, PD, 8);
+        b += shaded((a) => `<path d="M40 100 Q24 152 44 188 L156 188 Q176 152 160 100Z" ${a}/>`, HR, HRD, -4, -4) + `<path d="M52 130 Q46 156 56 180 M148 130 Q154 156 144 180" stroke="${HRD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += torso(P, PD);
+        b += `<ellipse cx="100" cy="162" rx="25" ry="15" fill="${Y}" stroke="${O}" stroke-width="3.5"/>` + batSym(100, 162, 1, P, 2.5);
+        b += shaded((a) => `<path d="M58 184 Q100 192 142 184 L142 196 Q100 204 58 196Z" ${a}/>`, Y, YD, -2, -2) + `<rect x="92" y="186" width="16" height="12" rx="3" fill="${Y}" stroke="${O}" stroke-width="3"/>`;
+        b += head(SK, SKD) + ears(P, PD, "bat") + cowl(P, PD);
+        b += `<path d="M48 104 Q38 124 46 150 L58 140 Q52 124 56 108Z" fill="${HR}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>` + mirror(`<path d="M48 104 Q38 124 46 150 L58 140 Q52 124 56 108Z" fill="${HR}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>`);
+        b += x.byPose((p) => lenses(p) + (p == 0 ? `<path d="M93 125 Q100 129 107 125" stroke="#c63a4a" stroke-width="3.5" fill="none" stroke-linecap="round"/>` : jaw(p, 126)));
+        b += clasps(Y);
+        b += x.arm("L", armIn) + x.arm("R", armR);
+        const [mx, my] = tip(this, "R", 1, 70);
+        b += x.when([1], `<g class="fx"><circle cx="${f(mx)}" cy="${f(my)}" r="8" fill="#fff" opacity=".6"/></g>`);
+        const [gx, gy] = tip(this, "R", 2, 70), T = [212, 92];
+        const hook = `<g transform="translate(${T[0]} ${T[1]}) rotate(-30)"><path d="M0 -10 V10 M0 0 Q12 -2 14 -12 M0 0 Q12 2 14 12 M0 0 H16" stroke="${O}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M0 -10 V10 M0 0 Q12 -2 14 -12 M0 0 Q12 2 14 12 M0 0 H16" stroke="#cfd5e0" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`;
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(gx)}px ${f(gy)}px"><path d="M${f(gx)} ${f(gy)} L${T[0]} ${T[1]}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${f(gx)} ${f(gy)} L${T[0]} ${T[1]}" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g><g class="pop">${hook}</g><g class="pop">${sparks(T[0] + 6, T[1] - 4, 22, Y, 7)}</g><g class="pop">${sparks(gx, gy, 16, "#fff", 6)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "catwoman",
+      name: "Catwoman",
+      role: "Vol \xB7 \xE9conomie",
+      rarity: "Rare",
+      rar: "var(--rare)",
+      tint: "#e2dcf0",
+      tint2: "#9b8fc0",
+      stats: [3, 4, 3],
+      atk: "Coup de fouet sur 2 ennemis align\xE9s.",
+      skill: "Larcin : chaque ennemi \xE9limin\xE9 d\u2019un coup de fouet rapporte 1 mana de plus.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 14, R: -14 }, { L: 28, R: -176, body: [-3, -3, -6, 1, 1.02] }, { L: 26, R: -84, body: [8, 0, 7, 1, 1] }],
+      draw(x) {
+        const K = "#2b2740", KD = "#15121f", HL = "#7d72b0", S = "#cfd5e0", GR = "#ff6b4a", WH = "#4a3020";
+        const claws = (sx, y) => `<g fill="#fff" stroke="${O}" stroke-width="2" stroke-linejoin="round"><polygon points="${sx - 7},${y + 6} ${sx - 6},${y + 15} ${sx - 3},${y + 7}"/><polygon points="${sx - 1},${y + 8} ${sx},${y + 17} ${sx + 2},${y + 8}"/><polygon points="${sx + 4},${y + 7} ${sx + 7},${y + 15} ${sx + 7},${y + 5}"/></g>`;
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, K, 14) + `<path d="M${sx - 4} ${sy + 4} Q${sx - 6} ${sy + 20} ${sx - 4} ${sy + 32}" stroke="${HL}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".8"/>` + claws(sx, sy + 38) + hand(sx, sy + 38, K);
+        const whipR = (sx, sy) => armIn(sx, sy) + x.when([0], `<path d="M${sx} ${sy + 44} Q${sx + 18} ${sy + 62} ${sx + 6} ${sy + 70} Q${sx - 10} ${sy + 76} ${sx + 4} ${sy + 84}" stroke="${O}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M${sx} ${sy + 44} Q${sx + 18} ${sy + 62} ${sx + 6} ${sy + 70} Q${sx - 10} ${sy + 76} ${sx + 4} ${sy + 84}" stroke="${WH}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`);
+        let b = torso(K, KD);
+        b += `<path d="M70 150 Q66 172 70 196" stroke="${HL}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>` + gloss(76, 166, 8, 3, -70, 0.35);
+        b += `<path d="M100 138 V196" stroke="${O}" stroke-width="6"/><path d="M100 138 V196" stroke="${S}" stroke-width="2.6" stroke-dasharray="3 3"/><rect x="96" y="150" width="8" height="10" rx="2" fill="${S}" stroke="${O}" stroke-width="2"/>`;
+        b += shaded((a) => `<path d="M58 186 Q100 194 142 186 L142 196 Q100 204 58 196Z" ${a}/>`, "#4a3f6a", KD, -2, -2);
+        b += head(SK, SKD) + ears(K, KD, "cat") + cowl(K, KD);
+        const gg = `<circle cx="82" cy="58" r="13" fill="${S}" stroke="${O}" stroke-width="3.5"/><circle cx="82" cy="58" r="8.5" fill="${GR}" stroke="${O}" stroke-width="2.5"/><circle cx="79" cy="55" r="3" fill="#fff" opacity=".85"/>`;
+        b += `<path d="M46 66 Q100 44 154 66" stroke="${O}" stroke-width="6" fill="none"/>` + gg + mirror(gg) + `<path d="M95 56 Q100 52 105 56" stroke="${O}" stroke-width="4" fill="none"/>`;
+        b += x.byPose((p) => {
+          const hole = `<path d="M64 92 Q80 82 96 94 Q96 106 82 107 Q66 105 64 92Z" fill="${SK}" stroke="${O}" stroke-width="3"/>`;
+          let s = hole + mirror(hole) + face(p, { noMouth: true, noCheeks: true, eye: "#3aa86a" });
+          s += p == 2 ? `<path d="M90 122 Q100 120 110 122 Q108 132 100 133 Q92 132 90 122Z" fill="#7a1f2b" stroke="${O}" stroke-width="3"/><path d="M92 123 H108" stroke="#fff" stroke-width="2.5"/>` : `<path d="M90 124 Q95 120 100 123 Q105 120 110 124 Q100 132 90 124Z" fill="#d0283a" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>` + (p == 0 ? `<path d="M106 122 L112 119" stroke="${O}" stroke-width="2.5" stroke-linecap="round"/>` : "");
+          return s;
+        });
+        b += x.arm("L", armIn) + x.arm("R", whipR);
+        const [wx, wy] = tip(this, "R", 1, 44);
+        b += x.when([1], `<path d="M${f(wx)} ${f(wy)} Q${f(wx + 30)} ${f(wy - 40)} ${f(wx + 56)} ${f(wy - 6)} Q${f(wx + 76)} ${f(wy + 22)} ${f(wx + 56)} ${f(wy + 46)}" stroke="${O}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M${f(wx)} ${f(wy)} Q${f(wx + 30)} ${f(wy - 40)} ${f(wx + 56)} ${f(wy - 6)} Q${f(wx + 76)} ${f(wy + 22)} ${f(wx + 56)} ${f(wy + 46)}" stroke="${WH}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`);
+        const [hx, hy] = tip(this, "R", 2, 44), E = [204, 172];
+        const wd = `M${f(hx)} ${f(hy)} Q${f(hx + 14)} ${f(hy - 26)} ${f(hx + 28)} ${f(hy - 4)} Q${f(hx + 38)} ${f(hy + 14)} ${E[0]} ${E[1]}`;
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px"><path d="${wd}" stroke="#fff" stroke-width="14" fill="none" stroke-linecap="round" opacity=".35"/><path d="${wd}" stroke="${O}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="${wd}" stroke="${WH}" stroke-width="3.5" fill="none" stroke-linecap="round"/></g><g class="pop">${burst(E[0], E[1], 18, "#fff", "#ffd34a")}</g><g class="pop">${txt(E[0] - 8, E[1] - 26, 15, "#fff", "CLAC !", -8)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "harley",
+      name: "Harley Quinn",
+      role: "Chaos",
+      rarity: "\xC9pique",
+      rar: "var(--epi)",
+      tint: "#ffdbe4",
+      tint2: "#a8b4e8",
+      stats: [4, 3, 2],
+      atk: "Coup de maillet g\xE9ant qui \xE9tourdit.",
+      skill: "Folie douce : effet al\xE9atoire \xE0 chaque coup (double d\xE9g\xE2ts, recul ou confettis qui ralentissent).",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 14, R: -16 }, { L: 34, R: -150, body: [-4, -6, -6, 1, 1.04] }, { L: 26, R: -78, body: [6, 0, 4, 1.04, 0.96] }],
+      draw(x) {
+        const R = "#e0323e", RD = "#a01e2a", K = "#2a2436", KD = "#15111d", HB = "#f6dc8a", HBD = "#d6b45a", PS = "#fbe9ea", PSD = "#e6c4c8", W = "#f4f4f8", WO = "#c9935a", WOD = "#8a5a32";
+        const mallet = (sx, sy) => `<rect x="${sx - 4.5}" y="${sy + 30}" width="9" height="40" rx="4" fill="${WO}" stroke="${O}" stroke-width="3.5"/><path d="M${sx - 4.5} ${sy + 50} H${sx + 4.5} M${sx - 4.5} ${sy + 62} H${sx + 4.5}" stroke="${WOD}" stroke-width="2.5"/>` + clip((a) => `<rect x="${sx - 30}" y="${sy + 66}" width="60" height="32" rx="9" ${a}/>`, `<rect x="${sx - 30}" y="${sy + 66}" width="30" height="32" fill="${R}"/><rect x="${sx}" y="${sy + 66}" width="30" height="32" fill="${K}"/><rect x="${sx - 30}" y="${sy + 88}" width="60" height="10" fill="${O}" opacity=".18"/>`) + `<rect x="${sx - 30}" y="${sy + 66}" width="60" height="32" rx="9" fill="none" stroke="${O}" stroke-width="4.5"/><rect x="${sx - 34}" y="${sy + 64}" width="8" height="36" rx="3" fill="${W}" stroke="${O}" stroke-width="3"/><rect x="${sx + 26}" y="${sy + 64}" width="8" height="36" rx="3" fill="${W}" stroke="${O}" stroke-width="3"/>` + gloss(sx - 16, sy + 73, 8, 3, -10, 0.5);
+        const armL = (sx, sy) => limb(sx, sy, sx, sy + 38, PS, 13) + shaded((a) => `<rect x="${sx - 9}" y="${sy + 20}" width="18" height="14" rx="4" ${a}/>`, R, RD, -2, -2) + hand(sx, sy + 38, R);
+        const armR = (sx, sy) => limb(sx, sy, sx, sy + 38, PS, 13) + shaded((a) => `<rect x="${sx - 9}" y="${sy + 20}" width="18" height="14" rx="4" ${a}/>`, K, KD, -2, -2) + mallet(sx, sy) + hand(sx, sy + 38, K);
+        let b = "";
+        const tail = (c, d) => shaded((a) => `<path d="M54 64 Q20 66 14 108 Q12 128 24 140 Q28 120 36 108 Q44 90 58 84Z" ${a}/>`, c, d, -3, -3) + `<path d="M26 128 Q24 108 40 92" stroke="${d}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+        b += tail(R, RD) + mirror(tail(K, "#4a4466"));
+        b += `<circle cx="52" cy="70" r="7" fill="${W}" stroke="${O}" stroke-width="3"/><circle cx="148" cy="70" r="7" fill="${W}" stroke="${O}" stroke-width="3"/>`;
+        b += clip((a) => `<path d="${torsoD}" ${a}/>`, `<rect x="40" y="130" width="60" height="80" fill="${R}"/><rect x="100" y="130" width="60" height="80" fill="${K}"/><path d="M40 210 V180 Q70 200 100 186 Q130 200 160 180 V210Z" fill="${O}" opacity=".12"/>`) + `<path d="${torsoD}" fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>`;
+        b += `<g stroke="${O}" stroke-width="2.5" stroke-linejoin="round"><path d="M86 166 L92 158 L98 166 L92 174Z" fill="${K}"/><path d="M102 166 L108 158 L114 166 L108 174Z" fill="${R}"/></g>`;
+        b += `<path d="M70 140 L78 150 L86 142 L94 152 L100 144 L106 152 L114 142 L122 150 L130 140 Q100 132 70 140Z" fill="${W}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M58 188 Q100 196 142 188 L142 200 Q100 208 58 200Z" ${a}/>`, "#f6c64a", "#cf962a", -2, -2);
+        b += head(PS, PSD);
+        b += shaded((a) => `<path d="M46 92 Q38 30 100 24 Q162 30 154 92 Q148 66 130 60 Q118 68 104 56 Q94 70 72 64 Q54 70 46 92Z" ${a}/>`, HB, HBD, -4, -4) + gloss(80, 36, 13, 5, -20, 0.45);
+        b += domino(K, "#4a4466");
+        b += x.byPose((p) => {
+          let s = face(p, { eye: "#3a8ad8", noCheeks: true, noMouth: true });
+          s += `<path d="M128 112 q-3 -4 -6 0 q-3 -4 -6 0 q0 5 6 9 q6 -4 6 -9Z" fill="${K}" stroke="${O}" stroke-width="1.5"/>`;
+          s += p == 0 ? `<path d="M88 116 Q100 128 112 116 Q100 120 88 116Z" fill="#d0283a" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>` : p == 1 ? `<path d="M88 115 Q100 132 112 115Z" fill="#7a1f2b" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M90 116 H110" stroke="#fff" stroke-width="3"/>` : `<path d="M86 113 Q100 111 114 113 Q112 132 100 133 Q88 132 86 113Z" fill="#7a1f2b" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M88 114 H112" stroke="#fff" stroke-width="3"/><path d="M93 126 Q100 122 107 126" stroke="#e85a6e" stroke-width="3" fill="none"/>`;
+          return s;
+        });
+        b += x.arm("L", armL) + x.arm("R", armR);
+        const [mx, my] = tip(this, "R", 2, 82);
+        b += x.when([1], `<g class="fx">${[[40, 60, "#e0323e"], [160, 20, "#3a8ad8"], [30, 120, "#f6c64a"], [170, 96, "#e0323e"]].map(([cx, cy, c]) => `<polygon points="${star(cx, cy, 6, 2.5, 4)}" fill="${c}" stroke="${O}" stroke-width="1.5"/>`).join("")}</g>`);
+        b += x.when([2], `<g class="grow" style="transform-origin:${f(mx)}px ${f(my)}px">${swoosh(`M${f(mx - 40)} ${f(my - 96)} Q${f(mx + 14)} ${f(my - 80)} ${f(mx + 4)} ${f(my - 30)}`, "#ffd0dc", 14)}</g><g class="pop">${burst(f(mx + 26), f(my), 24, "#ffd34a", "#fff")}</g>` + shock(mx + 30, my, 10, 30, "#ff8aa8") + `<g class="pop">${[[mx - 14, my - 40, "#e0323e"], [mx + 20, my - 34, "#3a8ad8"], [mx + 18, my + 32, "#f6c64a"]].map(([cx, cy, c]) => `<polygon points="${star(cx, cy, 7, 3, 4)}" fill="${c}" stroke="${O}" stroke-width="2"/>`).join("")}${txt(f(mx - 12), f(my - 54), 18, "#fff", "PAF !", -8)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "martian",
+      name: "Martian Manhunter",
+      role: "Contr\xF4le",
+      rarity: "\xC9pique",
+      rar: "var(--epi)",
+      tint: "#d4f0d6",
+      tint2: "#78c08a",
+      stats: [3, 3, 5],
+      atk: "Onde t\xE9l\xE9pathique qui traverse la ligne.",
+      skill: "M\xE9tamorphe : copie l\u2019attaque du h\xE9ros adjacent le plus fort pendant 6 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 12, R: -12 }, { L: 160, R: -20, body: [0, -4, 0, 1, 1.02] }, { L: 150, R: -92, body: [4, -4, 3, 1, 1] }],
+      draw(x) {
+        const G = "#52b05c", GD = "#2f7a3a", B = "#2f55b8", BD = "#1f3a85", R = "#d42e35", RD = "#9b1d27", K = "#2a2436", RE = "#ff5a3a", PS = "#ff7a5a";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, G, 15) + shaded((a) => `<rect x="${sx - 10}" y="${sy + 22}" width="20" height="12" rx="4" ${a}/>`, B, BD, -2, -2) + hand(sx, sy + 38, G);
+        let b = "";
+        const collar = `<path d="M48 150 Q20 104 34 50 Q52 96 76 134Z" fill="${B}" stroke="${O}" stroke-width="5" stroke-linejoin="round"/><path d="M44 132 Q30 100 36 66" stroke="${BD}" stroke-width="4" fill="none"/>`;
+        b += cape(B, BD, 10) + collar + mirror(collar);
+        b += torso(G, GD);
+        b += `<path d="M64 146 L136 196 M136 146 L64 196" stroke="${O}" stroke-width="13" stroke-linecap="round"/><path d="M64 146 L136 196 M136 146 L64 196" stroke="${R}" stroke-width="7.5" stroke-linecap="round"/>`;
+        b += `<circle cx="100" cy="171" r="9" fill="${R}" stroke="${O}" stroke-width="3.5"/><circle cx="98" cy="169" r="3" fill="#ffd0c8"/>`;
+        b += shaded((a) => `<path d="M58 190 Q100 198 142 190 L142 202 Q100 208 58 202Z" ${a}/>`, K, "#15111d", -2, -2);
+        b += `<path d="M66 140 L60 150 M134 140 L140 150" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`;
+        b += head(G, GD);
+        b += `<path d="M58 80 Q78 66 98 80 L100 84 L102 80 Q122 66 142 80" stroke="${GD}" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M58 80 Q78 66 98 80 M102 80 Q122 66 142 80" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += `<path d="M70 52 Q86 44 100 50 M114 46 Q124 44 132 50" stroke="${GD}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M96 104 Q100 110 104 104" stroke="${GD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += x.byPose((p) => {
+          const e = `<path d="M66 88 L94 92 Q92 102 82 103 Q68 102 66 88Z" fill="${RE}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><ellipse cx="78" cy="94" rx="4" ry="2.2" fill="#ffe0c8"/>`;
+          let s = (p ? `<g class="fx"><ellipse cx="80" cy="96" rx="18" ry="11" fill="${RE}" opacity=".35"/><ellipse cx="120" cy="96" rx="18" ry="11" fill="${RE}" opacity=".35"/></g>` : "") + e + mirror(e);
+          s += p == 2 ? `<path d="M90 118 Q100 116 110 118 Q108 128 100 129 Q92 128 90 118Z" fill="#2f1a22" stroke="${O}" stroke-width="3"/>` : `<path d="M88 120 Q100 116 112 120" stroke="${O}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+          return s;
+        });
+        b += x.arm("L", armIn) + x.arm("R", armIn);
+        b += x.when([1], `<g class="fx">${[22, 34, 46].map((r) => `<circle cx="100" cy="84" r="${r + 40}" fill="none" stroke="${PS}" stroke-width="3" opacity="${f(1 - r / 60)}"/>`).join("")}</g>`);
+        const arc = (cx, r) => `<path d="M${cx} ${84 - r} Q${cx + r * 0.6} 84 ${cx} ${84 + r}" stroke="${O}" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M${cx} ${84 - r} Q${cx + r * 0.6} 84 ${cx} ${84 + r}" stroke="${PS}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`;
+        b += x.when([2], `<g class="grow" style="transform-origin:150px 84px">${arc(156, 16)}${arc(176, 26)}${arc(198, 36)}</g><g class="pop">${sparks(214, 84, 22, PS, 8)}</g>`);
+        return shadow() + x.body(b);
+      }
+    },
+    {
+      id: "greenarrow",
+      name: "Green Arrow",
+      role: "Pr\xE9cision",
+      rarity: "Rare",
+      rar: "var(--rare)",
+      tint: "#dcf0cf",
+      tint2: "#8cc472",
+      stats: [3, 4, 5],
+      atk: "Fl\xE8che pr\xE9cise sur l\u2019ennemi le plus \xE9loign\xE9.",
+      skill: "Fl\xE8ches gadgets : une sur trois est une fl\xE8che-filet qui immobilise 1 s.",
+      sh: { L: [68, 150], R: [132, 150] },
+      poses: [{ L: 14, R: -50 }, { L: -100, R: -90, body: [-4, 0, -3, 1, 1] }, { L: -40, R: -90, body: [-6, 0, -4, 1, 1] }],
+      draw(x) {
+        const G = "#3f8a3a", GD = "#286024", GL = "#62b04e", BR = "#6b4a2a", BRD = "#47301a", HB = "#e2b84a", HBD = "#b98a2a", FL = "#9dff7a";
+        const bow = (sx, sy) => {
+          const y = sy + 38;
+          const d = `M${sx - 38} ${y - 12} Q${sx} ${y + 22} ${sx + 38} ${y - 12}`;
+          return `<path d="${d}" stroke="${O}" stroke-width="11" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${BR}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M${sx - 30} ${y - 8} Q${sx - 14} ${y + 6} ${sx - 4} ${y + 6}" stroke="#a07848" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+        };
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, G, 14) + shaded((a) => `<rect x="${sx - 9}" y="${sy + 22}" width="18" height="12" rx="4" ${a}/>`, BR, BRD, -2, -2);
+        const armR = (sx, sy) => armIn(sx, sy) + bow(sx, sy) + hand(sx, sy + 38, G);
+        const armL = (sx, sy) => armIn(sx, sy) + hand(sx, sy + 38, G);
+        let b = "";
+        b += `<g transform="rotate(-24 52 120)">${shaded((a) => `<rect x="40" y="86" width="22" height="70" rx="7" ${a}/>`, BR, BRD, -3, -3)}<path d="M46 86 l-4 -14 l6 4 l3 -6 l2 16 M54 86 l0 -16 l5 6 l5 -4 l-3 14" fill="${GL}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+        b += shaded((a) => `<path d="M34 112 Q26 30 100 6 Q174 30 166 112 Q164 144 140 152 L60 152 Q36 144 34 112Z" ${a}/>`, G, GD, -4, -4);
+        b += torso(G, GD);
+        b += `<path d="M64 142 L136 198" stroke="${O}" stroke-width="11" stroke-linecap="round"/><path d="M64 142 L136 198" stroke="${BR}" stroke-width="6" stroke-linecap="round"/>`;
+        b += shaded((a) => `<path d="M58 186 Q100 194 142 186 L142 198 Q100 206 58 198Z" ${a}/>`, BR, BRD, -2, -2) + `<rect x="93" y="187" width="14" height="11" rx="2" fill="#cfd5e0" stroke="${O}" stroke-width="2.5"/>`;
+        b += `<path d="M72 138 Q100 152 128 138 L122 148 Q100 158 78 148Z" fill="${GD}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+        b += head(SK, SKD);
+        const hoodTop = (a) => `<path d="M44 96 Q42 30 100 18 Q158 30 156 96 Q150 64 130 56 Q100 46 70 56 Q50 64 44 96Z" ${a}/>`;
+        b += hoodShade(headS, 60, 104, 0.45);
+        b += shaded(hoodTop, G, GD, -4, -4) + gloss(74, 34, 13, 5, -30, 0.4) + `<path d="M100 20 V44" stroke="${GD}" stroke-width="3" stroke-linecap="round"/>`;
+        b += shaded((a) => `<path d="M60 66 Q78 56 96 64 L92 70 Q78 66 64 72Z" ${a}/>`, HB, HBD, -2, -2) + mirror(shaded((a) => `<path d="M60 66 Q78 56 96 64 L92 70 Q78 66 64 72Z" ${a}/>`, HB, HBD, -2, -2));
+        b += domino(G, GD);
+        b += x.byPose((p) => {
+          let s = face(p, { eye: "#3a7a3a", noMouth: true, noCheeks: true });
+          s += `<path d="M84 116 Q92 110 100 114 Q108 110 116 116 Q108 118 100 116 Q92 118 84 116Z" fill="${HB}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+          s += p == 2 ? `<path d="M92 120 Q100 118 108 120 Q106 126 100 127 Q94 126 92 120Z" fill="#7a1f2b" stroke="${O}" stroke-width="2.5"/>` : `<path d="M92 121 Q100 124 108 120" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+          s += `<path d="M92 128 Q100 132 108 128 L104 142 Q100 146 96 142Z" fill="${HB}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+          return s;
+        });
+        b += x.arm("R", armR);
+        const cR = this.sh["R"];
+        const ends = (p) => {
+          const a = this.poses[p]["R"] || 0;
+          return [rot([cR[0] - 38, cR[1] + 26], cR, a), rot([cR[0] + 38, cR[1] + 26], cR, a)];
+        };
+        b += x.byPose((p) => {
+          const [e1, e2] = ends(p);
+          const m = p == 1 ? tip(this, "L", 1, 40) : [(e1[0] + e2[0]) / 2, (e1[1] + e2[1]) / 2];
+          let s = `<path d="M${f(e1[0])} ${f(e1[1])} L${f(m[0])} ${f(m[1])} L${f(e2[0])} ${f(e2[1])}" stroke="#f2ead6" stroke-width="2.5" fill="none" stroke-linejoin="round"/>`;
+          if (p == 1) {
+            const [hx, hy] = tip(this, "R", 1, 38);
+            s += `<path d="M${f(m[0])} ${f(m[1])} L${f(hx + 22)} ${f(hy - 2)}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${f(m[0])} ${f(m[1])} L${f(hx + 22)} ${f(hy - 2)}" stroke="#e9dcc5" stroke-width="3" stroke-linecap="round"/><path d="M${f(hx + 20)} ${f(hy - 8)} L${f(hx + 34)} ${f(hy - 2)} L${f(hx + 20)} ${f(hy + 4)}Z" fill="#cfd5e0" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>` + glow(hx + 30, hy - 2, 12, FL);
+          }
+          return s;
+        });
+        b += x.arm("L", armL);
+        const A = [206, 148];
+        const arw = `<g transform="translate(${A[0]} ${A[1]}) rotate(-4)"><path d="M-44 0 H0" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M-44 0 H0" stroke="#e9dcc5" stroke-width="3" stroke-linecap="round"/><path d="M-44 0 l-6 -7 h10 Z M-44 0 l-6 7 h10 Z" fill="${GL}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-2 -6 L12 0 L-2 6Z" fill="#cfd5e0" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+        b += x.when([2], `<g class="grow" style="transform-origin:150px 150px"><path d="M150 152 L${A[0] - 44} ${A[1] + 2}" stroke="${FL}" stroke-width="12" stroke-linecap="round" opacity=".35"/><path d="M150 152 L${A[0] - 44} ${A[1] + 2}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/></g><g class="pop">${arw}</g><g class="pop">${burst(A[0] + 18, A[1] - 1, 18, FL, "#fff")}</g>`);
+        return shadow() + x.body(b);
+      }
+    }
+  ];
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/bosses/dcVillains.ts
+  var BUST = "M24 206 C20 152 54 128 100 126 C146 128 180 152 176 206Z";
+  var bust = (c, d, path = BUST) => shaded((a) => `<path d="${path}" ${a}/>`, c, d, -10, -4);
+  var padS = (a) => `<path d="M24 156 Q22 124 50 120 Q78 124 78 152 Q50 164 24 156Z" ${a}/>`;
+  var pad = (c, d, trim) => shaded(padS, c, d, -4, -4) + (trim ? `<path d="M28 146 Q50 154 76 144" stroke="${trim}" stroke-width="3.5" fill="none"/>` : "") + gloss(40, 130, 9, 4, -30, 0.5);
+  var cloud = (pts, c, c2) => pts.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + 4}" fill="${O}"/>`).join("") + pts.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join("") + pts.map(([x, y, r]) => `<circle cx="${f(x - r * 0.3)}" cy="${f(y - r * 0.3)}" r="${f(r * 0.45)}" fill="${c2}" opacity=".8"/>`).join("");
+  function skyline(seed, col, lit) {
+    const r = rnd(seed);
+    let s = "", xx = -44;
+    while (xx < 244) {
+      const w = 16 + r() * 22, h = 30 + r() * 70, y = 232 - h;
+      s += `<rect x="${f(xx)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" fill="${col}"/>`;
+      for (let i = 0; i < 3; i++) if (r() > 0.45) s += `<rect x="${f(xx + 4 + r() * (w - 10))}" y="${f(y + 6 + r() * (h - 20))}" width="3.5" height="5" fill="${lit}" opacity=".7"/>`;
+      xx += w + 2;
+    }
+    return `<g opacity=".55">${s}</g>`;
+  }
+  function zap(pts, c, w = 9) {
+    const d = "M" + pts.map((p) => p.map(f).join(" ")).join(" L");
+    return `<g class="fx"><path d="${d}" stroke="${c}" stroke-width="${w + 16}" fill="none" stroke-linejoin="round" stroke-linecap="round" opacity=".25"/><path d="${d}" stroke="${O}" stroke-width="${w + 7}" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="#fff" stroke-width="${f(w * 0.35)}" fill="none" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+  }
+  var omega = (x, y, s, c) => {
+    const d = "M-11 9 H-4 Q-13 1 -11 -6 Q-8 -14 0 -14 Q8 -14 11 -6 Q13 1 4 9 H11";
+    return `<g transform="translate(${f(x)} ${f(y)}) scale(${s})"><path d="${d}" stroke="${O}" stroke-width="8" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+  };
+  var DC_BOSSES = [
+    /* ---------- Joker ---------- */
+    {
+      id: "joker",
+      name: "Joker",
+      stats: [3, 4, 4],
+      tint: "#5e3a8c",
+      tint2: "#1a1030",
+      mt: "#f2e6fb",
+      mt2: "#cdb2ea",
+      glow: "#9dff5a",
+      shake: true,
+      power: "Gaz hilarant : un nuage vert fait rire 3 h\xE9ros, qui ratent leurs attaques pendant 4 s.",
+      minionTxt: "Hommes de main clowns : nombreux, lancent des tartes pi\xE9g\xE9es.",
+      sh: { L: [52, 152], R: [148, 152] },
+      poses: [{ L: 18, R: -18 }, { L: 30, R: -150, body: [2, -4, 4, 1, 1.03] }, { L: 40, R: -96, body: [-6, 0, -6, 1, 1] }],
+      bg() {
+        let s = skyline(5, "#120a22", "#ffe27a");
+        const r = rnd(41);
+        for (let i = 0; i < 8; i++) s += twinkle(f(-26 + r() * 250), f(-36 + r() * 110), f(3 + r() * 3), "#d8c4ff", 0.5);
+        const card = (x, y, a) => `<g transform="rotate(${a} ${x} ${y})" opacity=".45"><rect x="${x - 9}" y="${y - 13}" width="18" height="26" rx="3" fill="#f4f1f6"/><path d="M${x} ${y - 5} l4 5 l-4 5 l-4 -5Z" fill="#d0283a"/></g>`;
+        return s + card(-16, 24, -20) + card(208, 6, 18) + card(222, 92, -12);
+      },
+      draw(x) {
+        const PU = "#7b3fb0", PUD = "#53278a", GR = "#3faa4a", GRD = "#26803a", OR = "#f28a2a", ORD = "#c45e14", W = "#f4f1f6", WD = "#c9c0d8", H = "#5ec84a", HD = "#2f8a2f", GAS = "#9dff5a", GAS2 = "#e6ffd0", Y = "#ffe23a";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, PU, 22) + `<rect x="${sx - 14}" y="${sy + 28}" width="28" height="9" rx="3" fill="${W}" stroke="${O}" stroke-width="3"/>` + hand(sx, sy + 48, PUD, 14);
+        const armR = (sx, sy) => armIn(sx, sy) + x.when([1], glow(sx, sy + 52, 20, Y) + `<circle cx="${sx}" cy="${sy + 52}" r="7" fill="#cfd5e0" stroke="${O}" stroke-width="2.5"/>`);
+        let b = "";
+        b += bust(PU, PUD) + gloss(48, 166, 12, 5, -55, 0.22);
+        b += shaded((a) => `<path d="M72 132 Q100 140 128 132 L118 206 L82 206Z" ${a}/>`, GR, GRD, -4, -3);
+        b += `<circle cx="100" cy="174" r="3.5" fill="${Y}" stroke="${O}" stroke-width="2"/><circle cx="100" cy="190" r="3.5" fill="${Y}" stroke="${O}" stroke-width="2"/>`;
+        b += shaded((a) => `<path d="M86 132 Q100 138 114 132 L100 160Z" ${a}/>`, OR, ORD, -2, -2);
+        b += `<path d="M86 140 L100 146 L86 152Z M114 140 L100 146 L114 152Z" fill="${PUD}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="146" r="4" fill="${PU}" stroke="${O}" stroke-width="2.5"/>`;
+        const lapel = `<path d="M70 132 L82 206 L60 186 L64 156 L54 146Z" fill="${PUD}" stroke="${O}" stroke-width="4" stroke-linejoin="round"/>`;
+        b += lapel + mirror(lapel);
+        b += x.when([1, 2], glow(66, 160, 14, GAS));
+        b += `<g stroke="${O}" stroke-width="2.5">${[0, 1, 2, 3, 4].map((i) => `<circle cx="${f(66 + Math.cos(i * 1.256) * 6)}" cy="${f(160 + Math.sin(i * 1.256) * 6)}" r="5" fill="${W}"/>`).join("")}</g><circle cx="66" cy="160" r="4" fill="${Y}" stroke="${O}" stroke-width="2"/>`;
+        const faceS = (a) => `<path d="M54 96 Q52 50 100 46 Q148 50 146 96 L144 126 Q138 164 100 168 Q62 164 56 126Z" ${a}/>`;
+        b += shaded(faceS, W, WD, -4, -4);
+        b += hoodShade(faceS, 56, 108, 0.42, "#2a1440");
+        b += shaded((a) => `<path d="M46 108 Q34 60 54 34 Q60 4 92 6 Q100 -10 116 2 Q146 0 154 30 Q172 52 156 106 Q154 76 140 64 Q148 50 136 44 Q126 58 104 52 Q96 62 78 56 Q60 60 62 72 Q50 82 46 108Z" ${a}/>`, H, HD, -4, -4);
+        b += `<path d="M64 36 Q74 18 92 18 M110 14 Q130 14 142 30 M54 60 Q54 46 64 40" stroke="#a6f08a" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+        b += `<path d="M64 86 Q80 80 94 92 M136 86 Q120 80 106 92" stroke="#3a2152" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+        b += `<ellipse cx="80" cy="100" rx="17" ry="13" fill="#6a3f8a" opacity=".45"/><ellipse cx="120" cy="100" rx="17" ry="13" fill="#6a3f8a" opacity=".45"/>`;
+        b += x.byPose((p) => {
+          let s = geyes("#c6ff4a", { x: 81, y: 100, s: p == 2 ? 1.05 : 0.95, sq: p == 1 ? 0.7 : 1 });
+          const open = [140, 148, 156][p];
+          s += `<path d="M58 118 Q100 ${open - 10} 142 118 Q132 ${open + 4} 100 ${open + 6} Q68 ${open + 4} 58 118Z" fill="${p ? "#4a0f22" : "#fff"}" stroke="${O}" stroke-width="4" stroke-linejoin="round"/>`;
+          if (p) s += `<path d="M62 120 Q100 ${open - 6} 138 120 L134 126 Q100 ${open - 2} 66 126Z" fill="#fff" stroke="${O}" stroke-width="2"/><path d="M84 ${open} Q100 ${open - 6} 116 ${open}" stroke="#e85a6e" stroke-width="4" fill="none"/>`;
+          else for (let i = 1; i < 9; i++) {
+            const t = i / 9, xx = 58 + 84 * t;
+            s += `<path d="M${f(xx)} ${f(118 + Math.sin(t * Math.PI) * (open - 128))} V${f(118 + Math.sin(t * Math.PI) * (open - 114))}" stroke="${O}" stroke-width="1.8"/>`;
+          }
+          s += `<path d="M58 118 Q100 ${open - 10} 142 118 Q132 ${open + 4} 100 ${open + 6} Q68 ${open + 4} 58 118Z" fill="none" stroke="#d0283a" stroke-width="3" stroke-linejoin="round" opacity=".9"/>`;
+          s += `<path d="M52 112 Q56 120 58 118 M148 112 Q144 120 142 118" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+          return s;
+        });
+        const pads = pad(PU, PUD);
+        b += x.arm("L", armIn) + pads + x.arm("R", armR) + mirror(pads);
+        const [bx, by] = tip(this, "R", 1, 52);
+        b += x.when([1], sparks(bx, by, 26, Y, 8) + `<g class="fx">${txt(18, 4, 22, GAS, "HI HI", -12)}</g>`);
+        const [hx, hy] = tip(this, "R", 2, 50), T = [198, 168];
+        const gas = cloud([[T[0] - 22, T[1] - 14, 15], [T[0], T[1] - 26, 18], [T[0] + 24, T[1] - 12, 16], [T[0] - 14, T[1] + 12, 16], [T[0] + 18, T[1] + 16, 18], [T[0] + 34, T[1] - 34, 11], [hx + 8, hy + 2, 10]], GAS, GAS2);
+        const card = (cx, cy, a) => `<g transform="rotate(${a} ${cx} ${cy})"><rect x="${cx - 11}" y="${cy - 15}" width="22" height="30" rx="4" fill="#fff" stroke="${O}" stroke-width="3"/><path d="M${cx} ${cy - 7} l5 7 l-5 7 l-5 -7Z" fill="#d0283a" stroke="${O}" stroke-width="1.5"/></g>`;
+        const fxg = x.when([2], `<g class="pop">${gas}</g><g class="pop">${token(T[0], T[1], 13, "#3c8bf0", `<path d="M${T[0] - 6} ${T[1] + 2} q6 6 12 0" stroke="#fff" stroke-width="2.5" fill="none"/>`)}</g><g class="pop">${card(T[0] - 40, T[1] - 64, -18)}${card(T[0] + 4, T[1] - 74, 14)}</g><g class="pop">${txt(T[0] - 10, T[1] + 52, 22, GAS, "HA HA HA !", -6)}</g>`);
+        return shadow(88) + x.body(b) + fxg;
+      }
+    },
+    /* ---------- Lex Luthor ---------- */
+    {
+      id: "luthor",
+      name: "Lex Luthor",
+      stats: [4, 2, 4],
+      tint: "#3f7a5a",
+      tint2: "#10261c",
+      mt: "#e2f5e6",
+      mt2: "#a9d8b2",
+      glow: "#7dff5a",
+      power: "Armure de guerre : rayon de kryptonite qui d\xE9sactive 2 h\xE9ros pendant 5 s.",
+      minionTxt: "Robots LexCorp : blind\xE9s, r\xE9sistent aux premiers coups.",
+      sh: { L: [52, 152], R: [148, 152] },
+      poses: [{ L: 16, R: -16 }, { L: 26, R: -70, body: [-2, -4, -3, 1, 1.02] }, { L: 30, R: -112, body: [-8, 0, -6, 1, 1] }],
+      bg() {
+        let s = skyline(17, "#0b1a14", "#9dff7a");
+        const r = rnd(29);
+        for (let i = 0; i < 8; i++) s += twinkle(f(-26 + r() * 250), f(-36 + r() * 100), f(3 + r() * 3), "#c8ffd0", 0.5);
+        return s + `<g opacity=".45"><rect x="166" y="-30" width="34" height="200" fill="#16302a"/><text x="183" y="-6" text-anchor="middle" font-family="Lilita One, Arial Rounded MT Bold, sans-serif" font-size="22" fill="#9dff7a">L</text></g>`;
+      },
+      draw(x) {
+        const G = "#3f9a52", GD = "#26703a", PU = "#6b3fa0", PUD = "#47267a", M = "#c9d0de", MD = "#8c95ab", K = "#7dff5a", SKN = "#f2c39a", SKND = "#c98f68";
+        const gaunt = (sx, sy) => shaded((a) => `<rect x="${sx - 17}" y="${sy + 24}" width="34" height="30" rx="9" ${a}/>`, PU, PUD, -3, -3) + `<path d="M${sx - 17} ${sy + 36} H${sx + 17}" stroke="${PUD}" stroke-width="3"/>`;
+        const armL = (sx, sy) => limb(sx, sy, sx, sy + 34, G, 24) + gaunt(sx, sy) + hand(sx, sy + 56, PU, 15);
+        const armR = (sx, sy) => limb(sx, sy, sx, sy + 34, G, 24) + gaunt(sx, sy) + shaded((a) => `<rect x="${sx - 13}" y="${sy + 50}" width="26" height="18" rx="5" ${a}/>`, M, MD, -2, -2) + x.byPose((p) => p ? glow(sx, sy + 70, p == 2 ? 22 : 16, K) : "") + x.byPose((p) => `<ellipse cx="${sx}" cy="${sy + 70}" rx="10" ry="5" fill="${p ? "#e8ffe0" : "#2a5a3a"}" stroke="${O}" stroke-width="3"/>`);
+        let b = "";
+        b += bust(G, GD) + gloss(48, 166, 12, 5, -55, 0.25);
+        b += shaded((a) => `<path d="M58 140 Q100 124 142 140 L134 196 Q100 210 66 196Z" ${a}/>`, PU, PUD, -4, -4);
+        b += `<path d="M66 160 Q100 172 134 160 M70 182 Q100 194 130 182" stroke="${PUD}" stroke-width="3" fill="none"/>`;
+        b += x.when([1, 2], glow(100, 166, 28, K));
+        b += x.byPose((p) => `<path d="M100 150 L114 158 L114 174 L100 182 L86 174 L86 158Z" fill="${p ? "#d8ffc8" : K}" stroke="${O}" stroke-width="4" stroke-linejoin="round"/>`) + `<path d="M95 160 L100 156 L105 160" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+        b += shaded((a) => `<path d="M56 140 Q54 116 66 106 L134 106 Q146 116 144 140 Q100 152 56 140Z" ${a}/>`, G, GD, -3, -3) + `<path d="M64 128 Q100 138 136 128" stroke="${GD}" stroke-width="3" fill="none"/>`;
+        const faceS = (a) => `<path d="M56 90 Q54 40 100 38 Q146 40 144 90 L142 120 Q136 150 100 152 Q64 150 58 120Z" ${a}/>`;
+        b += shaded(faceS, SKN, SKND, -4, -4) + gloss(78, 54, 16, 8, -30, 0.6) + gloss(118, 48, 5, 3, 20, 0.5);
+        b += hoodShade(faceS, 70, 110, 0.4, "#102a1e");
+        const ear = `<path d="M58 94 Q46 90 46 102 Q48 114 60 112Z" fill="${SKN}" stroke="${O}" stroke-width="3.5"/>`;
+        b += ear + mirror(ear);
+        b += `<path d="M62 84 L94 92 M138 84 L106 92" stroke="${O}" stroke-width="5.5" stroke-linecap="round"/>`;
+        b += x.byPose((p) => geyes(K, { x: 81, y: 100, s: 0.95, sq: p == 1 ? 0.65 : 0.9 }) + evilMouth(p, 100, 128, 13) + `<path d="M96 108 Q100 116 104 108" stroke="${SKND}" stroke-width="2.5" fill="none"/>`);
+        const pads = pad(PU, PUD, G);
+        b += x.arm("L", armL) + pads + x.arm("R", armR) + mirror(pads);
+        const [cx, cy] = tip(this, "R", 1, 70);
+        b += x.when([1], sparks(cx, cy, 26, K, 8));
+        const [hx, hy] = tip(this, "R", 2, 72), T = [202, 182];
+        const fxg = x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px">${beam(hx, hy, T[0], T[1], 14, K)}</g><g class="pop">${burst(f(hx), f(hy), 20, K)}</g><g class="pop">${token(T[0], T[1], 15, "#3c8bf0")}<circle cx="${T[0]}" cy="${T[1]}" r="26" fill="${K}" opacity=".35"/>${sparks(T[0], T[1], 34, K, 8)}</g><g class="pop">${token(T[0] - 44, T[1] + 14, 12, "#9b59e6")}<circle cx="${T[0] - 44}" cy="${T[1] + 14}" r="20" fill="${K}" opacity=".3"/></g>`);
+        return shadow(88) + x.body(b) + fxg;
+      }
+    },
+    /* ---------- Bane ---------- */
+    {
+      id: "bane",
+      name: "Bane",
+      stats: [5, 2, 3],
+      tint: "#5a5a6a",
+      tint2: "#14121c",
+      mt: "#e8e6ee",
+      mt2: "#bdb8cc",
+      glow: "#5aff4a",
+      shake: true,
+      power: "Venin : grossit et devient insensible aux ralentissements, puis frappe le sol et \xE9tourdit une rang\xE9e.",
+      minionTxt: "Mercenaires au venin : lents mais tr\xE8s r\xE9sistants.",
+      sh: { L: [44, 150], R: [156, 150] },
+      poses: [{ L: 16, R: -16 }, { L: 150, R: -150, body: [0, -10, 0, 1.08, 1.06] }, { L: 22, R: -22, body: [0, 6, 0, 1.12, 0.9] }],
+      bg() {
+        let s = "";
+        for (let r2 = 0; r2 < 6; r2++) for (let i = 0; i < 7; i++) s += `<rect x="${-44 + i * 44 + r2 % 2 * 22}" y="${-46 + r2 * 30}" width="40" height="26" rx="3" fill="#2a2636" opacity=".55"/>`;
+        const r = rnd(13);
+        for (let i = 0; i < 6; i++) {
+          const xx = -30 + r() * 260, yy = -40 + r() * 90;
+          s += `<path d="M${f(xx)} ${f(yy)} q3 10 0 16 q-3 -6 0 -16Z" fill="#5aff4a" opacity=".35"/>`;
+        }
+        return s;
+      },
+      draw(x) {
+        const K = "#2c2a38", KD = "#16141e", S = "#d9a77a", SD = "#a87650", V = "#5aff4a", VD = "#2a9a2a", MS = "#3a3648", GY = "#9aa3b5";
+        const veins = (sx, sy) => x.when([1, 2], `<path d="M${sx - 6} ${sy + 8} l5 8 l-4 6 l5 8 M${sx + 6} ${sy + 12} l-4 7 l5 7" stroke="${V}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`);
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 40, S, 28) + veins(sx, sy) + shaded((a) => `<rect x="${sx - 17}" y="${sy + 30}" width="34" height="16" rx="5" ${a}/>`, K, KD, -2, -2) + hand(sx, sy + 54, K, 19);
+        let b = "";
+        b += bust(K, KD, "M14 206 C10 148 50 124 100 122 C150 124 190 148 186 206Z") + gloss(42, 162, 12, 5, -55, 0.2);
+        b += `<path d="M58 160 Q78 176 98 162 M102 162 Q122 176 142 160 M80 186 H120" stroke="${KD}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M60 156 Q78 168 96 158" stroke="#5a5670" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+        b += shaded((a) => `<path d="M16 186 Q100 202 184 186 L185 204 Q100 218 15 204Z" ${a}/>`, "#4a4458", KD, -3, -3);
+        b += x.when([1, 2], glow(100, 194, 20, V));
+        b += shaded((a) => `<rect x="86" y="182" width="28" height="22" rx="6" ${a}/>`, GY, "#646c80", -2, -2) + `<rect x="92" y="186" width="16" height="14" rx="3" fill="${V}" stroke="${O}" stroke-width="2.5"/><path d="M95 189 V197" stroke="#fff" stroke-width="2" opacity=".8"/>`;
+        const tube = (d) => `<path d="${d}" stroke="${O}" stroke-width="12" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${VD}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${V}" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".85"/>`;
+        b += tube("M62 128 Q30 120 26 144") + mirror(tube("M62 128 Q30 120 26 144"));
+        const hs = (a) => `<path d="M50 96 Q48 34 100 30 Q152 34 150 96 L148 124 Q142 158 100 160 Q58 158 52 124Z" ${a}/>`;
+        b += shaded(hs, MS, "#1e1b2a", -4, -4) + gloss(76, 50, 14, 6, -30, 0.35);
+        b += `<path d="M100 32 V70 M66 50 Q84 62 100 62 Q116 62 134 50 M58 120 Q70 132 78 150 M142 120 Q130 132 122 150" stroke="${GY}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += x.byPose((p) => {
+          const hole = `<path d="M60 86 Q80 78 96 96 Q94 110 80 112 Q62 110 60 86Z" fill="#120f1a" stroke="${GY}" stroke-width="3"/>`;
+          let s = hole + mirror(hole) + geyes(p ? V : "#ff5a3a", { x: 80, y: 98, s: 0.85, sq: p == 1 ? 0.7 : 0.9 });
+          s += `<path d="M76 122 Q100 116 124 122 Q120 146 100 148 Q80 146 76 122Z" fill="${S}" stroke="${GY}" stroke-width="3"/>`;
+          s += evilMouth(p, 100, 132, 11);
+          return s;
+        });
+        b += `<path d="M54 112 Q46 100 52 86 M146 112 Q154 100 148 86" stroke="${O}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M54 112 Q46 100 52 86 M146 112 Q154 100 148 86" stroke="${VD}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        const pads = shaded((a) => `<circle cx="40" cy="146" r="22" ${a}/>`, S, SD, -4, -4) + gloss(32, 136, 7, 3, -30, 0.5);
+        b += x.arm("L", armIn) + pads + x.arm("R", armIn) + mirror(pads);
+        b += x.when([1], `<g class="fx">${txt(100, -26, 24, V, "VENIN !", -4)}</g>`);
+        const [lx, ly] = tip(this, "L", 2, 56), [rx, ry] = tip(this, "R", 2, 56);
+        let rocks = "";
+        [[-16, 176], [214, 170], [-30, 150], [228, 140], [24, 150], [178, 146]].forEach(([cx, cy], i) => {
+          rocks += `<polygon points="${cx},${cy} ${cx + 12},${cy - 8} ${cx + 16},${cy + 6} ${cx + 4},${cy + 10}" transform="rotate(${i * 40} ${cx} ${cy})"/>`;
+        });
+        const fxg = x.when([2], shock(100, 206, 130, 18, V) + `<g class="ring"><ellipse cx="100" cy="206" rx="90" ry="12" fill="${V}" opacity=".3"/></g><g class="pop">${burst(f(lx), f(ly), 26, "#f2c95a")}</g><g class="pop">${burst(f(rx), f(ry), 26, "#f2c95a")}</g><g class="pop" fill="#7a6f8a" stroke="${O}" stroke-width="3" stroke-linejoin="round">${rocks}</g><g class="pop">${txt(176, 96, 26, "#fff", "BOUM !", 10)}</g>`);
+        return shadow(96) + x.body(b) + fxg;
+      }
+    },
+    /* ---------- Sinestro ---------- */
+    {
+      id: "sinestro",
+      name: "Sinestro",
+      stats: [4, 3, 5],
+      tint: "#8a7a2a",
+      tint2: "#1c1606",
+      mt: "#fff7d6",
+      mt2: "#f2dc8a",
+      glow: "#ffe23a",
+      power: "Anneau jaune de la peur : une griffe g\xE9ante saisit un h\xE9ros et le fait reculer d\u2019une case.",
+      minionTxt: "Corps Sinestro : volent au-dessus du chemin et tirent de loin.",
+      sh: { L: [52, 152], R: [148, 152] },
+      poses: [{ L: 18, R: -14 }, { L: 24, R: -158, body: [2, -6, 4, 1, 1.03] }, { L: 30, R: -112, body: [-6, 0, -6, 1, 1] }],
+      bg() {
+        let s = "";
+        const r = rnd(53);
+        for (let i = 0; i < 12; i++) s += twinkle(f(-26 + r() * 250), f(-40 + r() * 240), f(2.5 + r() * 3.5), "#fff2a0", 0.5);
+        s += `<g opacity=".18" fill="none" stroke="#ffe23a" stroke-width="8"><circle cx="100" cy="76" r="104"/><path d="M28 30 H172 M28 122 H172"/></g>`;
+        return s;
+      },
+      draw(x) {
+        const K = "#24202e", KD = "#110e18", Y = "#ffd23a", YD = "#c89a1a", S = "#d9508a", SD = "#a8346a", H = "#1c1622", LY = "#ffe23a";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, K, 22) + shaded((a) => `<rect x="${sx - 14}" y="${sy + 26}" width="28" height="14" rx="5" ${a}/>`, Y, YD, -2, -2) + hand(sx, sy + 50, K, 14);
+        const armR = (sx, sy) => armIn(sx, sy) + x.byPose((p) => p ? glow(sx, sy + 56, p == 2 ? 22 : 18, LY) : "") + `<rect x="${sx - 6}" y="${sy + 50}" width="12" height="10" rx="3" fill="${LY}" stroke="${O}" stroke-width="2.5"/>`;
+        let b = "";
+        const collar = `<path d="M48 150 Q22 100 40 44 Q56 96 78 132Z" fill="${K}" stroke="${O}" stroke-width="5" stroke-linejoin="round"/><path d="M44 132 Q32 100 40 64" stroke="${Y}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+        b += collar + mirror(collar);
+        b += bust(K, KD) + gloss(48, 166, 12, 5, -55, 0.22);
+        b += shaded((a) => `<path d="M60 138 Q100 128 140 138 L128 206 L72 206Z" ${a}/>`, Y, YD, -4, -3);
+        b += x.when([1, 2], glow(100, 170, 26, LY));
+        b += `<circle cx="100" cy="170" r="18" fill="${K}" stroke="${O}" stroke-width="4"/><path d="M92 160 H108 L106 166 H94Z M94 168 H106 V178 Q100 182 94 178Z" fill="${LY}" stroke="${O}" stroke-width="2" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M26 186 Q100 200 174 186 L175 202 Q100 216 25 202Z" ${a}/>`, K, KD, -3, -3);
+        const faceS = (a) => `<path d="M56 86 Q54 30 100 26 Q146 30 144 86 L142 122 Q136 158 100 162 Q64 158 58 122Z" ${a}/>`;
+        b += shaded(faceS, S, SD, -4, -4) + gloss(80, 48, 14, 6, -30, 0.45);
+        b += hoodShade(faceS, 60, 108, 0.45, "#2a0a1e");
+        b += shaded((a) => `<path d="M54 92 Q50 40 74 28 Q100 16 126 28 Q150 40 146 92 Q140 62 128 54 L100 76 L72 54 Q60 62 54 92Z" ${a}/>`, "#3a3046", H, -3, -3);
+        const ear = `<path d="M58 92 L40 80 L46 106 L58 112Z" fill="${S}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>`;
+        b += ear + mirror(ear);
+        b += `<path d="M64 84 L94 94 M136 84 L106 94" stroke="${O}" stroke-width="5" stroke-linecap="round"/>`;
+        b += x.byPose((p) => geyes(LY, { x: 81, y: 100, s: 0.95, sq: p == 1 ? 0.6 : 0.85 }) + evilMouth(p, 100, 134, 12) + `<path d="M82 124 Q92 118 100 122 Q108 118 118 124" stroke="${H}" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+        const pads = pad(K, KD, Y);
+        b += x.arm("L", armIn) + pads + x.arm("R", armR) + mirror(pads);
+        const [rx, ry] = tip(this, "R", 1, 56);
+        b += x.when([1], `<g class="fx"><circle cx="${f(rx)}" cy="${f(ry - 34)}" r="22" fill="${LY}" opacity=".3"/><path d="M${f(rx - 12)} ${f(ry - 46)} H${f(rx + 12)} L${f(rx + 9)} ${f(ry - 38)} H${f(rx - 9)}Z M${f(rx - 9)} ${f(ry - 34)} H${f(rx + 9)} V${f(ry - 22)} Q${f(rx)} ${f(ry - 16)} ${f(rx - 9)} ${f(ry - 22)}Z" fill="${LY}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/></g>` + sparks(rx, ry, 24, LY, 7));
+        const [hx, hy] = tip(this, "R", 2, 56), T = [196, 178];
+        let claw = "";
+        for (let i = 0; i < 4; i++) {
+          const a = -0.9 + i * 0.6, x1 = T[0] + Math.cos(a - Math.PI / 2) * 6, y1 = T[1] - 30;
+          const x2 = T[0] + Math.sin(a) * 38, y2 = T[1] - 10 + Math.cos(a) * 6;
+          claw += `<path d="M${f(x1)} ${f(y1)} Q${f(x2)} ${f(y1 - 8)} ${f(x2 * 0.9 + T[0] * 0.1)} ${f(y2 + 22)}" stroke="${O}" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M${f(x1)} ${f(y1)} Q${f(x2)} ${f(y1 - 8)} ${f(x2 * 0.9 + T[0] * 0.1)} ${f(y2 + 22)}" stroke="${LY}" stroke-width="7" fill="none" stroke-linecap="round" opacity=".9"/>`;
+        }
+        const fxg = x.when([2], `<g class="grow" style="transform-origin:${f(hx)}px ${f(hy)}px">${beam(hx, hy, T[0], T[1] - 34, 9, LY)}</g><g class="pop">${token(T[0], T[1], 14, "#3c8bf0")}</g><g class="pop"><ellipse cx="${T[0]}" cy="${T[1] - 30}" rx="18" ry="12" fill="${LY}" stroke="${O}" stroke-width="4"/>${claw}</g><g class="pop">${sparks(T[0], T[1], 42, LY, 8)}</g>`);
+        return shadow(88) + x.body(b) + fxg;
+      }
+    },
+    /* ---------- Black Adam ---------- */
+    {
+      id: "blackadam",
+      name: "Black Adam",
+      stats: [5, 3, 4],
+      tint: "#8a6a2a",
+      tint2: "#22160a",
+      mt: "#fbefd6",
+      mt2: "#e8cc8e",
+      glow: "#ffe066",
+      shake: true,
+      power: "Foudre de Kahndaq : la foudre s\u2019abat sur la colonne la plus puissante et \xE9tourdit 2 s.",
+      minionTxt: "Soldats de Kahndaq : lances et boucliers, avancent en rangs.",
+      sh: { L: [52, 152], R: [148, 152] },
+      poses: [{ L: 16, R: -16 }, { L: 156, R: -156, body: [0, -8, 0, 1, 1.04] }, { L: 30, R: -104, body: [-6, 0, -6, 1, 1] }],
+      bg() {
+        let s = `<circle cx="10" cy="4" r="26" fill="#ffe8a8" opacity=".55"/>`;
+        s += `<path d="M-44 232 L-44 170 L-2 120 L40 170 L60 150 L96 190 L130 150 L176 196 L210 164 L244 190 L244 232Z" fill="#3a2410" opacity=".55"/>`;
+        s += `<path d="M150 232 L196 120 L244 232Z" fill="#4a3014" opacity=".5"/>`;
+        const r = rnd(61);
+        for (let i = 0; i < 6; i++) s += twinkle(f(-26 + r() * 250), f(-36 + r() * 90), f(3 + r() * 3), "#fff0b8", 0.45);
+        return s;
+      },
+      draw(x) {
+        const K = "#272230", KD = "#120f18", G = "#f6c64a", GD = "#c58f25", H = "#1c1622", LT = "#ffe066";
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 38, K, 23) + shaded((a) => `<rect x="${sx - 15}" y="${sy + 24}" width="30" height="18" rx="6" ${a}/>`, G, GD, -3, -3) + `<path d="M${sx - 15} ${sy + 33} H${sx + 15}" stroke="${GD}" stroke-width="2.5"/>` + hand(sx, sy + 50, SKT, 14);
+        const armX = (sx, sy) => armIn(sx, sy) + x.when([1, 2], glow(sx, sy + 52, 22, LT));
+        let b = "";
+        b += shaded((a) => `<path d="M38 134 Q2 176 6 206 L194 206 Q198 176 162 134Z" ${a}/>`, "#3a3446", KD, 8, -4) + `<path d="M10 204 Q8 180 40 140 M190 204 Q192 180 160 140" stroke="${G}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        b += shaded((a) => `<path d="M40 128 Q36 104 56 92 L144 92 Q164 104 160 128 Q100 146 40 128Z" ${a}/>`, "#3a3446", KD, -3, -3);
+        b += bust(K, KD) + gloss(48, 166, 12, 5, -55, 0.22);
+        b += shaded((a) => `<path d="M26 186 Q100 200 174 186 L175 202 Q100 216 25 202Z" ${a}/>`, G, GD, -3, -3) + `<path d="M28 195 Q100 209 172 195" stroke="${GD}" stroke-width="2.5" fill="none"/>`;
+        b += x.when([1, 2], glow(100, 182, 30, LT));
+        b += boltSym(100, 180, 1.25, G, 4.5);
+        const faceS = (a) => `<path d="M56 86 Q54 36 100 34 Q146 36 144 86 L142 122 Q136 158 100 162 Q64 158 58 122Z" ${a}/>`;
+        b += shaded(faceS, SKT, SKTD, -4, -4) + gloss(80, 56, 14, 6, -30, 0.4);
+        b += hoodShade(faceS, 60, 110, 0.5, "#1e1008");
+        b += shaded((a) => `<path d="M50 96 Q44 28 100 22 Q156 28 150 96 Q146 66 132 58 Q116 66 100 60 Q84 66 68 58 Q54 66 50 96Z" ${a}/>`, "#3a3046", H, -3, -3) + `<path d="M100 60 L96 72 L104 72Z" fill="${H}" stroke="${O}" stroke-width="2"/>`;
+        const ear = `<path d="M58 94 Q46 90 46 102 Q48 114 60 112Z" fill="${SKT}" stroke="${O}" stroke-width="3.5"/>`;
+        b += ear + mirror(ear);
+        b += `<path d="M62 84 L95 94 M138 84 L105 94" stroke="${O}" stroke-width="6" stroke-linecap="round"/>`;
+        b += x.byPose((p) => geyes(p ? "#fffbe0" : LT, { x: 81, y: 101, s: 0.95, sq: p == 1 ? 0.65 : 0.85 }) + evilMouth(p, 100, 134, 12) + `<path d="M96 110 Q100 118 104 110" stroke="${SKTD}" stroke-width="2.5" fill="none"/>`);
+        const pads = pad(K, KD, G);
+        b += x.arm("L", armX) + pads + x.arm("R", armX) + mirror(pads);
+        const [lx, ly] = tip(this, "L", 1, 52), [rx, ry] = tip(this, "R", 1, 52);
+        b += x.when([1], `<g class="pop">${bolt([[lx - 14, -46], [lx + 6, -20], [lx - 8, -14], [lx, ly - 14]], LT)}${bolt([[rx + 14, -46], [rx - 6, -20], [rx + 8, -14], [rx, ry - 14]], LT)}</g>` + sparks(lx, ly, 22, LT, 6) + sparks(rx, ry, 22, LT, 6));
+        const [hx, hy] = tip(this, "R", 2, 54), T = [200, 180];
+        const fxg = x.when([2], `<g class="pop">${zap([[hx, hy], [hx + 18, hy + 4], [hx + 12, hy + 18], [T[0] - 22, T[1] - 12], [T[0] - 8, T[1] - 8]], LT, 7)}</g><g class="pop">${zap([[T[0] + 14, -46], [T[0] - 10, 20], [T[0] + 10, 30], [T[0] - 6, 100], [T[0] + 6, 108], [T[0], T[1] - 14]], LT, 8)}</g><g class="pop">${token(T[0], T[1], 14, "#3c8bf0")}${burst(T[0], T[1] - 18, 22, LT, "#fff")}</g>` + shock(T[0], T[1] + 16, 40, 9, LT) + `<g class="pop">${txt(36, -24, 24, LT, "SHAZAM !", -10)}</g>`);
+        return shadow(88) + x.body(b) + fxg;
+      }
+    },
+    /* ---------- Darkseid (boss final de l'extension) ---------- */
+    {
+      id: "darkseid",
+      name: "Darkseid",
+      stats: [5, 2, 5],
+      tint: "#b0402a",
+      tint2: "#200808",
+      mt: "#f2e2e0",
+      mt2: "#d6aaa4",
+      glow: "#ff3b2a",
+      shake: true,
+      power: "Rayons Om\xE9ga : deux rayons rebondissent entre les h\xE9ros et en d\xE9sactivent 3 ; \xE0 30 % de PV, le Sanction Om\xE9ga frappe tout le plateau.",
+      minionTxt: "Parademons : volent en essaim, tr\xE8s rapides.",
+      sh: { L: [40, 150], R: [160, 150] },
+      poses: [{ L: 18, R: -18 }, { L: 40, R: -40, body: [0, -8, 0, 1.02, 1.04], head: [0, -4, 1.04] }, { L: 30, R: -30, body: [0, -4, 0, 1.04, 1.02], head: [0, -2, 1.06] }],
+      bg() {
+        let s = "";
+        const r = rnd(97);
+        s += `<path d="M-44 232 L-44 120 L-30 120 L-30 60 L-18 60 L-18 110 L4 110 L4 150 L24 150 L24 232Z M176 232 L176 140 L190 140 L190 70 L204 70 L204 30 L216 30 L216 120 L244 120 L244 232Z" fill="#1a0606" opacity=".7"/>`;
+        s += `<ellipse cx="100" cy="236" rx="190" ry="40" fill="#ff5a1a" opacity=".22"/>`;
+        for (let i = 0; i < 14; i++) s += `<circle cx="${f(-30 + r() * 260)}" cy="${f(-30 + r() * 250)}" r="${f(1.5 + r() * 2.5)}" fill="#ff8a3a" opacity="${f(0.3 + r() * 0.4)}"/>`;
+        return s;
+      },
+      draw(x) {
+        const BL = "#3b4f9a", BLD = "#26346e", ST = "#8a8f9e", STD = "#5c6070", DK = "#23202e", DKD = "#110f18", RE = "#ff3b2a";
+        const K = 1.12, sc = (px, py) => [100 + (px - 100) * K, 206 + (py - 206) * K];
+        const crack = (sx, sy) => `<path d="M${sx - 8} ${sy + 8} l6 6 l-3 7 M${sx + 6} ${sy + 4} l-3 8" stroke="${STD}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+        const armIn = (sx, sy) => limb(sx, sy, sx, sy + 40, ST, 28) + crack(sx, sy) + shaded((a) => `<rect x="${sx - 18}" y="${sy + 30}" width="36" height="22" rx="7" ${a}/>`, BL, BLD, -3, -3) + `<path d="M${sx - 18} ${sy + 41} H${sx + 18}" stroke="${BLD}" stroke-width="3"/>` + hand(sx, sy + 58, ST, 18);
+        let b = "";
+        const BIG = "M4 208 C0 142 46 116 100 114 C154 116 200 142 196 208Z";
+        b += bust(BL, BLD, BIG) + gloss(36, 160, 14, 5, -55, 0.22);
+        b += `<path d="M44 150 L100 176 L156 150 M54 172 L100 192 L146 172" stroke="${BLD}" stroke-width="4" fill="none" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M10 184 Q100 202 190 184 L192 206 Q100 222 8 206Z" ${a}/>`, DK, DKD, -3, -3);
+        b += x.when([1, 2], glow(100, 196, 20, RE));
+        b += `<circle cx="100" cy="196" r="14" fill="${DK}" stroke="${O}" stroke-width="4"/>` + x.byPose((p) => omega(100, 197, 0.75, p ? "#ffb0a0" : RE));
+        b += shaded((a) => `<path d="M58 126 Q100 142 142 126 L138 144 Q100 160 62 144Z" ${a}/>`, DK, DKD, -3, -3);
+        let h = "";
+        h += shaded((a) => `<path d="M30 122 Q20 22 100 6 Q180 22 170 122 Q170 150 148 160 L52 160 Q30 150 30 122Z" ${a}/>`, BL, BLD, -5, -4) + gloss(64, 34, 16, 6, -30, 0.35);
+        h += `<path d="M60 20 Q100 6 140 20 M40 70 Q36 100 44 130 M160 70 Q164 100 156 130" stroke="${BLD}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+        const faceS = (a) => `<path d="M54 82 Q54 52 100 50 Q146 52 146 82 L146 124 Q142 164 100 168 Q58 164 54 124Z" ${a}/>`;
+        h += shaded(faceS, ST, STD, -4, -4);
+        h += clip(faceS, `<g stroke="${STD}" stroke-width="3" fill="none" stroke-linecap="round"><path d="M62 112 Q66 128 62 146 M138 112 Q134 128 138 146 M80 134 Q86 150 84 162 M120 134 Q114 150 116 162 M88 64 l6 8 l-4 6 M118 62 l-4 10"/></g><path d="M54 140 Q100 176 146 140 V180 H54Z" fill="${STD}" opacity=".45"/>`);
+        h += hoodShade(faceS, 54, 106, 0.55, "#120406");
+        h += shaded((a) => `<path d="M56 84 Q76 72 98 86 L100 92 L102 86 Q124 72 144 84 L142 96 Q122 88 104 98 L96 98 Q78 88 58 96Z" ${a}/>`, ST, STD, -2, -3);
+        h += `<path d="M94 100 L92 116 Q100 122 108 116 L106 100" fill="${ST}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+        h += x.byPose((p) => {
+          let s = geyes(RE, { x: 80, y: 104, s: p ? 1.15 : 1, sq: p == 1 ? 0.7 : 0.8 });
+          if (p) s += `<g class="fx"><circle cx="80" cy="104" r="${p == 2 ? 26 : 20}" fill="${RE}" opacity=".3"/><circle cx="120" cy="104" r="${p == 2 ? 26 : 20}" fill="${RE}" opacity=".3"/></g>`;
+          s += p == 2 ? evilMouth(2, 100, 136, 14) : `<path d="M84 136 Q100 ${p ? 130 : 132} 116 136" stroke="${O}" stroke-width="4.5" fill="none" stroke-linecap="round"/><path d="M80 140 Q100 146 120 140" stroke="${STD}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+          return s;
+        });
+        b += x.head(h);
+        const padD = (a) => `<path d="M6 160 Q2 118 38 110 Q74 112 76 150 Q40 168 6 160Z" ${a}/>`;
+        const pads = shaded(padD, BL, BLD, -4, -4) + `<path d="M12 148 Q40 158 72 146" stroke="${DK}" stroke-width="4" fill="none"/>` + gloss(28, 124, 10, 4, -30, 0.5);
+        b += x.arm("L", armIn) + pads + x.arm("R", armIn) + mirror(pads);
+        b += x.when([1], `<g class="fx">${[[-2, 46], [202, 46], [2, 126], [198, 126]].map(([cx, cy]) => omega(cx, cy, 1.2, RE)).join("")}</g>`);
+        b = `<g transform="translate(100 206) scale(${K}) translate(-100 -206)">${b}</g>`;
+        const T1 = [196, 176], T2 = [10, 196];
+        const [e1x, e1y] = sc(80, 100), [e2x, e2y] = sc(120, 100);
+        const fxg = x.when([2], `<g class="pop">${zap([[e1x, e1y], [44, 84], [-14, 110], [16, 150], [T2[0], T2[1] - 16]], RE, 9)}</g><g class="pop">${zap([[e2x, e2y], [168, 84], [224, 112], [190, 146], [T1[0], T1[1] - 16]], RE, 9)}</g><g class="pop">${token(T1[0], T1[1], 14, "#3c8bf0")}${burst(T1[0], T1[1] - 14, 22, RE, "#ffd0c8")}</g><g class="pop">${token(T2[0], T2[1], 14, "#9b59e6")}${burst(T2[0], T2[1] - 14, 22, RE, "#ffd0c8")}</g><g class="pop">${omega(224, 112, 1.1, "#fff")}${omega(-14, 110, 1.1, "#fff")}</g>`);
+        return shadow(100) + x.body(b) + fxg;
+      }
+    }
+  ];
+
+  // ../../../../../../home/user/marvel-rush-dc/src/art/bosses/dcMinions.ts
+  var legs = (c, shoe = O) => `<g class="legA">${limb(88, 190, 88, 202, c, 11)}</g><g class="legB">${limb(112, 190, 112, 202, c, 11)}</g><ellipse cx="86" cy="205" rx="10" ry="5" fill="${shoe}"/><ellipse cx="114" cy="205" rx="10" ry="5" fill="${shoe}"/>`;
+  var trunk = (c, d) => shaded((a) => `<path d="M62 198 C60 166 72 148 100 146 C128 148 140 166 138 198Z" ${a}/>`, c, d, -8, -4);
+  var headC = (a) => `<circle cx="100" cy="118" r="32" ${a}/>`;
+  var meanEyes = (p, c = O, y = 114) => `<ellipse cx="88" cy="${y}" rx="3.8" ry="${p == 1 ? 2 : 4}" fill="${c}"/><ellipse cx="112" cy="${y}" rx="3.8" ry="${p == 1 ? 2 : 4}" fill="${c}"/><path d="M80 ${y - 9} L94 ${y - 4} M120 ${y - 9} L106 ${y - 4}" stroke="${O}" stroke-width="3.5" stroke-linecap="round"/>`;
+  var gruntMouth = (p, y = 136) => p == 2 ? `<path d="M88 ${y - 2} Q100 ${y - 6} 112 ${y - 2} Q108 ${y + 8} 100 ${y + 8} Q92 ${y + 8} 88 ${y - 2}Z" fill="#5c0f22" stroke="${O}" stroke-width="3"/>` : `<path d="M90 ${y} Q100 ${y - 4} 110 ${y}" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  var DC_MINIONS = {
+    /* Hommes de main clowns : tarte à la crème */
+    joker: {
+      id: "clown",
+      name: "Hommes de main clowns",
+      sh: { L: [74, 156], R: [126, 156] },
+      poses: [{ L: 14, R: -14 }, { L: 24, R: -160, body: [0, 2, 4, 1, 1] }, { L: 20, R: -70, body: [8, 2, -6, 1, 1] }],
+      draw(x) {
+        const PU = "#7b3fb0", PUD = "#53278a", GR = "#3faa4a", W = "#f4f1f6", WD = "#c9c0d8", R = "#e0323e", HR = "#f28a2a", CR = "#fff6e0", PI = "#d9a05a";
+        const pie = (cx, cy) => `<ellipse cx="${cx}" cy="${cy + 4}" rx="16" ry="6" fill="${PI}" stroke="${O}" stroke-width="3"/><path d="M${cx - 15} ${cy + 2} Q${cx - 12} ${cy - 10} ${cx} ${cy - 10} Q${cx + 12} ${cy - 10} ${cx + 15} ${cy + 2}Z" fill="${CR}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><circle cx="${cx}" cy="${cy - 12}" r="4" fill="${R}" stroke="${O}" stroke-width="2"/>`;
+        let b = legs("#3a2a50");
+        b += trunk(PU, PUD);
+        b += clip((a) => `<path d="M62 198 C60 166 72 148 100 146 C128 148 140 166 138 198Z" ${a}/>`, `${[156, 172, 188].map((y) => `<rect x="60" y="${y}" width="80" height="7" fill="${GR}"/>`).join("")}`) + `<path d="M62 198 C60 166 72 148 100 146 C128 148 140 166 138 198Z" fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>`;
+        b += `<path d="M80 148 L88 158 L96 150 L104 158 L112 150 L120 158 Q100 142 80 148Z" fill="${W}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+        const tuft = `<circle cx="70" cy="104" r="11" fill="${HR}" stroke="${O}" stroke-width="3.5"/><circle cx="66" cy="116" r="9" fill="${HR}" stroke="${O}" stroke-width="3.5"/>`;
+        b += tuft + mirror(tuft);
+        b += shaded(headC, W, WD, -5, -5) + hoodShade(headC, 96, 122, 0.45, "#2a1440");
+        b += x.byPose((p) => {
+          let s = `<path d="M82 106 L88 112 L94 106 M106 106 L112 112 L118 106" stroke="#3a6ad0" stroke-width="2.5" fill="none"/>` + meanEyes(p, O, 116);
+          s += p == 2 ? `<path d="M80 132 Q100 128 120 132 Q114 146 100 146 Q86 146 80 132Z" fill="#5c0f22" stroke="${O}" stroke-width="3"/>` : `<path d="M80 132 Q100 146 120 132" stroke="${R}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M84 134 Q100 142 116 134" stroke="${O}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+          return s;
+        });
+        b += `<circle cx="100" cy="124" r="7" fill="${R}" stroke="${O}" stroke-width="3"/><circle cx="98" cy="122" r="2" fill="#fff"/>`;
+        b += `<path d="M84 90 L102 62 L118 90Z" fill="${GR}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="102" cy="62" r="5" fill="${R}" stroke="${O}" stroke-width="2.5"/>`;
+        b += x.arm("L", (sx, sy) => limb(sx, sy, sx, sy + 26, PU, 11) + hand(sx, sy + 30, W, 8));
+        b += x.arm("R", (sx, sy) => limb(sx, sy, sx, sy + 26, PU, 11) + x.when([0, 1], pie(sx, sy + 40)) + hand(sx, sy + 30, W, 8));
+        const fxg = x.when([2], `<g class="pop">${burst(170, 140, 18, CR, "#fff")}<path d="M152 132 q-8 4 -6 12 M186 128 q8 4 6 12 M168 158 q2 8 -4 12" stroke="${CR}" stroke-width="6" fill="none" stroke-linecap="round"/></g><g class="pop">${txt(166, 112, 16, "#fff", "SPLAT !", 8)}</g>`);
+        return shadow(44, 207, 0.18) + `<g class="${x.A ? "walk" : ""}">${x.body(b)}</g>` + fxg;
+      }
+    },
+    /* Robots LexCorp : laser vert */
+    luthor: {
+      id: "lexbot",
+      name: "Robots LexCorp",
+      sh: { L: [66, 156], R: [134, 156] },
+      poses: [{ L: 10, R: -10 }, { L: 16, R: -60, body: [0, 2, 0, 1, 1] }, { L: 16, R: -92, body: [-4, 0, -4, 1, 1] }],
+      draw(x) {
+        const M = "#c9d0de", MD = "#8c95ab", G = "#3f9a52", GD = "#26703a", PU = "#6b3fa0", K = "#7dff5a";
+        let b = `<g class="legA">${limb(86, 186, 86, 202, MD, 12)}</g><g class="legB">${limb(114, 186, 114, 202, MD, 12)}</g><rect x="74" y="200" width="22" height="8" rx="3" fill="${G}" stroke="${O}" stroke-width="3"/><rect x="104" y="200" width="22" height="8" rx="3" fill="${G}" stroke="${O}" stroke-width="3"/>`;
+        b += shaded((a) => `<rect x="62" y="146" width="76" height="46" rx="16" ${a}/>`, G, GD, -6, -4) + gloss(76, 154, 8, 3, -20, 0.5);
+        b += `<rect x="86" y="156" width="28" height="22" rx="5" fill="${M}" stroke="${O}" stroke-width="3"/><path d="M93 160 V174 H107" stroke="${PU}" stroke-width="4.5" fill="none" stroke-linejoin="round"/>`;
+        b += `<path d="M100 92 V78" stroke="${O}" stroke-width="4" stroke-linecap="round"/><g class="fx"><circle cx="100" cy="76" r="5" fill="${K}" stroke="${O}" stroke-width="2.5"/></g>`;
+        b += shaded((a) => `<rect x="70" y="92" width="60" height="50" rx="18" ${a}/>`, M, MD, -5, -5) + gloss(84, 100, 8, 4, -30, 0.7);
+        b += `<rect x="76" y="106" width="48" height="20" rx="10" fill="#2a2440" stroke="${O}" stroke-width="3.5"/>`;
+        b += x.byPose((p) => `<g class="fx"><rect x="80" y="110" width="40" height="12" rx="6" fill="${K}" opacity=".35"/></g><rect x="${p == 1 ? 84 : 82}" y="${p == 1 ? 114 : 113}" width="${p == 1 ? 32 : 36}" height="${p == 1 ? 4 : 6}" rx="3" fill="${K}"/>`);
+        b += `<circle cx="70" cy="118" r="7" fill="${PU}" stroke="${O}" stroke-width="3"/><circle cx="130" cy="118" r="7" fill="${PU}" stroke="${O}" stroke-width="3"/>`;
+        b += x.arm("L", (sx, sy) => limb(sx, sy, sx, sy + 24, MD, 10) + hand(sx, sy + 28, G, 9));
+        b += x.arm("R", (sx, sy) => limb(sx, sy, sx, sy + 24, MD, 10) + shaded((a) => `<rect x="${sx - 9}" y="${sy + 20}" width="18" height="22" rx="5" ${a}/>`, G, GD, -2, -2) + x.when([1, 2], glow(sx, sy + 44, 10, K)));
+        const fxg = x.when([2], `<g class="grow" style="transform-origin:150px 160px">${beam(150, 160, 194, 160, 6, K)}</g><g class="pop">${burst(188, 160, 14, K)}</g>`);
+        return shadow(44, 207, 0.18) + `<g class="${x.A ? "walk" : ""}">${x.body(b)}</g>` + fxg;
+      }
+    },
+    /* Mercenaires au venin : coup de poing */
+    bane: {
+      id: "mercenaire",
+      name: "Mercenaires au venin",
+      sh: { L: [70, 156], R: [130, 156] },
+      poses: [{ L: 14, R: -14 }, { L: 24, R: 50, body: [-4, 2, -6, 1.04, 0.96] }, { L: 20, R: -92, body: [10, 0, 8, 1, 1] }],
+      draw(x) {
+        const K = "#2c2a38", KD = "#16141e", S = "#d9a77a", SD = "#a87650", V = "#5aff4a", VD = "#2a9a2a", CA = "#6b6a4a", CAD = "#4a4a30";
+        let b = legs("#3a3a2a");
+        b += shaded((a) => `<path d="M56 198 C52 164 68 144 100 142 C132 144 148 164 144 198Z" ${a}/>`, CA, CAD, -8, -4);
+        b += `<path d="M76 146 L92 198 M124 146 L108 198" stroke="${KD}" stroke-width="6"/><rect x="58" y="182" width="84" height="8" fill="${KD}" stroke="${O}" stroke-width="2.5"/>`;
+        b += x.when([1, 2], glow(100, 186, 10, V)) + `<rect x="94" y="180" width="12" height="12" rx="3" fill="${V}" stroke="${O}" stroke-width="2.5"/>`;
+        b += shaded(headC, K, KD, -5, -5) + gloss(88, 98, 7, 3, -30, 0.35);
+        b += `<rect x="72" y="106" width="56" height="18" rx="9" fill="#4a4458" stroke="${O}" stroke-width="3"/>`;
+        b += x.byPose((p) => `<circle cx="88" cy="115" r="7" fill="${p ? V : "#ff5a3a"}" stroke="${O}" stroke-width="2.5"/><circle cx="112" cy="115" r="7" fill="${p ? V : "#ff5a3a"}" stroke="${O}" stroke-width="2.5"/><circle cx="86" cy="113" r="2" fill="#fff"/><circle cx="110" cy="113" r="2" fill="#fff"/>` + gruntMouth(p, 138));
+        const arm = (sx, sy) => limb(sx, sy, sx, sy + 26, S, 15) + x.when([1, 2], `<path d="M${sx - 3} ${sy + 6} l4 6 l-4 6" stroke="${V}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`) + hand(sx, sy + 32, K, 11);
+        b += x.arm("L", arm) + x.arm("R", arm);
+        b += `<path d="M84 140 Q70 146 68 156" stroke="${O}" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M84 140 Q70 146 68 156" stroke="${VD}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+        const fxg = x.when([2], `<g class="pop">${burst(170, 158, 18, "#f2c95a", "#fff")}</g><g class="pop">${sparks(170, 158, 26, V, 7)}</g>`);
+        return shadow(48, 207, 0.18) + `<g class="${x.A ? "walk" : ""}">${x.body(b)}</g>` + fxg;
+      }
+    },
+    /* Corps Sinestro : vol, tir jaune */
+    sinestro: {
+      id: "corps",
+      name: "Corps Sinestro",
+      sh: { L: [72, 150], R: [128, 150] },
+      poses: [{ L: 20, R: -20 }, { L: 30, R: -140, body: [0, -4, 0, 1.04, 1.04] }, { L: 26, R: -96, body: [-4, 0, -4, 1, 1] }],
+      draw(x) {
+        const K = "#24202e", KD = "#110e18", Y = "#ffd23a", YD = "#c89a1a", S = "#8a6ab0", SD = "#5e4486", LY = "#ffe23a";
+        let b = "";
+        b += x.byPose((p) => `<g class="fx"><path d="M84 184 Q100 ${p == 1 ? 224 : 214} 116 184Z" fill="${LY}" opacity=".55"/><path d="M92 186 Q100 ${p == 1 ? 206 : 200} 108 186Z" fill="#fff8c8"/></g>`);
+        b += shaded((a) => `<path d="M66 184 C62 158 74 142 100 140 C126 142 138 158 134 184 Q100 196 66 184Z" ${a}/>`, K, KD, -8, -4);
+        b += shaded((a) => `<path d="M84 142 Q100 138 116 142 L110 188 L90 188Z" ${a}/>`, Y, YD, -3, -2);
+        b += `<circle cx="100" cy="160" r="9" fill="${K}" stroke="${O}" stroke-width="3"/><path d="M95 155 H105 L103 159 H97Z M97 161 H103 V166 Q100 168 97 166Z" fill="${LY}"/>`;
+        b += `<path d="M70 104 L52 88 L72 96Z M130 104 L148 88 L128 96Z" fill="${S}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+        const hs = (a) => `<path d="M68 112 Q66 76 100 74 Q134 76 132 112 Q130 142 100 146 Q70 142 68 112Z" ${a}/>`;
+        b += shaded(hs, S, SD, -5, -5) + hoodShade(hs, 80, 116, 0.45, "#1a0a2a");
+        b += `<path d="M100 76 V98 M86 80 Q90 92 88 100 M114 80 Q110 92 112 100" stroke="${SD}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        b += x.byPose((p) => geyes(LY, { x: 88, y: 116, s: 0.55, sq: p == 1 ? 0.6 : 1 }) + gruntMouth(p, 134));
+        b += x.arm("L", (sx, sy) => limb(sx, sy, sx, sy + 24, K, 10) + hand(sx, sy + 28, Y, 8));
+        b += x.arm("R", (sx, sy) => limb(sx, sy, sx, sy + 24, K, 10) + x.when([1, 2], glow(sx, sy + 32, 12, LY)) + hand(sx, sy + 28, Y, 8));
+        const fxg = x.when([2], `<g class="grow" style="transform-origin:150px 146px">${beam(150, 146, 192, 158, 7, LY)}</g><g class="pop">${burst(186, 158, 15, LY)}</g>`);
+        return shadow(34, 207, 0.14) + `<g class="${x.A ? "float" : ""}">${x.body(b)}</g>` + fxg;
+      }
+    },
+    /* Soldats de Kahndaq : lance et bouclier */
+    blackadam: {
+      id: "kahndaq",
+      name: "Soldats de Kahndaq",
+      sh: { L: [74, 158], R: [126, 158] },
+      poses: [{ L: 12, R: -10, sp: [0, 0, 10] }, { L: 24, R: -36, sp: [0, 0, 40], body: [-6, 2, -6, 1, 1] }, { L: 18, R: -62, sp: [0, 0, 96], body: [-6, 0, 2, 1, 1] }],
+      draw(x) {
+        const SA = "#e2c88a", SAD = "#b89a58", G = "#f6c64a", GD = "#c58f25", RE = "#b8322f", M = "#cfd5e0";
+        const P = [126, 192];
+        const spear = `<rect x="${P[0] - 3.5}" y="${P[1] - 62}" width="7" height="92" rx="3" fill="#8a5a32" stroke="${O}" stroke-width="3"/><polygon points="${P[0]},${P[1] - 86} ${P[0] - 8},${P[1] - 60} ${P[0] + 8},${P[1] - 60}" fill="${G}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M${P[0] - 1} ${P[1] - 80} V${P[1] - 64}" stroke="#fff" stroke-width="2" opacity=".7"/><rect x="${P[0] - 8}" y="${P[1] - 62}" width="16" height="5" rx="2" fill="${RE}" stroke="${O}" stroke-width="2"/>`;
+        let b = legs("#6a4a2a", "#4a3020");
+        b += trunk(SA, SAD);
+        b += `<path d="M64 182 Q100 192 136 182" stroke="${O}" stroke-width="7" fill="none"/><path d="M64 182 Q100 192 136 182" stroke="${RE}" stroke-width="4" fill="none"/>`;
+        b += `<path d="M100 148 L100 176" stroke="${SAD}" stroke-width="2.5"/><circle cx="100" cy="164" r="6" fill="${G}" stroke="${O}" stroke-width="2.5"/>`;
+        b += shaded(headC, SKT, SKTD, -5, -5);
+        b += shaded((a) => `<path d="M66 114 Q62 82 100 80 Q138 82 134 114 Q100 100 66 114Z" ${a}/>`, SA, SAD, -3, -3) + `<path d="M66 112 Q100 98 134 112" stroke="${G}" stroke-width="5" fill="none"/><path d="M66 112 Q100 98 134 112" stroke="${O}" stroke-width="1.5" fill="none" opacity=".5"/>`;
+        b += shaded((a) => `<path d="M68 116 Q60 140 74 152 L80 130Z" ${a}/>`, SA, SAD, -2, -2);
+        b += hoodShade(headC, 104, 126, 0.45);
+        b += x.byPose((p) => meanEyes(p, "#ffe27a", 118) + gruntMouth(p, 138));
+        const shield = (sx, sy) => shaded((a) => `<circle cx="${sx - 4}" cy="${sy + 30}" r="20" ${a}/>`, G, GD, -3, -3) + `<circle cx="${sx - 4}" cy="${sy + 30}" r="12" fill="none" stroke="${GD}" stroke-width="3"/><path d="M${sx - 7} ${sy + 22} l6 -2 l-4 9 l6 -1 l-8 12 l2 -9 l-5 1Z" fill="${RE}" stroke="${O}" stroke-width="1.5"/>` + gloss(sx - 12, sy + 20, 6, 3, -30, 0.6);
+        b += x.arm("L", (sx, sy) => limb(sx, sy, sx, sy + 26, SA, 11) + hand(sx, sy + 30, SKT, 8) + shield(sx, sy));
+        b += x.arm("R", (sx, sy) => limb(sx, sy, sx, sy + 28, SA, 11) + x.part("sp", P[0], P[1], spear) + hand(sx, sy + 34, SKT, 8));
+        const [kx, ky] = held(this, "R", "sp", 2, [126, 106], P);
+        const fxg = x.when([2], `<g class="pop">${sparks(kx + 4, ky, 18, "#ffe27a", 6)}</g>`);
+        return shadow(44, 207, 0.18) + `<g class="${x.A ? "walk" : ""}">${x.body(b)}</g>` + fxg;
+      }
+    },
+    /* Parademons : vol en essaim, tir rouge */
+    darkseid: {
+      id: "parademon",
+      name: "Parademons",
+      sh: { L: [74, 152], R: [126, 152] },
+      poses: [{ L: 18, R: -18 }, { L: 30, R: -120, body: [0, -6, -6, 1.04, 1.04] }, { L: 26, R: -84, body: [8, 4, 10, 1, 1] }],
+      draw(x) {
+        const SK2 = "#8a9a6a", SKD2 = "#5e6e44", AR = "#4a3a3a", ARD = "#2a1e1e", RE = "#ff3b2a", WG = "#5a4a5a";
+        let b = "";
+        const wing = `<g class="flap" style="transform-origin:76px 140px"><path d="M76 140 Q48 98 18 104 Q30 114 26 124 Q38 120 40 132 Q48 126 54 138 Q62 132 70 146Z" fill="${WG}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/><path d="M72 140 L30 110 M70 144 L46 128" stroke="#3a2e3a" stroke-width="2.5" fill="none"/></g>`;
+        b += wing + mirror(wing);
+        b += x.byPose((p) => `<g class="fx"><path d="M90 186 Q100 ${p == 1 ? 216 : 206} 110 186Z" fill="#ff8a3a" stroke="${O}" stroke-width="2.5"/></g>`);
+        b += shaded((a) => `<path d="M66 186 C62 158 74 142 100 140 C126 142 138 158 134 186 Q100 196 66 186Z" ${a}/>`, AR, ARD, -8, -4);
+        b += `<path d="M76 154 L100 164 L124 154 M80 172 L100 180 L120 172" stroke="${RE}" stroke-width="3" fill="none" stroke-linejoin="round" opacity=".8"/>`;
+        const hs = (a) => `<path d="M70 114 Q68 82 100 80 Q132 82 130 114 Q128 142 100 146 Q72 142 70 114Z" ${a}/>`;
+        b += shaded(hs, SK2, SKD2, -5, -5);
+        b += `<path d="M76 92 L66 72 L84 86 M124 92 L134 72 L116 86" fill="${SKD2}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+        b += shaded((a) => `<path d="M72 104 Q100 94 128 104 L126 122 Q100 116 74 122Z" ${a}/>`, ARD, "#120a0a", -2, -2);
+        b += x.byPose((p) => `<g class="fx"><circle cx="88" cy="111" r="9" fill="${RE}" opacity=".35"/><circle cx="112" cy="111" r="9" fill="${RE}" opacity=".35"/></g><circle cx="88" cy="111" r="${p == 1 ? 4 : 5.5}" fill="${RE}" stroke="${O}" stroke-width="2"/><circle cx="112" cy="111" r="${p == 1 ? 4 : 5.5}" fill="${RE}" stroke="${O}" stroke-width="2"/><path d="M86 132 Q100 ${p == 2 ? 146 : 138} 114 132Z" fill="#5c0f22" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path d="M90 133 l2 5 l2 -5 M106 133 l2 5 l2 -5" fill="#fff" stroke="${O}" stroke-width="1.2"/>`);
+        b += x.arm("L", (sx, sy) => limb(sx, sy, sx, sy + 24, SK2, 10) + hand(sx, sy + 28, ARD, 8));
+        b += x.arm("R", (sx, sy) => limb(sx, sy, sx, sy + 24, SK2, 10) + `<rect x="${sx - 4}" y="${sy + 20}" width="8" height="40" rx="3" fill="#6a6f80" stroke="${O}" stroke-width="3"/>` + x.when([1, 2], glow(sx, sy + 62, 10, RE)) + hand(sx, sy + 28, ARD, 8));
+        const fxg = x.when([2], `<g class="grow" style="transform-origin:160px 150px">${beam(160, 150, 196, 176, 6, RE)}</g><g class="pop">${burst(190, 174, 14, RE, "#ffd0c8")}</g>`);
+        return shadow(34, 207, 0.14) + `<g class="${x.A ? "float" : ""}">${x.body(b)}</g>` + fxg;
+      }
+    }
+  };
+  return __toCommonJS(planche_entry_exports);
+})();
+
+</script>
+<script>
+
+const ART_DC=ART;
+const WIN={'0':'rest','1':'wind','2':'rel','1,2':'act','0,1':'notrel'};
+const f=v=>(+v).toFixed(1);
+const bodyT=b=>{const [tx=0,ty=0,r=0,sx=1,sy=1]=b||[];return `translate(${tx}px,${ty}px) rotate(${r}deg) scale(${sx},${sy})`};
+const headT=h=>{const [tx=0,ty=0,s=1]=h||[];return `translate(${tx}px,${ty}px) scale(${s})`};
+const partT=v=>{if(v==null)return 'none';if(typeof v==='number')return `rotate(${v}deg)`;const [r=0,sx=1,sy=sx]=v;return `rotate(${r}deg) scale(${sx},${sy})`};
+/* contexte animé : toutes les poses sont dessinées, la CSS les enchaîne */
+function actx(c){
+  return {
+    A:true,mode:'anim',
+    when:(list,svg)=>`<g class="w-${WIN[list.join()]}">${svg}</g>`,
+    byPose:fn=>[0,1,2].map(i=>`<g class="w-${['rest','wind','rel'][i]}">${fn(i)}</g>`).join(''),
+    arm:(side,inner)=>{const [sx,sy]=c.sh[side];return `<g class="arm arm${side}" style="transform-origin:${sx}px ${sy}px">${inner(sx,sy)}</g>`},
+    body:svg=>`<g class="body" style="transform-origin:100px 206px">${svg}</g>`,
+    head:svg=>`<g class="headT" style="transform-origin:100px 132px">${svg}</g>`,
+    part:(key,ox,oy,svg)=>`<g class="part p-${key}" style="transform-origin:${ox}px ${oy}px">${svg}</g>`,
+    kick:(svg)=>svg, mv:(_c,_t,svg)=>svg,
+  };
+}
+const draw=(c,mode,partMode)=>c.draw(mode==='anim'?actx(c):ART_DC.ctx(c,mode,{partMode}));
+function seg(name,v){
+  return `@keyframes ${name}{0%,10%{transform:${v[0]};animation-timing-function:cubic-bezier(.25,.8,.35,1)}34%,46%{transform:${v[1]};animation-timing-function:cubic-bezier(.85,0,1,.55)}52%,72%{transform:${v[2]};animation-timing-function:cubic-bezier(.45,0,.3,1)}92%,100%{transform:${v[0]}}}`;
+}
+function animCss(list,partFn){
+  let css='';
+  list.forEach(c=>{
+    const P=c.poses,id=c.id;
+    ['L','R'].forEach(s=>{if(P.some(p=>s in p)){css+=seg(`${id}-${s}`,P.map(p=>`rotate(${p[s]||0}deg)`))+`.s-${id}.anim .arm${s}{animation:${id}-${s} var(--dur) infinite}`}});
+    css+=seg(`${id}-B`,P.map(p=>bodyT(p.body)))+`.s-${id}.anim .body{animation:${id}-B var(--dur) infinite}`;
+    if(P.some(p=>p.head)) css+=seg(`${id}-H`,P.map(p=>headT(p.head)))+`.s-${id}.anim .headT{animation:${id}-H var(--dur) infinite}`;
+    const keys=[...new Set(P.flatMap(p=>Object.keys(p)))].filter(k=>!['L','R','body','head'].includes(k));
+    keys.forEach(k=>{css+=seg(`${id}-${k}`,P.map(p=>partFn(p[k])))+`.s-${id}.anim .p-${k}{animation:${id}-${k} var(--dur) infinite}`});
+  });
+  document.head.insertAdjacentHTML('beforeend',`<style>${css}</style>`);
+}
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const bars=v=>[1,2,3,4,5].map(i=>`<span class="${i<=v?'on':''}"></span>`).join('');
+const btn=document.getElementById('toggle');
+btn.addEventListener('click',()=>{const on=document.body.classList.toggle('paused');btn.textContent=on?'Lecture':'Pause';btn.setAttribute('aria-pressed',on)});
+
+/* ---------- boss et sbires ---------- */
+const bosses=ART_DC.DC_BOSSES, minions=ART_DC.DC_MINIONS;
+animCss([...bosses,...bosses.map(b=>minions[b.id])],bodyT);
+const svgB=(c,mode,cls,label)=>`<svg class="${cls}" viewBox="-40 -46 280 280" role="img" aria-label="${esc(c.name)}, ${label}">${c.bg()}<g class="scene">${draw(c,mode,'bodyT')}</g></svg>`;
+const svgM=(m,mode,cls,label)=>`<svg class="${cls}" viewBox="5 44 190 190" role="img" aria-label="${esc(m.name)}, ${label}"><g class="scene">${draw(m,mode,'bodyT')}</g></svg>`;
+document.getElementById('sheet').innerHTML=bosses.map((c,i)=>{
+  const m=minions[c.id];
+  const frames=[[svgB(c,0,'tile b','boss, fiche'),'Boss · fiche'],[svgB(c,2,'tile b','boss, pouvoir'),'Boss · pouvoir'],[svgM(m,0,'tile m','sbire, fiche'),'Sbire · fiche'],[svgM(m,2,'tile m','sbire, action'),'Sbire · action']];
+  return `
+  <article class="card" style="--tint:${c.tint};--tint2:${c.tint2};--mt:${c.mt};--mt2:${c.mt2}">
+    <div class="stageWrap">
+      ${svgB(c,'anim',`stage boss anim s-${c.id}${c.shake?' shake':''}`,'animation de pouvoir')}
+      <span class="badge"><i></i>Pouvoir</span>
+    </div>
+    <div class="side">
+      <div class="top"><span class="num">${String(i+1).padStart(2,'0')}</span><h2>${esc(c.name)}</h2></div>
+      <div class="chips"><span class="chip r">${c.id==='darkseid'?'Boss final':'Boss'}</span><span class="chip">Sbires · ${esc(m.name)}</span></div>
+      <div class="mid">
+        <div class="info">
+          <dl class="stats">
+            <dt>PV</dt><dd>${bars(c.stats[0])}</dd>
+            <dt>Vitesse</dt><dd>${bars(c.stats[1])}</dd>
+            <dt>Menace</dt><dd>${bars(c.stats[2])}</dd>
+          </dl>
+          <div class="desc">
+            <p><b>Pouvoir</b> · ${esc(c.power)}</p>
+            <p><b>Sbire</b> · ${esc(c.minionTxt)}</p>
+          </div>
+        </div>
+        <div class="miniWrap">
+          ${svgM(m,'anim',`stage mini anim s-${m.id}`,'animation du sbire')}
+          <span class="badge sm"><i></i>Sbire</span>
+        </div>
+      </div>
+      <div class="poses">${frames.map(([s,l])=>`<figure>${s}<figcaption>${l}</figcaption></figure>`).join('')}</div>
+    </div>
+  </article>`}).join('');
+</script>
+</html>
