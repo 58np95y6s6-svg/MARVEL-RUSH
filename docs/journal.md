@@ -42,8 +42,8 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 | Date (minuit, Paris) | Extension | Branche | État |
 |---|---|---|---|
 | Dimanche 18/10/2026 | DC Comics | `extension/dc` | prête à publier (vérifiée le 10/10, d36f950) |
-| Dimanche 25/10/2026 | Transformers | `extension/transformers` | prête à publier (vérifiée le 10/10, 737619b) |
-| Dimanche 01/11/2026 | Pixar | `extension/pixar` | prête à publier (vérifiée le 10/10, 5df0740) |
+| Dimanche 25/10/2026 | Transformers | `extension/transformers` | prête à publier (vérifiée le 10/10, 737619b ; branches empilées) |
+| Dimanche 01/11/2026 | Pixar | `extension/pixar` | prête à publier (vérifiée le 10/10, 5df0740 ; branches empilées) |
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
 

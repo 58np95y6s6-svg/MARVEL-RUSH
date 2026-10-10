@@ -632,7 +632,7 @@ function applyCommand(ctx: Ctx, c: Command): void {
       if (c.from === c.to) return reject(ctx, c.type, 'Choisis une autre unité.');
       const a = p.grid[c.from], b = p.grid[c.to];
       if (!a || !b) return reject(ctx, c.type, 'Il faut deux unités.');
-      if (a.unit === b.unit) return reject(ctx, c.type, 'Deux unités identiques fusionnent.');
+      if (a.unit === b.unit && !(c.type === 'promote' && unitParams(ctx, pi, a.unit).promoteAlly)) return reject(ctx, c.type, 'Deux unités identiques fusionnent.');
       if (a.rank !== b.rank) return reject(ctx, c.type, 'Les deux unités doivent avoir le même rang.');
       const prm = unitParams(ctx, pi, a.unit);
       if (c.type === 'copy') {

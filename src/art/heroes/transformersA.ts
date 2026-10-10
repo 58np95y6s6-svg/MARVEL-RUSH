@@ -130,7 +130,7 @@ export const TF_A: CharDef[] = [
 },
 {
   id: 'arcee', name: 'Arcee', role: 'Critique', rarity: 'Épique', rar: 'var(--epi)', tint: '#ffe0f0', tint2: '#f09ac8', stats: [3, 5, 2],
-  atk: 'Lames qui frappent en combo ; en moto, vise les plus rapides.', skill: 'Lames d’Arcee : critiques et dégâts qui montent.',
+  atk: 'Blasters du bras et lames en combo ; en moto, vise les plus rapides.', skill: 'Lames d’Arcee : critiques et dégâts qui montent.',
   sh: { L: [70, 150], R: [130, 150] },
   poses: [{ L: 12, R: -12 }, { L: 40, R: -140, body: [-4, -2, -8, 1, 1.02] }, { L: -30, R: -96, body: [10, 0, 10, 1, 1] }],
   draw(this: CharDef, x: Ctx): string {
