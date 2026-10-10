@@ -171,7 +171,7 @@ Aucun emballement économique : les decks « mana » restent sous le témoin (le
 
 **Campagne longue** (« des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum ») : 10 → 50 vagues (`docs/campagne.md`). La difficulté d'un niveau = **effectif** (`script.enemyCountMultiplier`, divise l'intervalle d'apparition) et **PV** (`script.enemyHpMultiplier`, `script.bossHpMultiplier` pour les lieutenants et gros boss), en hausse régulière sur les 60 niveaux. Avec la rampe du Solo Infini (×1,18 par vague), aucune collection ne tiendrait 50 vagues (le deck méta niveau 9 meurt vers la vague 28) : la campagne adoucit la croissance par vague (`script.waveHpGrowth` : ×1,14 au chapitre 1, ×1,075 au 2, ×1,07 aux 3-5, ×1,0425 au 6). Repères mesurés (`--casual`, PV× et effectif× à 1) : le deck de départ niveau 1 tient ≈ 20 vagues à ×1,10, 26 à ×1,08, 40 à ×1,06 ; le deck Avengers niveau 8 (3 paliers) ≈ 42 à ×1,10, 53 à ×1,08, 69 à ×1,06. Taux de victoire par chapitre : `docs/campagne.md` §4.
 
-## 2 quinquies. Extension DC : portées, archétypes et rééquilibrage (octobre 2026)
+## 2 quinquies. Extension DC : portées, archétypes et rééquilibrage (octobre 2026, remplacé par le §2 sexies)
 
 Après la fusion de `main` (portées, cadence par rang, archétypes, économie), les valeurs du §2 bis (mesurées en portée globale) sont remplacées par celles-ci.
 
@@ -219,6 +219,48 @@ Après la fusion de `main` (portées, cadence par rang, archétypes, économie),
 - `dc-rares` avec le joueur occasionnel (12,43, vague 10 passée à 37 %) : quatre corps à corps placés au hasard tapent peu le gros boss. Un débutant qui ne joue que des Rares DC bute sur la vague 10 ; les decks de départ restent Marvel et Disney.
 - Coop et corps à corps : `dc-rares` (9,60) et un deck de corps à corps de la version 1 (Rox & Rouky, Shang-Chi, Venom, Mulan, Œil de faucon : 9,67) ne passent jamais la vague 10 en Coop avec le bot. Problème des portées courtes en Coop, pas propre à DC : à traiter sur `main` (portée courte 1,8 ou placement du bot).
 - Le bot n'exploite ni l'échange (Flash) ni la formation (Green Lantern) : leur valeur réelle est sous-estimée.
+
+## 2 sexies. Extension DC : profils Rush Royale et chapitres longs (octobre 2026)
+
+Après la « copie Rush Royale » de `main`, les 15 héros DC reprennent chacun une unité Rush Royale non utilisée par Marvel et Disney (`docs/rush-royale-mapping.md`, « Extension DC »). Règle de fusion de Rush Royale (intervalle ÷ rang, dégâts inchangés), portées inchangées. Les dégâts des unités dont Rush Royale ne publie pas les chiffres (C) ont été réglés au simulateur ; les mêlées (portée 1,6) gardent des dégâts plus hauts, comme Hulk et Shang-Chi.
+
+| Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée |
+|---|---|---|---|
+| Batman | Bourreau | 200 / 1,0 s | moyenne |
+| Superman | Givre | 150 / 1,0 s | globale |
+| Wonder Woman | Moine | 170 / 1,0 s | moyenne |
+| Green Lantern | Cultiste | 132 / 0,8 s | longue |
+| Flash | Cogneur | 135 / 0,6 s | courte |
+| Aquaman | Faucheuse | 140 / 1,0 s | moyenne |
+| Cyborg | Génie | 90 / 0,8 s | globale |
+| Supergirl | Barde | 100 / 1,0 s | longue |
+| Shazam | Météore | 90 / 1,0 s | moyenne |
+| Martian Manhunter | Mime | 30 / 1,0 s | longue |
+| Robin | Ferrailleur | 140 / 0,8 s | courte |
+| Batgirl | Bombardier | 130 / 0,8 s | courte |
+| Catwoman | Démonologue | 140 / 0,7 s | courte |
+| Harley Quinn | Clown | 150 / 0,8 s | courte |
+| Green Arrow | Mage de glace | 82 / 0,5 s | globale |
+
+**Solo Infini**, niveau 1, toits de New York, graines 1..60, rotation « tous les univers » (vague moyenne) :
+
+| Deck | Référence | `--casual` | Écart au deck Marvel comparable |
+|---|---|---|---|
+| Départ Marvel | 19,27 | 17,38 | — |
+| Départ Disney | 15,77 | 13,98 | — |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 25,27 | 21,52 | — |
+| `meta-dc` (Superman, Batman, Wonder Woman, Green Lantern, Flash) | **23,25** | **20,17** | −8,0 % / −6,3 % (méta Marvel) |
+| `dc-rares` (Robin, Batgirl, Catwoman, Harley, Green Arrow) | **17,60** | **15,77** | −8,7 % / −9,3 % (départ Marvel) ; au-dessus du départ Disney |
+| `dc-epics` (Aquaman, Cyborg, Supergirl, Shazam, Flash) | 18,30 | 15,18 | — |
+| `cosmiques` | 18,60 | 16,87 | — |
+| `bat-famille` (Batman + 4 Rares de mêlée) | 13,85 | 9,78 | à surveiller (4 corps à corps) |
+
+**Campagne, chapitres 7 à 9** (`--campagne c7|c8|c9 --attendu --casual`, 12 parties par niveau) : 100 % sur tous les niveaux des chapitres 7 et 8, 100 % sur les niveaux 9-1 à 9-9, **92 % sur Darkseid** (9-10). Collection attendue : ch. 7 Iron Man, Thor, Hulk, Cap, Superman niveau 9 (3 paliers) ; ch. 8 Iron Man, Thor, Superman, Wonder Woman, Batman niveau 10, ★2 ; ch. 9 Iron Man, Thor, Superman, Batman, Green Lantern niveau 10, ★4. Croissance des PV par vague réglée pour Darkseid (PV ×2) : ch. 7 ×1,032, ch. 8 ×1,024, ch. 9 ×1,016 (à ×1,025, Darkseid 0 %).
+
+**À surveiller** :
+- Darkseid avec un deck **100 % DC** (Superman, Batman, Wonder Woman, Green Lantern, Flash, même collection) : 42 % (8 % avant le relèvement de Flash à 135) contre 83 % pour le méta Marvel ; avec Cyborg à la place de Flash 67 %, avec Aquaman et Cyborg 75 %. Le Cogneur (Flash) n'entre en rage qu'avec plus de 7 ennemis sur le chemin, jamais seul face à un boss.
+- Sans talents ni éveils, au niveau 10, Darkseid tient (méta Marvel 17 %, méta DC 0 %) : le boss final demande les paliers de talents et quelques éveils, comme prévu.
+- `bat-famille` (quatre Rares de mêlée) reste faible pour le joueur occasionnel.
 
 ## 3. Le simulateur (`scripts/simulate.ts`)
 

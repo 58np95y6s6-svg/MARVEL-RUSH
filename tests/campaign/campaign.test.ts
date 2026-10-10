@@ -273,6 +273,11 @@ describe('récompenses', () => {
     expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
     expect(levelRewards(l('c3-n10'), [true, false, false], progress([]), DECK).total.heroes).toEqual(['moana']);
     expect(levelRewards(l('c6-n10'), [true, false, false], progress([]), DECK).total).toMatchObject({ heroes: ['coco'], crystals: 100 });
+    // Extension DC : coffres héroïques, Darkseid donne aussi 100 ✦.
+    expect(levelRewards(l('c7-n1'), [true, false, false], progress([]), DECK).chest?.tier).toBe('heroique');
+    const dk = levelRewards(l('c9-n10'), [true, false, false], progress([]), DECK);
+    expect(dk.total).toMatchObject({ heroes: ['greenlantern'], crystals: 100 });
+    expect(dk.chest).toEqual({ tier: 'legendaire', scale: 1, crystals: 20 });
     // Rejouer après la première victoire : plus de récompense spéciale.
     expect(levelRewards(l('c1-n10'), [true, false, false], progress([['c1-n10', [true, false, false]]]), DECK).total.scrolls).toBeUndefined();
   });

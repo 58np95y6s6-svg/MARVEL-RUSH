@@ -366,7 +366,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Cogneur.
     id: 'flash', name: 'Flash', pack: 'dc', rarity: 'epique', role: 'Échangeur / rage',
-    targeting: 'premier', damage: 100, attackInterval: 0.6, range: 1.6,
+    targeting: 'premier', damage: 135, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Force véloce',
       description: 'Rage : quand plus de 7 ennemis sont sur le chemin, chaque seconde 10 % de chance par ennemi en plus d’entrer en rage 5 s (vitesse d’attaque ×2, +50 % de dégâts, coups de zone à 50 %). Échangeur : glisse Flash sur une alliée de même rang, ils échangent leurs cases ; ses nouvelles voisines gagnent +20 % de cadence 5 s.',

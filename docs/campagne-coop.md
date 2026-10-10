@@ -157,55 +157,55 @@ Boss intermédiaire : **Maléfique** (niveau 8). Boss final : **Thanos** (niveau
 
 ## 2 bis. Extension DC Comics — chapitres 7 à 9
 
-Le chapitre N (7, 8 ou 9) de la Coop s'ouvre quand les deux joueurs ont gagné le niveau 10 du chapitre N en Solo (`docs/campagne.md`, §3 bis). Même rythme : lieutenant au niveau 5 (vague 15), boss intermédiaire au niveau 8 (vague 20), gros boss au niveau 10 (vague 30, annoncé par son lieutenant à la vague 25) ; **Darkseid** au niveau 10 du chapitre 9. Gros boss « rot. » tirés dans la rotation complète (11 boss) sans les boss du chapitre. Récompenses identiques aux chapitres 1 à 6 ; le niveau 10 du chapitre 9 donne en plus le cadre « Duo cosmique » et **100 ✦** chacun (Darkseid vaincu).
+Le chapitre N (7, 8 ou 9) de la Coop s'ouvre quand les deux joueurs ont gagné le niveau 10 du chapitre N en Solo (`docs/campagne.md`, §3 bis). Octobre 2026 : comme les chapitres 1 à 6 (§1 « Difficulté »), un niveau Coop a **le même nombre de vagues et les mêmes réglages** que le niveau Solo de même numéro (`docs/campagne.md` §3 bis) : 50 → 60 vagues au chapitre 7, 60 → 75 au chapitre 8, 75 → 100 au chapitre 9, **Darkseid à la vague 100**. Le lieutenant du chapitre arrive à la dernière vague du niveau 5, le boss intermédiaire à la dernière vague du niveau 8, le boss du chapitre à la dernière vague du niveau 10. Gros boss « rot. » tirés dans la rotation complète (11 boss) sans les boss du chapitre. Récompenses identiques aux chapitres 1 à 6 ; le niveau 10 du chapitre 9 donne en plus le cadre « Duo cosmique » et **100 ✦** chacun (Darkseid vaincu).
 
 ### Chapitre 7 — Gotham
-Boss intermédiaire : **Bane** (niveau 8). Boss : **le Joker** (niveau 10, vague 30), lieutenant **Clown géant** (vague 25).
+Boss intermédiaire : **Bane** (niveau 8). Boss : **le Joker** (niveau 10, vague 60), lieutenant **Clown géant** (niveau 5, vague 55).
 
 | Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ |
 |---|---|---|---|---|---|
-| 1 | gotham-nuit | 20 | 1,7 | L (5), B (10), L (15), B (20) | Au moins 2 héros DC chez chaque joueur |
-| 2 | gotham-nuit | 21 | 1,75 | L, B, L, B | Sans perdre de vie |
-| 3 | batcave | 22 | 1,75 | L, B, L, B | Aucun bouclier ne passe |
-| 4 | batcave | 23 | 1,8 | L, B, L, B | Offrir au moins 5 unités |
-| 5 | gotham-nuit | 15 | 1,8 | L (5), B rot. (10), **L Clown géant** (15) | Clown tué en moins de 20 s |
-| 6 | batcave | 24 | 1,85 | L, B, L, B | Chaque joueur fait au moins 35 % des dégâts |
-| 7 | gotham-nuit | 25 | 1,9 | L, B, L, B, L (25) | Bonus Bat-famille actif chez au moins un joueur |
-| 8 | batcave → arène | 20 | 1,9 | L (5), B rot. (10), L Mercenaire (15), **B Bane** (20) | Bane tué en moins de 30 s |
-| 9 | gotham-nuit | 28 | 1,95 | L, B, L, B, L (25) | Aucune unité ne perd de rang |
-| 10 | gotham-nuit → arène | 30 | 2,0 | L (5), B (10), L (15), B (20), **L Clown géant** (25), **B Joker** (30) | Joker tué en moins de 30 s |
+| 1 | gotham-nuit | 50 | 1,91 | L tous les 5, B rot. tous les 10 ; B rot. (50) | Au moins 2 héros DC chez chaque joueur |
+| 2 | gotham-nuit | 51 | 1,92 | L tous les 5, B rot. tous les 10 | Sans perdre de vie |
+| 3 | batcave | 52 | 1,93 | L tous les 5, B rot. tous les 10 | Aucun bouclier ne passe |
+| 4 | batcave | 54 | 1,94 | L tous les 5, B rot. tous les 10 | Offrir au moins 5 unités |
+| 5 | gotham-nuit | 55 | 1,95 | L tous les 5, B rot. tous les 10 ; **L Clown géant** (55) | Clown tué en moins de 20 s |
+| 6 | batcave | 54 | 1,96 | L tous les 5, B rot. tous les 10 | Chaque joueur fait au moins 35 % des dégâts |
+| 7 | gotham-nuit | 56 | 1,97 | L tous les 5, B rot. tous les 10 | Bonus Bat-famille actif chez au moins un joueur |
+| 8 | batcave → arène | 58 | 1,98 | L tous les 5, B rot. tous les 10 ; **B Bane** (58) | Bane tué en moins de 30 s |
+| 9 | gotham-nuit | 58 | 1,99 | L tous les 5, B rot. tous les 10 | Aucune unité ne perd de rang |
+| 10 | gotham-nuit → arène | 60 | 2 | L tous les 5, B rot. tous les 10 ; **B Le Joker** (60) | Joker tué en moins de 30 s |
 
 ### Chapitre 8 — Metropolis et Themyscira
-Boss intermédiaire : **Black Adam** (niveau 8). Boss : **Lex Luthor** (niveau 10, vague 30), lieutenant **Robot LexCorp géant** (vague 25).
+Boss intermédiaire : **Black Adam** (niveau 8). Boss : **Lex Luthor** (niveau 10, vague 75), lieutenant **Robot LexCorp géant** (niveau 5, vague 70).
 
 | Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ |
 |---|---|---|---|---|---|
-| 1 | metropolis | 21 | 2,0 | L, B, L, B | Sans perdre de vie |
-| 2 | metropolis | 22 | 2,05 | L, B, L, B | Aucun blindé ne passe |
-| 3 | themyscira | 23 | 2,05 | L, B, L, B | Bonus Trinité ou Justice League chez au moins un joueur |
-| 4 | atlantis | 24 | 2,1 | L, B, L, B | Les deux joueurs ont une unité de rang 6 |
-| 5 | metropolis | 15 | 2,1 | L (5), B rot. (10), **L Robot LexCorp géant** (15) | Robot tué en moins de 20 s |
-| 6 | themyscira | 25 | 2,15 | L, B, L, B, L (25) | Offrir au moins 5 unités |
-| 7 | atlantis | 26 | 2,2 | L, B, L, B, L (25) | Sans perdre de vie |
-| 8 | themyscira → arène | 20 | 2,2 | L (5), B rot. (10), L Soldat de Kahndaq (15), **B Black Adam** (20) | Black Adam tué en moins de 30 s |
-| 9 | metropolis | 28 | 2,25 | L, B, L, B, L (25) | Chaque joueur fait au moins 35 % des dégâts |
-| 10 | metropolis → arène | 30 | 2,3 | L (5), B (10), L (15), B (20), **L Robot LexCorp géant** (25), **B Lex Luthor** (30) | Luthor tué en moins de 35 s |
+| 1 | metropolis | 60 | 2,01 | L tous les 5, B rot. tous les 10 ; B rot. (60) | Sans perdre de vie |
+| 2 | metropolis | 62 | 2,02 | L tous les 5, B rot. tous les 10 | Aucun blindé ne passe |
+| 3 | themyscira | 64 | 2,03 | L tous les 5, B rot. tous les 10 | Bonus Trinité ou Justice League chez au moins un joueur |
+| 4 | atlantis | 67 | 2,04 | L tous les 5, B rot. tous les 10 | Les deux joueurs ont une unité de rang 6 |
+| 5 | metropolis | 70 | 2,05 | L tous les 5, B rot. tous les 10 ; **L Robot LexCorp géant** (70) | Robot tué en moins de 20 s |
+| 6 | themyscira | 67 | 2,06 | L tous les 5, B rot. tous les 10 | Offrir au moins 5 unités |
+| 7 | atlantis | 69 | 2,07 | L tous les 5, B rot. tous les 10 | Sans perdre de vie |
+| 8 | themyscira → arène | 72 | 2,08 | L tous les 5, B rot. tous les 10 ; **B Black Adam** (72) | Black Adam tué en moins de 30 s |
+| 9 | metropolis | 73 | 2,09 | L tous les 5, B rot. tous les 10 | Chaque joueur fait au moins 35 % des dégâts |
+| 10 | metropolis → arène | 75 | 2,1 | L tous les 5, B rot. tous les 10 ; **B Lex Luthor** (75) | Luthor tué en moins de 35 s |
 
 ### Chapitre 9 — Apokolips
-Boss intermédiaire : **Sinestro** (niveau 8). Boss final : **Darkseid** (niveau 10, vague 30, à la place du gros boss de cette vague), lieutenant **Parademon géant** (vague 25).
+Boss intermédiaire : **Sinestro** (niveau 8). Boss final : **Darkseid** (niveau 10, vague 100), lieutenant **Soldat Sinestro géant** (niveau 5, vague 95).
 
 | Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ |
 |---|---|---|---|---|---|
-| 1 | oa | 22 | 2,3 | L, B, L, B | Sans perdre de vie |
-| 2 | oa | 23 | 2,35 | L, B, L, B | Les deux joueurs ont une unité de rang 7 |
-| 3 | gotham-nuit | 24 | 2,4 | L, B, L, B | Aucun volant ne passe |
-| 4 | metropolis | 25 | 2,4 | L, B, L, B, L (25) | Offrir au moins 6 unités |
-| 5 | oa | 15 | 2,45 | L (5), B rot. (10), **L Soldat Sinestro géant** (15) | Soldat tué en moins de 20 s |
-| 6 | themyscira | 26 | 2,5 | L, B, L, B, L (25) | Chaque joueur fait au moins 35 % des dégâts |
-| 7 | atlantis | 27 | 2,55 | L, B, L, B, L (25) | Sans perdre de vie |
-| 8 | oa → arène | 20 | 2,55 | L (5), B rot. (10), L Soldat Sinestro (15), **B Sinestro** (20) | Aucune unité emprisonnée plus de 3 s |
-| 9 | batcave | 29 | 2,6 | L, B, L, B, L (25) | Deux bonus d'équipe actifs (un chez chaque joueur) |
-| 10 | oa → Apokolips | 30 | 2,6 | L (5), B (10), L (15), B (20), **L Parademon géant** (25), **Darkseid** (30) | Darkseid tué sans perdre de vie |
+| 1 | oa | 75 | 2,11 | L tous les 5, B rot. tous les 10 ; L (75) | Sans perdre de vie |
+| 2 | oa | 80 | 2,12 | L tous les 5, B rot. tous les 10 ; B rot. (80) | Les deux joueurs ont une unité de rang 7 |
+| 3 | gotham-nuit | 85 | 2,13 | L tous les 5, B rot. tous les 10 ; L (85) | Aucun volant ne passe |
+| 4 | metropolis | 90 | 2,14 | L tous les 5, B rot. tous les 10 ; B rot. (90) | Offrir au moins 6 unités |
+| 5 | oa | 95 | 2,15 | L tous les 5, B rot. tous les 10 ; **L Soldat Sinestro géant** (95) | Soldat tué en moins de 20 s |
+| 6 | themyscira | 85 | 2,16 | L tous les 5, B rot. tous les 10 ; L (85) | Chaque joueur fait au moins 35 % des dégâts |
+| 7 | atlantis | 90 | 2,17 | L tous les 5, B rot. tous les 10 ; B rot. (90) | Sans perdre de vie |
+| 8 | oa → arène | 94 | 2,18 | L tous les 5, B rot. tous les 10 ; **B Sinestro** (94) | Aucune unité emprisonnée plus de 3 s |
+| 9 | batcave | 97 | 2,19 | L tous les 5, B rot. tous les 10 | Deux bonus d'équipe actifs (un chez chaque joueur) |
+| 10 | oa → arène | 100 | 2,21 | L tous les 5, B rot. tous les 10 ; **B Darkseid** (100) | Darkseid tué sans perdre de vie |
 
 ---
 

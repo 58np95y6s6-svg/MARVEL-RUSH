@@ -153,12 +153,12 @@ export function chestReward(threshold: number, cardUnit: UnitId | null): Reward 
 
 export const chestKey = (chapter: number, threshold: number): string => `c${chapter}-${threshold}`;
 
-/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or). */
-const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent', 'or', 'or'];
+/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or ; extension DC, 7-9 héroïque). */
+const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent', 'or', 'or', 'heroique', 'heroique', 'heroique'];
 
 /**
  * Coffre de victoire d'un niveau : rang du chapitre, +1 pour 3 étoiles dans ce combat, +1 au niveau 5
- * (lieutenant), +2 au niveau du boss (10, et 8 du chapitre 6). Rejouer : un rang de moins, contenu × 0,5.
+ * (lieutenant), +2 au niveau du boss (10, et 8 des chapitres 6 à 9). Rejouer : un rang de moins, contenu × 0,5.
  * Cristaux dans le coffre à la première victoire d'un niveau de boss (lieutenant 10 ✦, boss 20 ✦).
  */
 export function victoryChest(level: CampaignLevel, earned: Stars, firstWin: boolean): VictoryChest {
