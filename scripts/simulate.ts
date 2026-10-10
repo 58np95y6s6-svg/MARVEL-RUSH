@@ -186,13 +186,17 @@ function play(seed: number): number {
 }
 
 /** Collection attendue par chapitre (docs/campagne.md §2) : deck, niveau de collection, paliers de talents (option a). */
-const EXPECTED: Record<number, { deck: UnitId[]; level: number; tiers: number }> = {
+const EXPECTED: Record<number, { deck: UnitId[]; level: number; tiers: number; stars?: number }> = {
   1: { deck: ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow'], level: 1, tiers: 0 },   // deck de départ
   2: { deck: ['spiderman', 'hawkeye', 'cmarvel', 'widow', 'bucky'], level: 2, tiers: 0 },    // + 1 Épique
   3: { deck: ['thor', 'spiderman', 'hawkeye', 'cmarvel', 'bucky'], level: 4, tiers: 0 },     // + Thor (ch. 2)
   4: { deck: ['thor', 'ironman', 'spiderman', 'bucky', 'widow'], level: 5, tiers: 1 },       // 2 Légendaires, palier 1
   5: { deck: ['ironman', 'thor', 'hulk', 'cap', 'widow'], level: 6, tiers: 2 },              // équipe complète, palier 2
   6: { deck: ['ironman', 'thor', 'hulk', 'cap', 'widow'], level: 8, tiers: 3 },              // deck « méta », palier 3
+  // Extension DC : premiers héros DC, puis éveils.
+  7: { deck: ['ironman', 'thor', 'hulk', 'cap', 'superman'], level: 9, tiers: 3 },           // méta + 1 héros DC
+  8: { deck: ['ironman', 'thor', 'superman', 'wonderwoman', 'batman'], level: 10, tiers: 3, stars: 2 }, // inter-univers, ★2
+  9: { deck: ['ironman', 'thor', 'superman', 'batman', 'greenlantern'], level: 10, tiers: 3, stars: 4 }, // deck complet, ★4
 };
 
 if (campaignArg) {
@@ -215,6 +219,7 @@ if (campaignArg) {
       const cfg = levelConfig(lv, d, null, seed);
       cfg.players[0]!.levels = Object.fromEntries(d.map((u) => [u, lvlN]));
       cfg.players[0]!.talents = talents;
+      if (exp?.stars) cfg.players[0]!.awakening = Object.fromEntries(d.map((u) => [u, exp.stars!]));
       const engine = createEngine(cfg);
       const tr = createBattleTracker();
       while (!engine.state.result) {

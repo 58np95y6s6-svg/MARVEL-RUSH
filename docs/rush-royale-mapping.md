@@ -72,3 +72,34 @@
   niveau), sauf l'Archer (Œil de faucon) dont la vitesse monte davantage, comme dans Rush Royale.
 - **Pas de critique de compte** : la chance de critique de base de Rush Royale (5 %) n'est pas reprise ;
   les critiques viennent des compétences (Statue, Borée, Voleur) et des équipes.
+
+## Extension DC (15 héros)
+
+> Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et
+> Disney. Les archétypes DC sont gardés (clés génériques du moteur) et posés sur l'unité Rush Royale qui leur
+> ressemble le plus. Portées inchangées. Sources : recherche web (extraits des guides alucare.fr, touchtapplay,
+> wiki Fandom, tier lists 2024-2026) ; le wiki ne s'ouvre pas depuis l'environnement, d'où beaucoup de
+> chiffres **(C)** (approximation) : ils ont été réglés au simulateur pour que les decks DC restent à ~10 % des
+> decks Marvel (`docs/equilibrage.md` §2 sexies).
+
+| Héros | Unité Rush Royale | Profil repris | Conf. |
+|---|---|---|---|
+| **Batman** | **Bourreau** (Executioner) | Achève tout ennemi sous un seuil de PV : **17,5 % (niv. 5) → 29,5 % (niv. 13)**, soit 20,5 % à notre niveau 1, +1,5 point par niveau ; seuil réduit de moitié contre boss et mini-boss. Le justicier qui met hors d'état de nuire. | A (seuils) / C (dégâts) |
+| **Superman** | **Givre** (Frost) | Blizzard périodique sur tout le chemin, ralentissement qui monte avec le rang, cumulable 3 fois (souffle glacial). | A (mécanique) / C (chiffres : 4 % par rang, 6 s, 7 s) |
+| **Wonder Woman** | **Moine** (Monk) | Renforcement **sans mana**, limité dans le temps, avec recharge ; plus fort avec d'autres Moines reliés (Fureur amazone partagée). | A (mécanique) / C (+60 % de cadence, zone 50 %, 5 s / 12 s) |
+| **Green Lantern** | **Cultiste** (Cultist) | 132 dégâts / 0,8 s au niv. 7 ; chaque Cultiste voisin ajoute une cible (1 à 3), à 4 voisins les dégâts doublent → **archétype Formation** (groupe relié). | B |
+| **Flash** | **Cogneur** (Bruiser) | Rage : au-delà de 7 monstres, 10 % de chance par monstre en plus d'entrer en furie (vitesse, dégâts, zone), sans recharge en PvE. **Archétype Échangeur** gardé (aucune unité d'échange libre : le Gardien du portail est pris). | B / C (×2 vitesse, +50 %, 5 s) |
+| **Aquaman** | **Faucheuse** (Reaper) | Cible au hasard, chance d'**exécution instantanée** (5,4 % au niv. 7, +0,2 point par niveau), jamais sur les boss : le kraken qui engloutit. | A |
+| **Cyborg** | **Génie** (Genie) | Les fusions chargent son « Vortex » : vitesse et dégâts en plus (vortex technologique). **Archétype Boost de vitesse** gardé (Bannière et Statue sont prises). | B (mécanique) / C (5 % par charge, 10 au plus) |
+| **Supergirl** | **Barde** (Bard) | Accumule l'inspiration (dégâts proportionnels) → **archétype Croissance** (énergie solaire) ; à la fin du mode Musique, **+20 % de vitesse d'attaque pendant 10 s**. | B |
+| **Shazam** | **Météore** (Meteor) | Frappe venue du ciel : zone et étourdissement périodiques (la foudre de SHAZAM !). | C |
+| **Martian Manhunter** | **Mime** | Fusionne avec n'importe quelle unité de même rang « comme une copie » ; dégâts 30, 1 s → **archétype Copieur** (−25 %), Intangible gardé. | B |
+| **Robin** | **Ferrailleur** (Scrapper) | Fait monter le rang d'une alliée, **20 % de chance de double montée au niv. 7, +2,5 %/niv.** → **archétype Booster de fusion**. | A |
+| **Batgirl** | **Bombardier** | Commune, explosion de zone sur la cible (batarangs explosifs). | C |
+| **Catwoman** | **Démonologue** (Demonologist) | Mana en plus sur les éliminations (doublé en Coop dans Rush Royale) → **archétype Mana par élimination** (barème ×2). | B |
+| **Harley Quinn** | **Clown** | Fusion : chance de copie, sinon **mana** et perte de rang → **archétype Sacrifice → mana** (barème standard). | B |
+| **Green Arrow** | **Mage de glace** (Cold Mage) | Chaque tir ralentit un peu plus la cible (6 % par flèche, 30 % au plus) : flèches cryogéniques. | C |
+
+Talents DC : Rush Royale ne publie pas les talents de ces unités dans les extraits trouvés ; chaque héros a
+3 paliers de talents **de même famille** que son unité (seuil, cumuls, rage, charges, chance de double
+montée…), marqués *(C)* dans `src/data/talents.ts`.

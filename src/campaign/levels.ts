@@ -232,7 +232,7 @@ export const DIFFICULTY = {
   count: [1.1, 1.4] as const,      // effectif× (apparitions par vague)
   bossHp: [1.0, 1.3] as const,     // PV× des boss et lieutenants, en plus
   /** Croissance des PV par vague, par chapitre (Solo Infini : 1,18), réglée au simulateur. */
-  growth: [1.14, 1.10, 1.10, 1.09, 1.07, 1.0425, 1.035, 1.03, 1.025] as const,
+  growth: [1.14, 1.10, 1.10, 1.09, 1.07, 1.0425, 1.032, 1.024, 1.016] as const,
 };
 
 const lerp = (a: readonly [number, number], t: number): number => Math.round((a[0] + (a[1] - a[0]) * t) * 100) / 100;

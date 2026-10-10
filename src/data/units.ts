@@ -388,8 +388,8 @@ export const UNIT_LIST: UnitDef[] = [
     id: 'cyborg', name: 'Cyborg', pack: 'dc', rarity: 'epique', role: 'Soutien / vitesse',
     targeting: 'fort', damage: 90, attackInterval: 0.8, range: 'globale',
     ability: {
-      name: 'Boom Tube',
-      description: 'Chaque fusion sur ton plateau charge le Boom Tube (10 charges au plus) : +5 % de vitesse d’attaque et de dégâts par charge pour Cyborg. Réseau : ses voisines tirent 15 % plus vite.',
+      name: 'Vortex technologique',
+      description: 'Chaque fusion sur ton plateau charge son vortex (10 charges au plus) : +5 % de vitesse d’attaque et de dégâts par charge pour Cyborg. Réseau : ses voisines tirent 15 % plus vite.',
       params: { vortexMax: 10, vortexSpeed: 0.05, vortexDamage: 0.05, auraAttackSpeed: 0.15 },
     },
   },

@@ -271,7 +271,7 @@ export const AWAKENINGS: AwakeningPassiveDef[] = [
   ...u('cyborg',
     ['Refroidissement', '+10 % de vitesse d’attaque.', { attackSpeedMul: 1.1 }],
     ['Armement', '+10 % de dégâts.', { damageMul: 1.1 }],
-    ['Batterie', 'Le Boom Tube garde 2 charges de plus.', { vortexMaxAdd: 2 }],
+    ['Batterie', 'Le vortex garde 2 charges de plus.', { vortexMaxAdd: 2 }],
     ['Optimisation', 'Le réseau donne 5 points de vitesse d’attaque de plus.', { auraAttackSpeedAdd: 0.05 }],
     ['Réseau mondial', 'Ultime : chaque charge donne +3 points de dégâts.', { vortexDamageAdd: 0.03 }],
   ),

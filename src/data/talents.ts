@@ -317,7 +317,7 @@ export const TALENTS: TalentDef[] = [
     ['Atlante', '+30 % de dégâts contre les boss.', { bossDamageMul: 1.3 }],
   ),
   ...u('cyborg', // Génie
-    ['Batterie étendue', 'Le Boom Tube garde jusqu’à 15 charges.', { vortexMaxAdd: 5 }],
+    ['Batterie étendue', 'Le vortex garde jusqu’à 15 charges.', { vortexMaxAdd: 5 }],
     ['Overclocking', 'Le réseau donne +25 % de vitesse d’attaque aux voisines au lieu de +15 %.', { auraAttackSpeedAdd: 0.1 }],
     ['Processeur quantique', 'Chaque charge donne +7 % de vitesse d’attaque au lieu de +5 %.', { vortexSpeedAdd: 0.02 }],
     ['Canon amélioré', '+20 % de dégâts.', { damageMul: 1.2 }],
