@@ -41,7 +41,7 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 
 | Date (minuit, Paris) | Extension | Branche | État |
 |---|---|---|---|
-| Dimanche 18/10/2026 | DC Comics | `extension/dc` | en préparation |
+| Dimanche 18/10/2026 | DC Comics | `extension/dc` | prête à publier (vérifiée le 10/10, d36f950) |
 | Dimanche 25/10/2026 | Transformers | `extension/transformers` | en préparation |
 | Dimanche 01/11/2026 | Pixar | `extension/pixar` | en préparation |
 
