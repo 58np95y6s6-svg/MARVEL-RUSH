@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { blankProfile, applyReward, type Profile } from '../../src/meta/profile';
 import {
-  AWAKENING_CRYSTAL_COSTS, LEVEL_SHARD_COSTS, accountLevel, applyInfiniteRewards, awaken, awakeningCost,
+  AWAKENING_CRYSTAL_COSTS, LEVEL_GOLD_COSTS, accountLevel, applyInfiniteRewards, awaken, awakeningCost,
   chooseTalent, claimDailyChest, deckSlotsUnlocked, infiniteUnlocked, levelUp, levelUpCost,
 } from '../../src/meta/economy';
 import {
@@ -122,28 +122,34 @@ describe('packs', () => {
 });
 
 describe('progression des héros', () => {
-  it('coûts de niveau : cartes et éclats', () => {
+  it('coûts de niveau : cartes et OR (jamais de gemmes)', () => {
     expect(LEVEL_COPY_COSTS).toEqual([1, 1, 2, 2, 2, 3, 3, 3, 4]);
-    expect(LEVEL_SHARD_COSTS).toEqual([50, 100, 150, 250, 400, 600, 900, 1300, 1800]);
+    expect(LEVEL_GOLD_COSTS).toEqual([300, 700, 1200, 2000, 3000, 4500, 6500, 9000, 12000]);
+    expect(LEVEL_GOLD_COSTS.reduce((a, b) => a + b, 0)).toBe(39200);
     const p = fresh();
-    p.shards = 100000;
+    p.gold = 100000;
     p.heroes.thor = { level: 1, cards: 21, awakening: 0, talents: [null, null, null] };
-    expect(levelUpCost(p.heroes.thor)).toEqual({ cards: 1, shards: 50, crystals: 0, scrolls: 0 });
+    expect(levelUpCost(p.heroes.thor)).toEqual({ cards: 1, gold: 300, crystals: 0, scrolls: 0 });
     for (let i = 0; i < 9; i++) expect(levelUp(p, 'thor')).toBe(true);
     expect(p.heroes.thor.level).toBe(10);
     expect(p.heroes.thor.cards).toBe(0);
-    expect(p.shards).toBe(100000 - 5550);
+    expect(p.gold).toBe(100000 - 39200);
+    expect(p.shards).toBe(1000); // les gemmes ne bougent pas
     expect(levelUp(p, 'thor')).toBe(false);
   });
 
-  it('refuse sans cartes ou sans éclats, sans rien modifier', () => {
+  it('refuse sans cartes ou sans or, sans rien modifier (les gemmes ne paient pas)', () => {
     const p = fresh();
     p.heroes.thor = { level: 1, cards: 0, awakening: 0, talents: [null, null, null] };
     expect(levelUp(p, 'thor')).toBe(false);
-    p.heroes.thor.cards = 1; p.shards = 49;
+    p.heroes.thor.cards = 1; p.gold = 299; p.shards = 99999;
     expect(levelUp(p, 'thor')).toBe(false);
     expect(p.heroes.thor).toMatchObject({ level: 1, cards: 1 });
-    expect(p.shards).toBe(49);
+    expect(p.gold).toBe(299);
+    expect(p.shards).toBe(99999);
+    p.gold = 300;
+    expect(levelUp(p, 'thor')).toBe(true);
+    expect(p.gold).toBe(0);
   });
 
   it('éveils : niveau 10 requis, 130 copies et 24 950 ✦ au total', () => {
@@ -155,7 +161,7 @@ describe('progression des héros', () => {
     expect(awakeningCost(p.heroes.hulk)).toBeNull();
     expect(awaken(p, 'hulk')).toBe(false);
     p.heroes.hulk.level = 10;
-    expect(awakeningCost(p.heroes.hulk)).toEqual({ cards: 2, shards: 0, crystals: 50, scrolls: 0 });
+    expect(awakeningCost(p.heroes.hulk)).toEqual({ cards: 2, gold: 0, crystals: 50, scrolls: 0 });
     for (let i = 0; i < 10; i++) expect(awaken(p, 'hulk')).toBe(true);
     expect(p.heroes.hulk.awakening).toBe(10);
     expect(p.heroes.hulk.cards).toBe(70);
@@ -231,14 +237,19 @@ describe('compte, coffres, Solo Infini', () => {
     expect(deckSlotsUnlocked(10000)).toBe(3);
   });
 
-  it('coffre quotidien : +150 éclats +5 ✦, une fois par jour', () => {
+  it('coffre quotidien : coffre d’argent + 40 gemmes + 10 ✦, une fois par jour (minuit local)', () => {
     const p = fresh();
-    expect(claimDailyChest(p, '2026-10-09')).not.toBeNull();
-    expect(p.shards).toBe(1150);
-    expect(p.crystals).toBe(5);
-    expect(claimDailyChest(p, '2026-10-09')).toBeNull();
-    expect(claimDailyChest(p, '2026-10-10')).not.toBeNull();
-    expect(p.shards).toBe(1300);
+    applyStarter(p, 'marvel');
+    const c = claimDailyChest(p, seeded(2), '2026-10-09')!;
+    expect(c.tier).toBe('argent');
+    expect(p.shards).toBe(1000 + c.gems);
+    expect(c.gems).toBe(8 + 40);
+    expect(p.gold).toBe(2000 + c.gold);
+    expect(c.gold).toBeGreaterThanOrEqual(220);
+    expect(p.crystals).toBe(10);
+    expect(claimDailyChest(p, seeded(3), '2026-10-09')).toBeNull();
+    expect(claimDailyChest(p, seeded(4), '2026-10-10')).not.toBeNull();
+    expect(p.crystals).toBe(20);
   });
 
   it('Solo Infini verrouillé jusqu’au chapitre 1', () => {
@@ -248,29 +259,38 @@ describe('compte, coffres, Solo Infini', () => {
     expect(infiniteUnlocked(p)).toBe(true);
   });
 
-  it('récompenses : 10 éclats par vague, coffres cumulés une fois par jour, record', () => {
+  it('récompenses : 15 or par vague, coffres de palier cumulés une fois par jour, record', () => {
     const p = fresh();
     applyStarter(p, 'marvel');
     const r = applyInfiniteRewards(p, 32, seeded(5), '2026-10-09');
-    // 320 (vagues) + 150 + 300 + 500 (coffres) ; ✦ 5 + 10 + 20 ; parchemins 1 + 2
-    expect(r.total.shards).toBe(320 + 150 + 300 + 500);
+    // coffres bois, argent, or ; ✦ 5 + 10 + 20 ; parchemins 1 + 2
+    expect(r.chests.map((c) => c.content.tier)).toEqual(['bois', 'argent', 'or']);
+    const chestGold = r.chests.reduce((n, c) => n + c.content.gold, 0);
+    const chestGems = r.chests.reduce((n, c) => n + c.content.gems, 0);
+    expect(r.total.gold).toBe(32 * 15 + chestGold);
+    expect(r.total.shards).toBe(chestGems);
+    expect(chestGems).toBe(4 + 8 + 16);
     expect(r.total.crystals).toBe(35);
     expect(r.total.scrolls).toBe(3);
-    expect(r.heroes).toHaveLength(1); // Épique garantie du coffre or
+    expect(r.heroes.length).toBeGreaterThanOrEqual(1); // Épique garantie du coffre or
     expect(p.infiniteBest).toBe(32);
     expect(r.newRecord).toBe(true);
     const again = applyInfiniteRewards(p, 25, seeded(6), '2026-10-09');
-    expect(again.total.shards).toBe(250);
+    expect(again.total.gold).toBe(25 * 15);
+    expect(again.chests).toHaveLength(0);
     expect(again.total.crystals).toBe(0);
     expect(again.newRecord).toBe(false);
-    const next = applyInfiniteRewards(p, 12, seeded(7), '2026-10-10');
-    expect(next.total.shards).toBe(120 + 150);
+    const next = applyInfiniteRewards(p, 40, seeded(7), '2026-10-10');
+    expect(next.chests.map((c) => c.content.tier)).toEqual(['bois', 'argent', 'or', 'heroique']);
+    expect(next.newRecord).toBe(true);
+    expect(next.lines.some((l) => l.icon === 'record' && /\+500 or/.test(l.detail ?? ''))).toBe(true);
   });
 
-  it('au-delà de 50 : +300 éclats, 1 parchemin, +10 ✦ tous les 10', () => {
+  it('au-delà de 50 : coffre d’or, 1 parchemin, +10 ✦ tous les 10', () => {
     const p = fresh();
+    applyStarter(p, 'disney');
     const r = applyInfiniteRewards(p, 70, seeded(1), '2026-10-09');
-    expect(r.total.shards).toBe(700 + 150 + 300 + 500 + 800 + 1500 + 300 + 300);
+    expect(r.chests.map((c) => c.content.tier)).toEqual(['bois', 'argent', 'or', 'heroique', 'legendaire', 'or', 'or']);
     expect(r.total.crystals).toBe(5 + 10 + 20 + 30 + 60 + 10 + 10);
     expect(r.total.scrolls).toBe(1 + 2 + 3 + 1 + 1);
   });

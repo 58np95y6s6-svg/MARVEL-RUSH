@@ -6,7 +6,8 @@ import { emitMeta } from '../meta/events';
 import { getProfile, onProfileChange, type Profile } from '../meta/profile';
 import { freePullsTotal } from '../meta/pulls';
 import { createView } from './view';
-import { el, fmt, icon, portraitUrl, type IconName } from './kit';
+import { frameColor } from '../meta/road';
+import { el, fmtShort, icon, portraitUrl, type IconName } from './kit';
 
 export type TabId = 'tirages' | 'collection' | 'accueil' | 'campagne' | 'encyclopedie';
 
@@ -40,9 +41,12 @@ export function mountShell(root: HTMLElement, o: { onProfile: () => void; go: (h
       <span class="sh-who"><span class="sh-name"></span><span class="sh-xp"><i></i></span></span>
     </button>
     <div class="sh-money">
-      <span class="sh-pill" data-m="shards" title="Éclats">${icon('eclats')}<b>0</b></span>
-      <span class="sh-pill" data-m="crystals" title="Cristaux d'éveil">${icon('cristaux')}<b>0</b></span>
-      <span class="sh-pill" data-m="scrolls" title="Parchemins de talent">${icon('parchemins')}<b>0</b></span>
+      <span class="sh-pill gold" data-m="gold" title="Or : monte tes héros de niveau">${icon('or')}<b>0</b></span>
+      <span class="sh-pill gems" data-m="shards" title="Gemmes : ouvre des packs">${icon('gemmes')}<b>0</b></span>
+      <span class="sh-mini">
+        <span class="sh-pill" data-m="crystals" title="Cristaux d'éveil">${icon('cristaux')}<b>0</b></span>
+        <span class="sh-pill" data-m="scrolls" title="Parchemins de talent">${icon('parchemins')}<b>0</b></span>
+      </span>
     </div>`;
   const avatar = header.querySelector<HTMLImageElement>('.sh-avatar img')!;
   const lvB = header.querySelector<HTMLElement>('.sh-lv b')!;
@@ -74,7 +78,7 @@ export function mountShell(root: HTMLElement, o: { onProfile: () => void; go: (h
   const last: Record<string, number> = {};
   function bump(key: string, value: number): void {
     const pill = header.querySelector<HTMLElement>(`[data-m="${key}"]`)!;
-    pill.querySelector('b')!.textContent = fmt(value);
+    pill.querySelector('b')!.textContent = fmtShort(value);
     if (last[key] !== undefined && last[key] !== value) {
       pill.classList.remove('up', 'down'); void pill.offsetWidth;
       pill.classList.add(value > last[key]! ? 'up' : 'down');
@@ -88,7 +92,10 @@ export function mountShell(root: HTMLElement, o: { onProfile: () => void; go: (h
     lvB.textContent = String(a.level);
     nameEl.textContent = p.name;
     xpBar.style.width = `${Math.round((a.into / a.need) * 100)}%`;
-    bump('shards', p.shards); bump('crystals', p.crystals); bump('scrolls', p.scrolls);
+    bump('gold', p.gold ?? 0); bump('shards', p.shards); bump('crystals', p.crystals); bump('scrolls', p.scrolls);
+    const fc = frameColor(p.frame);
+    header.querySelector<HTMLElement>('.sh-avatar')!.style.setProperty('--frame', fc ?? '');
+    header.querySelector<HTMLElement>('.sh-avatar')!.classList.toggle('framed', !!fc);
     const free = freePullsTotal(p);
     const badge = footer.querySelector<HTMLElement>('[data-tab="tirages"] .sh-badge')!;
     badge.hidden = free === 0;

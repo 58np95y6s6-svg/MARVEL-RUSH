@@ -4,6 +4,8 @@
 //   #tirages     packs et ouverture   │ dans la coquille (en-tête + barre d'onglets, src/ui/shell.ts)
 //   #collection  collection et deck   │
 //   #decks       idem, deck en avant  │
+//   #quetes      quêtes du jour       │
+//   #route       Route des récompenses│
 //   #campagne[/<ch>[/<n>]]  campagne : chapitre, fiche de niveau ┘
 //   #campagne/<ch>/<n>/jouer[/<vitesse>]  combat d'un niveau de campagne (plein écran)
 //   #encyclopedie[/mechants|/heros/<id>|/mechant/<id>]  encyclopédie des héros et des méchants
@@ -50,7 +52,9 @@ function teardown(): void {
   root.innerHTML = '';
 }
 
-const SHELL_ROUTES: Record<string, TabId> = { '': 'accueil', tirages: 'tirages', collection: 'collection', decks: 'collection', campagne: 'campagne' };
+const SHELL_ROUTES: Record<string, TabId> = {
+  '': 'accueil', tirages: 'tirages', collection: 'collection', decks: 'collection', campagne: 'campagne', quetes: 'accueil', route: 'accueil',
+};
 
 async function route(): Promise<void> {
   const h = location.hash.replace(/^#/, '');
@@ -164,7 +168,7 @@ async function route(): Promise<void> {
       onEnd: (r) => {
         void clearSavedGame().catch(() => undefined);
         // Méta : récompenses du Solo Infini à la place de la fenêtre de fin par défaut.
-        window.setTimeout(() => void showInfiniteRewards(root, { won: r.won, wave: r.wave, bossKills: r.bossKills }, {
+        window.setTimeout(() => void showInfiniteRewards(root, { won: r.won, wave: r.wave, bossKills: r.bossKills, merges: r.merges, summons: r.summons }, {
           onReplay: () => void route(), onHome: () => go(''),
         }), 900);
         return true;
@@ -229,9 +233,15 @@ async function route(): Promise<void> {
       onChapter: (n) => go(`#campagne/${n}`),
       onPlay: (id) => { const [c, n] = id.slice(1).split('-n'); go(`#campagne/${c}/${n}/jouer`); },
     }));
+  } else if (h === 'quetes') {
+    const { mountQuests } = await import('./quests');
+    s.show(tab, route_, (host) => mountQuests(host, { overlay: s.overlay, go }));
+  } else if (h === 'route') {
+    const { mountRoad } = await import('./road');
+    s.show(tab, route_, (host) => mountRoad(host, { overlay: s.overlay, go }));
   } else {
     const { mountHome } = await import('./home');
-    s.show(tab, route_, (host) => mountHome(host, { go, onInfinite: () => go('#combat') }));
+    s.show(tab, route_, (host) => mountHome(host, { go, onInfinite: () => go('#combat'), overlay: s.overlay }));
   }
 }
 

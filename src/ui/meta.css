@@ -53,7 +53,18 @@
 .sh-pill.down { animation: sh-down .4s ease-out; }
 @keyframes sh-up { 40% { transform: scale(1.2); background: rgba(58,168,58,.8); } }
 @keyframes sh-down { 40% { transform: scale(.92); background: rgba(232,65,59,.6); } }
-@media (max-width: 370px) { .sh-name { max-width: 58px; } .sh-xp { width: 54px; } .sh-pill { padding-right: 5px; } .sh-pill b { font-size: 14px; } }
+/* Or et gemmes en grand, cristaux et parchemins en petit, l'un sous l'autre. */
+.sh-pill.gold b { color: #ffe27a; }
+.sh-pill.gems b { color: #ffc2e2; }
+.sh-mini { display: grid; gap: 2px; }
+.sh-mini .sh-pill { height: 16px; padding: 0 5px 0 0; border-width: 2px; border-radius: 9px; }
+.sh-mini .sh-pill .ic { width: 15px; height: 15px; margin: -2px 0 -2px -3px; }
+.sh-mini .sh-pill b { font-size: 11.5px; -webkit-text-stroke: 2.5px var(--ink); }
+.sh-avatar.framed { box-shadow: inset 0 0 0 3px var(--frame), 0 0 8px var(--frame); }
+@media (max-width: 370px) {
+  .sh-name { max-width: 50px; } .sh-xp { width: 50px; }
+  .sh-pill { padding-right: 5px; } .sh-pill b { font-size: 14px; } .sh-money { gap: 3px; }
+}
 
 .sh-body { position: relative; overflow: hidden; min-height: 0; }
 .sh-screen { position: absolute; inset: 0; overflow: hidden; animation: sh-in .22s ease-out both; }
@@ -423,8 +434,12 @@
 .rw-list small { font-weight: 700; font-size: 12px; opacity: .9; }
 @keyframes rw-line { from { opacity: 0; transform: translateX(-20px) scale(.9); } }
 .rw-total { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 12px; }
-.rw-total span { display: flex; align-items: center; gap: 3px; padding: 2px 10px 2px 4px; border-radius: 12px; background: rgba(15,11,28,.7); border: 2.5px solid var(--ink); font: 400 16px var(--display); }
-.rw-total .ic { width: 22px; height: 22px; }
+.rw-chip { display: flex; align-items: center; gap: 3px; padding: 2px 10px 2px 4px; border-radius: 12px; background: rgba(15,11,28,.7); border: 2.5px solid var(--ink); font: 400 16px var(--display); }
+.rw-chip .ic { width: 22px; height: 22px; }
+.rw-chip.go { animation: rw-chip .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes rw-chip { 40% { transform: scale(1.18); background: rgba(58,168,58,.8); } }
+.rw-list { max-height: 40vh; overflow-y: auto; }
+.rw-list li.or { background: linear-gradient(90deg, rgba(255,210,63,.35), rgba(0,0,0,.2)); }
 .rw-heroes { margin: 0 0 10px; font-weight: 800; font-size: 13px; color: #ffe27a; }
 .rw-row { display: flex; gap: 10px; }
 .rw-row .mr-btn { flex: 1; }

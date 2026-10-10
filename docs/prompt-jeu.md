@@ -266,7 +266,7 @@ Comme dans Rush Royale, le joueur ne lit rien : il **apprend en jouant**, avec u
 4. « Les unités plus fortes ont **plus de pastilles**. » Une deuxième fusion est guidée.
 5. « Touche le bouton d'**amélioration** sous la grille : toutes les unités de ce type deviennent plus fortes. »
 6. « Un **boss** arrive ! » Annonce plein écran, puis un boss faible avec un pouvoir montré au ralenti et expliqué en une phrase.
-7. Victoire : l'écran de fin explique les **éclats** et l'**XP**.
+7. Victoire : l'écran de fin explique l'**or** (montées de niveau), les **gemmes** (packs) et l'**XP**.
 
 **Partie 2 — Le méta-jeu, guidé dans les menus**
 8. « Ouvre ton **premier pack** » : un **lot de 10 invocations offert** (au moins 1 Épique garanti), dans le pack de l'univers choisi, avec l'animation complète et le bouton « Passer ».
@@ -304,11 +304,11 @@ Le Solo est le **mode principal** : c'est là que chaque joueur avance à son ry
 
   Les paliers se débloquent avec des **parchemins de talent** gagnés en campagne. L'agent game design écrit les 2 options de chaque palier pour les 28 unités.
 - **Niveau de compte** (XP gagnée dans tous les modes) : il débloque les maps, les emplacements de deck (jusqu'à 3), le coffre quotidien et les cadres de profil.
-- **Éclats** pour les tirages, et cartes d'unités en récompense.
+- **Or** pour les montées de niveau, **gemmes** pour les packs, et cartes d'unités en récompense, dans des **coffres** (§6.1).
 
 **Solo Infini**
 - Il se débloque après le chapitre 1 de la campagne. Seul, on tient le plus de vagues possible : un petit boss toutes les 5 vagues, un gros toutes les 10, Thanos à la 50.
-- **Récompenses par palier atteint**, comme en Coop Infini (§5.2), mais en version solo : bronze à 10, argent à 20, or à 30, héroïque à 40, légendaire à 50 (Thanos vaincu), puis +300 éclats et 1 parchemin tous les 10. C'est la **principale source de cristaux d'éveil** (§6.6).
+- **Récompenses par palier atteint**, comme en Coop Infini (§5.2), mais en version solo : coffre en bois à 10, d'argent à 20, d'or à 30, héroïque à 40, légendaire à 50 (Thanos vaincu), puis un coffre d'or et 1 parchemin tous les 10 ; +15 or par vague, butin d'or des boss, bonus de record (+500 or, +50 gemmes). C'est la **principale source de cristaux d'éveil** (§6.6).
 - **Record personnel** sauvegardé, et un **classement à deux** (ton record contre celui de ta partenaire).
 - Une partie se met en pause et se reprend plus tard (sauvegarde à chaque vague).
 
@@ -336,16 +336,16 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 
 **Coop — Infini**
 - On tient le plus de vagues possible, avec un petit boss toutes les 5 vagues, un gros toutes les 10 et Thanos à la 50.
-- **Récompenses par palier atteint**, données à chacun à la fin de la partie. Chaque coffre de palier se gagne **une fois par jour et par mode** ; au-delà, seuls les éclats par vague comptent (contre l'inflation, voir `docs/equilibrage.md`).
+- **Récompenses par palier atteint**, données à chacun à la fin de la partie. Chaque coffre de palier se gagne **une fois par jour et par mode** ; au-delà, seul l'or par vague compte (contre l'inflation, voir `docs/equilibrage.md`).
 
 | Palier | Récompense (pour chacun) |
 |---|---|
-| Vague 10 | coffre bronze : 150 éclats, 10 cartes |
-| Vague 20 | coffre argent : 300 éclats, 1 parchemin de talent, 20 cartes |
-| Vague 30 | coffre or : 500 éclats, 2 parchemins, 1 carte Épique garantie |
-| Vague 40 | coffre héroïque : 800 éclats, 3 parchemins, 1 skin au hasard |
-| Vague 50 (Thanos vaincu) | coffre légendaire : 1 500 éclats, 1 Légendaire garanti, cadre de profil « Vainqueur de Thanos » |
-| Ensuite, tous les 10 | +300 éclats et 1 parchemin |
+| Vague 10 | coffre en bois (§6.1) |
+| Vague 20 | coffre d'argent + 1 parchemin de talent |
+| Vague 30 | coffre d'or + 2 parchemins + 1 carte Épique garantie |
+| Vague 40 | coffre héroïque + 3 parchemins + 1 skin au hasard |
+| Vague 50 (Thanos vaincu) | coffre légendaire + 1 Légendaire garanti + cadre de profil « Vainqueur de Thanos » |
+| Ensuite, tous les 10 | coffre d'or + 1 parchemin |
 
 - **Record du duo** affiché sur l'écran Coop, et historique des meilleures parties.
 - Une partie infinie se **met en pause et se reprend** plus tard, à deux (§5.4).
@@ -353,13 +353,13 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 ### 5.4 Deux profils : jouer chacun de son côté ou ensemble
 
 - **Deux profils**, un par joueur. Au premier lancement, chacun crée le sien : pseudo et avatar (un personnage possédé). L'app affiche un **code de récupération** (12 caractères) pour retrouver le profil sur un autre appareil.
-- **Chacun sa progression** : campagne, collection, niveaux, talents, éclats, decks et records sont propres à chaque profil et **sauvegardés en ligne** (§2). Jouer seul ne touche jamais à la progression de l'autre.
+- **Chacun sa progression** : campagne, collection, niveaux, talents, or, gemmes, decks et records sont propres à chaque profil et **sauvegardés en ligne** (§2). Jouer seul ne touche jamais à la progression de l'autre.
 - **Lier les deux profils** : dans « Mon duo », un joueur génère un code ou un lien de liaison et l'autre l'accepte. Les profils deviennent **partenaires**.
 - **Jouer ensemble quand on le décide** :
   - **Présence** : on voit si sa partenaire est en ligne et ce qu'elle fait (« en campagne, chapitre 3 », « dans les tirages »…).
   - Le bouton **« Inviter à jouer »** choisit le mode (Coop Niveaux ou Coop Infini) et le niveau ou la map, puis envoie l'invitation, qui s'affiche chez l'autre. Si elle est hors ligne, l'invitation attend et une notification PWA est envoyée si elle l'a autorisée.
   - Le **lien d'invitation** du §5.5 reste disponible en secours.
-- **Une partie commune profite aux deux** : chaque joueur gagne son XP, ses éclats et ses récompenses sur son propre profil. Les cartes ne s'échangent pas, mais on peut offrir une unité *pendant* la partie (Coop).
+- **Une partie commune profite aux deux** : chaque joueur gagne son XP, son or, ses gemmes et ses récompenses sur son propre profil. Les cartes ne s'échangent pas, mais on peut offrir une unité *pendant* la partie (Coop).
 - **Parties communes sauvegardées** : l'hôte enregistre l'état complet de la partie Coop à chaque vague dans `saved_games`. Les deux joueurs peuvent **arrêter et reprendre plus tard** depuis « Parties en cours ».
 - **Historique à deux** : les dernières parties communes (mode, map, vague atteinte, vainqueur) et le score du duo (étoiles Coop, record en Coop Infini).
 
@@ -381,21 +381,41 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
 
 ## 6. Collection, tirages et progression
 
-### 6.1 Monnaie (fictive, aucun achat réel)
-- **Éclats** :
-  - campagne : +30 par étoile la première fois, +10 en rejouant ;
-  - Solo Infini : +10 par vague et les coffres de palier ;
-  - Coop Niveaux : +30 par étoile la première fois, pour chacun ;
-  - Coop Infini : +10 par vague et les coffres de palier (§5.2), pour chacun ;
-  - coffre quotidien : +150.
-- **Parchemins de talent** : gagnés en campagne (coffres d'étoiles et boss de chapitre).
-- Au premier lancement : **1 000 éclats** offerts et un deck de départ de 5 unités, au choix :
+### 6.1 Monnaies et récompenses (fictives, aucun achat réel)
+
+Deux monnaies séparées, comme dans Rush Royale (retour joueur d'octobre 2026 : « la même monnaie pour pack et pour évoluer c'est nul ») :
+- **Or** (pièces, abondant) : paie **uniquement les montées de niveau** des héros, avec leurs cartes.
+- **Gemmes** (rares) : paient **uniquement les packs**.
+- **Cristaux d'éveil ✦** (§6.6) et **parchemins de talent** (campagne, paliers d'Infini) ne changent pas.
+- Au premier lancement : **1 000 gemmes**, **2 000 or**, un **lot de 10 tirages offert** et un deck de départ de 5 unités, au choix :
   - **Marvel** : Spider-Man, Œil de faucon, Falcon, Captain Marvel, Black Widow ;
   - **Disney** : Pocahontas, Rebelle, Tiana, Nemo & Dory, Rox & Rouky.
+- Profils existants (v1 → v2) : les éclats deviennent des gemmes (rien ne se perd) et l'or de départ suit la progression : 2 000 + 120 par étoile de campagne + 60 par vague du record Infini + 1 par point d'XP (plafond 40 000).
+
+**Coffres** (`src/meta/chests.ts`), ouverts avec une animation (le coffre tombe, frétille, tremble au toucher, éclate ; le butin sort objet par objet puis l'or et les gemmes s'envolent vers la barre des monnaies, dont les compteurs montent) :
+
+| Coffre | Or (±10 %) | Gemmes | Cartes (piles d'un héros possédé, deck en priorité) | Nouveau héros |
+|---|---|---|---|---|
+| Bois | 120 | 4 | 6 Rare, 1 Épique (50 %) | — |
+| Argent | 250 | 8 | 12 Rare, 3 Épique, 1 Légendaire (10 %) | 2 % |
+| Or | 500 | 16 | 18 + 6 Rare, 6 Épique, 1 Légendaire (35 %) | 5 % |
+| Héroïque | 1 000 | 30 | 30 + 10 Rare, 10 + 3 Épique, 1 Légendaire (75 %) | 10 % |
+| Légendaire | 2 000 | 60 | 45 + 15 Rare, 15 + 5 Épique, 2 (+1 à 50 %) Légendaire | 25 % |
+
+Une pile vise un héros du deck actif 6 fois sur 10 ; sans héros de la rareté, elle descend d'une rareté (deux fois plus de cartes).
+
+**Sources**
+- **Campagne** (détail : `docs/campagne.md` §2) : à chaque victoire un **coffre** dont le rang dépend du chapitre (1-2 bois, 3-4 argent, 5-6 or), +1 pour 3 étoiles dans le combat, +1 au niveau 5, +2 au niveau du boss ; rejouer donne un coffre plus petit (un rang de moins, contenu × 0,5). Plus : +20 or par étoile nouvelle (+8 en rejouant) pour 10 vagues, +2 gemmes par étoile nouvelle, premières 3 étoiles d'un niveau +150 or et +5 gemmes, coffres d'étoiles du chapitre, premier boss de chapitre +100 gemmes.
+- **Solo Infini** : +15 or par vague, coffres de palier (§5.1), bonus de record.
+- **Butin des boss** en combat : +20 or par lieutenant, +60 par gros boss, +300 pour Thanos (écran de fin).
+- **Coffre quotidien** (minuit, heure locale) : coffre d'argent + 40 gemmes + 10 ✦.
+- **Quêtes du jour** (3 par jour, minuit) : « Fusionne 30 fois », « Bats 2 boss », « Gagne 3 niveaux de campagne », « Tiens 40 vagues », « Invoque 80 héros », « Améliore un héros », « Gagne 3 étoiles », « Atteins la vague 15 en Solo Infini » ; 250 à 500 or et 25 à 35 gemmes chacune. **Coffre de la semaine** : 12 quêtes réclamées du lundi au dimanche → coffre légendaire + 150 gemmes + 40 ✦.
+- **Route des récompenses** (niveau de compte) : chaque niveau donne 100 + 40 × niveau en or, plus 40 gemmes (niveaux pairs) ou 30 ✦ (impairs) ; tous les 5 niveaux un coffre (or, puis héroïque dès 20, légendaire dès 40) ; tous les 10 niveaux un **lot de 10 tirages offert** ; cadres d'avatar aux niveaux 5, 10, 20, 30 et 50.
+- **Rythme visé** (simulation `docs/equilibrage.md` §6) : un lot de 10 acheté avec des gemmes tous les **3 à 4 jours** de jeu régulier, l'or limite les montées de niveau (deck niveau 9 vers la fin de la campagne, 3 semaines).
 
 ### 6.2 Packs
 - Deux packs, **Pack Marvel** et **Pack Disney**, qui ne contiennent que les unités de leur univers.
-- Prix : **100** éclats le tirage, **900** les 10 tirages, avec au moins 1 Épique garanti dans un lot de 10.
+- Prix : **100** gemmes le tirage, **900** les 10 tirages, avec au moins 1 Épique garanti dans un lot de 10. Les packs se paient **uniquement en gemmes**.
 - Taux : **Rare 72 %**, **Épique 24 %**, **Légendaire 4 %**.
 - **Garantie** : un Légendaire au plus tard au 40e tirage, compteur séparé par pack et affiché.
 - Affiche les taux exacts sur l'écran du pack.
@@ -405,7 +425,7 @@ Il n'y a **que deux façons de jouer** : seul (Solo, §5.1) ou à deux en Coop. 
   3. la carte se retourne ;
   4. le personnage joue sa **boucle d'attaque** ;
   5. le bouton « Passer » révèle tout d'un coup pour un lot de 10.
-- **Doublons** : ils deviennent des cartes de niveau. Il faut 1, 1, 2, 2, 2, 3, 3, 3, 4 cartes pour passer les niveaux 2 à 10 (21 au total), plus 50, 100, 150, 250, 400, 600, 900, 1 300, 1 800 éclats. Au-delà du niveau 10, les doublons servent à l'**Éveil** (§6.6), qui porte la progression longue.
+- **Doublons** : ils deviennent des cartes de niveau. Il faut 1, 1, 2, 2, 2, 3, 3, 3, 4 cartes pour passer les niveaux 2 à 10 (21 au total), plus 300, 700, 1 200, 2 000, 3 000, 4 500, 6 500, 9 000, 12 000 **or** (39 200 or du niveau 1 au niveau 10). Au-delà du niveau 10, les doublons servent à l'**Éveil** (§6.6), qui porte la progression longue.
 
 ### 6.3 Skins
 - **3 skins par unité** : Classique, Hiver et Néon, obtenus par palette alternative appliquée au SVG.
@@ -464,14 +484,14 @@ L'**Éveil** est la progression la plus longue du jeu, au-delà du niveau 10. Ch
 **Cristaux d'éveil (✦), gagnés lentement**
 - Solo Infini et Coop Infini : 5 ✦ au palier 10, 10 au 20, 20 au 30, 30 au 40, 60 au 50, puis +10 tous les 10.
 - Premier gros boss vaincu de la journée : 5 ✦. Thanos vaincu : 50 ✦.
-- Campagne : 3 étoiles sur un niveau de boss, la première fois : 25 ✦.
-- Coffre quotidien : 5 ✦.
+- Campagne : 3 étoiles sur un niveau de boss, la première fois : 25 ✦ ; coffre de la première victoire d'un niveau de boss : 10 ✦ (lieutenant) ou 20 ✦ (boss).
+- Coffre quotidien : 10 ✦. Coffre de la semaine : 40 ✦. Route des récompenses : 30 ✦ aux niveaux de compte impairs.
 - Doublons d'un personnage déjà à ★10 : convertis en 5 ✦ chacun.
 - **Rythme visé** (l'agent Game design le vérifie et l'écrit dans `docs/equilibrage.md`) :
   - premier ★1 dans la première semaine de jeu régulier ;
   - ★5 sur un personnage Rare en 2 à 3 mois ;
   - ★10 sur un Légendaire en **plus de 8 mois**.
-- Ces valeurs viennent de la simulation d'économie de `docs/equilibrage.md` §6 : premier ★1 vers le jour 8, ★5 sur un Rare vers le jour 66, ★10 sur un Légendaire vers le jour 262 (≈ 8,7 mois).
+- Ces valeurs viennent de la simulation d'économie de `docs/equilibrage.md` §6 (vraies règles, `npx vite-node scripts/economie.ts`) : premier ★1 vers le jour 8, ★5 sur un Rare vers le jour 84, ★10 sur un Légendaire vers le jour 287 (≈ 9,4 mois).
 - **Aucun achat**, aucun raccourci.
 
 **Affichage**
@@ -579,7 +599,7 @@ Chaque écran suit les captures et les règles de `design/references/ecrans/READ
 - **Navigation par transitions** (glissement ou fondu de 200 à 250 ms) entre les vues, jamais par rechargement. Les fenêtres (fiche d'unité, confirmation, récompenses) s'ouvrent en **panneaux qui montent du bas** ou en modales centrées, avec un fond assombri.
 - Ce qui précède est garanti par une feuille de style de base commune (`src/ui/base.css`) et un composant de vue (`src/ui/view.ts`) que tous les écrans utilisent.
 
-1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Solo Infini**, **Jouer à deux**, **Tirages**, **Collection**, **Decks**, **Maps**. En haut : avatar, niveau de compte, éclats, et la pastille de présence de la partenaire.
+1. **Accueil** : logo animé sur la map préférée en fond, gros bouton **Campagne** (avec la reprise de la partie en cours s'il y en a une), puis **Solo Infini**, **Jouer à deux**, **Coffre quotidien**, **Quêtes du jour**, **Route des récompenses**, **Tirages**, **Maps**. En haut : avatar (et son cadre), niveau de compte, or, gemmes, cristaux et parchemins, et la pastille de présence de la partenaire.
 2. **Campagne** : carte des 6 chapitres, niveaux avec leurs étoiles, coffres d'étoiles, prochain personnage à débloquer.
 3. **Jouer à deux / Mon duo** : liaison des profils, présence, « Inviter à jouer », invitations reçues, **parties communes en cours** à reprendre, historique et score du duo.
 4. **Talents** : depuis la fiche d'une unité, les 3 paliers et le choix entre 2 talents à chaque palier.
@@ -592,7 +612,7 @@ Chaque écran suit les captures et les règles de `design/references/ecrans/READ
    - en haut : vies, vague, minuteur, barre du boss ;
    - au milieu : chemin et plateau(x) ;
    - en bas : mana, bouton **Invoquer** avec son coût, les 5 boutons d'amélioration du deck, emotes.
-11. **Fin de partie** : vague atteinte ou victoire/défaite, éclats gagnés, bouton « Rejouer » (qui renvoie au salon en multi).
+11. **Fin de partie** : vague atteinte ou victoire/défaite, ouverture du coffre gagné, puis récompenses détaillées qui défilent (or, gemmes, cartes, butin des boss), bouton « Rejouer » (qui renvoie au salon en multi).
 12. **Réglages et profil** : pseudo, avatar, code de récupération (afficher et copier), récupérer un profil, son, vibrations, notifications, état de la synchronisation, réinitialiser (avec confirmation dans la page).
 
 ---

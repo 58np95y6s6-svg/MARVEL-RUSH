@@ -1,25 +1,36 @@
-// Attaques et compétences des 28 unités (§4.5). Une fonction par tick et par joueur :
-// timers, purification de Raiponce, croissance (archétype, voir archetypes.ts), métamorphose de Maui,
-// compétences à recharge, attaques de base.
+// Attaques et compétences des 28 unités, sur les profils Rush Royale (docs/rush-royale-mapping.md).
+// Une fonction par tick et par joueur : timers, compétences à recharge, attaques de base (le rang de
+// fusion divise l'intervalle d'attaque, règle de Rush Royale : plusieurs coups par tick si besoin).
 
 import type { UnitId } from '../data/types';
 import { UNITS } from '../data/units';
-import { GRID_SIZE } from './types';
+import { GRID_SIZE, MAX_RANK } from './types';
 import {
-  DT, EPS, emit, pick, pickMany, rand, randInt, type Ctx, type SimEnemy, type SimUnit,
+  DT, EPS, emit, pick, pickMany, rand, type Ctx, type SimEnemy, type SimUnit,
 } from './internal';
 import {
-  aliveAll, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate,
-  effectiveDef, effectiveId, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors, pushBack,
-  progress, segmentOf, selectTarget, sendToStart, teamFor, topBy, unitHit, unitParams, within,
+  aliveAll, applyBurn, applySlow, applyStun, attackSpeedOf, baseDamage, bestBy, controlMul, cooldownRate, countOnBoard,
+  effectiveDef, effectiveId, inquisitorActive, isAlive, isDisabled, killEnemy, laneLength, nearest, neighbors,
+  progress, selectTarget, sendToStart, teamFor, unitHit, unitParams, within,
 } from './combat';
 import { enemyGridPos, inReach, unitRange } from './geometry';
 import { formationSplash, growOverTime } from './archetypes';
 
+/** Recharge de la compétence périodique selon le rang (`abilityCooldownPerRank`, Stase). */
+export function abilityCd(prm: Record<string, number>, rank: number): number {
+  const cd = (prm.abilityCooldown ?? 0) + (prm.abilityCooldownPerRank ?? 0) * (rank - 1);
+  return Math.max(0.5, cd);
+}
+
 export function initUnitCounters(ctx: Ctx, player: number, u: SimUnit): void {
   const prm = unitParams(ctx, player, effectiveId(u));
   u.counters = {};
-  if (prm.abilityCooldown) u.counters.cd = prm.abilityCooldown;
+  if (prm.abilityCooldown) u.counters.cd = abilityCd(prm, u.rank);
+  // Chaudron magique (Nemo) : une potion à l'arrivée sur le plateau.
+  if (prm.potionDamage) u.counters.potion = 1;
+  // Minotaure (Hulk) : mode Berserker à l'apparition (talent).
+  if (prm.berserkDuration) u.counters.berserkFor = prm.berserkDuration;
+  if (prm.chargeStart) u.counters.charges = prm.chargeStart;
 }
 
 function dec(v: number | undefined, by = DT): number | undefined {
@@ -41,11 +52,11 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
       delete s.transformedInto;
       delete s.transformFor;
       const prm = unitParams(ctx, player, u.unit);
-      if (prm.abilityCooldown) u.counters.cd = prm.abilityCooldown;
+      if (prm.abilityCooldown) u.counters.cd = abilityCd(prm, u.rank);
     }
   }
   const c = u.counters;
-  for (const k of ['binaryFor', 'hasteFor', 'boostFor', 'restoredFor', 'immuneFor'] as const) {
+  for (const k of ['hasteFor', 'boostFor', 'restoredFor', 'immuneFor', 'hurricaneFor', 'buffFor', 'killManaFor', 'berserkFor', 'rockfallFor'] as const) {
     if ((c[k] ?? 0) > 0) c[k] = Math.max(0, (c[k] ?? 0) - DT);
   }
   const rate = cooldownRate(ctx, player, effectiveId(u));
@@ -53,13 +64,14 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
   growOverTime(ctx, player, u, DT);
 }
 
-/** Raiponce retire les effets de boss des unités adjacentes (et diagonales avec le talent). */
-function rapunzelCleanse(ctx: Ctx, player: number): void {
+/** Talent de Raiponce (Meule) : retire les effets de boss des unités voisines. */
+function cleanse(ctx: Ctx, player: number): void {
   const grid = ctx.st.players[player]!.grid;
   for (let i = 0; i < GRID_SIZE; i++) {
     const r = grid[i];
-    if (!r || effectiveId(r) !== 'rapunzel') continue;
-    const prm = unitParams(ctx, player, 'rapunzel');
+    if (!r) continue;
+    const prm = unitParams(ctx, player, effectiveId(r));
+    if (!prm.cleanseNeighbors) continue;
     for (const j of neighbors(i, !!prm.auraDiagonal)) {
       const n = grid[j];
       if (!n) continue;
@@ -70,57 +82,134 @@ function rapunzelCleanse(ctx: Ctx, player: number): void {
   }
 }
 
+/** Plus de 3 coups par tick n'ont pas de sens visuel : au-delà, la cadence est plafonnée (60 coups/s). */
+const MAX_ATTACKS_PER_TICK = 3;
+
 export function updateUnits(ctx: Ctx, player: number): void {
   const p = ctx.st.players[player]!;
-  rapunzelCleanse(ctx, player);
+  cleanse(ctx, player);
   const units = p.grid.filter((u): u is SimUnit => !!u);
   for (const u of units) {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
     tickTimers(ctx, player, u);
-    if (effectiveId(u) === 'maui') mauiForm(ctx, player, slot, u);
+    const id = effectiveId(u);
+    const def = effectiveDef(u);
+    if ((u.counters.rockfallFor ?? 0) > EPS) rockfall(ctx, player, slot, u);
+    if (u.counters.potion) { delete u.counters.potion; potion(ctx, player, slot, u); }
     const disabled = isDisabled(u);
     let enemies = aliveAll(ctx);
-    let cur = slot;
     if (!disabled && (u.counters.cd ?? 1) <= EPS) {
       const res = timedAbility(ctx, player, slot, u, enemies, inRange(ctx, player, slot, u, enemies));
       if (res !== false) {
-        u.counters.cd = unitParams(ctx, player, effectiveId(u)).abilityCooldown ?? 0;
-        if (typeof res === 'number') cur = res;
+        u.counters.cd = abilityCd(unitParams(ctx, player, id), u.rank) + (typeof res === 'number' ? res : 0);
         enemies = aliveAll(ctx);
       }
     }
-    u.cooldown = Math.max(0, u.cooldown - DT * attackSpeedOf(ctx, player, cur, u));
-    if (disabled || u.cooldown > EPS || enemies.length === 0) continue;
-    const pool = inRange(ctx, player, cur, u, enemies);
-    // Aucun ennemi dans la zone : l'attaque reste prête (pas de coup dans le vide).
-    if (pool.length === 0) continue;
-    performAttack(ctx, player, cur, u, enemies, pool);
-    const team = teamFor(ctx, player, effectiveId(u));
-    if (team.doubleAttackChance > 0 && rand(ctx) < team.doubleAttackChance) {
-      const again = aliveAll(ctx);
-      const againPool = inRange(ctx, player, cur, u, again);
-      if (againPool.length > 0) performAttack(ctx, player, cur, u, again, againPool);
+    // Soutiens « sans cible » de Rush Royale (Statue, Bannière, Meule) : pas d'attaque.
+    if (def.damage <= 0) continue;
+    // Le reste négatif de la recharge permet plusieurs coups dans un tick (cadences élevées des rangs hauts).
+    u.cooldown -= DT * attackSpeedOf(ctx, player, slot, u);
+    if (disabled || enemies.length === 0) { u.cooldown = Math.max(0, u.cooldown); continue; }
+    u.cooldown = Math.max(-def.attackInterval * MAX_ATTACKS_PER_TICK, u.cooldown);
+    if (u.cooldown > EPS) continue;
+    for (let n = 0; n < MAX_ATTACKS_PER_TICK && u.cooldown <= EPS; n++) {
+      const pool = inRange(ctx, player, slot, u, enemies);
+      // Aucun ennemi dans la zone : l'attaque reste prête (pas de coup dans le vide).
+      if (pool.length === 0) { u.cooldown = Math.max(0, u.cooldown); break; }
+      performAttack(ctx, player, slot, u, enemies, pool);
+      const team = teamFor(ctx, player, id);
+      if (team.doubleAttackChance > 0 && rand(ctx) < team.doubleAttackChance) {
+        const again = aliveAll(ctx);
+        const againPool = inRange(ctx, player, slot, u, again);
+        if (againPool.length > 0) performAttack(ctx, player, slot, u, again, againPool);
+      }
+      u.cooldown += def.attackInterval;
+      enemies = aliveAll(ctx);
+      if (enemies.length === 0) { u.cooldown = Math.max(0, u.cooldown); break; }
     }
-    u.cooldown += effectiveDef(u).attackInterval;
   }
 }
 
-// ───────────── Transformations ─────────────
+// ───────────── Effets de plateau (fusion, arrivée) ─────────────
 
-function mauiForm(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
-  if ((u.counters.cd ?? 0) > EPS) return;
-  const prm = unitParams(ctx, player, 'maui');
-  const shark = u.counters.form ? 0 : 1;
-  u.counters.form = shark;
-  u.counters.cd = shark ? prm.sharkDuration ?? 8 : prm.abilityCooldown ?? 8;
-  const targets: number[] = [];
-  if (prm.transformBlast) {
-    const dmg = baseDamage(ctx, player, slot, u) * prm.transformBlast;
-    for (const e of aliveAll(ctx)) { unitHit(ctx, player, u, e, dmg, { noOnHit: true }); targets.push(e.uid); }
+/**
+ * Tesla (Iron Man) : une fusion ou une montée de rang sur la case `slot` charge les Iron Man voisins
+ * (charges au plus = rang × chargeMax).
+ */
+export function onRankUp(ctx: Ctx, player: number, slot: number): void {
+  const grid = ctx.st.players[player]!.grid;
+  for (const j of neighbors(slot, false)) {
+    const n = grid[j];
+    if (!n) continue;
+    const prm = unitParams(ctx, player, effectiveId(n));
+    if (!prm.chargeDamage) continue;
+    const max = Math.max(1, (prm.chargeMax ?? 1) * n.rank);
+    const before = n.counters.charges ?? 0;
+    n.counters.charges = Math.min(max, before + 1);
+    if (n.counters.charges >= max && before < max) abilityEvent(ctx, player, j, effectiveId(n), 'Surcharge Arc', []);
   }
-  emit(ctx, { type: 'ability', player: ctx.st.players[player]!.id, slot, unit: 'maui', name: shark ? 'Métamorphose : requin' : 'Métamorphose : faucon', targets });
 }
+
+/** Minotaure (Hulk) : deux Hulk fusionnés lancent un Éboulement depuis la case de la fusion. */
+export function startRockfall(ctx: Ctx, player: number, merged: SimUnit): void {
+  const prm = unitParams(ctx, player, 'hulk');
+  merged.counters.rockfallFor = prm.rockfallDuration ?? 4;
+  merged.counters.rockfallTick = 0;
+}
+
+function rockfall(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
+  const c = u.counters;
+  c.rockfallTick = (c.rockfallTick ?? 0) + DT;
+  if (c.rockfallTick < 1 - EPS) return;
+  c.rockfallTick -= 1;
+  const prm = unitParams(ctx, player, 'hulk');
+  const range = unitRange(UNITS.hulk);
+  const zone = aliveAll(ctx).filter((e) => ctx.debugNoRange
+    || inReach(slot, range, enemyGridPos(ctx.geo, player, e.lane, e.distance, laneLength(ctx, e.lane))));
+  for (const e of zone) {
+    const lost = e.maxHp - e.hp;
+    if (lost > 0) unitHit(ctx, player, u, e, lost * (prm.rockfallLostHp ?? 0.05), { noOnHit: true });
+  }
+  if (zone.length) abilityEvent(ctx, player, slot, 'hulk', 'Éboulement', zone);
+}
+
+/** Chaudron magique (Nemo) : une potion au hasard quand il arrive sur le plateau. */
+function potion(ctx: Ctx, player: number, slot: number, u: SimUnit): void {
+  const prm = unitParams(ctx, player, effectiveId(u));
+  const p = ctx.st.players[player]!;
+  const brews = 1 + (rand(ctx) < (prm.potionTwice ?? 0) ? 1 : 0);
+  for (let b = 0; b < brews; b++) {
+    const kind = Math.min(3, Math.floor(rand(ctx) * 4));
+    const enemies = inRange(ctx, player, slot, u, aliveAll(ctx));
+    let targets: SimEnemy[] = [];
+    if (kind === 0) {
+      const allies = p.grid.filter((x): x is SimUnit => !!x && x !== u);
+      const ally = pick(ctx, allies);
+      if (ally) {
+        ally.counters.buff = prm.potionBuff ?? 0.25;
+        ally.counters.buffFor = prm.potionBuffDuration ?? 15;
+      }
+    } else if (kind === 1) {
+      targets = pickMany(ctx, enemies, Math.max(1, Math.round(prm.potionTargets ?? 3)));
+      const d = baseDamage(ctx, player, slot, u) * (prm.potionDamage ?? 3);
+      for (const e of targets) unitHit(ctx, player, u, e, d, { noOnHit: true });
+    } else if (kind === 2) {
+      u.counters.killMana = prm.potionKillMana ?? 0.5;
+      u.counters.killManaFor = prm.potionKillManaDuration ?? 10;
+    } else {
+      targets = enemies;
+      for (const e of targets) applySlow(ctx, e, prm.potionSlow ?? 0.5, (prm.potionSlowDuration ?? 3) * controlMul(ctx, player, effectiveId(u)));
+    }
+    if (prm.potionRankUp && rand(ctx) < prm.potionRankUp) {
+      const up = pick(ctx, p.grid.filter((x): x is SimUnit => !!x && x !== u && x.rank < MAX_RANK));
+      if (up) { up.rank += 1; onRankUp(ctx, player, p.grid.indexOf(up)); }
+    }
+    abilityEvent(ctx, player, slot, effectiveId(u), POTIONS[kind]!, targets);
+  }
+}
+
+const POTIONS = ['Potion de force', 'Potion explosive', 'Potion de mana', 'Potion de lenteur'];
 
 // ───────────── Compétences à recharge ─────────────
 
@@ -132,96 +221,107 @@ function abilityEvent(ctx: Ctx, player: number, slot: number, unit: UnitId, name
 }
 
 const displaceable = (e: SimEnemy) => !e.bossId && !e.x.mini && !e.x.flying;
+const notBoss = (e: SimEnemy) => !e.bossId && !e.x.mini;
 
 /**
  * Déclenche la compétence à recharge. Renvoie false si elle n'a pas pu partir (on réessaie au
- * tick suivant), true sinon, ou la nouvelle case si l'unité s'est déplacée (Vanellope).
+ * tick suivant), true sinon, ou un nombre de secondes ajouté à la recharge (Ouragan de Vaïana).
  */
 function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: SimEnemy[], enemies: SimEnemy[]): boolean | number {
   const id = effectiveId(u);
   const prm = unitParams(ctx, player, id);
   const ctrl = controlMul(ctx, player, id);
+  const scale = UNITS[id].damage > 0 ? baseDamage(ctx, player, slot, u) / UNITS[id].damage : 1;
   switch (id) {
-    case 'ironman': {
+    case 'spiderman': {
+      // Trappeur : filets lancés sur des ennemis au hasard de la zone.
+      const centers = pickMany(ctx, enemies, Math.max(1, Math.round(prm.nets ?? 2)));
+      if (centers.length === 0) return false;
+      const hit = new Set<SimEnemy>();
+      for (const c of centers) for (const e of [c, ...within(ctx, all, c, prm.netRadius ?? 1)]) hit.add(e);
+      const targets = [...hit].filter(isAlive);
+      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: targets.map((e) => e.uid), fx: 'spiderman:toile' });
+      for (const e of targets) {
+        unitHit(ctx, player, u, e, (prm.netDamage ?? 0) * scale, { noOnHit: true });
+        if (!isAlive(e)) continue;
+        applySlow(ctx, e, prm.netSlow ?? 0.3, (prm.netDuration ?? 5) * ctrl);
+        e.x.netStacks = Math.min(Math.max(1, Math.round(prm.netMaxStacks ?? 3)), ((e.x.netFor ?? 0) > EPS ? e.x.netStacks ?? 0 : 0) + 1);
+        e.x.netFor = (prm.netDuration ?? 5) * ctrl;
+        e.x.netVuln = Math.max(e.x.netVuln ?? 0, prm.netVuln ?? 0.1);
+        if (prm.netStun) applyStun(e, prm.netStun * ctrl);
+      }
+      abilityEvent(ctx, player, slot, id, 'Toiles', targets);
+      return true;
+    }
+    case 'hulk': {
+      // Minotaure : Séisme autour de l'ennemi de tête (pas pendant le Berserker « vitesse »).
+      if (prm.berserkSpeed && (u.counters.berserkFor ?? 0) > EPS) return true;
       const lead = bestBy(enemies, (e) => progress(ctx, e));
       if (!lead) return false;
-      const seg = segmentOf(ctx, lead);
-      // Le laser part vers l'ennemi de tête de la zone, puis traverse toute sa ligne du chemin.
-      const line = prm.beamAllLines ? all : all.filter((e) => segmentOf(ctx, e) === seg);
-      const dmg = baseDamage(ctx, player, slot, u) * (prm.beamDamage ?? 2) * (1 + (ctx.mods.beamDamage ?? 0));
-      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: line.map((e) => e.uid), fx: 'ironman:unibeam' });
-      for (const e of line) {
-        const d = e.bossId ? dmg * (prm.beamBossFactor ?? 1) : dmg;
-        unitHit(ctx, player, u, e, d, { noOnHit: true });
+      const zone = [lead, ...within(ctx, all, lead, prm.quakeRadius ?? 1.5)].filter(isAlive);
+      const berserk = (u.counters.berserkFor ?? 0) > EPS ? 1 + (prm.berserkQuake ?? 0) : 1;
+      const dps = baseDamage(ctx, player, slot, u) * (prm.quakeDps ?? 1) * berserk;
+      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: zone.map((e) => e.uid), fx: 'hulk:smash' });
+      for (const e of zone) {
+        applySlow(ctx, e, prm.quakeSlow ?? 0.3, (prm.quakeDuration ?? 3) * ctrl);
+        if (prm.quakeStun) applyStun(e, prm.quakeStun * ctrl);
+        e.x.bleed = Math.max((e.x.bleedFor ?? 0) > EPS ? e.x.bleed ?? 0 : 0, dps);
+        e.x.bleedFor = prm.quakeDuration ?? 3;
+        e.x.bleedBy = player;
       }
-      abilityEvent(ctx, player, slot, id, 'Uni-Beam', line);
+      abilityEvent(ctx, player, slot, id, 'Séisme', zone);
       return true;
     }
-    case 'strange': {
-      const targets = topBy(enemies.filter(displaceable), (e) => progress(ctx, e), Math.max(1, prm.portalTargets ?? 1));
-      if (targets.length === 0) return false;
-      for (const e of targets) {
-        sendToStart(e);
-        delete e.x.knockFor;
-        if (prm.portalSlow) applySlow(ctx, e, prm.portalSlow, (prm.portalSlowDuration ?? 3) * ctrl);
-        if (prm.portalDamagePctMaxHp) unitHit(ctx, player, u, e, e.maxHp * prm.portalDamagePctMaxHp, { noOnHit: true });
+    case 'thor': {
+      // Talent « Marteau de la foi » (Inquisitrice de Rush Royale) : coup lourd qui étourdit.
+      if (!prm.hammerDamage) return true;
+      const lead = bestBy(enemies, (e) => progress(ctx, e));
+      if (!lead) return false;
+      const zone = [lead, ...within(ctx, all, lead, 1)].filter(isAlive);
+      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: zone.map((e) => e.uid), fx: 'thor:chaine' });
+      for (const e of zone) {
+        unitHit(ctx, player, u, e, baseDamage(ctx, player, slot, u) * prm.hammerDamage, { noOnHit: true });
+        if (isAlive(e)) applyStun(e, (prm.hammerStun ?? 1) * ctrl);
       }
-      abilityEvent(ctx, player, slot, id, 'Portail', targets);
-      return true;
-    }
-    case 'falcon': {
-      const targets = topBy(enemies, (e) => e.hp, Math.max(1, prm.markTargets ?? 1));
-      if (targets.length === 0) return false;
-      const info = ctx.info[player]!;
-      for (const e of targets) {
-        e.effects.marked = (prm.markBonus ?? 0.25) * (e.bossId ? prm.markBossFactor ?? 1 : 1);
-        e.effects.markedFor = prm.markDuration ?? 4;
-        if (info.markSlow > 0) applySlow(ctx, e, info.markSlow, prm.markDuration ?? 4);
-      }
-      abilityEvent(ctx, player, slot, id, 'Drone Redwing', targets);
+      abilityEvent(ctx, player, slot, id, 'Marteau de la foi', zone);
       return true;
     }
     case 'moana': {
-      const targets = topBy(enemies.filter(displaceable), (e) => progress(ctx, e), Math.max(1, prm.pushTargets ?? 3));
-      if (targets.length === 0) return false;
-      for (const e of targets) {
-        pushBack(ctx, e, prm.push ?? 1.5);
-        if (prm.waveSlow) applySlow(ctx, e, prm.waveSlow, (prm.waveSlowDuration ?? 2) * ctrl);
-      }
-      if (prm.waveDamage) {
-        const dmg = baseDamage(ctx, player, slot, u) * prm.waveDamage;
-        for (const e of targets) unitHit(ctx, player, u, e, dmg, { noOnHit: true });
-      }
-      abilityEvent(ctx, player, slot, id, 'Appel de l’océan', targets);
+      // Archer du vent : Ouragan ; la recharge repart à la fin de l'Ouragan.
+      const d = (prm.hurricaneDuration ?? 3.6) + (prm.hurricaneDurationPerRank ?? 0) * (u.rank - 1);
+      u.counters.hurricaneFor = d;
+      abilityEvent(ctx, player, slot, id, 'Ouragan', []);
+      return d;
+    }
+    case 'maui': {
+      // Borée : alterne les phases (faucon : cadence ; requin : cadence et critiques).
+      const shark = u.counters.form ? 0 : 1;
+      u.counters.form = shark;
+      emit(ctx, { type: 'ability', player: ctx.st.players[player]!.id, slot, unit: 'maui', name: shark ? 'Métamorphose : requin' : 'Métamorphose : faucon', targets: [] });
       return true;
     }
     case 'ariel': {
-      const targets = topBy(enemies.filter((e) => !e.bossId && !e.x.mini), (e) => progress(ctx, e), Math.max(1, prm.songTargets ?? 3));
-      if (targets.length === 0) return false;
-      for (const e of targets) applyStun(e, (prm.songDuration ?? 1.5) * ctrl);
+      // Stase : sphères qui figent les ennemis autour d'un ennemi au hasard (sauf boss).
+      const n = Math.max(1, Math.round(prm.stasisTargets ?? 1));
+      const centers = pickMany(ctx, enemies, n);
+      if (centers.length === 0) return false;
+      const hit = new Set<SimEnemy>();
+      for (const c of centers) for (const e of [c, ...within(ctx, all, c, prm.stasisRadius ?? 1)]) hit.add(e);
+      const targets = [...hit].filter(isAlive);
+      const dur = (prm.stasisDuration ?? 2.5) * ctrl;
+      for (const e of targets) {
+        if (notBoss(e)) applyStun(e, dur);
+        else if (prm.stasisBossSlow) applySlow(ctx, e, prm.stasisBossSlow, dur);
+        if (prm.stasisDamage) unitHit(ctx, player, u, e, baseDamage(ctx, player, slot, u) * prm.stasisDamage, { noOnHit: true });
+      }
       abilityEvent(ctx, player, slot, id, 'Chant de sirène', targets);
       return true;
     }
-    case 'tiana': {
-      const target = bestBy(enemies.filter(displaceable), (e) => progress(ctx, e));
-      if (!target) return false;
-      pushBack(ctx, target, prm.pull ?? 1);
-      abilityEvent(ctx, player, slot, id, 'Langue de Naveen', [target]);
-      return true;
-    }
-    case 'nickjudy': {
-      const targets = topBy(enemies.filter((e) => !e.bossId && !e.x.mini), (e) => e.hp, Math.max(1, prm.stopTargets ?? 1));
-      if (targets.length === 0) return false;
-      for (const e of targets) applyStun(e, (prm.stopDuration ?? 2) * ctrl);
-      abilityEvent(ctx, player, slot, id, 'Arrestation', targets);
-      return true;
-    }
-    case 'buzzwoody': {
-      const target = bestBy(enemies.filter(displaceable), (e) => progress(ctx, e));
-      if (!target) return false;
-      pushBack(ctx, target, prm.pull ?? 2);
-      if (prm.pullStun) applyStun(target, prm.pullStun * ctrl);
-      abilityEvent(ctx, player, slot, id, 'Lasso de Woody', [target]);
+    case 'nemo': {
+      // Chaudron magique : du mana à intervalle régulier.
+      const p = ctx.st.players[player]!;
+      p.mana += Math.round((prm.manaPerRank ?? 5) * u.rank);
+      abilityEvent(ctx, player, slot, id, 'Mémoire de poisson', []);
       return true;
     }
     default:
@@ -234,8 +334,7 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
 /**
  * Ennemis dans la zone de touche de l'unité posée sur `slot` (§4.1, « Portées d'attaque »).
  * La cible principale d'une attaque ou d'une compétence est toujours choisie dans cette liste ;
- * les effets secondaires (éclaboussures, rebonds, chaînes, attaques « tous les ennemis ») suivent
- * ensuite leurs propres règles, sur tout le chemin.
+ * les effets secondaires (éclaboussures, rebonds, chaînes) suivent leurs propres règles, sur tout le chemin.
  */
 export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[]): SimEnemy[] {
   const range = unitRange(effectiveDef(u));
@@ -247,14 +346,46 @@ export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enem
   return out;
 }
 
+/** Cible de l'attaque : ciblage de l'unité, avec les règles propres à certains profils Rush Royale. */
+function chooseTarget(ctx: Ctx, player: number, u: SimUnit, pool: SimEnemy[]): SimEnemy | undefined {
+  const def = effectiveDef(u);
+  const prm = unitParams(ctx, player, def.id);
+  // Pyrotechnicien (Mulan) : en nombre impair, cible au hasard.
+  if (prm.oddSplash && countOnBoard(ctx, player, def.id) % 2 === 1) return selectTarget(ctx, pool, 'aleatoire');
+  // Chimiste (Nick & Judy) : le premier ennemi qui n'est pas encore fiché.
+  if (prm.vulnPerRank) {
+    const fresh = pool.filter((e) => !(e.x.vuln ?? 0));
+    return selectTarget(ctx, fresh.length ? fresh : pool, 'premier');
+  }
+  // Chasseur (Rebelle), talent : garde sa cible, en change tous les N tirs.
+  if (prm.retargetEvery && u.counters.lastTarget !== undefined) {
+    const keep = pool.find((e) => e.uid === u.counters.lastTarget);
+    if (keep && (u.counters.sameShots ?? 0) < prm.retargetEvery) return keep;
+  }
+  return selectTarget(ctx, pool, def.targeting);
+}
+
 function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemies: SimEnemy[], pool: SimEnemy[]): void {
   const def = effectiveDef(u);
   const id = def.id;
-  const target = selectTarget(ctx, pool, def.targeting);
+  const target = chooseTarget(ctx, player, u, pool);
   if (!target) return;
+  const prm = unitParams(ctx, player, id);
+  const c = u.counters;
+  const fresh = c.lastTarget !== target.uid;
+  // Croissance par coup (Inquisitrice) et rampe (talent du Minotaure) : remises à zéro au changement de cible.
+  if (fresh) {
+    if (prm.growthResetOnRetarget) c.growth = (c.growth ?? 0) * (prm.growthKeepOnRetarget ?? 0);
+    c.ramp = 0;
+    c.sameShots = 0;
+  }
+  c.sameShots = (c.sameShots ?? 0) + 1;
   const at = ctx.ev.length;
-  u.counters.attacks = (u.counters.attacks ?? 0) + 1;
-  const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool);
+  c.attacks = (c.attacks ?? 0) + 1;
+  const { targets, fx } = attackOf(ctx, player, slot, u, id, target, enemies, pool, fresh);
+  c.lastTarget = target.uid;
+  if (prm.growthPerHit) c.growth = (c.growth ?? 0) + prm.growthPerHit;
+  if (prm.rampPerHit) c.ramp = Math.min(prm.rampMax ?? 4, (c.ramp ?? 0) + prm.rampPerHit);
   ctx.ev.splice(at, 0, {
     type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id,
     targets: targets.map((e) => e.uid), fx,
@@ -262,12 +393,15 @@ function performAttack(ctx: Ctx, player: number, slot: number, u: SimUnit, enemi
 }
 
 function attackOf(
-  ctx: Ctx, player: number, slot: number, u: SimUnit, id: UnitId, target: SimEnemy, enemies: SimEnemy[], pool: SimEnemy[],
+  ctx: Ctx, player: number, slot: number, u: SimUnit, id: UnitId, target: SimEnemy, enemies: SimEnemy[], pool: SimEnemy[], fresh: boolean,
 ): { targets: SimEnemy[]; fx: string } {
   const prm = unitParams(ctx, player, id);
   const ctrl = controlMul(ctx, player, id);
-  const dmg = baseDamage(ctx, player, slot, u);
   const c = u.counters;
+  let dmg = baseDamage(ctx, player, slot, u);
+  if ((c.buffFor ?? 0) > EPS) dmg *= 1 + (c.buff ?? 0);               // potion de force (Nemo)
+  if (c.ramp) dmg *= 1 + c.ramp;                                         // talent Fureur (Hulk)
+  if (prm.batPctHp) dmg += target.hp * prm.batPctHp;                    // talent Chauves-souris (Tiana)
   const hit = (e: SimEnemy, d: number, o?: { crit?: boolean; shieldBreak?: boolean; noOnHit?: boolean }) => unitHit(ctx, player, u, e, d, o);
   const splash = (center: SimEnemy, d: number, radius: number) => {
     const around = within(ctx, enemies, center, radius).filter(isAlive);
@@ -276,49 +410,34 @@ function attackOf(
   };
 
   switch (id) {
-    case 'spiderman': {
+    case 'ironman': {
+      // Tesla : chargé (charges = plafond), le tir frappe aussi 4 ennemis de plus à 50 %.
+      const max = Math.max(1, (prm.chargeMax ?? 1) * u.rank);
       hit(target, dmg);
-      if (isAlive(target) && !target.x.flying) {
-        const stacks = (target.x.webStacks ?? 0) + 1;
-        const max = Math.max(1, Math.round(prm.maxStacks ?? 3));
-        if (stacks >= max) {
-          target.x.webStacks = 0;
-          if (!applyStun(target, (prm.rootDuration ?? 1) * ctrl)) applySlow(ctx, target, max * (prm.slowPerStack ?? 0.1), (prm.slowDuration ?? 2) * ctrl);
-          if (prm.rootSplashRadius) for (const e of within(ctx, enemies, target, prm.rootSplashRadius)) applyStun(e, (prm.rootDuration ?? 1) * ctrl);
-          abilityEvent(ctx, player, slot, id, 'Toile collante', [target]);
-        } else {
-          target.x.webStacks = stacks;
-          applySlow(ctx, target, stacks * (prm.slowPerStack ?? 0.1), (prm.slowDuration ?? 2) * ctrl);
-        }
+      if ((c.charges ?? 0) >= max) {
+        const more = nearest(ctx, enemies.filter(isAlive), target, Math.max(0, Math.round(prm.chargedExtraTargets ?? 4)), new Set([target.uid]));
+        for (const e of more) hit(e, dmg * (prm.chargedSplash ?? 0.5));
+        return { targets: [target, ...more], fx: 'ironman:unibeam' };
       }
-      return { targets: [target], fx: 'spiderman:toile' };
+      return { targets: [target], fx: 'ironman:repulseur' };
     }
     case 'hulk': {
-      const hits = (c.hits = (c.hits ?? 0) + 1);
-      const rage = Math.min(prm.rageMax ?? 0.5, (hits - 1) * (prm.ragePerHit ?? 0.05));
-      const d = dmg * (1 + rage);
-      hit(target, d);
-      const around = splash(target, d * (prm.splash ?? 0.4), prm.splashRadius ?? 1.5);
-      const every = Math.max(1, Math.round(prm.smashEveryHits ?? 8));
-      if (hits % every === 0) {
-        const zone = [target, ...within(ctx, enemies, target, prm.smashRadius ?? 2)].filter(isAlive);
-        for (const e of zone) {
-          applyStun(e, (prm.smashStun ?? 1) * ctrl);
-          if (prm.smashDamage) hit(e, d * prm.smashDamage, { noOnHit: true });
-        }
-        abilityEvent(ctx, player, slot, id, 'Hulk Smash', zone);
+      hit(target, dmg);
+      // Berserker « vitesse » (talent) : zone égale aux dégâts du Séisme.
+      if (prm.berserkSpeed && (c.berserkFor ?? 0) > EPS) {
+        const around = splash(target, dmg * (prm.quakeDps ?? 1), prm.quakeRadius ?? 1.5);
         return { targets: [target, ...around], fx: 'hulk:smash' };
       }
-      return { targets: [target, ...around], fx: 'hulk:coup' };
+      return { targets: [target], fx: 'hulk:coup' };
     }
     case 'thor': {
-      const n = Math.min(prm.chainMax ?? 5, (prm.chain ?? 3) + Math.floor((u.rank - 1) / Math.max(1, prm.chainPerRanks ?? 2)))
-        + (ctx.mods.chainBounces ?? 0);
+      // Thunderer : 1 rebond de plus par rang.
+      const n = 1 + Math.round((prm.chainPerRank ?? 1) * u.rank) + Math.round(prm.chainExtra ?? 0) + (ctx.mods.chainBounces ?? 0);
       const chain = [target];
       const seen = new Set([target.uid]);
       let cur = target;
       while (chain.length < n) {
-        const next = nearest(ctx, enemies, cur, 1, seen)[0];
+        const next = nearest(ctx, enemies.filter(isAlive), cur, 1, seen)[0];
         if (!next) break;
         chain.push(next);
         seen.add(next.uid);
@@ -326,220 +445,193 @@ function attackOf(
       }
       const info = ctx.info[player]!;
       chain.forEach((e, i) => {
-        let f = Math.max(0, 1 - (prm.falloff ?? 0.2) * i);
-        if (e.bossId && prm.noFalloffOnBoss) f = 1;
-        if (i === 0) f *= 1 + (prm.firstTargetBonus ?? 0);
-        hit(e, dmg * f);
+        hit(e, i === 0 ? dmg : dmg * (prm.chainDamage ?? 1));
+        if (i > 0 && prm.chainStun && isAlive(e)) applyStun(e, prm.chainStun * ctrl);
         if (isAlive(e) && info.chainIllusionChance > 0 && rand(ctx) < info.chainIllusionChance && displaceable(e)) {
           e.x.knockFor = info.illusionDuration;
         }
       });
       return { targets: chain, fx: 'thor:chaine' };
     }
-    case 'venom': {
-      // La croissance (archétype) est déjà dans `dmg` (baseDamage).
+    case 'strange': {
+      // Mage du portail : chance de renvoyer la cible au début du chemin, de moins en moins sur la même.
       hit(target, dmg);
-      const thr = target.bossId ? prm.bossExecuteThreshold ?? 0 : prm.executeThreshold ?? 0.15;
-      if (isAlive(target) && target.hp / target.maxHp < thr) {
+      if (isAlive(target) && displaceable(target)) {
+        const chance = (prm.teleportChance ?? 0.05) * Math.pow(prm.teleportDecay ?? 0.5, target.x.teleports ?? 0);
+        if (rand(ctx) < chance) {
+          sendToStart(target);
+          delete target.x.knockFor;
+          target.x.teleports = (target.x.teleports ?? 0) + 1;
+          if (prm.portalDamage) hit(target, dmg * prm.portalDamage, { noOnHit: true });
+          if (prm.teleportSlow && isAlive(target)) applySlow(ctx, target, prm.teleportSlow, 3 * ctrl);
+          abilityEvent(ctx, player, slot, id, 'Portail', [target]);
+        }
+      }
+      return { targets: [target], fx: 'strange:magie' };
+    }
+    case 'venom': {
+      // Inquisitrice : la croissance par coup est dans `dmg` ; active (1, 4, 7, 10 exemplaires) : zone.
+      hit(target, dmg);
+      if (prm.executeThreshold && isAlive(target) && !target.bossId && !target.x.mini && target.hp / target.maxHp < prm.executeThreshold) {
         killEnemy(ctx, target, player, u);
-        if (prm.manaOnExecute) ctx.st.players[player]!.mana += prm.manaOnExecute;
         abilityEvent(ctx, player, slot, id, 'Dévorer', [target]);
-        return { targets: [target], fx: 'venom:devorer' };
+      }
+      if (prm.activeCounts && inquisitorActive(ctx, player, id)) {
+        const around = splash(target, dmg * (prm.activeSplash ?? 0.5), prm.activeSplashRadius ?? 1.5);
+        return { targets: [target, ...around], fx: 'venom:devorer' };
       }
       return { targets: [target], fx: 'venom:griffes' };
     }
     case 'cmarvel': {
-      const binary = (c.binaryFor ?? 0) > EPS;
-      hit(target, binary ? dmg * (prm.binaryMul ?? 2) : dmg);
-      if (binary && prm.binarySplash) splash(target, dmg * (prm.binaryMul ?? 2) * prm.binarySplash, 1.5);
-      if (!binary) {
-        c.charge = (c.charge ?? 0) + 1;
-        if (c.charge >= Math.max(1, Math.round(prm.chargeAttacks ?? 10))) {
-          c.charge = 0;
-          c.binaryFor = prm.binaryDuration ?? 5;
-          abilityEvent(ctx, player, slot, id, 'Mode binaire', []);
-        }
-      }
-      return { targets: [target], fx: binary ? 'cmarvel:binaire' : 'cmarvel:rafale' };
-    }
-    case 'cap': {
-      const n = Math.max(1, Math.round(prm.bounces ?? 3));
-      const list = [target, ...nearest(ctx, enemies, target, n - 1, new Set([target.uid]))];
-      for (const e of list) hit(e, dmg);
-      return { targets: list, fx: 'cap:bouclier' };
+      // Mage de feu : explosion autour de la cible.
+      hit(target, dmg);
+      const around = splash(target, dmg * (prm.splash ?? 0.78), prm.splashRadius ?? 1.2);
+      return { targets: [target, ...around], fx: 'cmarvel:rafale' };
     }
     case 'loki': {
       hit(target, dmg);
-      // Formation (archétype) : 3 Loki alignés, la dague devient une attaque de zone.
       const zone = formationSplash(ctx, player, slot, u);
       if (zone > 0) splash(target, dmg * zone, 1.5);
-      if (isAlive(target) && displaceable(target) && rand(ctx) < (prm.knockbackChance ?? 0.1)) {
-        target.x.knockFor = (prm.knockbackDuration ?? 2) * ctrl;
-        abilityEvent(ctx, player, slot, id, 'Illusion', [target]);
-      }
       return { targets: [target], fx: 'loki:dague' };
     }
     case 'bucky': {
-      const crit = (c.attacks ?? 0) % Math.max(1, Math.round(prm.critEvery ?? 4)) === 0;
-      const d = crit ? dmg * (prm.critMul ?? 3) : dmg;
-      hit(target, d, { crit });
-      if (crit) {
-        applyStun(target, (prm.critStun ?? 0.5) * ctrl);
-        if (prm.critSplash) splash(target, d * prm.critSplash, 1.5);
-        abilityEvent(ctx, player, slot, id, 'Bras bionique', [target]);
-      }
+      // Voleur : bonus aléatoire jusqu'aux dégâts critiques.
+      const bonus = rand(ctx) * Math.max(0, (prm.rogueCritMul ?? 3) - 1);
+      const crit = bonus >= 1;
+      hit(target, dmg * (1 + bonus), { crit });
       return { targets: [target], fx: crit ? 'bucky:critique' : 'bucky:tir' };
     }
     case 'hawkeye': {
-      const arrow = (c.arrow ?? 0) % 3;
-      c.arrow = arrow + 1;
-      if (arrow === 0) {
-        hit(target, dmg);
-        const around = splash(target, dmg * (prm.explosiveSplash ?? 0.5), prm.splashRadius ?? 1.5);
-        return { targets: [target, ...around], fx: 'hawkeye:explosive' };
+      // Archer ; talents de Rush Royale : flèches empoisonnées (2 cibles au hasard) ou explosives.
+      hit(target, dmg);
+      if (prm.poisonArrowChance && rand(ctx) < prm.poisonArrowChance) {
+        const extra = pickMany(ctx, enemies.filter((e) => isAlive(e) && e !== target), 2);
+        for (const e of extra) hit(e, dmg);
+        return { targets: [target, ...extra], fx: 'hawkeye:glace' };
       }
-      if (arrow === 1) {
-        hit(target, dmg);
-        if (isAlive(target)) applySlow(ctx, target, prm.iceSlow ?? 0.25, (prm.iceDuration ?? 2) * ctrl);
-        return { targets: [target], fx: 'hawkeye:glace' };
+      if (prm.explosiveArrowChance && rand(ctx) < prm.explosiveArrowChance) {
+        const center = pick(ctx, enemies.filter(isAlive));
+        if (center) {
+          hit(center, dmg, { noOnHit: true });
+          const around = splash(center, dmg, 1.5);
+          return { targets: [target, center, ...around], fx: 'hawkeye:explosive' };
+        }
       }
-      const n = Math.max(1, Math.round(prm.chain ?? 2)) + (ctx.mods.chainBounces ?? 0);
-      const list = [target, ...nearest(ctx, enemies, target, n - 1, new Set([target.uid]))];
-      for (const e of list) hit(e, dmg);
-      return { targets: list, fx: 'hawkeye:electrique' };
+      return { targets: [target], fx: 'hawkeye:electrique' };
     }
     case 'widow': {
-      const hits = (c.hits = (c.hits ?? 0) + 1);
       hit(target, dmg);
-      if (hits % Math.max(1, Math.round(prm.paralyzeEvery ?? 5)) === 0 && isAlive(target)) {
-        if (applyStun(target, (prm.paralyzeDuration ?? 1) * ctrl)) {
-          abilityEvent(ctx, player, slot, id, 'Morsure de la veuve', [target]);
-        }
-        return { targets: [target], fx: 'widow:morsure' };
-      }
       return { targets: [target], fx: 'widow:tir' };
     }
     case 'shangchi': {
-      const hits = (c.hits = (c.hits ?? 0) + 1);
       hit(target, dmg);
-      if (hits % Math.max(1, Math.round(prm.ringsEveryHits ?? 10)) === 0) {
-        const pool = enemies.filter(isAlive);
-        const rings = pickMany(ctx, pool, Math.max(1, Math.round(prm.ringCount ?? 10)));
-        const rd = dmg * (prm.ringDamage ?? 1) * (1 + (ctx.mods.comboDamage ?? 0));
-        for (const e of rings) {
-          hit(e, rd, { noOnHit: true });
-          if (prm.ringStun && isAlive(e)) applyStun(e, prm.ringStun * ctrl);
-        }
-        abilityEvent(ctx, player, slot, id, 'Dix Anneaux', rings);
-        return { targets: [target, ...rings], fx: 'shangchi:anneaux' };
-      }
-      return { targets: [target], fx: 'shangchi:combo' };
+      return { targets: [target], fx: (prm.aloneAttackSpeed && !hasNeighborTwin(ctx, player, slot, id)) ? 'shangchi:anneaux' : 'shangchi:combo' };
     }
     case 'maui': {
+      // Borée, phase 2 (requin) : critiques, talents de double flèche et de pluie de flèches.
       if (c.form) {
-        const d = dmg * (prm.sharkMul ?? 2.5);
-        hit(target, d);
-        const around = splash(target, d * (prm.sharkSplash ?? 0.5), prm.splashRadius ?? 1.5);
-        return { targets: [target, ...around], fx: 'maui:requin' };
+        const crit = rand(ctx) < (prm.sharkCritChance ?? 0);
+        hit(target, crit ? dmg * (prm.sharkCritMul ?? 2) : dmg, { crit });
+        const out = [target];
+        if (prm.sharkDoubleArrow && rand(ctx) < prm.sharkDoubleArrow) {
+          const other = pick(ctx, enemies.filter((e) => isAlive(e) && e !== target));
+          if (other) { hit(other, dmg); if (isAlive(other)) applySlow(ctx, other, 0.3, 2 * ctrl); out.push(other); }
+        }
+        if (prm.sharkRain && rand(ctx) < prm.sharkRain) {
+          const rain = pickMany(ctx, enemies.filter(isAlive), 3);
+          for (const e of rain) hit(e, dmg * 2 * (prm.sharkCritMul ?? 2), { crit: true, noOnHit: true });
+          out.push(...rain);
+        }
+        return { targets: out, fx: 'maui:requin' };
       }
-      hit(target, dmg * (prm.hawkMul ?? 0.5));
+      hit(target, dmg);
       return { targets: [target], fx: 'maui:faucon' };
     }
     case 'mulan': {
+      // Pyrotechnicien : zone en nombre impair (rayon qui grandit avec le rang).
       hit(target, dmg);
-      const uses = c.avalanche ?? 0;
-      const live = enemies.filter(isAlive);
-      if (uses < (prm.avalancheUses ?? 1) && (live.length >= (prm.avalancheMinEnemies ?? 8) || live.some((e) => e.bossId))) {
-        c.avalanche = uses + 1;
-        const d = dmg * (prm.avalancheDamage ?? 3);
-        for (const e of live) {
-          hit(e, d, { noOnHit: true });
-          if (prm.avalancheStun && isAlive(e)) applyStun(e, prm.avalancheStun * ctrl);
-        }
-        abilityEvent(ctx, player, slot, id, 'Avalanche', live);
-        return { targets: live, fx: 'mulan:avalanche' };
+      if (prm.oddSplash && countOnBoard(ctx, player, id) % 2 === 1) {
+        const r = (prm.oddRadius ?? 0.8) + (prm.oddRadiusPerRank ?? 0.1) * u.rank;
+        const around = splash(target, dmg * prm.oddSplash, r);
+        return { targets: [target, ...around], fx: 'mulan:avalanche' };
       }
       return { targets: [target], fx: 'mulan:souffle' };
     }
     case 'merida': {
-      hit(target, dmg * (prm.critMul ?? 2), { crit: true });
-      return { targets: [target], fx: 'merida:tir-parfait' };
+      // Chasseur : premier tir renforcé sur chaque nouvelle cible.
+      let d = dmg * (1 + (c.trophies ?? 0) * (prm.bossTrophy ?? 0));
+      let crit = false;
+      if (fresh) {
+        let bonus = (prm.firstShotBonus ?? 2.1) + (prm.firstShotBonusPerRank ?? 0) * (u.rank - 1);
+        if (prm.firstShotExtraChance && rand(ctx) < prm.firstShotExtraChance) bonus += prm.firstShotExtra ?? 1.5;
+        d *= 1 + bonus;
+        crit = true;
+      }
+      if (prm.critFromRank && u.rank >= prm.critFromRank && rand(ctx) < (prm.critChanceBonus ?? 0.1)) { d *= 2; crit = true; }
+      const wasBoss = !!(target.bossId || target.x.mini);
+      hit(target, d, { crit });
+      if (wasBoss && !isAlive(target) && prm.bossTrophy) c.trophies = (c.trophies ?? 0) + 1;
+      const out = [target];
+      if (prm.splashFromRank && u.rank >= prm.splashFromRank) out.push(...splash(target, d * (prm.rankSplash ?? 0.5), 1.2));
+      if (prm.acornChance && rand(ctx) < prm.acornChance) {
+        const e = pick(ctx, enemies.filter(isAlive));
+        if (e) { hit(e, dmg, { noOnHit: true }); out.push(e); }
+      }
+      return { targets: out, fx: 'merida:tir-parfait' };
     }
     case 'ariel': {
       hit(target, dmg);
-      if (isAlive(target)) {
-        target.x.bleed = (prm.bleed ?? 0.05) * target.maxHp * (target.bossId ? prm.bleedBossFactor ?? 0.1 : 1);
-        target.x.bleedFor = prm.bleedDuration ?? 2;
-        target.x.bleedBy = player;
-      }
       return { targets: [target], fx: 'ariel:bulles' };
     }
     case 'foxhound': {
+      const n = Math.max(1, Math.round(prm.hits ?? 2));
       hit(target, dmg);
-      if (isAlive(target)) {
-        hit(target, dmg * (1 + (prm.secondHitBonus ?? 0.5)));
-        return { targets: [target], fx: 'foxhound:double' };
+      const out = [target];
+      for (let k = 1; k < n; k++) {
+        if (isAlive(target)) { hit(target, dmg * (1 + (prm.secondHitBonus ?? 0.5))); continue; }
+        const next = selectTarget(ctx, pool.filter(isAlive), 'premier');
+        if (next) { hit(next, dmg); out.push(next); }
       }
-      const next = selectTarget(ctx, pool.filter(isAlive), 'premier');
-      if (next) hit(next, dmg);
-      return { targets: next ? [target, next] : [target], fx: 'foxhound:double' };
-    }
-    case 'nemo': {
-      const count = Math.max(1, Math.round(prm.effectsPerShot ?? 1));
-      const effects: number[] = [];
-      for (let i = 0; i < count; i++) effects.push(randInt(ctx, 4));
-      const names = ['ralenti', 'double', 'poison', 'cadence'];
-      const d = effects.includes(1) ? dmg * (prm.doubleDamageMul ?? 2) : dmg;
-      hit(target, d);
-      for (const fx of effects) {
-        if (fx === 0 && isAlive(target)) applySlow(ctx, target, prm.slow ?? 0.2, (prm.slowDuration ?? 2) * ctrl);
-        if (fx === 2 && isAlive(target)) {
-          target.x.poison = d * (prm.poison ?? 0.3);
-          target.x.poisonFor = prm.poisonDuration ?? 3;
-          target.x.poisonBy = player;
-        }
-        if (fx === 3) {
-          const grid = ctx.st.players[player]!.grid;
-          const allies = grid.filter((x): x is SimUnit => !!x && x !== u);
-          const ally = pick(ctx, allies);
-          if (ally) {
-            ally.counters.haste = prm.allyHaste ?? 0.2;
-            ally.counters.hasteFor = prm.allyHasteDuration ?? 3;
-          }
-        }
-      }
-      return { targets: [target], fx: `nemo:${effects.map((e) => names[e]).join('+')}` };
+      return { targets: out, fx: 'foxhound:double' };
     }
     case 'nickjudy': {
+      // Chimiste : la cible subit plus de dégâts jusqu'à sa mort.
       hit(target, dmg);
-      if (isAlive(target)) target.effects.armorBreak = Math.max(target.effects.armorBreak ?? 0, prm.armorBreak ?? 0.2);
+      if (isAlive(target)) target.x.vuln = Math.max(target.x.vuln ?? 0, (prm.vulnPerRank ?? 0.05) * u.rank);
       return { targets: [target], fx: 'nickjudy:carotte' };
     }
     case 'buzzwoody': {
-      const seg = segmentOf(ctx, target);
-      const line = enemies.filter((e) => isAlive(e) && segmentOf(ctx, e) === seg);
-      const d = dmg * (1 + (ctx.mods.beamDamage ?? 0));
-      for (const e of line) hit(e, d);
-      return { targets: line, fx: 'buzzwoody:laser' };
+      hit(target, dmg);
+      return { targets: [target], fx: 'buzzwoody:laser' };
     }
     case 'vanralph': {
-      const d = target.armor > 0 ? dmg * (prm.armoredMul ?? 2) : dmg;
-      const hadShield = target.shieldHits > 0;
-      hit(target, d, { shieldBreak: true });
-      if (prm.splash) splash(target, d * prm.splash, 1.5);
-      return { targets: [target], fx: hadShield ? 'vanralph:brise-bouclier' : 'vanralph:poing' };
+      hit(target, dmg);
+      return { targets: [target], fx: 'vanralph:poing' };
+    }
+    case 'spiderman': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'spiderman:toile' };
+    }
+    case 'nemo': {
+      hit(target, dmg);
+      return { targets: [target], fx: 'nemo:ralenti' };
     }
     default: {
-      // ironman, strange, falcon, moana, pocahontas, tiana, coco, rapunzel : coup simple.
+      // falcon, moana, tiana, coco… : coup simple.
       hit(target, dmg);
       return { targets: [target], fx: `${id}:${BASE_FX[id] ?? 'tir'}` };
     }
   }
 }
 
+function hasNeighborTwin(ctx: Ctx, player: number, slot: number, unit: UnitId): boolean {
+  const grid = ctx.st.players[player]!.grid;
+  return neighbors(slot, false).some((j) => { const n = grid[j]; return !!n && effectiveId(n) === unit; });
+}
+
 const BASE_FX: Partial<Record<UnitId, string>> = {
   ironman: 'repulseur', strange: 'magie', falcon: 'tir-aerien', moana: 'rame', pocahontas: 'feuilles',
-  tiana: 'luciole', coco: 'notes', rapunzel: 'poele',
+  tiana: 'luciole', coco: 'notes', rapunzel: 'poele', cap: 'bouclier', loki: 'dague',
 };
 
 /** Début de vague : remise à zéro des compétences « une fois par vague ». Renvoie le mana gagné. */
@@ -548,10 +640,9 @@ export function onWaveStart(ctx: Ctx, player: number): number {
   for (let i = 0; i < GRID_SIZE; i++) {
     const u = p.grid[i];
     if (!u) continue;
-    u.counters.avalanche = 0;
     u.counters.restores = 0;
   }
   return 0;
 }
 
-export { UNITS };
+export { UNITS, applyBurn };

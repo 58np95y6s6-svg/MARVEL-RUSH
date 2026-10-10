@@ -51,14 +51,14 @@ describe('options de script de la campagne', () => {
     expect(ofType(step(e, 2), 'gameOver')[0]).toMatchObject({ outcome: 'victoire', wave: 3 });
   });
 
-  it('passifs d’éveil : appliqués à partir de leur étoile (Thor ★2 : +1 rebond)', () => {
+  it('passifs d’éveil : appliqués à partir de leur étoile (Thor ★10 : +1 rebond)', () => {
     const hits = (stars: number) => {
       const e = quiet(['thor', ...MARVEL.slice(0, 4)], {}, { awakening: { thor: stars } });
       debugPlace(e, 0, 0, 'thor');
       for (let i = 0; i < 8; i++) debugSpawn(e, { hp: 1e9, distance: i });
       return ofType(step(e, 1), 'hit').length;
     };
-    expect(hits(1)).toBe(3);
-    expect(hits(2)).toBe(4);
+    expect(hits(9)).toBe(2);
+    expect(hits(10)).toBe(3);
   });
 });

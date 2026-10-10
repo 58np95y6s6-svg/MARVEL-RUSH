@@ -2,10 +2,10 @@
 // des unités (rang, niveau, améliorations, équipes, auras, talents).
 
 import { BOSS_STATS } from '../data/bosses';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, killMana } from '../data/enemies';
 import type { Targeting, UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
-import { GRID_COLS, GRID_ROWS, type LaneId } from './types';
+import { GRID_COLS, GRID_ROWS, GRID_SIZE, type LaneId } from './types';
 import {
   DT, EPS, LEVEL_DAMAGE, MANA_UPGRADE_BONUS, NO_TEAM, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, emit, pick, rand,
   type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
@@ -172,11 +172,19 @@ export function dealDamage(ctx: Ctx, e: SimEnemy, amount: number, player: number
     const armor = Math.max(0, e.armor - (e.effects.armorBreak ?? 0)) * (1 - Math.min(1, opts.armorPierce ?? 0));
     dmg *= 1 - armor;
     if ((e.effects.markedFor ?? 0) > EPS) dmg *= 1 + (e.effects.marked ?? 0);
+    dmg *= 1 + vulnerability(e);
   }
   e.hp -= dmg;
   emit(ctx, { type: 'hit', enemy: e.uid, damage: dmg, crit: !!opts.crit });
   if (e.hp <= EPS) killEnemy(ctx, e, player, opts.unit);
   return dmg;
+}
+
+/** Dégâts subis en plus : fiche du Chimiste (Nick & Judy) et toiles du Trappeur (Spider-Man). */
+export function vulnerability(e: SimEnemy): number {
+  let v = e.x.vuln ?? 0;
+  if ((e.x.netFor ?? 0) > EPS) v += (e.x.netVuln ?? 0) * (e.x.netStacks ?? 0);
+  return v;
 }
 
 export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit): void {
@@ -185,13 +193,12 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
   e.x.gone = 1;
   const p = ctx.st.players[player];
   if (!p) return;
-  let mana = e.bossId ? BOSS_STATS.mana : ENEMIES[e.kind].mana;
-  // Meeko (Pocahontas) : chance de mana bonus par élimination.
-  const poca = p.grid.find((u) => u && effectiveId(u) === 'pocahontas');
-  if (poca) {
-    const prm = unitParams(ctx, player, 'pocahontas');
-    if (rand(ctx) < (prm.meekoChance ?? 0)) mana += prm.meekoMana ?? 0;
-  }
+  // Rush Royale (Coop) : mana d'élimination de la vague (10, +10 toutes les 10 vagues, 50 au plus) × type.
+  let mana = e.bossId ? BOSS_STATS.mana : ENEMIES[e.kind].mana * killMana(Math.max(1, ctx.st.wave));
+  // Potion de Nemo (Chaudron magique) : mana des éliminations augmenté pendant quelques secondes.
+  let potion = 0;
+  for (const u of p.grid) if (u && (u.counters.killManaFor ?? 0) > EPS) potion = Math.max(potion, u.counters.killMana ?? 0);
+  mana *= 1 + potion;
   if (unit) growOnKill(ctx, player, unit);
   // Mana par élimination (Tiana) : versé au joueur de l'unité qui a touché l'ennemi.
   const tag = e.x.manaTag ?? 0;
@@ -264,12 +271,16 @@ export function neighbors(slot: number, diagonal: boolean): number[] {
   return out;
 }
 
-export interface Auras { damage: number; attackSpeed: number }
+export interface Auras { damage: number; attackSpeed: number; critChance: number; critMul: number }
 
-/** Bonus reçus des unités voisines (Captain America, Pocahontas, Coco, Raiponce, talents). */
+/**
+ * Bonus reçus des unités voisines (haut, bas, gauche, droite ; diagonales avec `auraDiagonal`) :
+ * Statue de chevalier (Captain America), Bannière (Pocahontas), Meule (Raiponce), talents.
+ * Rush Royale : l'effet d'un soutien monte avec son rang (`…PerRank` × rang).
+ */
 export function aurasAt(ctx: Ctx, player: number, slot: number): Auras {
   const grid = ctx.st.players[player]!.grid;
-  const out: Auras = { damage: 0, attackSpeed: 0 };
+  const out: Auras = { damage: 0, attackSpeed: 0, critChance: 0, critMul: 2 };
   for (const j of neighbors(slot, true)) {
     const n = grid[j];
     if (!n) continue;
@@ -278,20 +289,52 @@ export function aurasAt(ctx: Ctx, player: number, slot: number): Auras {
     const [c1, r1] = slotXY(slot), [c2, r2] = slotXY(j);
     const diag = c1 !== c2 && r1 !== r2;
     if (diag && !prm.auraDiagonal) continue;
-    let speed = prm.auraAttackSpeed ?? 0;
-    if (id === 'pocahontas') speed += (prm.auraPerRank ?? 0) * (n.rank - 1);
-    out.attackSpeed += speed;
-    out.damage += prm.auraDamage ?? 0;
+    out.attackSpeed += (prm.auraAttackSpeed ?? 0) + (prm.auraAttackSpeedPerRank ?? 0) * n.rank;
+    out.damage += (prm.auraDamage ?? 0) + (prm.auraDamagePerRank ?? 0) * n.rank;
+    if (prm.evenCritChancePerRank && countOnBoard(ctx, player, id) % 2 === 0) {
+      out.critChance += prm.evenCritChancePerRank * n.rank;
+      out.critMul = Math.max(out.critMul, prm.auraCritMul ?? 2);
+    }
   }
   return out;
 }
 
+/** Nombre d'exemplaires d'une unité sur le plateau d'un joueur. */
+export function countOnBoard(ctx: Ctx, player: number, unit: UnitId): number {
+  let n = 0;
+  for (const u of ctx.st.players[player]!.grid) if (u && effectiveId(u) === unit) n++;
+  return n;
+}
+
+/** Une autre unité identique est-elle sur une case voisine (haut, bas, gauche, droite) ? */
+export function hasSameNeighbor(ctx: Ctx, player: number, slot: number, unit: UnitId): boolean {
+  const grid = ctx.st.players[player]!.grid;
+  return neighbors(slot, false).some((j) => { const n = grid[j]; return !!n && effectiveId(n) === unit; });
+}
+
+/** Venom (Inquisitrice) : actif quand le plateau compte 1, 4, 7 ou 10 exemplaires. */
+export function inquisitorActive(ctx: Ctx, player: number, unit: UnitId): boolean {
+  const n = countOnBoard(ctx, player, unit);
+  return n > 0 && n % 3 === 1;
+}
+
+/** Shang-Chi (Danse-lames) : nombre d'exemplaires qui dansent (sans voisin identique). */
+export function dancers(ctx: Ctx, player: number, unit: UnitId): number {
+  const grid = ctx.st.players[player]!.grid;
+  let n = 0;
+  for (let i = 0; i < GRID_SIZE; i++) {
+    const u = grid[i];
+    if (u && effectiveId(u) === unit && !hasSameNeighbor(ctx, player, i, unit)) n++;
+  }
+  return n;
+}
+
 /**
- * Niveau de fusion (rang) : chaque rang au-dessus de 1 accélère les attaques de 12 % (rang 7 = ×1,72)
- * et ajoute 51 % des dégâts de base (rang 7 = ×4,06). Le DPS du rang 7 reste ≈ 7 fois celui du rang 1.
+ * Rang de fusion, règle de Rush Royale : « intervalle ÷ rang » (le rang 3 tire 3 fois plus vite que le
+ * rang 1), dégâts par coup indépendants du rang. Vitesse = 1 + RANK_ATTACK_SPEED × (rang − 1) = rang.
  */
-export const RANK_ATTACK_SPEED = 0.12;
-export const RANK_DAMAGE = 0.51;
+export const RANK_ATTACK_SPEED = 1;
+export const RANK_DAMAGE = 0;
 
 /** Multiplicateur de vitesse d'attaque d'une unité. */
 export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit): number {
@@ -301,11 +344,17 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   let bonus = aurasAt(ctx, player, slot).attackSpeed + team.attackSpeed;
   if ((u.counters.hasteFor ?? 0) > EPS) bonus += u.counters.haste ?? 0;
   if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
+  const puSpeed = prm.powerUpAttackSpeed ?? POWERUP_ATTACK_SPEED;
   let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id))
     * (1 + RANK_ATTACK_SPEED * (u.rank - 1))
-    * (1 + POWERUP_ATTACK_SPEED * Math.max(0, (ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
-  if (id === 'maui' && !u.counters.form) mul *= prm.hawkSpeedMul ?? 1;
-  if (id === 'cmarvel' && (u.counters.binaryFor ?? 0) > EPS) mul *= prm.binaryAttackSpeedMul ?? 1;
+    * (1 + puSpeed * Math.max(0, (ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
+  // Compétences de cadence des profils Rush Royale.
+  if (prm.hawkSpeed !== undefined) mul *= 1 + (u.counters.form ? prm.sharkSpeed ?? 0 : prm.hawkSpeed);   // Borée (Maui)
+  if ((u.counters.hurricaneFor ?? 0) > EPS) mul *= prm.hurricaneSpeedMul ?? 1;                           // Archer du vent (Vaïana)
+  if (prm.activeCounts && inquisitorActive(ctx, player, id)) mul *= prm.activeAttackSpeed ?? 1;          // Inquisitrice (Venom)
+  if (prm.aloneAttackSpeed && !hasSameNeighbor(ctx, player, slot, id)) mul *= 1 + prm.aloneAttackSpeed;  // Danse-lames (Shang-Chi)
+  if (prm.oddSpeedMul && countOnBoard(ctx, player, id) % 2 === 1) mul *= prm.oddSpeedMul;               // Pyrotechnicien (Mulan)
+  if (prm.bossWaveAttackSpeedMul && ctx.st.phase === 'boss') mul *= prm.bossWaveAttackSpeedMul;          // Tireur d'élite (Falcon)
   return mul;
 }
 
@@ -318,7 +367,8 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   const info = ctx.info[player]!;
   const level = info.levels[id] ?? 1;
   const pu = p.powerUps[id] ?? 1;
-  let dmg = def.damage * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  const flat = (prm.rankDamageFlat ?? 0) * (u.rank - 1); // Archer du vent (Vaïana) : +30 dégâts par rang
+  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
   dmg *= 1 + teamFor(ctx, player, id).damage;
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
@@ -329,6 +379,17 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   dmg *= 1 + growthBonus(prm, u.counters.growth ?? 0);
   dmg *= u.status.copyMul ?? 1;
   dmg *= 1 + formationBonus(ctx, player, slot, u);
+  // Profils Rush Royale.
+  if (prm.bossWaveDamageMul && ctx.st.phase === 'boss') dmg *= prm.bossWaveDamageMul;                    // Tireur d'élite
+  if (prm.dancerDamage) {                                                                                  // Danse-lames
+    const others = Math.min(dancers(ctx, player, id), prm.dancerMax ?? 8) - (hasSameNeighbor(ctx, player, slot, id) ? 0 : 1);
+    dmg *= 1 + prm.dancerDamage * Math.max(0, others);
+  }
+  if (prm.evenDamageMul && countOnBoard(ctx, player, id) % 2 === 0) dmg *= prm.evenDamageMul;             // Pyrotechnicien
+  if (prm.chargeDamage) {                                                                                  // Tesla
+    const max = Math.max(1, (prm.chargeMax ?? 1) * u.rank);
+    dmg *= 1 + prm.chargeDamage * Math.min(1, (u.counters.charges ?? 0) / max);
+  }
   return dmg;
 }
 
@@ -357,10 +418,22 @@ export function unitHit(
   let crit = !!opts.crit;
   if (e.bossId) dmg *= prm.bossDamageMul ?? 1;
   tagForMana(ctx, player, u, e);
+  if (prm.biteManaPerSecond && !e.bossId) { // Vampire (Tiana) : la cible mordue donne du mana tant qu'elle vit
+    e.x.bite = Math.max(e.x.bite ?? 0, prm.biteManaPerSecond);
+    e.x.biteBy = player;
+  }
   const team = teamFor(ctx, player, id);
   if (!crit && team.critChance > 0 && rand(ctx) < team.critChance) {
     crit = true;
     dmg *= team.critMul;
+  }
+  if (!crit) { // Statue de chevalier (Captain America) : chance de critique des voisines
+    const slot = ctx.st.players[player]!.grid.indexOf(u);
+    const aura = slot >= 0 ? aurasAt(ctx, player, slot) : undefined;
+    if (aura && aura.critChance > 0 && rand(ctx) < aura.critChance) {
+      crit = true;
+      dmg *= aura.critMul;
+    }
   }
   const dealt = dealDamage(ctx, e, dmg, player, {
     crit, shieldBreak: opts.shieldBreak, armorPierce: prm.armorPierce ?? 0, unit: u,
@@ -375,7 +448,7 @@ export function unitHit(
       if (rand(ctx) < (prm.stunChance ?? 1)) applyStun(e, prm.stunDuration * controlMul(ctx, player, id));
     }
   }
-  if (id !== 'nemo' && prm.slow && !UNITS[id].ability.params.slow) {
+  if (prm.slow && !UNITS[id].ability.params.slow) {
     applySlow(ctx, e, prm.slow, (prm.slowDuration ?? 1) * controlMul(ctx, player, id));
   }
   return dealt;

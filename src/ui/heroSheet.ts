@@ -60,7 +60,7 @@ export function openHeroSheet(overlay: HTMLElement, id: UnitId, o: HeroSheetOpti
       <div class="hs-stars" aria-label="Éveil ${h.awakening} sur ${MAX_AWAKENING}">${stars}</div>
       <div class="hs-actions">
         ${lc ? `<button class="mr-btn ${miss ? '' : 'yellow'} hs-up" data-a="up" data-tuto="hero-upgrade" ${miss ? 'aria-disabled="true"' : ''}>
-            <span>Améliorer</span><small>${icon('cartes')}${lc.cards} · ${icon('eclats')}${fmt(lc.shards)}</small></button>`
+            <span>Améliorer</span><small>${icon('cartes')}${lc.cards} · ${icon('or')}${fmt(lc.gold)}</small></button>`
         : `<button class="mr-btn hs-up eveil" data-a="eveil" data-tuto="hero-awaken"><span>Éveil ★</span><small>${h.awakening}/${MAX_AWAKENING}</small></button>`}
         ${o.onDeck ? '<button class="mr-btn hs-deck" data-a="deck" data-tuto="hero-to-deck"><span>Au deck</span></button>' : ''}
       </div>

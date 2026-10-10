@@ -1,204 +1,245 @@
-// Données des 28 unités (§4.5 du prompt, design/game-design.md).
-// Valeurs de départ, à équilibrer avec scripts/simulate.ts. Tout est lu par le moteur.
+// Données des 28 unités. Octobre 2026 : chaque héros reprend le profil d'une unité Rush Royale
+// (docs/rush-royale-mapping.md, données et sources dans docs/rush-royale-donnees.md). Tout est lu par le moteur.
+//
+// Conversion Rush Royale → Marvel Rush :
+// - `damage` = dégâts du niveau de carte 7 de Rush Royale (notre niveau de collection 1) ; +10 % par
+//   niveau de collection (moteur). 0 = l'unité n'attaque pas (soutiens « sans cible » de Rush Royale).
+// - Rang de fusion (règle Rush Royale) : intervalle ÷ rang, dégâts par coup indépendants du rang.
+// - `range` : Rush Royale n'a pas de portée ; on garde notre système, cohérent avec le type d'unité.
 //
 // Convention des paramètres de compétence (`ability.params`) :
-// - `abilityCooldown` : recharge (s) de la compétence principale à déclenchement périodique ;
-// - les noms reprennent ceux visés par les talents (src/data/talents.ts) : un talent `xAdd`
-//   ajoute à `x`, un talent `xMul` multiplie `x`, une clé sans suffixe est une valeur directe ;
+// - `abilityCooldown` : recharge (s) de la compétence périodique ; `abilityCooldownPerRank` l'ajuste par rang
+//   au-dessus de 1 ;
+// - suffixe `PerLevel` : ajouté au paramètre de même nom par niveau de collection au-dessus de 1
+//   (tableaux par niveau de Rush Royale) ; suffixe `PerRank` : valeur × rang de fusion ;
+// - les talents (src/data/talents.ts) : `xAdd` ajoute à `x`, `xMul` multiplie `x`, sans suffixe = valeur directe ;
 // - fractions : 0.1 = 10 %, durées en secondes, distances en cases du chemin.
 // - archétypes de stratégie génériques (src/engine/archetypes.ts, docs/roadmap.md) : `sacrificeMana`,
-//   `copyDamageMul`, `promoteAlly`, `growthPerSecond`/`growthPerKill`/`growthKeepOnMerge`,
-//   `manaPerKill`, `auraAttackSpeed`, `swapAlly`, `formationDamagePerAlly`… ; une extension n'a qu'à poser ces clés sur ses héros.
+//   `copyDamageMul`, `promoteAlly`, `growthPerHit`/`growthPerSecond`/`growthPerKill`, `manaPerKill`,
+//   `auraAttackSpeed`, `swapAlly`, `formationDamagePerAlly`… ; une extension n'a qu'à poser ces clés sur ses héros.
 
 import type { UnitDef, UnitId } from './types';
 
 export const UNIT_LIST: UnitDef[] = [
   // ───────────── Pack Marvel ─────────────
   {
-    id: 'ironman', name: 'Iron Man', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts',
-    targeting: 'premier', damage: 37, attackInterval: 0.8, range: 'globale',
+    // Rush Royale : Tesla.
+    id: 'ironman', name: 'Iron Man', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts / charges',
+    targeting: 'premier', damage: 260, attackInterval: 0.6, range: 'globale',
     ability: {
-      name: 'Uni-Beam',
-      description: 'Toutes les 10 s, un laser inflige 200 % des dégâts à tous les ennemis d’une ligne du chemin.',
-      params: { abilityCooldown: 10, beamDamage: 2 },
+      name: 'Surcharge Arc',
+      description: 'Gagne une charge à chaque fusion ou montée de rang sur une case voisine (au plus autant que son rang). Chaque charge augmente ses dégâts (jusqu’à +38 %) ; chargé à fond, chaque tir frappe aussi 4 autres ennemis à 50 %.',
+      params: { chargeMax: 1, chargeDamage: 0.385, chargedExtraTargets: 4, chargedSplash: 0.5 },
     },
   },
   {
-    id: 'spiderman', name: 'Spider-Man', pack: 'marvel', rarity: 'epique', role: 'Contrôle',
-    targeting: 'premier', damage: 21, attackInterval: 0.5, range: 2.4,
+    // Rush Royale : Trappeur.
+    id: 'spiderman', name: 'Spider-Man', pack: 'marvel', rarity: 'epique', role: 'Contrôle / malus',
+    targeting: 'premier', damage: 40, attackInterval: 1.0, range: 3.4,
     ability: {
-      name: 'Toile collante',
-      description: 'Chaque coup ralentit de 10 %, cumulable 3 fois ; à 3 cumuls, l’ennemi est immobilisé 1 s.',
-      params: { slowPerStack: 0.1, maxStacks: 3, slowDuration: 2, rootDuration: 1 },
+      name: 'Toiles',
+      description: 'Toutes les 6 s (−0,3 s par niveau), lance 2 toiles sur le chemin : 123 dégâts (+19 par niveau), les ennemis pris ralentissent de 30 % et subissent +10 % de dégâts pendant 5 s. Les toiles se cumulent (3 au plus).',
+      params: {
+        abilityCooldown: 6, abilityCooldownPerLevel: -0.3, nets: 2, netRadius: 1, netDamage: 123, netDamagePerLevel: 19,
+        netSlow: 0.3, netVuln: 0.1, netMaxStacks: 3, netDuration: 5,
+      },
     },
   },
   {
+    // Rush Royale : Minotaure.
     id: 'hulk', name: 'Hulk', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 220, attackInterval: 1.6, range: 1.6,
+    targeting: 'premier', damage: 150, attackInterval: 1.0, range: 1.6,
     ability: {
-      name: 'Hulk Smash',
-      description: 'Éclaboussure de 40 % autour de la cible. Rage : +5 % de dégâts par coup (max +50 %). Tous les 8 coups, Smash étourdit les ennemis proches 1 s.',
-      params: { splash: 0.4, splashRadius: 1.5, ragePerHit: 0.05, rageMax: 0.5, smashEveryHits: 8, smashStun: 1, smashRadius: 2 },
+      name: 'Séisme',
+      description: 'Toutes les 5 s, Hulk frappe le sol : séisme autour de l’ennemi de tête, qui ralentit de 30 % et inflige 100 % de ses dégâts par seconde pendant 3 s. Éboulement : quand deux Hulk fusionnent, les ennemis à portée de la case perdent 5 % des PV qu’ils ont déjà perdus chaque seconde pendant 4 s.',
+      params: {
+        abilityCooldown: 5, quakeRadius: 1.5, quakeSlow: 0.3, quakeDps: 1, quakeDuration: 3,
+        rockfallLostHp: 0.05, rockfallDuration: 4,
+      },
     },
   },
   {
+    // Rush Royale : Thunderer (pas de « Paladin » dans Rush Royale ; le Marteau de la foi est un talent).
     id: 'thor', name: 'Thor', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts en chaîne',
-    targeting: 'aleatoire', damage: 43, attackInterval: 1.0, range: 3.4,
+    targeting: 'premier', damage: 80, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Éclair en chaîne',
-      description: 'L’éclair touche 3 ennemis, +1 rebond tous les 2 rangs (max 5), −20 % de dégâts par rebond.',
-      params: { chain: 3, chainPerRanks: 2, chainMax: 5, falloff: 0.2 },
+      description: 'L’éclair rebondit sur 1 ennemi de plus par rang (rang 1 : 2 ennemis, rang 7 : 8) ; les ennemis touchés par rebond subissent 119 % des dégâts.',
+      params: { chainPerRank: 1, chainDamage: 1.19 },
     },
   },
   {
-    id: 'strange', name: 'Doctor Strange', pack: 'marvel', rarity: 'epique', role: 'Soutien / contrôle',
-    targeting: 'premier', damage: 18, attackInterval: 1.0, range: 'globale',
+    // Rush Royale : Mage du portail.
+    id: 'strange', name: 'Doctor Strange', pack: 'marvel', rarity: 'epique', role: 'Contrôle',
+    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 'globale',
     ability: {
       name: 'Portail',
-      description: 'Toutes les 12 s, renvoie l’ennemi de tête au début du chemin (sauf boss).',
-      params: { abilityCooldown: 12, portalTargets: 1 },
+      description: 'Chaque tir a 5 % de chance de renvoyer sa cible au début du chemin (sauf boss et volants). La chance est divisée par 2 à chaque nouveau renvoi du même ennemi.',
+      params: { teleportChance: 0.05, teleportDecay: 0.5 },
     },
   },
   {
-    id: 'venom', name: 'Venom', pack: 'marvel', rarity: 'epique', role: 'Exécution',
-    targeting: 'premier', damage: 128, attackInterval: 1.0, range: 1.6,
+    // Rush Royale : Inquisitrice.
+    id: 'venom', name: 'Venom', pack: 'marvel', rarity: 'epique', role: 'Croissance',
+    targeting: 'premier', damage: 145, attackInterval: 1.0, range: 2.4,
     ability: {
-      name: 'Dévorer',
-      description: 'Exécute un ennemi sous 15 % de PV (sauf boss). Croissance sans plafond, qui ralentit avec le temps : ses dégâts grandissent tant qu’il reste sur le plateau et à chaque élimination (≈ +20 % après 2 min, +100 % vers la vague 30, +200 % vers la vague 60). Fusionné, il transmet la moitié de son bonus à la nouvelle unité.',
-      params: { executeThreshold: 0.15, growthPerSecond: 0.005, growthPerKill: 0.02, growthScale: 0.28, growthExponent: 0.75, growthKeepOnMerge: 0.5 },
+      name: 'Symbiote',
+      description: 'Ses dégâts montent à chaque coup sur la même cible (×2 après 23 coups, ×3 après 154), et retombent quand il change de cible. Quand il y a 1, 4, 7 ou 10 Venom sur le plateau, le symbiote s’active : cadence ×1,67 et éclaboussure de 50 %.',
+      params: {
+        growthPerHit: 1, growthResetOnRetarget: 1, growthScale: 0.319, growthExponent: 0.3646,
+        activeCounts: 1, activeAttackSpeed: 1.667, activeSplash: 0.5, activeSplashRadius: 1.5,
+      },
     },
   },
   {
-    id: 'cmarvel', name: 'Captain Marvel', pack: 'marvel', rarity: 'rare', role: 'Dégâts',
-    targeting: 'fort', damage: 30, attackInterval: 0.9, range: 'globale',
+    // Rush Royale : Mage de feu.
+    id: 'cmarvel', name: 'Captain Marvel', pack: 'marvel', rarity: 'rare', role: 'Dégâts de zone',
+    targeting: 'premier', damage: 55, attackInterval: 0.74, range: 'globale',
     ability: {
-      name: 'Mode binaire',
-      description: 'Après 10 attaques, passe en mode binaire : dégâts ×2 pendant 5 s.',
-      params: { chargeAttacks: 10, binaryMul: 2, binaryDuration: 5 },
+      name: 'Rafale photonique',
+      description: 'Chaque tir explose autour de la cible : 78 % des dégâts aux ennemis proches.',
+      params: { splash: 0.78, splashRadius: 1.2 },
     },
   },
   {
-    id: 'cap', name: 'Captain America', pack: 'marvel', rarity: 'legendaire', role: 'Soutien / rebond',
-    targeting: 'premier', damage: 41, attackInterval: 1.0, range: 2.4,
+    // Rush Royale : Statue de chevalier.
+    id: 'cap', name: 'Captain America', pack: 'marvel', rarity: 'legendaire', role: 'Soutien',
+    targeting: 'premier', damage: 0, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Leader',
-      description: 'Le bouclier rebondit sur 3 ennemis. Boost de vitesse : +15 % de vitesse d’attaque aux unités adjacentes.',
-      params: { bounces: 3, auraAttackSpeed: 0.15 },
+      description: 'N’attaque pas. +14 % de vitesse d’attaque par rang aux 4 unités voisines. Avec un nombre pair de Captain America sur le plateau, elles gagnent aussi 5 % de chance de critique par rang (dégâts ×2).',
+      params: { auraAttackSpeedPerRank: 0.14, evenCritChancePerRank: 0.05, auraCritMul: 2 },
     },
   },
   {
-    id: 'loki', name: 'Loki', pack: 'marvel', rarity: 'epique', role: 'Trickster',
-    targeting: 'aleatoire', damage: 31, attackInterval: 0.8, range: 3.4,
+    // Rush Royale : Arlequin.
+    id: 'loki', name: 'Loki', pack: 'marvel', rarity: 'epique', role: 'Copieur',
+    targeting: 'aleatoire', damage: 60, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Illusion',
-      description: 'Copieur : glisse Loki sur une alliée de même rang (autre héros) ; il devient sa copie, avec sa compétence, à −25 % de dégâts. Formation : +15 % de dégâts par autre Loki aligné à côté de lui (rangée ou colonne, +30 % au plus) ; à 3 alignés, ses dagues touchent aussi les ennemis autour de la cible (40 %). 10 % de chance de faire reculer l’ennemi touché pendant 2 s.',
-      params: { copyDamageMul: 0.75, formationDamagePerAlly: 0.15, formationMax: 3, formationSplashAt: 3, formationSplash: 0.4, knockbackChance: 0.1, knockbackDuration: 2 },
+      description: 'Copieur : glisse Loki sur une alliée de même rang (autre héros) ; il devient sa copie, avec sa compétence, à −35 % de dégâts (−3,75 points par niveau de collection, −5 % au niveau 9).',
+      params: { copyDamageMul: 0.65, copyDamageMulPerLevel: 0.0375 },
     },
   },
   {
+    // Rush Royale : Voleur.
     id: 'bucky', name: 'Soldat de l’hiver', pack: 'marvel', rarity: 'epique', role: 'Critique',
-    targeting: 'fort', damage: 51, attackInterval: 1.2, range: 3.4,
+    targeting: 'premier', damage: 70, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Bras bionique',
-      description: 'Une attaque sur 4 est un critique ×3 qui étourdit 0,5 s.',
-      params: { critEvery: 4, critMul: 3, critStun: 0.5 },
+      description: 'Chaque coup ajoute un bonus aléatoire de 0 à 200 % des dégâts (dégâts critiques ×3).',
+      params: { rogueCritMul: 3 },
     },
   },
   {
-    id: 'hawkeye', name: 'Œil de faucon', pack: 'marvel', rarity: 'rare', role: 'Polyvalent',
-    targeting: 'premier', damage: 22, attackInterval: 0.7, range: 'globale',
+    // Rush Royale : Archer.
+    id: 'hawkeye', name: 'Œil de faucon', pack: 'marvel', rarity: 'rare', role: 'Cadence',
+    targeting: 'premier', damage: 59, attackInterval: 0.45, range: 'globale',
     ability: {
-      name: 'Flèches spéciales',
-      description: 'Alterne les flèches : explosive (éclaboussure 50 %), glace (ralentit de 25 % pendant 2 s), électrique (chaîne sur 2 ennemis).',
-      params: { explosiveSplash: 0.5, splashRadius: 1.5, iceSlow: 0.25, iceDuration: 2, chain: 2 },
+      name: 'Carquois',
+      description: 'Archer rapide : chaque amélioration en partie lui donne +22 % de vitesse d’attaque (au lieu de +6 %).',
+      params: { powerUpAttackSpeed: 0.22 },
     },
   },
   {
-    id: 'falcon', name: 'Falcon', pack: 'marvel', rarity: 'rare', role: 'Ciblage',
-    targeting: 'fort', damage: 18, attackInterval: 0.6, range: 'globale',
+    // Rush Royale : Tireur d'élite.
+    id: 'falcon', name: 'Falcon', pack: 'marvel', rarity: 'rare', role: 'Anti-boss',
+    targeting: 'fort', damage: 80, attackInterval: 1.0, range: 'globale',
     ability: {
-      name: 'Drone Redwing',
-      description: 'Toutes les 6 s, Redwing marque l’ennemi le plus fort : +25 % de dégâts subis pendant 4 s.',
-      params: { abilityCooldown: 6, markBonus: 0.25, markDuration: 4, markTargets: 1 },
+      name: 'Redwing',
+      description: 'Vise l’ennemi qui a le plus de PV. Pendant un boss, Tir fou : dégâts et vitesse d’attaque ×1,5.',
+      params: { bossWaveDamageMul: 1.5, bossWaveAttackSpeedMul: 1.5 },
     },
   },
   {
-    id: 'widow', name: 'Black Widow', pack: 'marvel', rarity: 'epique', role: 'Anti-boss',
-    targeting: 'premier', damage: 24, attackInterval: 0.5, range: 3.4,
+    // Rush Royale : Prêtresse.
+    id: 'widow', name: 'Black Widow', pack: 'marvel', rarity: 'epique', role: 'Mana',
+    targeting: 'premier', damage: 43, attackInterval: 0.9, range: 3.4,
     ability: {
-      name: 'Morsure de la veuve',
-      description: 'Un coup sur 5 paralyse 1 s. Sacrifice : fusionnée ou détruite, elle rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190).',
-      params: { paralyzeEvery: 5, paralyzeDuration: 1, sacrificeMana: 1 },
+      name: 'Sacrifice',
+      description: 'Fusionnée ou détruite, Black Widow rapporte 80 de mana par rang (rang 6 : 480).',
+      params: { sacrificeMana: 1, sacrificeManaPerRank: 80 },
     },
   },
   {
-    id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Combo',
-    targeting: 'aleatoire', damage: 44, attackInterval: 0.4, range: 1.6,
+    // Rush Royale : Danse-lames.
+    id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Dégâts',
+    targeting: 'premier', damage: 215, attackInterval: 1.2, range: 1.6,
     ability: {
       name: 'Dix Anneaux',
-      description: 'Tous les 10 coups, 10 anneaux frappent 10 ennemis aléatoires à 100 %.',
-      params: { ringsEveryHits: 10, ringCount: 10, ringDamage: 1 },
+      description: 'Sans autre Shang-Chi sur une case voisine, il danse : +100 % de vitesse d’attaque. Chaque Shang-Chi qui danse donne +10 % de dégâts aux autres Shang-Chi (8 au plus).',
+      params: { aloneAttackSpeed: 1, dancerDamage: 0.1, dancerMax: 8 },
     },
   },
 
   // ───────────── Pack Disney ─────────────
   {
-    id: 'moana', name: 'Vaïana & Pua', pack: 'disney', rarity: 'epique', role: 'Contrôle',
-    targeting: 'premier', damage: 26, attackInterval: 1.0, range: 3.4,
+    // Rush Royale : Archer du vent.
+    id: 'moana', name: 'Vaïana & Pua', pack: 'disney', rarity: 'epique', role: 'Cadence',
+    targeting: 'premier', damage: 59, attackInterval: 0.6, range: 3.4,
     ability: {
-      name: 'Appel de l’océan',
-      description: 'Toutes les 10 s, une vague repousse de 1,5 case les ennemis de tête (sauf boss).',
-      params: { abilityCooldown: 10, push: 1.5, pushTargets: 3 },
+      name: 'Appel du vent',
+      description: 'Toutes les 4 s, Ouragan : vitesse d’attaque ×3 pendant 3,6 s (+0,3 s par niveau et par rang). Chaque rang au-dessus de 1 ajoute 30 dégâts.',
+      params: {
+        abilityCooldown: 4, hurricaneDuration: 3.6, hurricaneDurationPerLevel: 0.3, hurricaneDurationPerRank: 0.3,
+        hurricaneSpeedMul: 3, rankDamageFlat: 30,
+      },
     },
   },
   {
-    id: 'maui', name: 'Maui', pack: 'disney', rarity: 'legendaire', role: 'Dégâts / transformation',
-    targeting: 'premier', damage: 146, attackInterval: 1.2, range: 1.6,
+    // Rush Royale : Borée.
+    id: 'maui', name: 'Maui', pack: 'disney', rarity: 'legendaire', role: 'Dégâts / formes',
+    targeting: 'premier', damage: 120, attackInterval: 0.9, range: 2.4,
     ability: {
       name: 'Métamorphose',
-      description: 'Alterne toutes les 8 s : faucon (cadence ×2, dégâts ×0,5) ou requin (dégâts ×2,5 avec éclaboussure).',
-      params: { abilityCooldown: 8, sharkDuration: 8, hawkSpeedMul: 2, hawkMul: 0.5, sharkMul: 2.5, sharkSplash: 0.5, splashRadius: 1.5 },
+      description: 'Alterne deux formes toutes les 6 s : faucon (+30 % de vitesse d’attaque) puis requin (+60 % de vitesse d’attaque et 30 % de chance de critique ×2).',
+      params: { abilityCooldown: 6, hawkSpeed: 0.3, sharkSpeed: 0.6, sharkCritChance: 0.3, sharkCritMul: 2 },
     },
   },
   {
+    // Rush Royale : Bannière.
     id: 'pocahontas', name: 'Pocahontas & Meeko', pack: 'disney', rarity: 'rare', role: 'Soutien',
-    targeting: 'aleatoire', damage: 17, attackInterval: 0.8, range: 3.4,
+    targeting: 'aleatoire', damage: 0, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Couleurs du vent',
-      description: 'Boost de vitesse : +10 % de vitesse d’attaque aux unités adjacentes (+5 % par rang). Meeko : 5 % de chance de +5 de mana par élimination.',
-      params: { auraAttackSpeed: 0.1, auraPerRank: 0.05, meekoChance: 0.05, meekoMana: 5 },
+      description: 'N’attaque pas. +12 % de vitesse d’attaque par rang (+0,5 point par niveau) aux 4 unités voisines.',
+      params: { auraAttackSpeedPerRank: 0.12, auraAttackSpeedPerRankPerLevel: 0.005 },
     },
   },
   {
-    id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts / brûlure',
-    targeting: 'premier', damage: 110, attackInterval: 1.0, range: 1.6,
+    // Rush Royale : Pyrotechnicien.
+    id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts de zone',
+    targeting: 'premier', damage: 229, attackInterval: 1.0, range: 2.4,
     ability: {
-      name: 'Souffle de Mushu',
-      description: 'Brûlure : 20 % des dégâts par seconde pendant 3 s. Une fois par vague, Avalanche : 300 % des dégâts à tous les ennemis.',
-      params: { burnPerSecond: 0.2, burnDuration: 3, avalancheDamage: 3, avalancheUses: 1, avalancheMinEnemies: 8 },
+      name: 'Feu de Mushu',
+      description: 'Nombre impair de Mulan sur le plateau : cadence ×0,67, cible au hasard et explosion de 100 % autour de la cible (rayon qui grandit avec le rang). Nombre pair : −40 % de dégâts, tir sur le premier.',
+      params: { oddSpeedMul: 0.67, oddSplash: 1, oddRadius: 0.8, oddRadiusPerRank: 0.1, evenDamageMul: 0.6 },
     },
   },
   {
+    // Rush Royale : Chasseur.
     id: 'merida', name: 'Rebelle', pack: 'disney', rarity: 'rare', role: 'Précision',
-    targeting: 'premier', damage: 32, attackInterval: 0.9, range: 'globale',
+    targeting: 'aleatoire', damage: 120, attackInterval: 1.0, range: 'globale',
     ability: {
-      name: 'Tir parfait',
-      description: '100 % de critiques ×2 sur l’ennemi le plus avancé.',
-      params: { critMul: 2 },
+      name: 'Première flèche',
+      description: 'Le premier tir sur chaque nouvelle cible inflige +210 % de dégâts (+10 points par niveau et par rang au-dessus de 1).',
+      params: { firstShotBonus: 2.1, firstShotBonusPerLevel: 0.1, firstShotBonusPerRank: 0.1 },
     },
   },
   {
+    // Rush Royale : Stase.
     id: 'ariel', name: 'Ariel & Sébastien', pack: 'disney', rarity: 'epique', role: 'Contrôle',
-    targeting: 'premier', damage: 17, attackInterval: 0.9, range: 3.4,
+    targeting: 'premier', damage: 60, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Chant de sirène',
-      description: 'Toutes les 8 s, le chant arrête 3 ennemis pendant 1,5 s. Sébastien : saignement de 5 % des PV par seconde (réduit sur les boss).',
-      params: { abilityCooldown: 8, songTargets: 3, songDuration: 1.5, bleed: 0.05, bleedDuration: 2, bleedBossFactor: 0.1 },
+      description: 'Toutes les 4 s (1,8 s au rang 7), le chant fige les ennemis autour d’un ennemi au hasard pendant 2,5 s (+0,1 s par niveau ; sauf boss).',
+      params: { abilityCooldown: 4, abilityCooldownPerRank: -0.3667, stasisDuration: 2.5, stasisDurationPerLevel: 0.1, stasisRadius: 1 },
     },
   },
   {
+    // Rush Royale : Jumeaux (mécanique chiffrée introuvable : double attaque gardée).
     id: 'foxhound', name: 'Rox & Rouky', pack: 'disney', rarity: 'rare', role: 'Duo',
-    targeting: 'premier', damage: 51, attackInterval: 0.6, range: 1.6,
+    targeting: 'premier', damage: 70, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Meilleurs amis',
       description: 'Double attaque ; le second coup fait +50 % si le premier a touché la même cible.',
@@ -206,66 +247,76 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    id: 'tiana', name: 'Tiana & Naveen', pack: 'disney', rarity: 'rare', role: 'Économie',
-    targeting: 'aleatoire', damage: 11, attackInterval: 1.0, range: 'globale',
+    // Rush Royale : Vampire.
+    id: 'tiana', name: 'Tiana & Naveen', pack: 'disney', rarity: 'rare', role: 'Mana',
+    targeting: 'premier', damage: 40, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Restaurant',
-      description: 'Chaque ennemi touché par Tiana rapporte du mana en plus quand il est éliminé : +1 au rang 1, jusqu’à +8 au rang 7. Toutes les 12 s, la langue tire l’ennemi de tête 1 case en arrière.',
-      params: { manaPerKill: 1, abilityCooldown: 12, pull: 1 },
+      description: 'Chaque ennemi touché par Tiana rapporte 0,5 mana par seconde tant qu’il vit, et du mana en plus quand il est éliminé : +1 au rang 1, jusqu’à +8 au rang 7.',
+      params: { manaPerKill: 1, biteManaPerSecond: 0.5 },
     },
   },
   {
-    id: 'nemo', name: 'Nemo & Dory', pack: 'disney', rarity: 'rare', role: 'Aléatoire',
-    targeting: 'aleatoire', damage: 26, attackInterval: 0.7, range: 3.4,
+    // Rush Royale : Chaudron magique.
+    id: 'nemo', name: 'Nemo & Dory', pack: 'disney', rarity: 'rare', role: 'Aléatoire / mana',
+    targeting: 'aleatoire', damage: 30, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Mémoire de poisson',
-      description: 'Effet aléatoire à chaque tir : ralentissement, dégâts ×2, poison, ou +20 % de cadence à une unité alliée au hasard.',
-      params: { slow: 0.2, slowDuration: 2, doubleDamageMul: 2, poison: 0.3, poisonDuration: 3, allyHaste: 0.2, allyHasteDuration: 3, effectsPerShot: 1 },
+      description: 'Toutes les 8 s, 5 de mana par rang. À son arrivée sur le plateau, une potion au hasard : +25 % de dégâts à une alliée pendant 15 s, 300 % des dégâts à 3 ennemis, +50 % de mana des éliminations pendant 10 s, ou ralentissement de 50 % des ennemis à portée pendant 3 s.',
+      params: {
+        abilityCooldown: 8, manaPerRank: 5, potionBuff: 0.25, potionBuffDuration: 15, potionDamage: 3, potionTargets: 3,
+        potionKillMana: 0.5, potionKillManaDuration: 10, potionSlow: 0.5, potionSlowDuration: 3,
+      },
     },
   },
   {
-    id: 'coco', name: 'Coco (Miguel)', pack: 'disney', rarity: 'epique', role: 'Soutien',
-    targeting: 'aleatoire', damage: 17, attackInterval: 1.0, range: 3.4,
+    // Rush Royale : Dryade.
+    id: 'coco', name: 'Coco (Miguel)', pack: 'disney', rarity: 'epique', role: 'Booster de fusion',
+    targeting: 'premier', damage: 50, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Remember Me',
-      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (autre héros) ; Coco disparaît et l’alliée gagne 1 rang. Une fois par vague, restaure une unité détruite ou rétrogradée par un boss. +5 % de dégâts aux unités adjacentes.',
-      params: { restoreUses: 1, auraDamage: 0.05, promoteAlly: 1 },
+      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (autre héros) ; Coco disparaît et l’alliée gagne 1 rang.',
+      params: { promoteAlly: 1 },
     },
   },
   {
-    id: 'nickjudy', name: 'Nick & Judy', pack: 'disney', rarity: 'epique', role: 'Contrôle / malus',
-    targeting: 'premier', damage: 33, attackInterval: 0.8, range: 2.4,
+    // Rush Royale : Chimiste.
+    id: 'nickjudy', name: 'Nick & Judy', pack: 'disney', rarity: 'epique', role: 'Malus',
+    targeting: 'premier', damage: 55, attackInterval: 0.9, range: 2.4,
     ability: {
       name: 'Arrestation',
-      description: 'Toutes les 6 s, Judy arrête l’ennemi le plus fort (sauf boss) pendant 2 s. Les coups de Nick réduisent l’armure de 20 %.',
-      params: { abilityCooldown: 6, stopDuration: 2, stopTargets: 1, armorBreak: 0.2 },
+      description: 'Vise le premier ennemi qui n’est pas encore fiché : la cible subit +5 % de dégâts par rang (+0,5 point par niveau) jusqu’à sa mort.',
+      params: { vulnPerRank: 0.05, vulnPerRankPerLevel: 0.005 },
     },
   },
   {
-    id: 'buzzwoody', name: 'Buzz & Woody', pack: 'disney', rarity: 'legendaire', role: 'Duo / polyvalent',
-    targeting: 'premier', damage: 38, attackInterval: 0.8, range: 3.4,
+    // Rush Royale : Ingénieur.
+    id: 'buzzwoody', name: 'Buzz & Woody', pack: 'disney', rarity: 'legendaire', role: 'Dégâts reliés',
+    targeting: 'premier', damage: 70, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Vers l’infini',
-      description: 'Le laser transperce toute la ligne. Toutes les 10 s, le lasso ramène l’ennemi de tête 2 cases en arrière.',
-      params: { abilityCooldown: 10, pull: 2 },
+      description: 'Les Buzz & Woody posés sur des cases voisines se relient : +5 % de dégâts par autre Buzz & Woody du groupe (+0,5 point par niveau, 10 au plus).',
+      params: { formationDamagePerAlly: 0.05, formationDamagePerAllyPerLevel: 0.005, formationMax: 10 },
     },
   },
   {
-    id: 'rapunzel', name: 'Raiponce & Pascal', pack: 'disney', rarity: 'epique', role: 'Contrôle / soin',
-    targeting: 'aleatoire', damage: 25, attackInterval: 1.0, range: 2.4,
+    // Rush Royale : Meule.
+    id: 'rapunzel', name: 'Raiponce & Pascal', pack: 'disney', rarity: 'epique', role: 'Soutien',
+    targeting: 'aleatoire', damage: 0, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Cheveux magiques',
-      description: 'Retire les effets de boss (sommeil, hypnose, étourdissement) des unités adjacentes et leur donne +15 % de dégâts. Pascal la rend insensible aux pouvoirs des boss.',
-      params: { auraDamage: 0.15 },
+      description: 'N’attaque pas. +8 % de dégâts par rang aux 4 unités voisines.',
+      params: { auraDamagePerRank: 0.08 },
     },
   },
   {
-    id: 'vanralph', name: 'Vanellope & Ralph', pack: 'disney', rarity: 'legendaire', role: 'Chaos',
-    targeting: 'premier', damage: 165, attackInterval: 1.4, range: 1.6,
+    // Rush Royale : Gardien du portail.
+    id: 'vanralph', name: 'Vanellope & Ralph', pack: 'disney', rarity: 'legendaire', role: 'Échangeur',
+    targeting: 'premier', damage: 45, attackInterval: 0.66, range: 2.4,
     ability: {
       name: 'Glitch',
-      description: 'Ralph détruit les boucliers et fait +100 % contre les blindés. Échangeur : glisse-les sur une alliée de même rang (autre héros), elles échangent leurs cases, sans limite ; Vanellope donne alors +20 % de cadence à ses nouvelles voisines pendant 5 s.',
-      params: { armoredMul: 2, swapAlly: 1, boost: 0.2, boostDuration: 5 },
+      description: 'Échangeur : glisse-les sur une alliée de même rang (autre héros), elles échangent leurs cases, sans limite. L’alliée est libérée des effets de boss et de la pénalité de copie ; Vanellope, elle, bugue 2 s (ni attaque, ni fusion).',
+      params: { swapAlly: 1, swapSleep: 2, swapCleanse: 1 },
     },
   },
 ];

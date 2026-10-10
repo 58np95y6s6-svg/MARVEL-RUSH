@@ -53,7 +53,7 @@ function drive(): void {
       });
     } else {
       show('pack-none', {
-        text: 'Ici, tu ouvres des <b>packs</b> avec tes <b>éclats</b> pour trouver de nouveaux héros.',
+        text: 'Ici, tu ouvres des <b>packs</b> avec tes <b>gemmes</b> pour trouver de nouveaux héros.',
         next: 'Continuer', allow: 'none', place: 'center', dim: true,
         onNext: () => { void setStep(STEP.deck).then(() => { shownKey = ''; go('#collection'); }); },
       });

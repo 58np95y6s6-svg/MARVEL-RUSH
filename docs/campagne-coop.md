@@ -32,13 +32,13 @@
 - Les étoiles sont **communes** : une étoile gagnée l'est pour le duo, sur les deux profils.
 
 ### Récompenses (pour chacun, sur son propre profil)
-- **Éclats** : +30 par étoile la première fois (§6.1), +10 par étoile en rejouant.
+- **Coffre de victoire** et **or des étoiles** comme en Solo (`docs/campagne.md` §2 : +20 or par étoile la première fois, +8 en rejouant, +2 gemmes par étoile nouvelle), pour chacun.
 - **Coffres d'étoiles Coop** : 3 par chapitre, à 10, 20 et 30 étoiles du chapitre, ouverts **par chacun** :
-  - 10 ★ : 200 éclats + 10 cartes d'une unité possédée + 1 parchemin ;
-  - 20 ★ : 300 éclats + 15 cartes + 1 parchemin ;
-  - 30 ★ : 500 éclats + 1 tirage gratuit + 2 parchemins + 30 ✦.
+  - 10 ★ : 500 or + 50 gemmes + 10 cartes d'une unité possédée + 1 parchemin ;
+  - 20 ★ : 1 000 or + 75 gemmes + 15 cartes + 1 parchemin ;
+  - 30 ★ : 1 500 or + 100 gemmes + 1 tirage gratuit + 2 parchemins + 30 ✦.
 - **Niveau 5** (lieutenant), première victoire : 1 parchemin chacun.
-- **Niveau 10** (gros boss), première victoire : 2 parchemins + 300 éclats chacun + **20 cartes d'une unité au choix** (la Coop ne donne pas de personnage garanti : il vient du Solo). Chapitre 6 : cadre de profil « Duo invincible » pour les deux.
+- **Niveau 10** (gros boss), première victoire : 2 parchemins + 100 gemmes chacun + **20 cartes d'une unité au choix** (la Coop ne donne pas de personnage garanti : il vient du Solo). Chapitre 6 : cadre de profil « Duo invincible » pour les deux.
 - **Cristaux d'éveil** : 3 étoiles sur un niveau de boss (5 ou 10), la première fois : 25 ✦ chacun (même règle que la campagne Solo, §6.6). Thanos vaincu : 100 ✦ chacun.
 - **XP** : comme le Solo, pour chacun.
 

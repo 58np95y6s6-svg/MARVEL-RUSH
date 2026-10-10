@@ -151,20 +151,31 @@ describe('boss', () => {
     });
   });
 
-  it('Raiponce (Pascal) est insensible aux pouvoirs de boss', () => {
-    const { e, ev } = withBoss('galactus', [[0, 'rapunzel', 1]], ['rapunzel', ...MARVEL.slice(0, 4)]);
-    expect(ofType(ev, 'bossPower')[0]!.slots).toEqual([]);
+  it('talent « Pascal » : Raiponce est insensible aux pouvoirs de boss (sans talent, elle y est exposée)', () => {
+    const { ev } = withBoss('galactus', [[0, 'rapunzel', 1]], ['rapunzel', ...MARVEL.slice(0, 4)]);
+    expect(ofType(ev, 'bossPower')[0]!.slots).toEqual([0]);
+    const e = quiet(['rapunzel', ...MARVEL.slice(0, 4)], {}, { levels: { rapunzel: 7 }, talents: { rapunzel: ['a', 'b'] } });
+    debugPlace(e, 0, 0, 'rapunzel', 1);
+    debugSpawn(e, { hp: 1e12, bossId: 'galactus', distance: 1 });
+    const ev2 = step(e, 1);
+    expect(ofType(ev2, 'bossPower')[0]!.slots).toEqual([]);
     expect(grid(e)[0]!.unit).toBe('rapunzel');
   });
 
-  it('Coco : Remember Me restaure l’unité détruite, une fois par vague', () => {
-    const { e, ev } = withBoss('galactus', [[0, 'cmarvel', 5], [1, 'falcon', 2], [2, 'widow', 2], [14, 'coco', 4]]);
+  it('talent « Remember Me » de Coco : restaure l’unité détruite, une fois par vague', () => {
+    const e = quiet(DECK, {}, { levels: { coco: 7 }, talents: { coco: ['a', 'a'] } });
+    for (const [slot, u, r] of [[0, 'cmarvel', 5], [1, 'falcon', 2], [2, 'widow', 2], [14, 'coco', 4]] as [number, UnitId, number][]) debugPlace(e, 0, slot, u, r);
+    debugSpawn(e, { hp: 1e12, bossId: 'galactus', distance: 1 });
+    const ev = step(e, 1);
     const p = ofType(ev, 'bossPower')[0]!;
     expect(ofType(ev, 'ability').some((a) => a.name === 'Remember Me')).toBe(true);
     const restored = grid(e)[p.slots[0]!];
     expect(restored).not.toBeNull();
     const ev2 = step(e, 20 * 6);
     expect(ofType(ev2, 'ability').filter((a) => a.name === 'Remember Me')).toHaveLength(0);
+    // Sans le talent, pas de restauration (la Dryade de Rush Royale ne restaure rien).
+    const { ev: ev3 } = withBoss('galactus', [[0, 'cmarvel', 5], [1, 'falcon', 2], [2, 'widow', 2], [14, 'coco', 4]]);
+    expect(ofType(ev3, 'ability').some((a) => a.name === 'Remember Me')).toBe(false);
   });
 
   it('petit boss : version affaiblie du pouvoir du maître toutes les 10 s', () => {

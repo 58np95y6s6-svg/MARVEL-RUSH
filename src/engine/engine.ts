@@ -2,7 +2,7 @@
 // Aucune dépendance au DOM, à l'heure ou à Math.random.
 
 import { BOSSES, BOSS_STATS, LIEUTENANTS, ROTATING_BOSSES } from '../data/bosses';
-import { ENEMIES, WAVE_RULES, spawnWeights, waveHp } from '../data/enemies';
+import { ENEMIES, WAVE_RULES, monsterHp, monstersInWave, spawnWeights, waveHp } from '../data/enemies';
 import { activeTeams } from '../data/teams';
 import { UNITS } from '../data/units';
 import type { BossId, EnemyKind, UnitId } from '../data/types';
@@ -17,7 +17,7 @@ import {
 } from './internal';
 import { deriveSeed } from './rng';
 import { dealDamage, isAlive, manaYield, retreat, unitParams } from './combat';
-import { initUnitCounters, onWaveStart, updateUnits } from './abilities';
+import { initUnitCounters, onRankUp, onWaveStart, startRockfall, updateUnits } from './abilities';
 import { pumpkinExplosion, updateBosses } from './bossPowers';
 import { mapLengths } from './maps';
 import { boardGeometry } from './geometry';
@@ -117,7 +117,7 @@ function initState(cfg: GameConfig): SimState {
     rng: deriveSeed(cfg.seed, 1),
     spawnRng: deriveSeed(cfg.seed, 2),
     nextUid: 1,
-    spawnTimer: 0, spawnCount: 0, waveElapsed: 0,
+    spawnTimer: 0, spawnCount: 0, waveMonsters: 0, waveElapsed: 0,
     pendingBoss: null, nextBigBoss: null, minionMaster: null, bossOrder: [], bossIdx: 0, scriptedBossIdx: 0,
     currentBoss: null, currentBossSmall: false, bossVictory: false,
     paused: false, prevPhase: 'vague', awaitingVictory: false,
@@ -145,6 +145,8 @@ export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
   } else if (s?.bossAtWave !== undefined && wave === s.bossAtWave) {
     return 'gros';
   }
+  // Rush Royale (Coop) : après la vague 60, boss aux vagues paires et mini-boss aux vagues impaires.
+  if (infinite(cfg) && !cfg.bossRhythm && wave > WAVE_RULES.alternateAfter) return wave % 2 === 0 ? 'gros' : 'petit';
   if (r.big > 0 && wave % r.big === 0) return 'gros';
   if (infinite(cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'gros';
   if (r.small > 0 && wave % r.small === 0) return 'petit';
@@ -201,6 +203,10 @@ function startWave(ctx: Ctx, wave: number): void {
   st.spawnTimer = 0;
   st.spawnCount = 0;
   const kind = bossWaveKind(cfg, wave);
+  // Rush Royale (Coop) : 10 monstres par vague ; une vague de mini-boss en a aussi, une vague de boss non.
+  // Après la vague 60 (alternance boss / mini-boss), plus de monstres communs.
+  const late = infinite(cfg) && !cfg.bossRhythm && wave > WAVE_RULES.alternateAfter;
+  st.waveMonsters = kind === 'gros' || late ? 0 : monstersInWave(cfg.script?.enemyCountMultiplier);
   st.pendingBoss = kind === 'gros' ? bigBossFor(ctx, wave, true) : null;
   const nb = nextBigWave(cfg, kind === 'gros' ? wave + 1 : wave);
   st.nextBigBoss = bigBossFor(ctx, nb, false);
@@ -213,17 +219,14 @@ function startWave(ctx: Ctx, wave: number): void {
     p.giftUsedThisWave = false;
     p.mana += Math.round((onWaveStart(ctx, i) + ctx.info[i]!.manaPerWave) * manaYield(p));
   });
+  st.waveTimeLeft = st.waveMonsters * spawnInterval(wave);
   if (kind === 'gros') {
-    st.waveTimeLeft = 0;
     spawnBigBoss(ctx, st.pendingBoss!);
   } else if (kind === 'petit') {
-    st.waveTimeLeft = 0;
     // script.miniBoss ne remplace que la vague de petit boss désignée (bossAtWave, sinon la dernière
     // vague du niveau) ; les autres vagues de petit boss gardent le lieutenant du gros boss suivant.
     const scripted = scriptedMiniWave(cfg, wave) ? cfg.script!.miniBoss : undefined;
     spawnSmallBoss(ctx, scripted ?? st.nextBigBoss!, !!scripted);
-  } else {
-    st.waveTimeLeft = WAVE_RULES.duration;
   }
 }
 
@@ -237,9 +240,17 @@ function waveFinished(ctx: Ctx): void {
   startWave(ctx, st.wave + 1);
 }
 
+/** PV d'un ennemi normal au début de la vague (base des boss et des sbires). */
 function normalHp(ctx: Ctx, wave: number): number {
   const s = ctx.cfg.script;
   return waveHp(wave, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1);
+}
+
+/** PV du prochain monstre de la vague (Rush Royale : ils montent à chaque nouveau monstre). */
+function nextMonsterHp(ctx: Ctx): number {
+  const s = ctx.cfg.script;
+  const st = ctx.st;
+  return monsterHp(st.wave, st.spawnCount, st.waveMonsters, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1);
 }
 
 /** PV d'un boss ou d'un lieutenant : PV d'un ennemi normal × `script.bossHpMultiplier`. */
@@ -269,7 +280,7 @@ function addEnemy(ctx: Ctx, e: Omit<SimEnemy, 'uid' | 'distance' | 'effects'>): 
 
 function spawnKind(ctx: Ctx, kind: EnemyKind): void {
   const def = ENEMIES[kind];
-  const hp = normalHp(ctx, ctx.st.wave) * def.hpMul;
+  const hp = nextMonsterHp(ctx) * def.hpMul;
   let speed = WAVE_RULES.baseSpeed * def.speedMul;
   if (kind === 'rapide') speed *= 1 + (ctx.mods.fastSpeed ?? 0);
   const shield = def.shieldHits > 0 ? Math.max(0, def.shieldHits + (ctx.mods.shieldHits ?? 0)) : 0;
@@ -281,7 +292,7 @@ function spawnKind(ctx: Ctx, kind: EnemyKind): void {
 
 function spawnMinions(ctx: Ctx, boss: BossId): void {
   const prm = BOSSES[boss].minion.params;
-  const hp = normalHp(ctx, ctx.st.wave) * (prm.hpMul ?? 1);
+  const hp = nextMonsterHp(ctx) * (prm.hpMul ?? 1);
   const speed = WAVE_RULES.baseSpeed * (prm.speedMul ?? 1);
   const pack = Math.max(1, Math.round(prm.packSize ?? 1));
   for (const lane of entryLanes(ctx)) {
@@ -372,33 +383,44 @@ function bossAlive(ctx: Ctx): boolean {
   return ctx.st.enemies.some((e) => isAlive(e) && (e.bossId || e.x.mini));
 }
 
-function updateWave(ctx: Ctx): void {
+/**
+ * Vague, règle de la Coop de Rush Royale : les monstres de la vague apparaissent un à un, et la vague
+ * suivante ne commence qu'une fois le terrain nettoyé (monstres, mini-boss et boss).
+ */
+function updateWave(ctx: Ctx, spawn = true): void {
   const st = ctx.st;
   if (st.lives <= 0) return;
-  if (st.phase === 'vague') {
-    if (st.awaitingVictory) return;
+  if (st.phase !== 'vague' && st.phase !== 'boss') return;
+  if (st.awaitingVictory) return;
+  const interval = spawnInterval(st.wave, ctx.cfg.script?.enemyCountMultiplier);
+  if (spawn) {
     st.waveElapsed += DT;
-    st.waveTimeLeft = Math.max(0, st.waveTimeLeft - DT);
-    if (st.waveTimeLeft > EPS) {
+    if (st.spawnCount < st.waveMonsters) {
       st.spawnTimer -= DT;
-      while (st.spawnTimer <= EPS) {
+      while (st.spawnTimer <= EPS && st.spawnCount < st.waveMonsters) {
         spawnOne(ctx);
-        st.spawnTimer += spawnInterval(st.wave, ctx.cfg.script?.enemyCountMultiplier);
+        st.spawnTimer += interval;
       }
-    } else {
-      waveFinished(ctx);
     }
-  } else if (st.phase === 'boss') {
-    if (!bossAlive(ctx)) {
-      st.bossRageIn = undefined;
-      st.phase = 'vague';
-      if (ctx.cfg.script?.endOnBossKill && imposedBossDefeated(ctx)) {
-        st.bossVictory = true;
-        return;
-      }
-      waveFinished(ctx);
-    }
+    // Minuteur affiché : temps avant la dernière apparition de la vague.
+    const left = st.waveMonsters - st.spawnCount;
+    st.waveTimeLeft = left > 0 ? Math.max(0, st.spawnTimer) + (left - 1) * interval : 0;
   }
+  // Niveaux de boss : la partie est gagnée dès que le boss imposé tombe, même avec des ennemis sur le chemin.
+  if (st.phase === 'boss' && !bossAlive(ctx) && ctx.cfg.script?.endOnBossKill && imposedBossDefeated(ctx)) {
+    st.bossRageIn = undefined;
+    st.phase = 'vague';
+    st.bossVictory = true;
+    return;
+  }
+  if (st.spawnCount < st.waveMonsters) return;
+  if (st.phase === 'boss' && bossAlive(ctx)) return;
+  if (st.enemies.some((e) => isAlive(e))) return;
+  if (st.phase === 'boss') {
+    st.bossRageIn = undefined;
+    st.phase = 'vague';
+  }
+  waveFinished(ctx);
 }
 
 // ───────────── Ennemis ─────────────
@@ -422,6 +444,14 @@ function updateEnemies(ctx: Ctx): void {
     x.bleedFor = dot(ctx, e, x.bleed, x.bleedFor, x.bleedBy);
     x.poisonFor = dot(ctx, e, x.poison, x.poisonFor, x.poisonBy);
     if (!isAlive(e)) continue;
+    // Morsure du Vampire (Tiana) : la cible rapporte du mana tant qu'elle vit.
+    if (x.bite && x.biteBy !== undefined) {
+      x.biteAcc = (x.biteAcc ?? 0) + x.bite * DT;
+      const whole = Math.floor(x.biteAcc + 1e-9);
+      const owner = st.players[x.biteBy];
+      if (whole > 0 && owner) { owner.mana += whole; x.biteAcc -= whole; }
+    }
+    if (x.netFor) { x.netFor = Math.max(0, x.netFor - DT); if (x.netFor === 0) { delete x.netFor; delete x.netStacks; } }
     f.slowFor = dec(f.slowFor);
     if (f.slowFor === 0) { delete f.slow; delete f.slowFor; }
     f.markedFor = dec(f.markedFor);
@@ -456,7 +486,8 @@ function reachEnd(ctx: Ctx, e: SimEnemy): void {
   e.x.gone = 1;
   const st = ctx.st;
   if (!ctx.cfg.script?.noLifeLoss && st.lives > 0) {
-    st.lives = e.bossId || e.x.mini ? 0 : Math.max(0, st.lives - 1);
+    // Rush Royale : un gros monstre retire 2 vies, un boss toutes.
+    st.lives = e.bossId || e.x.mini ? 0 : Math.max(0, st.lives - ENEMIES[e.kind].lives);
     emit(ctx, { type: 'lifeLost', lives: st.lives });
   }
   pumpkinExplosion(ctx, e);
@@ -537,6 +568,9 @@ function applyCommand(ctx: Ctx, c: Command): void {
       const merged = newUnit(ctx, pi, unit, rank);
       if (growth > 0) merged.counters.growth = growth;
       p.grid[c.to] = merged;
+      // Profils Rush Royale : Éboulement du Minotaure (Hulk), charges de la Tesla (Iron Man) voisine.
+      if (a.unit === 'hulk') startRockfall(ctx, pi, merged);
+      onRankUp(ctx, pi, c.to);
       emit(ctx, { type: 'merge', player: p.id, from: c.from, to: c.to, unit, rank });
       return;
     }
@@ -559,6 +593,12 @@ function applyCommand(ctx: Ctx, c: Command): void {
       if (c.type === 'swap') {
         if (!prm.swapAlly) return reject(ctx, c.type, 'Cette unité ne sait pas échanger sa place.');
         swapCells(ctx, pi, c.from, c.to);
+        // Gardien du portail (Vanellope) : l'alliée est nettoyée, Vanellope s'endort un moment.
+        if (prm.swapCleanse) {
+          delete b.status.stunnedFor; delete b.status.sleepingFor; delete b.status.hypnotizedFor;
+          if (b.status.copyMul !== undefined) b.status.copyMul = 1;
+        }
+        if (prm.swapSleep && prm.swapSleep > 0) a.status.sleepingFor = Math.max(a.status.sleepingFor ?? 0, prm.swapSleep);
         emit(ctx, { type: 'swap', player: p.id, from: c.from, to: c.to, unit: a.unit, rank: a.rank });
         // Effet visuel du Glitch : `slot` = nouvelle case, `targets` = ancienne case.
         emit(ctx, { type: 'ability', player: p.id, slot: c.to, unit: a.unit, name: UNITS[a.unit].ability.name, targets: [c.from] });
@@ -569,6 +609,9 @@ function applyCommand(ctx: Ctx, c: Command): void {
       sacrifice(ctx, pi, c.from, a);
       p.grid[c.from] = null;
       b.rank += 1;
+      if (prm.promoteMana) p.mana += prm.promoteMana;
+      if (prm.promoteBoost) { b.counters.boost = prm.promoteBoost; b.counters.boostFor = 10; }
+      onRankUp(ctx, pi, c.to);
       emit(ctx, { type: 'promote', player: p.id, from: c.from, to: c.to, unit: b.unit, rank: b.rank });
       return;
     }
@@ -658,7 +701,7 @@ function step(ctx: Ctx): void {
   for (let i = 0; i < st.players.length; i++) updateUnits(ctx, i);
   updateBosses(ctx);
   st.enemies = st.enemies.filter((e) => !e.x.gone && e.hp > 0);
-  if (st.phase === 'boss') updateWave(ctx);
+  updateWave(ctx, false);
   checkEnd(ctx);
 }
 

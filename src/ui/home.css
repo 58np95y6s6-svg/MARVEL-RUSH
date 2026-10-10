@@ -66,6 +66,8 @@
   position: absolute; top: -8px; right: -4px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
   background: #e8413b; border: 2.5px solid var(--ink); font: 900 12px/17px var(--body); color: #fff;
 }
+.hm-tile.ready:not(.chest) { background: linear-gradient(#6fd36a, #2f8f3a); }
+.hm-tile .hm-badge[hidden] { display: none; }
 @media (max-height: 700px) {
   .hm-logo { font-size: 40px; }
   .hm-deck img { width: 52px; }

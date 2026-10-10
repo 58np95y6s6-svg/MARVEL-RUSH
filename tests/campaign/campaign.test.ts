@@ -233,16 +233,21 @@ describe('déblocage', () => {
 
 describe('récompenses', () => {
   const l = (id: string) => getLevel(id)!;
-  it('éclats : 30 par étoile nouvelle, 10 par étoile refaite, pour 10 vagues (× vagues / 10) ; XP de même', () => {
+  it('or : 20 par étoile nouvelle, 8 par étoile refaite, pour 10 vagues (× vagues / 10) ; 2 gemmes par étoile nouvelle ; XP', () => {
     const first = levelRewards(l('c1-n1'), [true, true, false], progress([]), DECK); // 10 vagues
-    expect(first.total.shards).toBe(60);
+    expect(first.total.gold).toBe(40);
+    expect(first.total.shards).toBe(4);
     expect(first.total.xp).toBe(20 + 20);
     expect(first.firstWin).toBe(true);
+    expect(first.chest).toEqual({ tier: 'bois', scale: 1, crystals: 0 });
     const replay = levelRewards(l('c1-n1'), [true, true, true], progress([['c1-n1', [true, true, false]]]), DECK);
-    expect(replay.total.shards).toBe(10 + 10 + 30);
+    // 8 + 8 (refaites) + 20 (nouvelle) ; 2 gemmes ; bonus premières 3 étoiles : +150 or, +5 gemmes
+    expect(replay.total.gold).toBe(8 + 8 + 20 + 150);
+    expect(replay.total.shards).toBe(2 + 5);
     expect(replay.total.xp).toBe(20 + 10);
+    expect(replay.chest).toEqual({ tier: 'bois', scale: 0.5, crystals: 0 }); // 3 ★ (+1) mais rejoué (−1)
     const long = levelRewards(l('c6-n9'), [true, false, false], progress([]), DECK); // 48 vagues
-    expect(long.total.shards).toBe(Math.round(30 * 4.8));
+    expect(long.total.gold).toBe(Math.round(20 * 4.8));
     expect(long.total.xp).toBe(Math.round(30 * 4.8));
     expect(replay.firstWin).toBe(false);
     expect(levelRewards(l('c1-n1'), [false, false, false], progress([]), DECK).total).toEqual({});
@@ -253,7 +258,8 @@ describe('récompenses', () => {
     expect(r5.total.cards?.[0]?.count).toBe(10);
     expect(DECK).toContain(r5.total.cards?.[0]?.unit);
     const r10 = levelRewards(l('c1-n10'), [true, false, false], progress([]), DECK);
-    expect(r10.total).toMatchObject({ scrolls: 2, shards: 300 + 45, heroes: ['spiderman'], xp: 45 * 2 }); // 15 vagues
+    expect(r10.total).toMatchObject({ scrolls: 2, shards: 100 + 2, gold: 30, heroes: ['spiderman'], xp: 45 * 2 }); // 15 vagues
+    expect(r10.chest).toEqual({ tier: 'or', scale: 1, crystals: 20 }); // bois + 2 (boss)
     const owner = { ...progress([]), heroes: { spiderman: { level: 1, cards: 0, awakening: 0, talents: [null, null, null] } } } as Progress;
     expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
     expect(levelRewards(l('c3-n10'), [true, false, false], progress([]), DECK).total.heroes).toEqual(['moana']);
@@ -271,7 +277,7 @@ describe('récompenses', () => {
     const p = progress(winAll([1]).slice(0, 3)); // 9 ★
     const rw = levelRewards(l('c1-n4'), [true, false, false], p, DECK);
     expect(rw.chests).toEqual(['c1-10']);
-    expect(rw.lines.find((x) => x.kind === 'coffre')!.reward).toMatchObject({ shards: 150, scrolls: 1 });
+    expect(rw.lines.find((x) => x.kind === 'coffre')!.reward).toMatchObject({ gold: 400, shards: 40, scrolls: 1 });
     recordLevel(p, l('c1-n4'), rw, 4);
     expect(chapterStars(p, 1)).toBe(10);
     expect(p.campaignChests['c1-10']).toBe(true);
@@ -284,9 +290,11 @@ describe('récompenses', () => {
     expect(t.freePulls?.length).toBe(6);
     // 25 ✦ × 13 niveaux de boss (5 et 10 de chaque chapitre, + 8 du ch. 6) + 100 (Thanos)
     expect(t.crystals).toBe(25 * 13 + 100);
-    // 3 étoiles × 30 × (vagues / 10) par niveau + 6 × 300 + 6 × (150 + 250 + 400)
-    const stars = LEVELS.reduce((n, lv) => n + Math.round(90 * lv.waves / 10), 0);
-    expect(t.shards).toBe(stars + 6 * 300 + 6 * 800);
+    // Or : 3 × 20 × (vagues / 10) par niveau + 60 × 150 (3 étoiles) + 6 × (400 + 800 + 1 200)
+    const stars = LEVELS.reduce((n, lv) => n + Math.round(60 * lv.waves / 10), 0);
+    expect(t.gold).toBe(stars + 60 * 150 + 6 * 2400);
+    // Gemmes : 180 × 2 + 60 × 5 + 6 × 100 (boss) + 6 × (40 + 60 + 80)
+    expect(t.shards).toBe(360 + 300 + 600 + 1080);
     expect(t.xp).toBe(LEVELS.reduce((n, lv) => n + Math.round(50 * lv.waves / 10) * (lv.n === 10 ? 2 : 1), 0));
   });
 });

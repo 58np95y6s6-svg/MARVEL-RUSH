@@ -19,6 +19,10 @@ import {
 import { campaignDeck, commitLevel, getProgress, type CommitResult } from '../campaign/store';
 import { clearSavedGame, currentSavedGame, saveGame, savedGameLabel, type SavedGame } from '../meta/savegame'; // Sauvegarde de partie
 import { ICONS as KIT } from './kit';
+import { CHEST_NAMES } from '../meta/chests';
+import { balanceOf, chestMiniSvg, playChests } from './chestOpening';
+import { runTotals, totalsHtml } from './rewards';
+import { addReward } from '../campaign/progress';
 
 // ---------------------------------------------------------------------------------------------
 // Pictogrammes
@@ -91,11 +95,12 @@ const starsHtml = (s: readonly boolean[]) => `<span class="cp-stars">${[0, 1, 2]
 
 function vibrate(ms: number): void { try { navigator.vibrate?.(ms); } catch { /* ignoré */ } }
 
-/** Liste des « jetons » de récompense (éclats, parchemins, cristaux, XP, cartes, héros, tirages). */
+/** Liste des « jetons » de récompense (or, gemmes, parchemins, cristaux, XP, cartes, héros, tirages). */
 function rewardChips(r: Reward, opts: { big?: boolean } = {}): string {
   const out: string[] = [];
   const chip = (icon: string, text: string, cls = '') => `<span class="cp-chip${cls ? ` ${cls}` : ''}${opts.big ? ' big' : ''}">${icon}<b>${text}</b></span>`;
-  if (r.shards) out.push(chip(KIT.eclats, `+${num(r.shards)}`, 'shards'));
+  if (r.gold) out.push(chip(KIT.or, `+${num(r.gold)}`, 'gold'));
+  if (r.shards) out.push(chip(KIT.gemmes, `+${num(r.shards)}`, 'shards'));
   if (r.scrolls) out.push(chip(KIT.parchemins, `+${r.scrolls}`, 'scrolls'));
   if (r.crystals) out.push(chip(KIT.cristaux, `+${r.crystals}`, 'crystals'));
   if (r.xp) out.push(chip(KIT.xp, `+${r.xp}`, 'xp'));
@@ -260,9 +265,9 @@ function toast(host: HTMLElement, msg: string): void {
 }
 
 function chestText(t: number): string {
-  if (t === 10) return '150 éclats, 5 cartes, 1 parchemin';
-  if (t === 20) return '250 éclats, 10 cartes, 1 parchemin';
-  return '400 éclats, 1 tirage gratuit au choix, 2 parchemins';
+  if (t === 10) return '1 000 or, 100 gemmes, 5 cartes, 1 parchemin';
+  if (t === 20) return '2 000 or, 150 gemmes, 10 cartes, 1 parchemin';
+  return '3 000 or, 250 gemmes, 1 tirage gratuit au choix, 2 parchemins';
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -414,7 +419,7 @@ function levelSheet(l: CampaignLevel, h: { onClose: () => void; onPlay: () => vo
     <h4>${l.boss ? (l.boss.kind === 'boss' ? 'Boss du niveau' : 'Lieutenant du niveau') : 'Boss'}</h4>
     ${bossBlock}
     <h4>Récompenses ${won ? '(en rejouant, 3 étoiles)' : '(première victoire, 3 étoiles)'}</h4>
-    <div class="cp-chips">${rewardChips(preview.total)}</div>
+    <div class="cp-chips">${preview.chest ? `<span class="cp-chip chest">${chestMiniSvg(preview.chest.tier)}<b>${esc(CHEST_NAMES[preview.chest.tier])}</b></span>` : ''}${rewardChips(preview.total)}</div>
     <h4>Ton deck${deckTabs ? '' : ' actif'}</h4>${deckTabs}
     <div class="cp-deck">${deck.map((u) => `<span><img alt="" src="${tokenUrl(u)}"><small>${esc(UNITS[u].name)}</small></span>`).join('')}</div>`;
   foot.innerHTML = `<button class="mr-btn ${won ? '' : 'yellow'} cp-go" data-a="play" data-tuto="level-play">${won ? 'Rejouer' : 'Jouer'}</button>`;
@@ -514,7 +519,7 @@ export async function mountCampaignBattle(root: HTMLElement, levelId: string, o:
 }
 
 function resultsScreen(res: CommitResult, o: CampaignBattleOptions): HTMLElement {
-  const { level, outcome, earned, rewards } = res;
+  const { level, outcome, earned, rewards, chest } = res;
   const won = outcome.won;
   const prog = getProgress();
   const next = nextLevel(level);
@@ -526,12 +531,36 @@ function resultsScreen(res: CommitResult, o: CampaignBattleOptions): HTMLElement
     const isNew = earned[i] && !rewards.prev[i];
     return `<div class="cp-rstar s${i}${earned[i] ? ' on' : ''}" style="--d:${0.45 + i * 0.45}s">${ICONS.star(earned[i])}${isNew ? '<em>Nouveau !</em>' : ''}<small>${esc(labels[i]!)}</small></div>`;
   }).join('');
-  const lines = rewards.lines.filter((x) => x.kind !== 'xp' || rewards.lines.length === 1);
+  // Lignes détaillées : récompenses fixes, coffre de victoire, butin des boss, cristaux du jour, XP.
+  const fixed = rewards.lines.filter((x) => x.kind !== 'xp');
+  const extra: { label: string; html: string }[] = [];
+  if (chest) {
+    extra.push({
+      label: `${CHEST_NAMES[chest.tier]}${chest.small ? ' (rejouer)' : ''}`,
+      // Les cartes, déjà montrées une à une à l'ouverture, sont résumées en une pastille.
+      html: rewardChips({ gold: chest.gold, shards: chest.gems, crystals: chest.crystals, scrolls: chest.scrolls, heroes: chest.heroes })
+        + (chest.cards.length ? `<span class="cp-chip cards">${KIT.cartes}<b>+${chest.cards.reduce((n, c) => n + c.count, 0)} cartes</b></span>` : ''),
+    });
+  }
+  if (res.bossGold) extra.push({ label: `Butin des boss (${outcome.bossKills.length})`, html: rewardChips({ gold: res.bossGold }) });
+  if (res.dailyCrystals) extra.push({ label: 'Premier gros boss du jour', html: rewardChips({ crystals: res.dailyCrystals }) });
+  let total = rewards.total;
+  if (chest) total = addReward(total, { gold: chest.gold, shards: chest.gems, crystals: chest.crystals, scrolls: chest.scrolls });
+  total = addReward(total, { gold: res.bossGold, crystals: res.dailyCrystals });
+  const rows = [
+    ...extra.map((x) => `<div class="cp-rline"><span>${esc(x.label)}</span><div class="cp-chips">${x.html}</div></div>`),
+    ...fixed.map((x) => `<div class="cp-rline"><span>${x.kind === 'coffre' ? chestSvg('or', true) : ''}${esc(x.label)}</span><div class="cp-chips">${rewardChips(x.reward)}</div></div>`),
+  ];
+  const listHtml = `<div class="cp-rlines">${rows.map((r, i) => r.replace('class="cp-rline"', `class="cp-rline" style="--d:${0.1 + 0.12 * i}s"`)).join('')}</div>
+    <div class="cp-rsum rw-total">${totalsHtml({ gold: total.gold, shards: total.shards, crystals: total.crystals, scrolls: total.scrolls, xp: total.xp })}</div>`;
+  const chestBlock = chest
+    ? `<button class="cp-rchest" data-a="chest" data-tuto="results-chest">${chestMiniSvg(chest.tier)}<span><b>${esc(CHEST_NAMES[chest.tier])}</b><small>${chest.small ? 'Coffre réduit (niveau rejoué)' : earned.every(Boolean) ? '3 étoiles : coffre amélioré !' : 'Touche pour l’ouvrir'}</small></span><em>Ouvrir</em></button>`
+    : '';
   const rewardsHtml = won
-    ? `<div class="cp-rlines">${lines.map((x) => `<div class="cp-rline" style="--d:${1.8 + 0.12 * lines.indexOf(x)}s"><span>${x.kind === 'coffre' ? chestSvg('or', true) : ''}${esc(x.label)}</span><div class="cp-chips">${rewardChips(x.reward)}</div></div>`).join('')}
-       <div class="cp-rline xp" style="--d:${1.8 + 0.12 * lines.length}s"><span>Expérience</span><div class="cp-chips">${rewardChips({ xp: rewards.total.xp ?? 0 })}${res.dailyCrystals ? rewardChips({ crystals: res.dailyCrystals }) : ''}</div></div></div>
+    ? `<div class="cp-rreward">${chest && res.credited ? chestBlock : listHtml}</div>
        ${res.credited ? '' : '<p class="cp-muted">Aucun profil actif : les récompenses ne sont pas créditées.</p>'}`
-    : `<p class="cp-lose-txt">Vague ${outcome.wave} / ${level.waves} atteinte.<br><small>Fusionne plus tôt et améliore l’unité la plus présente.</small></p>`;
+    : `<p class="cp-lose-txt">Vague ${outcome.wave} / ${level.waves} atteinte.<br><small>Fusionne plus tôt et améliore l’unité la plus présente.</small></p>
+       ${res.bossGold ? `<div class="cp-rlines"><div class="cp-rline" style="--d:.3s"><span>Butin des boss (${outcome.bossKills.length})</span><div class="cp-chips">${rewardChips({ gold: res.bossGold })}</div></div></div>` : ''}`;
   wrap.innerHTML = `<div class="cp-results-panel">
     <div class="cp-rhead"><small>Niveau ${level.chapter}-${level.n} · ${esc(getMap(level.map).name)}</small><h2 class="mr-outline-s">${won ? 'Victoire !' : 'Défaite'}</h2></div>
     <div class="cp-rstars">${starsBig}</div>
@@ -542,8 +571,23 @@ function resultsScreen(res: CommitResult, o: CampaignBattleOptions): HTMLElement
       <button class="mr-btn ${won && nextOpen ? '' : 'yellow'}" data-a="replay">Rejouer</button>
       <button class="mr-btn ghost" data-a="exit">Campagne</button>
     </div></div>`;
-  wrap.addEventListener('click', (e) => {
+  const showList = () => {
+    const box = wrap.querySelector<HTMLElement>('.cp-rreward');
+    if (!box) return;
+    box.innerHTML = listHtml;
+    box.classList.add('revealed');
+    runTotals(box, 150 + rows.length * 120);
+  };
+  if (won && !(chest && res.credited)) runTotals(wrap, 1900 + rows.length * 120);
+  let opening = false;
+  wrap.addEventListener('click', async (e) => {
     const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset['a'];
+    if (a === 'chest' && chest && !opening) {
+      opening = true;
+      await playChests(wrap, [{ content: chest, subtitle: `Victoire · niveau ${level.chapter}-${level.n}` }], balanceOf(getProfile()));
+      showList();
+      return;
+    }
     if (a === 'next' && next) o.onNext(next.id);
     if (a === 'replay') o.onReplay();
     if (a === 'exit') o.onExit(level.chapter);

@@ -45,8 +45,8 @@ export function mountPulls(host: HTMLElement, o: { overlay: HTMLElement; go: (ha
       <div class="pl-pity" title="Garantie Légendaire"><i style="width:${(pity / pk.pityLegendary) * 100}%"></i><span>Légendaire garanti dans <b>${left}</b> tirage${left > 1 ? 's' : ''}</span></div>
       <div class="pl-buy">
         ${free ? `<button class="mr-btn green pl-btn wide" data-a="free" data-tuto="pack-open-free-${pk.id}"><span>Ouvrir ${Math.min(10, free)} gratuit${Math.min(10, free) > 1 ? 's' : ''}</span><small>${free >= 10 ? '1 Épique garantie' : 'offert'}</small></button>` : `
-        <button class="mr-btn pl-btn" data-a="1" data-tuto="pack-open-1-${pk.id}" ${p.shards < pullPrice(pk.id, 1) ? 'disabled' : ''}><span>×1</span><small>${icon('eclats')}${fmt(pk.price1)}</small></button>
-        <button class="mr-btn yellow pl-btn" data-a="10" data-tuto="pack-open-10-${pk.id}" ${p.shards < pullPrice(pk.id, 10) ? 'disabled' : ''}><span>×10</span><small>${icon('eclats')}${fmt(pk.price10)}</small></button>`}
+        <button class="mr-btn pl-btn" data-a="1" data-tuto="pack-open-1-${pk.id}" ${p.shards < pullPrice(pk.id, 1) ? 'disabled' : ''}><span>×1</span><small>${icon('gemmes')}${fmt(pk.price1)}</small></button>
+        <button class="mr-btn yellow pl-btn" data-a="10" data-tuto="pack-open-10-${pk.id}" ${p.shards < pullPrice(pk.id, 10) ? 'disabled' : ''}><span>×10</span><small>${icon('gemmes')}${fmt(pk.price10)}</small></button>`}
       </div>
       <p class="pl-guar">Lot de 10 : au moins 1 ${RARITY_LABEL[TEN_PULL_MIN_RARITY]}</p>
       <button class="pl-info" data-a="info" data-tuto="pack-info-${pk.id}">ℹ️ Contenu et probabilités</button>
@@ -66,7 +66,7 @@ export function mountPulls(host: HTMLElement, o: { overlay: HTMLElement; go: (ha
       ${first ? packCard(first, p) : ''}
       <p class="pl-hint">Les packs d’univers, pour viser l’univers dont tu as besoin :</p>
       <div class="pl-row">${rest.map((pk) => packCard(pk, p)).join('')}</div>
-      <p class="pl-foot">Doublon → +1 carte de niveau. Au maximum (niveau 10, ★10) → +5 ✦.<br>Aucun achat réel : les éclats se gagnent en jouant.</p>`;
+      <p class="pl-foot">Doublon → +1 carte de niveau. Au maximum (niveau 10, ★10) → +5 ✦.<br>Les gemmes ne servent qu’aux packs : gagne-les avec les coffres, les quêtes du jour et la Route des récompenses. Aucun achat réel.</p>`;
     wrap.scrollTop = top;
   }
   render(getProfile());
@@ -84,7 +84,7 @@ export function mountPulls(host: HTMLElement, o: { overlay: HTMLElement; go: (ha
     }
     const n = kind === '10' ? 10 : 1;
     const price = pullPrice(packId, n);
-    return p.shards >= price ? `Encore ×${n}<small>${icon('eclats')}${fmt(price)}</small>` : null;
+    return p.shards >= price ? `Encore ×${n}<small>${icon('gemmes')}${fmt(price)}</small>` : null;
   }
 
   async function open(packId: PullPackId, kind: '1' | '10' | 'free'): Promise<void> {
@@ -102,7 +102,7 @@ export function mountPulls(host: HTMLElement, o: { overlay: HTMLElement; go: (ha
         });
       } finally { busy = false; }
       const res = results as PullResult[] | null;
-      if (!res || !res.length) { toast('Pas assez d’éclats.', 'warn'); render(getProfile()); return; }
+      if (!res || !res.length) { toast('Pas assez de gemmes : gagne-en avec les coffres, les quêtes et la Route des récompenses.', 'warn'); render(getProfile()); return; }
       busy = true;
       const end = await playPackOpening(o.overlay, getPullPack(packId), res, { again: againLabel(packId, kind) });
       busy = false;
@@ -134,7 +134,7 @@ export function mountPulls(host: HTMLElement, o: { overlay: HTMLElement; go: (ha
           <li>${icon('tirages')}<span><b>${pool.length} héros</b> dans ce pack. Taux : Rare ${pct(pk.rates.rare)}, Épique ${pct(pk.rates.epique)}, Légendaire ${pct(pk.rates.legendaire)}.</span></li>
           <li>${icon('record')}<span>Légendaire garanti au plus tard au <b>${pk.pityLegendary}e tirage</b> : encore <b>${left}</b> dans ce pack (${pity}/${pk.pityLegendary}).</span></li>
           <li>${icon('cartes')}<span>Lot de 10 : au moins <b>1 Épique</b> garantie.</span></li>
-          <li>${icon('eclats')}<span>Doublon → <b>+1 carte</b> de niveau (au maximum : +5 ✦).</span></li>
+          <li>${icon('cartes')}<span>Doublon → <b>+1 carte</b> de niveau (au maximum : +5 ✦).</span></li>
         </ul>
         ${groups}`,
     });

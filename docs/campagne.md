@@ -49,17 +49,21 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 - La sauvegarde est effacée à la fin de la partie (victoire ou défaite). Les statistiques des contraintes ★★★ repartent de la reprise (invocations, fusions…).
 
 ### Récompenses (§6.1)
-- **Éclats** : +30 par étoile la **première fois**, +10 par étoile en rejouant (prompt), **pour 10 vagues** : le montant est multiplié par vagues / 10 (`lengthFactor`, arrondi). Un niveau de 15 vagues donne 45 / 15 par étoile, un niveau de 50 vagues 150 / 50. Soit ≈ 9 éclats par vague à 3 étoiles, comme le Solo Infini (+10 par vague).
+Deux monnaies depuis octobre 2026 : l'**or** paie les montées de niveau, les **gemmes** paient les packs (détail et simulation : `docs/equilibrage.md` §6 bis).
+- **Coffre de victoire** (ouvert avec une animation sur l'écran de résultats, puis récompenses détaillées) : rang selon le chapitre (1-2 **bois**, 3-4 **argent**, 5-6 **or**), **+1** si les 3 étoiles sont gagnées dans ce combat, **+1** au niveau 5, **+2** au niveau du boss (10, et 8 du ch. 6), plafonné à **légendaire**. **Rejouer** donne un coffre plus petit : un rang de moins, contenu × 0,5. Première victoire d'un niveau de boss : +10 ✦ (lieutenant) ou +20 ✦ (boss) dans le coffre. Contenu : beaucoup d'or, quelques gemmes, des cartes des héros possédés (deck actif en priorité), parfois un nouveau héros (`src/meta/chests.ts`).
+- **Or des étoiles** : +20 par étoile la **première fois**, +8 par étoile en rejouant, **pour 10 vagues** (× vagues / 10, `lengthFactor`). **Gemmes** : +2 par étoile nouvelle. **Premières 3 étoiles** d'un niveau : +150 or et +5 gemmes.
+- **Butin des boss** tués pendant le combat (même en cas de défaite) : +20 or par lieutenant, +60 par gros boss, +300 pour Thanos.
 - **Coffres d'étoiles** : 3 par chapitre, à 10, 20 et 30 étoiles du chapitre.
-  - 10 ★ : 150 éclats + 5 cartes d'une unité possédée au hasard + **1 parchemin** ;
-  - 20 ★ : 250 éclats + 10 cartes + **1 parchemin** ;
-  - 30 ★ : 400 éclats + 1 tirage gratuit du pack au choix + **2 parchemins**.
+  - 10 ★ : 400 or + 40 gemmes + 5 cartes d'une unité possédée au hasard + **1 parchemin** ;
+  - 20 ★ : 800 or + 60 gemmes + 10 cartes + **1 parchemin** ;
+  - 30 ★ : 1 200 or + 80 gemmes + 1 tirage gratuit du pack au choix + **2 parchemins**.
 - **Niveau 5** (lieutenant), première victoire : **1 parchemin** + 10 cartes d'une unité du deck.
-- **Niveau 10** (boss), première victoire : **2 parchemins** + 300 éclats + le **personnage garanti** du chapitre. S'il est déjà possédé : 20 cartes de ce personnage.
+- **Niveau 10** (boss), première victoire : **2 parchemins** + 100 gemmes + le **personnage garanti** du chapitre. S'il est déjà possédé : 20 cartes de ce personnage.
 - **Total des parchemins** par chapitre : 1 + 1 + 2 (coffres) + 1 (niv. 5) + 2 (niv. 10) = **7**, soit **42** pour la campagne. Un palier coûte 1 / 2 / 3 parchemins (`TALENT_TIER_SCROLLS`, `src/data/talents.ts`) : la campagne complète ouvre les 3 paliers d'environ **7 unités**, ce qui pousse à choisir. Des parchemins viennent aussi des paliers du Solo Infini et de la Coop Infini (argent : 1, or : 2, héroïque : 3, puis 1 tous les 10).
 - **Cristaux d'éveil** (§6.6) : 3 étoiles sur un niveau de boss (niveaux 5 et 10), la première fois : **25 ✦**.
-- **XP de compte** : (20 par victoire + 10 par étoile nouvelle) × vagues / 10 ; ×2 sur les niveaux 10.
-- **Totaux d'une campagne à 3 étoiles** (`campaignTotals`) : ≈ 21 300 éclats (avant : 12 000 pour des niveaux 4 fois plus courts), 9 045 XP, **42 parchemins et 425 ✦ inchangés** (les parchemins, cristaux, cartes et personnages ne dépendent pas de la durée).
+- **XP de compte** : (20 par victoire + 10 par étoile nouvelle) × vagues / 10 ; ×2 sur les niveaux 10. Chaque niveau de compte se réclame sur la **Route des récompenses**.
+- **Quêtes du jour** : « Gagne 3 niveaux de campagne », « Gagne 3 étoiles », « Bats 2 boss »… avancent avec chaque combat.
+- **Totaux fixes d'une campagne à 3 étoiles** (`campaignTotals`, hors coffres de victoire tirés au hasard) : ≈ 33 200 or, 2 340 gemmes, 9 045 XP, **42 parchemins et 425 ✦**. Les 60 coffres de victoire (première victoire à 3 étoiles) ajoutent en moyenne ≈ 46 000 or et ≈ 1 400 gemmes, plus les cartes.
 
 ### Courbe de difficulté
 Retour joueur : « L'évolution de la difficulté, c'est le nombre de sbires (les boss aussi) et leurs points de vie. » Chaque niveau règle donc (`src/campaign/levels.ts`, `DIFFICULTY`) :
@@ -89,7 +93,7 @@ Les identifiants ci-dessous sont proposés à l'agent Maps (à aligner sur `src/
 
 ## 3. Les chapitres
 
-Colonnes : **Niv.** · **Map** · **Vagues** à tenir · **PV×** (`enemyHpMultiplier`) · **Effectif×** (`enemyCountMultiplier`) · **PV boss×** (`bossHpMultiplier`) · **Boss** rencontrés (L = lieutenant, B = gros boss tiré dans la rotation sans le boss du chapitre ; en gras, le boss imposé de la dernière vague) · **Contrainte ★★★**. Récompenses spéciales : niveau 5, 1 parchemin + 10 cartes ; niveau 10, 2 parchemins + 300 éclats + personnage garanti (ch. 6 : + cadre de profil et 100 ✦) ; voir §2.
+Colonnes : **Niv.** · **Map** · **Vagues** à tenir · **PV×** (`enemyHpMultiplier`) · **Effectif×** (`enemyCountMultiplier`) · **PV boss×** (`bossHpMultiplier`) · **Boss** rencontrés (L = lieutenant, B = gros boss tiré dans la rotation sans le boss du chapitre ; en gras, le boss imposé de la dernière vague) · **Contrainte ★★★**. Récompenses spéciales : niveau 5, 1 parchemin + 10 cartes ; niveau 10, 2 parchemins + 100 gemmes + personnage garanti (ch. 6 : + cadre de profil et 100 ✦) , et à chaque victoire un coffre (bois → légendaire) ; voir §2.
 
 ### Chapitre 1 — New York
 Boss : **Bouffon Vert** (`arene-bouffon`). Lieutenant : **Citrouille-bombe géante**. Personnage garanti : **Spider-Man** s'il manque (deck de départ Disney), sinon **Venom**.

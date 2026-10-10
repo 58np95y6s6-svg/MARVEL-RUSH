@@ -2,11 +2,13 @@
 // génériques pilotées par les clés de `ability.params`. Une extension n'a qu'à poser ces clés sur
 // ses héros, le moteur fait le reste.
 //
-//   Sacrifice → mana      sacrificeMana      multiplicateur de SACRIFICE_MANA (1 = barème standard)
+//   Sacrifice → mana      sacrificeMana      multiplicateur de SACRIFICE_MANA (1 = barème standard) ;
+//                         sacrificeManaPerRank : mana de base × rang à la place du barème (Prêtresse)
 //   Copieur               copyDamageMul      dégâts gardés par la copie (0.75 = −25 %)
 //                         copyRankBonus, copyReady, copyMana  (talents et éveils)
 //   Booster de fusion     promoteAlly        1 = glissée sur une alliée de même rang, la fait monter d'un rang
-//   Croissance            growthPerSecond, growthPerKill : points de croissance (counters.growth) ;
+//   Croissance            growthPerHit (par coup ; growthResetOnRetarget = remis à zéro au changement de
+//                         cible, Inquisitrice), growthPerSecond, growthPerKill : points (counters.growth) ;
 //                         bonus de dégâts = growthScale × points^growthExponent (rendements décroissants,
 //                         sans plafond ; défaut 1 et 1 = linéaire) ; growthKeepOnMerge : part du bonus
 //                         gardée par l'unité issue d'une fusion
@@ -16,7 +18,8 @@
 //                         boost/boostDuration/boostDamage : bonus aux nouvelles voisines après l'échange,
 //                         swapBoostPartner, swapMana (talents et éveils)
 //
-//   Formation             formationDamagePerAlly (+x par autre unité identique alignée et contiguë),
+//   Formation             formationDamagePerAlly (+x par autre unité identique du groupe relié par des cases
+//                         voisines, comme les Ingénieurs de Rush Royale),
 //                         formationMax (longueur comptée au plus), formationSplashAt / formationSplash
 //                         (ligne complète : éclaboussure autour de la cible, rayon 1,5)
 //
@@ -25,7 +28,7 @@
 import type { UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { GRID_COLS, GRID_ROWS, MAX_RANK, type UnitInstance } from './types';
-import { emit, type Ctx, type SimEnemy, type SimUnit } from './internal';
+import { emit, rand, type Ctx, type SimEnemy, type SimUnit } from './internal';
 import { effectiveId, manaYield, neighbors, unitParams } from './combat';
 
 /** Mana rendu par une unité Sacrifice fusionnée ou détruite, par rang (1..7). */
@@ -60,10 +63,21 @@ export function dropAction(a: UnitInstance | null | undefined, b: UnitInstance |
 export function sacrifice(ctx: Ctx, player: number, slot: number, u: SimUnit): number {
   const prm = unitParams(ctx, player, effectiveId(u));
   if (!prm.sacrificeMana) return 0;
-  const amount = Math.round(byRank(SACRIFICE_MANA, u.rank) * prm.sacrificeMana);
+  // Prêtresse de Rush Royale : mana de base × rang ; sinon le barème standard par rang.
+  const base = prm.sacrificeManaPerRank ? prm.sacrificeManaPerRank * u.rank : byRank(SACRIFICE_MANA, u.rank);
+  let amount = Math.round(base * prm.sacrificeMana);
   if (amount <= 0) return 0;
+  // Talents de la Prêtresse : chance de doubler le mana ; recevoir son mana accélère toutes les unités.
+  if (prm.sacrificeDoubleChance && rand(ctx) < prm.sacrificeDoubleChance) amount *= 2;
   const p = ctx.st.players[player]!;
   p.mana += amount;
+  if (prm.sacrificeHaste) {
+    for (const n of p.grid) {
+      if (!n || n === u) continue;
+      n.counters.haste = Math.max(n.counters.haste ?? 0, prm.sacrificeHaste);
+      n.counters.hasteFor = prm.sacrificeHasteDuration ?? 6;
+    }
+  }
   emit(ctx, { type: 'mana', player: p.id, slot, amount, reason: 'sacrifice' });
   return amount;
 }
@@ -174,34 +188,40 @@ export function bossReward(ctx: Ctx, e: SimEnemy): void {
   }
 }
 
-/**
- * Formation : longueur de la plus longue ligne contiguë (rangée ou colonne) de la même unité qui passe
- * par `slot` (une copie, qui n'est plus l'unité d'origine, ne compte pas). 1 = seule.
- */
-export function formationLength(grid: readonly (UnitInstance | null)[], slot: number): number {
+/** Cases du groupe relié de la même unité (cases voisines, haut/bas/gauche/droite) qui contient `slot`. */
+function formationGroup(grid: readonly (UnitInstance | null)[], slot: number): number[] {
   const u = grid[slot];
-  if (!u) return 0;
-  const col = slot % GRID_COLS, row = Math.floor(slot / GRID_COLS);
-  const same = (c: number, r: number) => c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS && grid[r * GRID_COLS + c]?.unit === u.unit;
-  let h = 1, v = 1;
-  for (let c = col - 1; same(c, row); c--) h++;
-  for (let c = col + 1; same(c, row); c++) h++;
-  for (let r = row - 1; same(col, r); r--) v++;
-  for (let r = row + 1; same(col, r); r++) v++;
-  return Math.max(h, v);
+  if (!u) return [];
+  const seen = new Set([slot]);
+  const todo = [slot];
+  while (todo.length) {
+    const s = todo.pop()!;
+    const col = s % GRID_COLS, row = Math.floor(s / GRID_COLS);
+    for (const [dc, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+      const c = col + dc, r = row + dr;
+      if (c < 0 || c >= GRID_COLS || r < 0 || r >= GRID_ROWS) continue;
+      const j = r * GRID_COLS + c;
+      if (seen.has(j) || grid[j]?.unit !== u.unit) continue;
+      seen.add(j);
+      todo.push(j);
+    }
+  }
+  return [...seen];
 }
 
-/** Cases des partenaires de formation de `slot` (même unité, alignées et contiguës), pour l'appui long. */
+/**
+ * Formation : taille du groupe relié de la même unité qui contient `slot` (une copie, qui n'est plus
+ * l'unité d'origine, ne compte pas). 1 = seule.
+ */
+export function formationLength(grid: readonly (UnitInstance | null)[], slot: number): number {
+  return formationGroup(grid, slot).length;
+}
+
+/** Cases des partenaires de formation de `slot` (même unité, groupe relié), pour l'appui long. */
 export function formationPartners(grid: readonly (UnitInstance | null)[], slot: number): number[] {
   const u = grid[slot];
   if (!u || !(UNITS[u.unit].ability.params.formationDamagePerAlly ?? 0)) return [];
-  const out: number[] = [];
-  const col = slot % GRID_COLS, row = Math.floor(slot / GRID_COLS);
-  const same = (c: number, r: number) => c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS && grid[r * GRID_COLS + c]?.unit === u.unit;
-  for (const [dc, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
-    for (let c = col + dc, r = row + dr; same(c, r); c += dc, r += dr) out.push(r * GRID_COLS + c);
-  }
-  return out;
+  return formationGroup(grid, slot).filter((j) => j !== slot);
 }
 
 /** Bonus de dégâts de formation de l'unité posée sur `slot` (0 sans formation). */

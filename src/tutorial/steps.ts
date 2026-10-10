@@ -1,7 +1,7 @@
 // Tutoriel guidé (§5.0) : logique pure des étapes, sans DOM (testée dans tests/tutorial/).
 //
 // Partie 1 (combat scénarisé, route #tutoriel) : 1 invoquer, 2 invoquer jusqu'à une paire, 3 fusion guidée,
-// 4 deuxième fusion, 5 amélioration, 6 boss, 7 victoire (éclats et XP).
+// 4 deuxième fusion, 5 amélioration, 6 boss, 7 victoire (or, gemmes et XP).
 // Partie 2 (menus) : 8 premier pack (10 tirages offerts), 9 nouvelle unité dans le deck, 10 niveau 1.
 // L'étape est sauvegardée dans `profile.tutorialStep` ; `tutorialDone` passe à true à la fin ou si on passe.
 
@@ -31,7 +31,7 @@ export const PART1_LAST = STEP.victory;
 export const LAST_STEP = STEP.campaign;
 
 /** Récompense de la victoire du combat tutoriel (créditée une seule fois). */
-export const TUTORIAL_REWARD = { shards: 100, xp: 60 } as const;
+export const TUTORIAL_REWARD = { gold: 300, shards: 100, xp: 60 } as const;
 /** Clé de `profile.tips` qui marque la récompense du tutoriel comme déjà donnée. */
 export const REWARD_FLAG = 'tuto-recompense';
 

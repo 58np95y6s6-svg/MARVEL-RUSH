@@ -17,15 +17,15 @@ function targetPlayer(ctx: Ctx): number {
   return 0;
 }
 
-/** Cases des unités qui peuvent subir un pouvoir (Raiponce et Pascal y échappent). */
+/** Cases des unités qui peuvent subir un pouvoir (talent `immuneBossControl` : elles y échappent). */
 function candidates(ctx: Ctx, player: number, filter?: (u: SimUnit) => boolean): number[] {
   const grid = ctx.st.players[player]!.grid;
   const out: number[] = [];
   for (let i = 0; i < GRID_SIZE; i++) {
     const u = grid[i];
-    if (!u || effectiveId(u) === 'rapunzel') continue;
+    if (!u) continue;
     if ((u.counters.immuneFor ?? 0) > EPS) continue;
-    if (unitParams(ctx, player, effectiveId(u)).immuneBossControl && !filter) continue;
+    if (unitParams(ctx, player, effectiveId(u)).immuneBossControl) continue;
     if (filter && !filter(u)) continue;
     out.push(i);
   }
@@ -206,7 +206,7 @@ function rememberMe(ctx: Ctx, player: number, lost: LostUnit[]): void {
     const prm = unitParams(ctx, player, 'coco');
     let uses = coco.counters.restores ?? 0;
     while (pending.length > 0) {
-      const bonus = uses >= (prm.restoreUses ?? 1);
+      const bonus = uses >= (prm.restoreUses ?? 0); // talent de Coco ; sinon seulement le bonus de map
       if (bonus && p.extraRestores <= 0) break;
       const l = pending.shift()!;
       let restored: SimUnit | undefined;

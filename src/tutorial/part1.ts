@@ -1,6 +1,6 @@
 // Tutoriel, partie 1 (§5.0) : premier combat scénarisé, impossible à perdre. Invoquer, obtenir une paire
 // (invocations truquées), fusion guidée, deuxième fusion, amélioration, boss faible au pouvoir montré au
-// ralenti, puis victoire qui explique les éclats et l'XP.
+// ralenti, puis victoire qui explique l'or, les gemmes et l'XP.
 import { BOSSES } from '../data/bosses';
 import type { BossId, UnitId } from '../data/types';
 import { STARTER_DECKS, UNITS } from '../data/units';
@@ -197,7 +197,7 @@ export function mountTutorialBattle(root: HTMLElement, o: { onDone: () => void; 
     return ev;
   }
 
-  // 7. Victoire : éclats et XP expliqués.
+  // 7. Victoire : or, gemmes et XP expliqués.
   async function victory(): Promise<void> {
     stepNow = STEP.victory;
     coach.hide();
@@ -210,7 +210,8 @@ export function mountTutorialBattle(root: HTMLElement, o: { onDone: () => void; 
     w.innerHTML = `<div class="tu-win-box">
       <h2>Victoire !</h2>
       <div class="tu-win-row">
-        <div>${icon('eclats')}<p><b>+${TUTORIAL_REWARD.shards} éclats</b><span>Pour ouvrir des packs et faire monter tes héros de niveau.</span></p></div>
+        <div>${icon('or')}<p><b>+${TUTORIAL_REWARD.gold} or</b><span>Pour faire monter tes héros de niveau (avec leurs cartes).</span></p></div>
+        <div>${icon('gemmes')}<p><b>+${TUTORIAL_REWARD.shards} gemmes</b><span>Pour ouvrir des packs et trouver de nouveaux héros.</span></p></div>
         <div>${icon('xp')}<p><b>+${TUTORIAL_REWARD.xp} XP</b><span>Ton niveau de compte monte : nouveaux decks et nouveaux modes.</span></p></div>
       </div>
       <button class="mr-btn yellow" data-tuto="tuto-continue">Continuer</button></div>`;

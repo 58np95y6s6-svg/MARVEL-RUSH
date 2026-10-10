@@ -13,7 +13,7 @@ const BIG = 1e9;
 const grid = (e: Engine) => e.state.players[0]!.grid;
 
 describe('Sacrifice → mana (Black Widow)', () => {
-  it('fusionnée : mana selon le rang (10, 25, 45, 70, 100, 140), une fois par fusion', () => {
+  it('fusionnée : 80 de mana par rang (Prêtresse de Rush Royale), une fois par fusion', () => {
     for (let rank = 1; rank <= 6; rank++) {
       const e = quiet(DECK);
       debugPlace(e, 0, 0, 'widow', rank);
@@ -22,13 +22,14 @@ describe('Sacrifice → mana (Black Widow)', () => {
       e.apply({ type: 'merge', player: 'p1', from: 0, to: 1 });
       const ev = step(e);
       expect(ofType(ev, 'merge')).toHaveLength(1);
-      expect(e.state.players[0]!.mana - before).toBe(SACRIFICE_MANA[rank - 1]);
-      expect(ofType(ev, 'mana')[0]).toMatchObject({ amount: SACRIFICE_MANA[rank - 1], reason: 'sacrifice', slot: 1 });
+      expect(e.state.players[0]!.mana - before).toBe(80 * rank);
+      expect(ofType(ev, 'mana')[0]).toMatchObject({ amount: 80 * rank, reason: 'sacrifice', slot: 1 });
     }
+    // Barème standard de l'archétype (unités sans `sacrificeManaPerRank`).
     expect(SACRIFICE_MANA).toEqual([10, 25, 45, 70, 100, 140, 190]);
   });
 
-  it('détruite par un boss (Galactus) : mana selon son rang', () => {
+  it('détruite par un boss (Galactus) : 80 de mana par rang', () => {
     const e = quiet(DECK);
     debugPlace(e, 0, 0, 'widow', 3);
     const boss = debugSpawn(e, { hp: BIG, bossId: 'galactus', distance: 1 });
@@ -37,11 +38,11 @@ describe('Sacrifice → mana (Black Widow)', () => {
     const ev = step(e, 2);
     expect(ofType(ev, 'bossPower')[0]!.slots).toEqual([0]);
     expect(grid(e)[0]).toBeNull();
-    expect(e.state.players[0]!.mana - before).toBe(45);
-    expect(ofType(ev, 'mana')[0]).toMatchObject({ amount: 45, slot: 0 });
+    expect(e.state.players[0]!.mana - before).toBe(240);
+    expect(ofType(ev, 'mana')[0]).toMatchObject({ amount: 240, slot: 0 });
   });
 
-  it('les talents multiplient le barème (Espionne d’élite ×1,3)', () => {
+  it('les talents augmentent le mana par rang (Red Room : 100 au lieu de 80)', () => {
     const e = createEngine({ mode: 'solo', seed: 3, mapId: 'test', players: [setup(DECK, { levels: { widow: 7 }, talents: { widow: ['a', 'a'] } })] });
     simState(e).enemies = [];
     simState(e).waveTimeLeft = 1e6;
@@ -51,34 +52,47 @@ describe('Sacrifice → mana (Black Widow)', () => {
     const before = e.state.players[0]!.mana;
     e.apply({ type: 'merge', player: 'p1', from: 0, to: 1 });
     step(e);
-    expect(e.state.players[0]!.mana - before).toBe(Math.round(25 * 1.3));
+    expect(e.state.players[0]!.mana - before).toBe(200);
   });
 });
 
 describe('Copieur (Loki)', () => {
-  it('glissé sur une alliée de même rang : devient sa copie (compétence complète, −25 % de dégâts)', () => {
-    const e = quiet(['loki', 'cmarvel', 'falcon', 'hawkeye', 'ironman']);
+  it('glissé sur une alliée de même rang : devient sa copie (compétence complète, −35 % de dégâts au niveau 1)', () => {
+    const e = quiet(['loki', 'cmarvel', 'falcon', 'hawkeye', 'spiderman']);
     debugNoRange(e);
     debugPlace(e, 0, 0, 'loki', 2);
-    debugPlace(e, 0, 1, 'ironman', 2);
+    debugPlace(e, 0, 1, 'spiderman', 2);
     e.apply({ type: 'copy', player: 'p1', from: 0, to: 1 });
     const ev = step(e);
-    expect(ofType(ev, 'copy')[0]).toMatchObject({ from: 0, to: 1, unit: 'ironman', rank: 2 });
+    expect(ofType(ev, 'copy')[0]).toMatchObject({ from: 0, to: 1, unit: 'spiderman', rank: 2 });
     const c = grid(e)[0]!;
-    expect(c.unit).toBe('ironman');
+    expect(c.unit).toBe('spiderman');
     expect(c.rank).toBe(2);
-    expect(c.status).toMatchObject({ copyMul: 0.75, copyOf: 'loki' });
-    expect(c.counters.cd).toBeGreaterThan(0); // recharge de l'Uni-Beam
-    expect(grid(e)[1]!.unit).toBe('ironman');
-    // Dégâts : 75 % de ceux de l'original.
+    expect(c.status).toMatchObject({ copyMul: 0.65, copyOf: 'loki' });
+    expect(c.counters.cd).toBeGreaterThan(0); // recharge des Toiles
+    expect(grid(e)[1]!.unit).toBe('spiderman');
+    // Dégâts : 65 % de ceux de l'original (Arlequin de Rush Royale).
     grid(e)[1] = null;
     debugSpawn(e, { hp: BIG, distance: 10 });
     c.cooldown = 0;
     const hit = ofType(step(e), 'hit')[0]!;
-    expect(hit.damage).toBeCloseTo(UNITS.ironman.damage * 1.51 * 0.75);
-    // La compétence complète (Uni-Beam) se déclenche aussi.
-    const more = step(e, 20 * 11);
-    expect(ofType(more, 'ability').some((a) => a.name === 'Uni-Beam' && a.slot === 0)).toBe(true);
+    expect(hit.damage).toBeCloseTo(UNITS.spiderman.damage * 0.65);
+    // La compétence complète (Toiles) se déclenche aussi.
+    const more = step(e, 20 * 7);
+    expect(ofType(more, 'ability').some((a) => a.name === 'Toiles' && a.slot === 0)).toBe(true);
+  });
+
+  it('la pénalité de copie baisse avec le niveau : −35 % au niveau 1, −5 % au niveau 9', () => {
+    const copyAt = (level: number) => {
+      const e = createEngine({ mode: 'solo', seed: 3, mapId: 'test', players: [setup(['loki', 'cmarvel', 'falcon', 'hawkeye', 'widow'], { levels: { loki: level } })] });
+      debugPlace(e, 0, 0, 'loki', 1);
+      debugPlace(e, 0, 1, 'cmarvel', 1);
+      e.apply({ type: 'copy', player: 'p1', from: 0, to: 1 });
+      step(e);
+      return grid(e)[0]!.status.copyMul!;
+    };
+    expect(copyAt(1)).toBeCloseTo(0.65);
+    expect(copyAt(9)).toBeCloseTo(0.95);
   });
 
   it('même héros = fusion normale, rang différent refusé, la copie peut ensuite fusionner', () => {
@@ -118,7 +132,7 @@ describe('Copieur (Loki)', () => {
     e.apply({ type: 'copy', player: 'p1', from: 1, to: 0 });
     step(e);
     expect(grid(e)[1]!.unit).toBe('cmarvel');
-    expect(grid(e)[1]!.status.copyMul).toBe(0.75);
+    expect(grid(e)[1]!.status.copyMul).toBe(0.65);
   });
 
   it('talents : copie à 100 % et rang bonus (éveil ultime)', () => {
@@ -171,41 +185,39 @@ describe('Booster de fusion (Coco)', () => {
   });
 });
 
-describe('Croissance (Venom)', () => {
-  const bonus = (pts: number) => 0.28 * Math.pow(pts, 0.75);
-  it('sans plafond, à rendements décroissants : points +0,5/s et +0,02 par élimination', () => {
+describe('Croissance par coup (Venom, Inquisitrice)', () => {
+  const bonus = (pts: number) => 0.319 * Math.pow(pts, 0.3646);
+  it('chaque coup sur la même cible ajoute 1 point ; ×2 vers 23 coups, ×3 vers 154, sans plafond', () => {
+    expect(bonus(22)).toBeCloseTo(1, 1);
+    expect(bonus(153)).toBeCloseTo(2, 1);
+    expect(bonus(1000)).toBeGreaterThan(bonus(500));
     const e = quiet(DECK);
     debugNoRange(e);
     const v = debugPlace(e, 0, 0, 'venom', 1);
-    runSeconds(e, 200);
-    expect(v.counters.growth).toBeCloseTo(1, 2);
-    for (let i = 0; i < 30; i++) debugSpawn(e, { hp: 1, distance: 5 });
-    const kills = ofType(step(e, 20 * 40), 'kill').length;
-    expect(kills).toBe(30);
-    expect(v.counters.growth).toBeCloseTo(1 + 0.005 * 40 + 0.02 * 30, 1);
     debugSpawn(e, { hp: BIG, distance: 5 });
-    v.cooldown = 0;
-    const hit = ofType(step(e), 'hit')[0]!;
-    expect(hit.damage).toBeCloseTo(UNITS.venom.damage * (1 + bonus(v.counters.growth!)), 0);
-    // Repères de la courbe : ≈ +100 % vers 5,5 points (vague 30), ≈ +200 % vers 13 points (vague 60), sans plafond.
-    expect(bonus(5.5)).toBeCloseTo(1, 1);
-    expect(bonus(13.4)).toBeCloseTo(1.96, 1);
-    expect(bonus(100)).toBeGreaterThan(bonus(50));
+    const hits = ofType(step(e, 20 * 6), 'hit').map((h) => h.damage);
+    expect(v.counters.growth).toBe(hits.length);
+    hits.forEach((d, n) => expect(d).toBeCloseTo(UNITS.venom.damage * (1 + bonus(n)), 3));
   });
 
-  it('fusion : la nouvelle unité garde 50 % du bonus du plus fort des deux Venom', () => {
+  it('remise à zéro au changement de cible ; une fusion ne transmet rien (Rush Royale)', () => {
     const e = quiet(DECK);
-    const a = debugPlace(e, 0, 0, 'venom', 2);
-    const b = debugPlace(e, 0, 1, 'venom', 2);
-    a.counters.growth = 8;
-    b.counters.growth = 4;
-    e.apply({ type: 'merge', player: 'p1', from: 0, to: 1 });
-    step(e);
-    const m = grid(e)[1]!;
-    expect(m.rank).toBe(3);
-    const kept = bonus(8) * 0.5;
-    if (m.unit === 'venom') expect(bonus(m.counters.growth!)).toBeCloseTo(kept, 2);
-    else expect(m.counters.growth).toBeCloseTo(kept, 3); // autre héros : bonus fixe (courbe linéaire par défaut)
+    debugNoRange(e);
+    const v = debugPlace(e, 0, 0, 'venom', 1);
+    const a = debugSpawn(e, { hp: BIG, distance: 5 });
+    step(e, 20 * 3);
+    expect(v.counters.growth).toBeGreaterThan(3);
+    debugSpawn(e, { hp: BIG, distance: 9 }); // plus avancé : nouvelle cible
+    void a;
+    const h = ofType(step(e, 20), 'hit');
+    expect(h[0]!.damage).toBeCloseTo(UNITS.venom.damage);
+    const m = quiet(DECK);
+    const x = debugPlace(m, 0, 0, 'venom', 2);
+    const y = debugPlace(m, 0, 1, 'venom', 2);
+    x.counters.growth = 8; y.counters.growth = 4;
+    m.apply({ type: 'merge', player: 'p1', from: 0, to: 1 });
+    step(m);
+    expect(grid(m)[1]!.counters.growth ?? 0).toBe(0);
   });
 });
 
@@ -238,9 +250,9 @@ describe('Mana par élimination (Tiana)', () => {
 });
 
 describe('Boost de vitesse (aura)', () => {
-  it('Captain America et Pocahontas portent la clé générique auraAttackSpeed', () => {
-    expect(UNITS.cap.ability.params.auraAttackSpeed).toBeGreaterThan(0);
-    expect(UNITS.pocahontas.ability.params.auraAttackSpeed).toBeGreaterThan(0);
+  it('Captain America et Pocahontas portent la clé générique auraAttackSpeedPerRank (base × rang, Rush Royale)', () => {
+    expect(UNITS.cap.ability.params.auraAttackSpeedPerRank).toBeGreaterThan(0);
+    expect(UNITS.pocahontas.ability.params.auraAttackSpeedPerRank).toBeGreaterThan(0);
   });
 });
 
@@ -278,7 +290,7 @@ describe('déterminisme et sauvegarde avec les archétypes', () => {
     e.apply({ type: 'copy', player: 'p1', from: 0, to: 1 });
     step(e);
     const r0 = createEngine(cfg, e.serialize());
-    expect(r0.state.players[0]!.grid[0]!.status).toEqual({ copyMul: 0.75, copyOf: 'loki' });
+    expect(r0.state.players[0]!.grid[0]!.status).toEqual({ copyMul: 0.65, copyOf: 'loki' });
     expect(r0.state.players[0]!.grid[0]!.unit).toBe('tiana');
     play(e, 20 * 10);
     const r = createEngine(cfg, e.serialize());
@@ -291,7 +303,7 @@ describe('déterminisme et sauvegarde avec les archétypes', () => {
 });
 
 describe('Échangeur (Vanellope & Ralph)', () => {
-  it('glissée sur une alliée de même rang : échange des cases, bonus aux nouvelles voisines, sans limite', () => {
+  it('glissée sur une alliée de même rang : échange des cases, Vanellope bugue 2 s, sans limite', () => {
     const e = quiet(['vanralph', 'cmarvel', 'falcon', 'hawkeye', 'widow']);
     const v = debugPlace(e, 0, 0, 'vanralph', 2);
     const f = debugPlace(e, 0, 13, 'falcon', 2);
@@ -303,9 +315,8 @@ describe('Échangeur (Vanellope & Ralph)', () => {
     expect(ofType(ev, 'swap')[0]).toMatchObject({ from: 0, to: 13, unit: 'vanralph', rank: 2 });
     expect(grid(e)[13]!.uid).toBe(v.uid);
     expect(grid(e)[0]!.uid).toBe(f.uid);
-    expect(n.counters.boostFor).toBeGreaterThan(4.9);
-    expect(n.counters.boost).toBeCloseTo(0.2);
-    expect(f.counters.boostFor ?? 0).toBe(0); // l'alliée échangée n'est plus voisine
+    expect(v.status.sleepingFor).toBeGreaterThan(1.9); // Gardien du portail : inactif après l'échange
+    expect(n.counters.boostFor ?? 0).toBe(0); // bonus aux voisines : talent seulement
     e.apply({ type: 'swap', player: 'p1', from: 13, to: 0 });
     step(e);
     expect(grid(e)[0]!.uid).toBe(v.uid);
@@ -331,34 +342,28 @@ describe('Échangeur (Vanellope & Ralph)', () => {
   });
 });
 
-describe('Formation (Loki)', () => {
-  const lokiHit = (slots: number[], at: number, extra = 0) => {
-    const e = quiet(['loki', 'cmarvel', 'falcon', 'hawkeye', 'widow']);
+describe('Formation (Buzz & Woody, Ingénieur)', () => {
+  const buzzHit = (slots: number[], at: number) => {
+    const e = quiet(['buzzwoody', 'cmarvel', 'falcon', 'hawkeye', 'widow']);
     debugNoRange(e);
-    for (const s of slots) { const u = debugPlace(e, 0, s, 'loki', 1); u.cooldown = s === at ? 0 : 99; }
-    const t = debugSpawn(e, { hp: BIG, distance: 10 });
-    for (let i = 0; i < extra; i++) debugSpawn(e, { hp: BIG, distance: 10.5 + i * 0.3 });
-    const ev = step(e);
-    return { hits: ofType(ev, 'hit'), t, e };
+    for (const s of slots) { const u = debugPlace(e, 0, s, 'buzzwoody', 1); u.cooldown = s === at ? 0 : 99; }
+    debugSpawn(e, { hp: BIG, distance: 10 });
+    return { hits: ofType(step(e), 'hit'), e };
   };
-  it('2 Loki alignés : +15 % ; en diagonale : aucun bonus ; une copie ne compte pas', () => {
-    const D = UNITS.loki.damage;
-    expect(lokiHit([0], 0).hits[0]!.damage).toBeCloseTo(D);
-    expect(lokiHit([0, 1], 0).hits[0]!.damage).toBeCloseTo(D * 1.15);
-    expect(lokiHit([0, 5], 0).hits[0]!.damage).toBeCloseTo(D * 1.15); // colonne
-    expect(lokiHit([0, 6], 0).hits[0]!.damage).toBeCloseTo(D); // diagonale
-    expect(lokiHit([0, 2], 0).hits[0]!.damage).toBeCloseTo(D); // pas contigus
+  it('+5 % par autre Buzz & Woody du groupe relié (cases voisines) ; la diagonale ne relie pas', () => {
+    const D = UNITS.buzzwoody.damage;
+    expect(buzzHit([0], 0).hits[0]!.damage).toBeCloseTo(D);
+    expect(buzzHit([0, 1], 0).hits[0]!.damage).toBeCloseTo(D * 1.05);
+    expect(buzzHit([0, 5], 0).hits[0]!.damage).toBeCloseTo(D * 1.05); // colonne
+    expect(buzzHit([0, 6], 0).hits[0]!.damage).toBeCloseTo(D); // diagonale
+    expect(buzzHit([0, 2], 0).hits[0]!.damage).toBeCloseTo(D); // pas reliés
     expect(formationLength([null, null], 0)).toBe(0);
   });
-  it('3 alignés : +30 % (plafond à 3) et attaque de zone (40 % autour de la cible)', () => {
-    const D = UNITS.loki.damage;
-    const three = lokiHit([5, 6, 7], 6, 2);
-    expect(three.hits[0]!.damage).toBeCloseTo(D * 1.3);
-    expect(three.hits.slice(1).map((h) => h.damage)).toEqual([D * 1.3 * 0.4, D * 1.3 * 0.4].map((x) => expect.closeTo(x, 5)));
-    const four = lokiHit([5, 6, 7, 8], 6);
-    expect(four.hits[0]!.damage).toBeCloseTo(D * 1.3);
-    expect(formationPartners(four.e.state.players[0]!.grid, 6).sort()).toEqual([5, 7, 8]);
-    const two = lokiHit([5, 6], 6, 2);
-    expect(two.hits).toHaveLength(1); // pas de zone à 2
+  it('un groupe en L compte entier (jusqu’à 10) ; partenaires pour l’appui long', () => {
+    const D = UNITS.buzzwoody.damage;
+    const l = buzzHit([0, 1, 6, 11], 0);
+    expect(l.hits[0]!.damage).toBeCloseTo(D * 1.15);
+    expect(formationLength(l.e.state.players[0]!.grid, 0)).toBe(4);
+    expect(formationPartners(l.e.state.players[0]!.grid, 0).sort((a, b) => a - b)).toEqual([1, 6, 11]);
   });
 });

@@ -11,6 +11,19 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10j',
+    title: 'Copie Rush Royale, or et gemmes, coffres',
+    date: '10 octobre 2026',
+    items: [
+      'Les 28 héros reprennent le profil d’une unité de Rush Royale : Thor l’éclair du Thunderer (et le Marteau de la foi en talent), Hulk le Minotaure, Iron Man la Tesla, Venom l’Inquisitrice, Loki l’Arlequin…',
+      'Règle de fusion de Rush Royale : chaque rang fait attaquer plus souvent ; Captain America, Pocahontas et Raiponce deviennent des soutiens qui n’attaquent pas.',
+      'Vagues comme en Coop de Rush Royale : 10 monstres par vague, de plus en plus solides, vague suivante une fois le terrain nettoyé, gros monstres à 5 fois les PV qui coûtent 2 vies.',
+      'Deux monnaies : l’or fait monter tes héros de niveau, les gemmes ouvrent les packs. Tes éclats deviennent des gemmes, et tu reçois de l’or selon ta progression.',
+      'Des coffres partout (bois, argent, or, héroïque, légendaire) : à chaque victoire de campagne, aux paliers du Solo Infini et chaque jour. Ils éclatent et le butin s’envole dans tes compteurs.',
+      'Nouvelles quêtes du jour (avec un coffre de la semaine) et Route des récompenses : chaque niveau de compte rapporte quelque chose. Les boss vaincus lâchent de l’or.',
+    ],
+  },
+  {
     id: '2026-10-10i',
     title: 'Campagne longue et tutoriel',
     date: '10 octobre 2026',
