@@ -50,6 +50,7 @@ export const CHANGELOG: ReleaseNote[] = [
     title: 'Raretés alignées sur Rush Royale',
     date: '10 octobre 2026',
     items: [
+      'Chaque fiche de héros montre l’unité Rush Royale qu’il copie, avec son portrait.',
       'Chaque héros a maintenant la même rareté que l’unité Rush Royale qu’il reprend : un Légendaire copie un Légendaire.',
       'Mulan & Mushu (Légendaire) reprend la Danse-lames : plus rapide quand elle danse seule, chaque Mulan qui danse renforce les autres.',
       'Shang-Chi reprend le Tonnerre : les Dix Anneaux rebondissent en chaîne sur la cible et les ennemis qui la suivent (autant que son rang).',
