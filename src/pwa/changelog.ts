@@ -58,6 +58,15 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-10t',
+    title: 'Fini le mur des modes infinis',
+    date: '10 octobre 2026',
+    items: [
+      'Modes infinis (Solo et Coop) : plus de mur vers la vague 35. Après la vague 20, les PV des monstres montent de moins en moins vite. Le boss de la vague 40 passe de 18,3 M à 2,3 M PV, Thanos de 663 M à 11 M. Le début de partie et la campagne ne changent pas.',
+      'Chaque progrès de collection compte : une collection moyenne tient environ 38 vagues (avant 32), une collection forte environ 65 avec Thanos battu 7 fois sur 10, une collection maximale environ 100.',
+    ],
+  },
+  {
     id: '2026-10-10s',
     title: 'Portées revues',
     date: '10 octobre 2026',

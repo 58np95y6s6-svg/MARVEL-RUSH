@@ -1,9 +1,12 @@
 // Simulateur d'équilibrage headless (agent Game design).
-// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--campagne <c1-n3|c1|all>] [--attendu]
+// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--paliers <n>] [--eveil <n>] [--stats] [--campagne <c1-n3|c1|all>] [--attendu]
 // --attendu (avec --campagne) : chaque chapitre est joué avec le deck, le niveau de collection et les
 // paliers de talents attendus à ce stade (tableau EXPECTED, docs/campagne.md §2).
 // --campagne : joue un niveau de campagne (ou tous ceux d'un chapitre, ou les 60) et affiche le taux de
 // victoire et la part de chaque étoile (contraintes évaluées comme en jeu, src/campaign).
+// --paliers / --eveil (Solo et Coop Infini) : paliers de talents (option a) et éveil de chaque unité du deck.
+// --stats : par vague, PV d'un monstre commun, PV retirés par seconde, durée de vie d'un commun, PV et temps
+// des boss et mini-boss (tués / apparus).
 // --casual : joueur « occasionnel » (réagit une fois par seconde, ne fusionne que plateau plein et au hasard,
 // sans copie ni booster, n'achète pas « Mana + », améliore tard), plus proche d'un humain débutant.
 // Joue N parties en Solo Infini (ou Coop Infini à deux bots avec --coop) avec un bot simple :
@@ -16,6 +19,7 @@ import { simState } from '../src/engine/debug';
 import type { GameConfig, PlayerId, PlayerState } from '../src/engine/types';
 import type { UnitId } from '../src/data/types';
 import { UNITS } from '../src/data/units';
+import { waveHp } from '../src/data/enemies';
 import { boardGeometry, coveredSpans, unitRange } from '../src/engine/geometry';
 import { dropAction } from '../src/engine/archetypes';
 import { MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, POWERUP_COSTS } from '../src/engine/internal';
@@ -46,6 +50,15 @@ const botRand = () => ((botRng = (botRng * 1103515245 + 12345) >>> 0) / 2 ** 32)
 const maxWave = Number(flag('--max') ?? 80);
 const seed0 = Number(flag('--seed') ?? 1);
 const level = Number(flag('--level') ?? 1);
+/** Solo / Coop Infini : paliers de talents (option a) et éveil (★) de chaque unité du deck. */
+const tiers = Number(flag('--paliers') ?? 0);
+const awaken = Number(flag('--eveil') ?? 0);
+/** --stats : par vague, PV et durée de vie d'un monstre commun, DPS du plateau, durée des boss et mini-boss. */
+const statsOn = argv.includes('--stats');
+if (statsOn) argv.splice(argv.indexOf('--stats'), 1);
+interface WaveStat { n: number; hp: number; life: number; kills: number; dmg: number; active: number; boss: number[]; mini: number[]; bossN: number; miniN: number; bossHp: number; miniHp: number }
+const waveStats = new Map<number, WaveStat>();
+const ws = (w: number): WaveStat => waveStats.get(w) ?? waveStats.set(w, { n: 0, hp: 0, life: 0, kills: 0, dmg: 0, active: 0, boss: [], mini: [], bossN: 0, miniN: 0, bossHp: 0, miniHp: 0 }).get(w)!;
 const campaignArg = flag('--campagne');
 const games = argv.length && /^\d+$/.test(argv[argv.length - 1]!) ? Number(argv.pop()) : 20;
 const deck = (argv.length ? argv : ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow']) as UnitId[];
@@ -171,9 +184,13 @@ function decideCasual(p: PlayerState, empty: boolean): Cmd | null {
 function play(seed: number): number {
   botRng = seed * 7919 + 17;
   const levels = Object.fromEntries(deck.map((u) => [u, level]));
-  const players: GameConfig['players'] = [{ id: 'p1', deck, levels, talents: {} }];
-  if (coop) players.push({ id: 'p2', deck, levels, talents: {} });
+  const talents = tiers ? Object.fromEntries(deck.map((u) => [u, Array.from({ length: tiers }, () => 'a' as const)])) : {};
+  const awakening = awaken ? Object.fromEntries(deck.map((u) => [u, awaken])) : undefined;
+  const players: GameConfig['players'] = [{ id: 'p1', deck, levels, talents, awakening }];
+  if (coop) players.push({ id: 'p2', deck, levels, talents, awakening });
   const engine = createEngine({ mode: coop ? 'coop' : 'solo', seed, mapId: MAP_ID, players });
+  lastHp.clear();
+  const born = new Map<number, { t: number; hp: number; wave: number; kind: 'normal' | 'boss' | 'mini' | 'autre' }>();
   while (!engine.state.result && engine.state.wave <= maxWave) {
     for (const [pi, p] of engine.state.players.entries()) {
       if (casual && engine.state.tick % 20 !== 0) break;
@@ -181,11 +198,47 @@ function play(seed: number): number {
       if (c) engine.apply(c);
     }
     engine.tick();
-    engine.drainEvents();
+    const ev = engine.drainEvents();
+    if (statsOn) collect(engine.state, ev, born);
   }
   const st = engine.state as typeof engine.state & { currentBoss?: string | null };
   if (process.env.SIM_TRACE) console.log(`  graine ${seed} : vague ${engine.state.wave}, boss ${st.currentBoss ?? '—'}`);
   return engine.state.result?.wave ?? engine.state.wave;
+}
+
+const lastHp = new Map<number, number>();
+function collect(st: ReturnType<typeof createEngine>['state'], ev: ReturnType<ReturnType<typeof createEngine>['drainEvents']>, born: Map<number, { t: number; hp: number; wave: number; kind: 'normal' | 'boss' | 'mini' | 'autre' }>): void {
+  const s = ws(st.wave);
+  if (st.enemies.length) s.active += 0.05;
+  // PV retirés pendant ce tick (sans les dégâts en trop) : ennemis encore là + ennemis disparus tués.
+  const now = new Map(st.enemies.map((x) => [x.uid, x.hp] as const));
+  const killed = new Set(ev.filter((e) => e.type === 'kill').map((e) => (e as { enemy: number }).enemy));
+  for (const [uid, hp] of lastHp) {
+    const h = now.get(uid);
+    if (h !== undefined) s.dmg += Math.max(0, hp - h);
+    else if (killed.has(uid)) s.dmg += hp;
+  }
+  lastHp.clear();
+  for (const [uid, hp] of now) lastHp.set(uid, hp);
+  for (const e of ev) {
+    if (e.type === 'hit') continue;
+    else if (e.type === 'enemySpawn' || e.type === 'bossSpawn' || e.type === 'miniBossSpawn') {
+      const en = st.enemies.find((x) => x.uid === e.enemy);
+      const kind = e.type === 'bossSpawn' ? 'boss' : e.type === 'miniBossSpawn' ? 'mini' : e.kind === 'normal' ? 'normal' : 'autre';
+      const prev = born.get(e.enemy);
+      born.set(e.enemy, { t: prev?.t ?? st.time, hp: en?.maxHp ?? waveHp(st.wave), wave: st.wave, kind: prev?.kind === 'autre' || !prev ? kind : prev.kind });
+      if (kind === 'boss') { s.bossN++; s.bossHp += en?.maxHp ?? 0; }
+      if (kind === 'mini') { s.miniN++; s.miniHp += en?.maxHp ?? 0; }
+    } else if (e.type === 'kill') {
+      const b = born.get(e.enemy);
+      if (!b) continue;
+      const w = ws(b.wave);
+      if (b.kind === 'normal') { w.n++; w.hp += b.hp; w.life += st.time - b.t; }
+      else if (b.kind === 'boss') w.boss.push(st.time - b.t);
+      else if (b.kind === 'mini') w.mini.push(st.time - b.t);
+      born.delete(e.enemy);
+    }
+  }
 }
 
 /** Collection attendue par chapitre (docs/campagne.md §2) : deck, niveau de collection, paliers de talents (option a). */
@@ -274,7 +327,7 @@ const median = waves[Math.floor(waves.length / 2)]!;
 const hist = new Map<number, number>();
 for (const w of waves) hist.set(w, (hist.get(w) ?? 0) + 1);
 
-console.log(`Deck : ${deck.join(', ')} · ${coop ? 'Coop' : 'Solo'} Infini${casual ? ' · joueur occasionnel' : ''} · niveau ${level} · ${games} parties (graines ${seed0}..${seed0 + games - 1})`);
+console.log(`Deck : ${deck.join(', ')} · ${coop ? 'Coop' : 'Solo'} Infini${casual ? ' · joueur occasionnel' : ''} · niveau ${level}${tiers ? ` · ${tiers} palier(s)` : ''}${awaken ? ` · ★${awaken}` : ''} · ${games} parties (graines ${seed0}..${seed0 + games - 1})`);
 const pass = (w: number) => Math.round((100 * waves.filter((x) => x > w).length) / waves.length);
 console.log(`Passent la vague 5 (lieutenant) : ${pass(5)} % · la vague 10 (gros boss) : ${pass(10)} % · la vague 15 : ${pass(15)} %`);
 console.log(`Vague moyenne : ${avg.toFixed(2)} · médiane : ${median} · min : ${waves[0]} · max : ${waves[waves.length - 1]}${waves.some((w) => w > maxWave) ? ` (plafond ${maxWave})` : ''}`);
@@ -282,5 +335,15 @@ console.log('Distribution :');
 const peak = Math.max(...hist.values());
 for (const [w, n] of [...hist.entries()].sort((a, b) => a[0] - b[0])) {
   console.log(`  vague ${String(w).padStart(3)} : ${'█'.repeat(Math.max(1, Math.round((n / peak) * 30)))} ${n}`);
+}
+if (statsOn) {
+  console.log('Vague · PV commun · PV retirés/s · TTK commun (PV/DPS) · vie d’un commun · boss : PV, tué en, tués/apparus · mini-boss : idem');
+  const avgOf = (a: number[], n: number, hp: number) => (n ? `${Math.round(hp / n)} PV, ${a.length ? (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1) : '—'} s, ${a.length}/${n}` : '—');
+  for (const [w, s] of [...waveStats.entries()].sort((a, b) => a[0] - b[0])) {
+    if (w % 5 && w % 10 !== 9 && w % 10 !== 1 && w % 10 !== 3) continue;
+    const dps = s.active ? s.dmg / s.active : 0;
+    const hp = s.n ? s.hp / s.n : 0;
+    console.log(`  ${String(w).padStart(3)} · ${Math.round(hp).toString().padStart(10)} · ${Math.round(dps).toString().padStart(10)} · ${(dps ? hp / dps : 0).toFixed(2).padStart(6)} s · ${s.n ? (s.life / s.n).toFixed(1) : '—'} s · ${avgOf(s.boss, s.bossN, s.bossHp)} · ${avgOf(s.mini, s.miniN, s.miniHp)}`);
+  }
 }
 console.log(`Durée : ${(ms / 1000).toFixed(1)} s (${(ms / games).toFixed(0)} ms par partie)`);
