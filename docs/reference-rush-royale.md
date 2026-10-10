@@ -68,7 +68,7 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 - Les **petits et gros boss** arrivent **par le tronc commun** ; leurs pouvoirs visent un plateau au hasard.
 - Tout en haut : la rangée des 5 cartes du deck de la partenaire avec leurs badges, son avatar et son pseudo.
 - Le bandeau « N vague(s) avant le boss X » se place **entre les deux plateaux**, sur le tronc.
-- Vies **partagées** : la porte commune n'a **qu'une vie**, comme dans la Coop de Rush Royale ; mana individuel (le coup final rapporte le mana).
+- Vies **partagées** : **3 vies** pour les deux joueurs. **[ÉCART]** La Coop de Rush Royale n'en a qu'une ; mana individuel (le coup final rapporte le mana).
 - Bouton **« Offrir »** à côté des emotes, actif une fois par vague.
 
 ### 1.4 Style des éléments (captures)
@@ -115,7 +115,7 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 | Cadence des boss | PvP : un boss à la fin de chaque vague. Coop : **un boss toutes les 10 vagues** (10, 20, 30…), plus fort à chaque fois, avec des vagues denses entre-temps. | Calé sur la Coop de Rush Royale, partout (Solo, Coop, campagnes) : **petit boss « lieutenant » toutes les 5 vagues** (5, 15, 25…, PV ×5 et vitesse ×0,8 d'un monstre commun comme le mini-boss de Rush Royale, pouvoir affaibli toutes les 10 s) ; **gros boss toutes les 10 vagues** (10, 20, 30…, PV ×25, pouvoir toutes les 6 s), rotation des 6 sans répétition ; **Thanos à la vague 50** puis toutes les 50 en mode infini, et au dernier niveau de la campagne (§4.3, §4.4). Le petit boss est un **[ÉCART]** (ajout). |
 | Sbires | Les monstres de la vague portent les traits du boss à venir *(à confirmer)*. | Les sbires du prochain gros boss se mêlent aux 2 vagues qui le précèdent. |
 | Rage du boss | Le boss accélère s'il traîne *(à confirmer)*. | Rage à 45 s : vitesse ×2. |
-| Vies | PvP : 3 vies par joueur. Coop : **une seule vie** pour la porte commune. Un monstre commun retire 1 vie, **un mini-boss ou un boss 2** (textes du jeu). | Solo et campagne : 3 vies ; Coop : 1 vie. Normal −1, gros, lieutenant et boss −2 ; dans un niveau de boss, laisser passer le boss imposé fait perdre. |
+| Vies | PvP : 3 vies par joueur. Coop : **une seule vie** pour la porte commune. Un monstre commun retire 1 vie, **un mini-boss ou un boss 2** (textes du jeu). | Solo et campagne : 3 vies ; Coop : 3 vies partagées (écart voulu). Normal −1, gros, lieutenant et boss −2 ; dans un niveau de boss, laisser passer le boss imposé fait perdre. |
 | PvP (fin de partie, envoi des monstres tués, mort subite) | Premier à 0 vie perd ; les monstres tués partent chez l'adversaire. | **Hors périmètre, par choix de l'utilisateur** : pas de Duel (§5.2). |
 | Héros | Un héros par joueur avec une compétence active (Trainer au départ). | **Hors périmètre** (pas de héros). |
 | Coup critique | Chance de critique (5 % de base, plus pour certaines unités) × **dégâts critiques** du compte. | **5 % de base** pour toutes les unités (octobre 2026), dégâts ×2 ; pas de stat de compte (les dégâts critiques de départ d'un compte ne sont pas publiés). |

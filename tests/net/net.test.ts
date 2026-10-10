@@ -1,0 +1,260 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createEngine } from '../../src/engine';
+import type { Command, Engine, GameConfig } from '../../src/engine/types';
+import { CoopGuest, CoopHost, classifyIncoming, compactState, remoteEngine, sendInvite, type LocalPlayer } from '../../src/net/coop';
+import { createMemoryNetwork, type Endpoint, type Link } from '../../src/net/peer';
+import { createPresence, lobbyId, personalId, presenceNamespace } from '../../src/net/presence';
+import { PROTOCOL_VERSION, decode, encode, msg, sanitizeCommand } from '../../src/net/protocol';
+import { MARVEL } from '../engine/helpers';
+
+const flush = async (n = 10) => { for (let i = 0; i < n; i++) await Promise.resolve(); };
+
+function player(id: string, name: string): LocalPlayer {
+  return {
+    hello: { profileId: id, name, avatar: 'spiderman', level: 3, soloChapters: [1], peer: `peer-${id}` },
+    setup: { deck: MARVEL.slice(), levels: {}, talents: {} },
+  };
+}
+
+afterEach(() => { vi.useRealTimers(); });
+
+describe('protocole v3', () => {
+  it('encode / decode : aller-retour, nombres arrondis, version et type vérifiés', () => {
+    const m = msg({ t: 'ping', at: 1.234567 });
+    expect(m.v).toBe(PROTOCOL_VERSION);
+    const d = decode(encode(m));
+    expect(d).toEqual({ v: PROTOCOL_VERSION, t: 'ping', at: 1.235 });
+    expect(decode('{"v":2,"t":"ping","at":1}')).toBeNull();
+    expect(decode('{"v":3,"t":"pirate"}')).toBeNull();
+    expect(decode('pas du json')).toBeNull();
+    expect(decode(null)).toBeNull();
+  });
+
+  it('les commandes de l’invitée sont forcées à son joueur et validées', () => {
+    expect(sanitizeCommand({ type: 'summon', player: 'p1' }, 'p2')).toEqual({ type: 'summon', player: 'p2' });
+    expect(sanitizeCommand({ type: 'merge', player: 'p1', from: 1, to: 2 }, 'p2')).toEqual({ type: 'merge', player: 'p2', from: 1, to: 2 });
+    expect(sanitizeCommand({ type: 'merge', from: 1, to: 99 }, 'p2')).toBeNull();
+    expect(sanitizeCommand({ type: 'pause', paused: true }, 'p2')).toBeNull();
+    expect(sanitizeCommand({ type: 'gift', slot: 3 }, 'p2')).toEqual({ type: 'gift', player: 'p2', slot: 3 });
+    expect(sanitizeCommand('summon', 'p2')).toBeNull();
+  });
+
+  it('l’instantané compact garde le rendu et se transmet', () => {
+    const e = createEngine({ mode: 'coop', seed: 3, mapId: 'test', players: [{ id: 'p1', deck: MARVEL, levels: {}, talents: {} }, { id: 'p2', deck: MARVEL, levels: {}, talents: {} }] });
+    e.apply({ type: 'summon', player: 'p2' });
+    for (let i = 0; i < 60; i++) e.tick();
+    const snap = compactState(e.state);
+    const back = decode(encode(msg({ t: 'snapshot', tick: snap.tick, state: snap, events: [] })));
+    expect(back?.t).toBe('snapshot');
+    const st = (back as { state: typeof snap }).state;
+    expect(st.players[1]!.grid.filter(Boolean).length).toBe(1);
+    expect(st.enemies.length).toBe(e.state.enemies.length);
+    expect(JSON.stringify(st).length).toBeLessThan(e.serialize().length);
+  });
+});
+
+describe('présence', () => {
+  it('espace de noms privé : dérivé de la clé, jamais la clé elle-même', async () => {
+    const a = await presenceNamespace('cle-secrete');
+    expect(a).toMatch(/^[0-9a-f]{10}$/);
+    expect(a).toBe(await presenceNamespace('cle-secrete'));
+    expect(a).not.toBe(await presenceNamespace('autre'));
+    expect(lobbyId(a)).not.toContain('cle');
+  });
+
+  it('élection du rendez-vous, liste des présents, réélection quand le détenteur part', async () => {
+    const net = createMemoryNetwork();
+    const mk = (id: string, name: string, device: string) => createPresence({
+      net, ns: 'ns', heartbeatMs: 50, dropAfterMs: 400, backoff: [5, 10],
+      me: () => ({ profileId: id, device, name, avatar: 'spiderman', level: 2, status: 'accueil' }),
+    });
+    const a = mk('pa', 'Alice', 'd1');
+    const b = mk('pb', 'Bob', 'd2');
+    await a.start();
+    await b.start();
+    await vi.waitFor(() => expect(b.partner()?.name).toBe('Alice'));
+    await vi.waitFor(() => expect(a.partner()?.name).toBe('Bob'));
+    expect(a.isLobbyHolder()).toBe(true);
+    expect(b.isLobbyHolder()).toBe(false);
+    expect(a.partner()?.peer).toBe(personalId('ns', 'pb'));
+    // Le détenteur s'en va : Bob reprend le rendez-vous, puis Alice revient et le retrouve.
+    a.stop();
+    await vi.waitFor(() => expect(b.isLobbyHolder()).toBe(true));
+    expect(b.partner()).toBeNull();
+    await a.start();
+    await vi.waitFor(() => expect(a.partner()?.name).toBe('Bob'));
+    // Pause (page cachée) puis reprise.
+    a.pause();
+    await vi.waitFor(() => expect(b.partner()).toBeNull());
+    a.resume();
+    await vi.waitFor(() => expect(b.partner()?.name).toBe('Alice'));
+    a.stop(); b.stop();
+  });
+
+  it('même appareil : l’autre profil est ignoré ; réseau injoignable : « indisponible » sans planter', async () => {
+    const net = createMemoryNetwork();
+    const a = createPresence({ net, ns: 'n2', heartbeatMs: 50, backoff: [5, 10], me: () => ({ profileId: 'x', device: 'same', name: 'X', avatar: 'hulk', level: 1, status: 'accueil' }) });
+    const b = createPresence({ net, ns: 'n2', heartbeatMs: 50, backoff: [5, 10], me: () => ({ profileId: 'y', device: 'same', name: 'Y', avatar: 'hulk', level: 1, status: 'accueil' }) });
+    await a.start(); await b.start();
+    await flush(50);
+    await new Promise((r) => setTimeout(r, 60));
+    expect(a.partner()).toBeNull();
+    a.stop(); b.stop();
+    const down = createMemoryNetwork();
+    down.setDown(true);
+    const c = createPresence({ net: down, ns: 'n3', me: () => ({ profileId: 'z', device: 'd', name: 'Z', avatar: 'hulk', level: 1, status: 'accueil' }) });
+    await c.start();
+    expect(c.state).toBe('unavailable');
+    c.stop();
+  });
+});
+
+async function pair(): Promise<{ net: ReturnType<typeof createMemoryNetwork>; hostEp: Endpoint; guestEp: Endpoint }> {
+  const net = createMemoryNetwork();
+  const hostEp = await net.open('host');
+  const guestEp = await net.open('guest');
+  return { net, hostEp, guestEp };
+}
+
+describe('invitations', () => {
+  it('invitation acceptée : le lien sert ensuite au salon', async () => {
+    const { hostEp, guestEp } = await pair();
+    let got: Awaited<ReturnType<typeof classifyIncoming>> = null;
+    guestEp.onLink((l) => { void classifyIncoming(l).then((r) => { got = r; }); });
+    const inv = sendInvite(hostEp, 'guest', { from: player('h', 'Hôte').hello, mode: 'coop-infini' });
+    await vi.waitFor(() => expect(got?.kind).toBe('invite'));
+    const invite = (got as unknown as { invite: { from: { name: string }; mode: string; accept(): Link } }).invite;
+    expect(invite.from.name).toBe('Hôte');
+    expect(invite.mode).toBe('coop-infini');
+    invite.accept();
+    const r = await inv.result;
+    expect('link' in r).toBe(true);
+  });
+
+  it('refus, expiration et annulation', async () => {
+    const { hostEp, guestEp } = await pair();
+    const seen: { refuse(): void; onCancel(h: () => void): void }[] = [];
+    guestEp.onLink((l) => { void classifyIncoming(l).then((r) => { if (r?.kind === 'invite') seen.push(r.invite); }); });
+    const a = sendInvite(hostEp, 'guest', { from: player('h', 'H').hello, mode: 'coop-infini' });
+    await vi.waitFor(() => expect(seen.length).toBe(1));
+    seen[0]!.refuse();
+    expect(await a.result).toMatchObject({ refused: true });
+
+    const b = sendInvite(hostEp, 'guest', { from: player('h', 'H').hello, mode: 'coop-infini', ttlMs: 30 });
+    expect(await b.result).toMatchObject({ expired: true });
+
+    const c = sendInvite(hostEp, 'guest', { from: player('h', 'H').hello, mode: 'coop-niveaux', levelId: 'cc1-n1' });
+    await vi.waitFor(() => expect(seen.length).toBe(3));
+    let cancelled = false;
+    seen[2]!.onCancel(() => { cancelled = true; });
+    c.cancel();
+    expect(await c.result).toMatchObject({ cancelled: true });
+    await vi.waitFor(() => expect(cancelled).toBe(true));
+
+    const d = sendInvite(hostEp, 'personne', { from: player('h', 'H').hello, mode: 'coop-infini' });
+    expect(await d.result).toMatchObject({ error: expect.stringMatching(/joindre/) });
+  });
+});
+
+describe('session Coop : hôte et invitée en boucle locale', () => {
+  async function lobby() {
+    const { net, hostEp, guestEp } = await pair();
+    const host = new CoopHost({ me: player('h', 'Hôte'), mode: 'coop-infini', mapId: 'test', hostPeer: 'host', seed: 11 });
+    hostEp.onLink((l) => {
+      void classifyIncoming(l).then((r) => {
+        if (r?.kind === 'hello') host.attach(l, r.first);
+        if (r?.kind === 'rejoin') host.rejoin(l, r.session, r.profileId);
+      });
+    });
+    const link = await guestEp.connect('host');
+    const guest = new CoopGuest({ me: player('g', 'Invitée'), link, endpoint: guestEp });
+    await vi.waitFor(() => expect(guest.lobby?.players.length).toBe(2));
+    return { net, host, guest, hostEp, guestEp };
+  }
+
+  it('salon : decks, « Prêt » des deux, départ avec la même configuration', async () => {
+    const { host, guest } = await lobby();
+    expect(guest.lobby?.players[0]!.name).toBe('Hôte');
+    expect(host.lobby.players[1]!.name).toBe('Invitée');
+    const starts: GameConfig[] = [];
+    host.onStart((c) => starts.push(c));
+    guest.onStart((c) => starts.push(c));
+    guest.setDeck({ deck: ['hulk', 'thor', 'ironman', 'cap', 'widow'], levels: { hulk: 4 }, talents: {} });
+    await vi.waitFor(() => expect(host.lobby.players[1]!.deck[0]).toBe('hulk'));
+    host.setReady(true);
+    guest.setReady(true);
+    await vi.waitFor(() => expect(starts.length).toBe(2));
+    expect(starts[0]).toEqual(starts[1]);
+    expect(starts[0]!.mode).toBe('coop');
+    expect(starts[0]!.players[1]).toMatchObject({ id: 'p2', deck: ['hulk', 'thor', 'ironman', 'cap', 'widow'], levels: { hulk: 4 } });
+    host.close(); guest.close();
+  });
+
+  it('partie : les commandes de l’invitée sont appliquées comme en local (déterminisme)', async () => {
+    const { host, guest } = await lobby();
+    let cfg: GameConfig | null = null;
+    host.onStart((c) => { cfg = c; });
+    host.setReady(true); guest.setReady(true);
+    await vi.waitFor(() => expect(cfg).not.toBeNull());
+    const engine = createEngine(cfg!);
+    host.bindEngine(engine);
+    const ref: Engine = createEngine(cfg!);
+    // Script de commandes des deux joueurs, appliqué au même tick côté hôte et sur la référence locale.
+    const script: [number, Command][] = [
+      [1, { type: 'summon', player: 'p1' }], [1, { type: 'summon', player: 'p2' }], [5, { type: 'summon', player: 'p2' }],
+      [12, { type: 'manaUpgrade', player: 'p2' }],
+    ];
+    const snaps: ReturnType<typeof guest.drain> = [];
+    const view = remoteEngine(cfg!, compactState(engine.state), (c) => guest.command(c));
+    for (let t = 0; t < 120; t++) {
+      if (t === 20) script.push([20, { type: 'gift', player: 'p2', slot: engine.state.players[1]!.grid.findIndex(Boolean) }]);
+      for (const [at, c] of script) if (at === t) {
+        if ('player' in c && c.player === 'p2') view.apply(c); else engine.apply(c);
+        ref.apply(c);
+      }
+      await flush(20); // la commande traverse le réseau avant le tick
+      engine.tick();
+      host.afterTick(engine.drainEvents());
+      ref.tick(); ref.drainEvents();
+      snaps.push(...guest.drain());
+    }
+    expect(engine.serialize()).toBe(ref.serialize());
+    await flush(20);
+    snaps.push(...guest.drain());
+    expect(snaps.length).toBe(60);
+    const last = snaps[snaps.length - 1]!;
+    expect(last.state.tick).toBe(engine.state.tick);
+    expect(last.state.players[1]!.manaLevel).toBe(1);
+    expect(snaps.flatMap((s) => s.events).some((e) => e.type === 'gift')).toBe(true);
+    // Une commande pour p1 envoyée par l'invitée est ramenée à p2.
+    guest.command({ type: 'summon', player: 'p1' });
+    await flush(20);
+    const before = engine.state.players[0]!.summonCost;
+    engine.tick();
+    expect(engine.state.players[0]!.summonCost).toBe(before);
+    host.close(); guest.close();
+  });
+
+  it('coupure : l’hôte attend, l’invitée revient dans les 30 s et reprend la partie', async () => {
+    const { net, host, guest } = await lobby();
+    let cfg: GameConfig | null = null;
+    host.onStart((c) => { cfg = c; });
+    host.setReady(true); guest.setReady(true);
+    await vi.waitFor(() => expect(cfg).not.toBeNull());
+    const engine = createEngine(cfg!);
+    host.bindEngine(engine);
+    const hostPeer: string[] = [], guestPeer: string[] = [];
+    host.onPeer((s) => hostPeer.push(s));
+    guest.onPeer((s) => guestPeer.push(s));
+    net.cut('guest');
+    await vi.waitFor(() => expect(hostPeer).toContain('lost'));
+    await vi.waitFor(() => expect(guestPeer).toEqual(['lost', 'back']));
+    await vi.waitFor(() => expect(hostPeer).toEqual(['lost', 'back']));
+    engine.tick(); engine.tick();
+    host.afterTick(engine.drainEvents());
+    await vi.waitFor(() => expect(guest.drain().length).toBeGreaterThan(0));
+    host.finish({ outcome: 'defaite', wave: 7, mode: 'coop-infini', livesLeft: 0, bossKills: [] });
+    await vi.waitFor(() => expect(guest.result?.wave).toBe(7));
+    host.close(); guest.close();
+  });
+});

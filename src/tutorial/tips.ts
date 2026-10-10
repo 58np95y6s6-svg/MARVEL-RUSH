@@ -111,7 +111,7 @@ function remind(api: BattleTutoApi, text: string): void {
 }
 
 function watchBattle(api: BattleTutoApi): void {
-  if (api.engine.config.mode === 'tutoriel') return;
+  if (api.engine.config.mode === 'tutoriel' || api.engine.config.mode === 'coop') return; // Coop : la partie ne s'arrête pas pour une astuce
   const reminders = takeReminderFlag();
   let lastRemind = -1e9;
   const seen = new Set<UnitId>();

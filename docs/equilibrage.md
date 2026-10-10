@@ -424,7 +424,7 @@ Bannière, Chaudron) : c'est le profil Rush Royale.
 | Vitesse du mini-boss | 0,5 case/s (comme un gros boss) | **×0,8 d'un normal** (1,6 case/s, « un peu plus lent ») | B |
 | Mana du mini-boss | ×1 | **×5** du mana d'élimination | A/B |
 | Vies retirées à la porte | normal 1, gros 2, boss et lieutenant : toutes | normal 1, **gros, lieutenant et boss 2** ; niveau de boss : laisser passer le boss imposé = défaite | A |
-| Vies en Coop | 3 | **1** (« la porte n'a qu'une vie ») | A |
+| Vies en Coop | 3 | **3 partagées** (Rush Royale : 1 seule ; écart voulu par la joueuse, octobre 2026) | — |
 | Vies en Solo | 3 | 3 (PvP de Rush Royale) | B |
 | Chance de critique de base | 0 % | **5 %** (dégâts ×2, valeur Marvel Rush) | A (5 %) / C (×2) |
 | Mana de départ | 150 | **100** | B |
@@ -445,7 +445,7 @@ pouvoirs des boss, dégâts critiques (×2), effet des améliorations (+15 % de 
 | Solo Infini, départ Disney niveau 1 (40 parties) | 13,20 | **14,97** | ≈ 14-18 |
 | Solo Infini, départ Marvel, bot de référence | 19,80 | 19,85 | — |
 | Solo Infini, méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) niveau 1 / niveau 8 (10 parties) | 25,1 / 27,7 | 24,3 / **32,6** | — |
-| Coop Infini, départ Marvel × 2, bot de référence (20 parties) | 18,55 | 15,75 (1 seule vie) | — |
+| Coop Infini, départ Marvel × 2, bot de référence (20 parties) | 18,55 | 15,75 (mesuré avec 1 seule vie, avant le retour à 3 vies partagées) | — |
 | Campagne, collection attendue : victoire moyenne (pire niveau), 10 parties par niveau | c1 99 % (90) · c2-c5 100 % · c6 99 % (90) | c1 97 % (80) — 96 % (80) sur 30 parties par niveau, avant 98 % (87) · c2 100 % · c3 99 % (90) · c4-c6 100 % | ≥ 85 % au ch. 1, ≥ 70 % ensuite |
 | Deck de départ niveau 1 : ch. 1 / ch. 2 / ch. 3 | 99 % / 96 % / 40 % (pire 0) | 97 % / 89 % / **27 %** (pire 0) | peine dès le ch. 3 |
 

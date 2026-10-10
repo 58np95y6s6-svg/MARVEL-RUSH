@@ -78,7 +78,7 @@ unités (Rogue, Twins, Bard, Knight Statue : seules les mécaniques sont publié
 |---|---|---|
 | Monstres par vague | **10** jusqu'à la vague 60. | A |
 | Composition (texte du jeu) | « La **5e vague de chaque dizaine** contient **un mini-boss et des monstres rapides**, la 10e un boss ; **les autres vagues ne contiennent que des monstres communs**. » Le nombre de rapides n'est pas donné : 9 + le mini-boss (10 monstres par vague). | A (9 : B) |
-| Vies | La porte commune n'a **qu'une vie**. | A |
+| Vies | La porte commune n'a **qu'une vie**. Marvel Rush garde volontairement **3 vies partagées** en Coop. | A |
 | Fin de vague | La vague suivante ne commence **qu'une fois le dernier monstre éliminé**. | A |
 | Croissance des PV | « Les PV augmentent **à chaque nouveau monstre** et **toutes les 10 vagues** ; le **taux de croissance augmente lui aussi** toutes les 10 vagues. » Aucun chiffre publié. | A (forme) / C (chiffres) |
 | Mana par élimination | Augmente de **10 toutes les 10 vagues**, plafonné à **50** vers la vague 50. | A |

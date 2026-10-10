@@ -37,8 +37,8 @@ export const DEFAULT_PATH_LENGTH = 30;
 export const DEFAULT_COOP_LENGTHS = { a: 18, b: 18, tronc: 14 };
 /** Vies en Solo (Rush Royale, PvP : 3). */
 export const START_LIVES = 3;
-/** Vies en Coop (Rush Royale : la porte commune n'a qu'une vie, un monstre qui passe finit la partie). */
-export const COOP_LIVES = 1;
+/** Vies en Coop : 3 vies partagées par les deux joueurs (choix Marvel Rush ; Rush Royale n'en a qu'une). */
+export const COOP_LIVES = 3;
 /** Chance de critique par défaut de toutes les unités (Rush Royale : 5 %) ; dégâts critiques ×2 (NO_TEAM.critMul). */
 export const BASE_CRIT_CHANCE = 0.05;
 

@@ -133,7 +133,7 @@ Règles de travail :
   - Plus la portée est courte, plus l'unité frappe fort : les valeurs sont équilibrées au simulateur.
   - **Garder le doigt appuyé sur une unité** affiche sa zone de touche, en surlignant la partie du chemin couverte. Pendant le glisser d'une fusion, la zone de la case visée s'affiche aussi. Une pression courte ouvre la fiche.
   - Le tutoriel l'explique avec une astuce dès la première unité à courte portée.
-- **3 vies** en Solo ; **1 seule vie** pour la porte commune en Coop (Rush Royale). Un ennemi normal qui atteint la fin du chemin retire 1 vie ; un gros, un lieutenant ou un boss en retire 2 (Rush Royale, octobre 2026). Dans un niveau de boss, laisser passer le boss imposé fait perdre.
+- **3 vies** en Solo ; **3 vies partagées** par les deux joueurs en Coop (choix Marvel Rush : Rush Royale n'en donne qu'une). Un ennemi normal qui atteint la fin du chemin retire 1 vie ; un gros, un lieutenant ou un boss en retire 2 (Rush Royale, octobre 2026). Dans un niveau de boss, laisser passer le boss imposé fait perdre.
 
 ### 4.2 Mana, invocation, fusion, amélioration
 - La partie commence avec **100 de mana** (Rush Royale, octobre 2026). Chaque ennemi tué rapporte du mana : 10 pour un ennemi normal (+10 toutes les 10 vagues, 50 au plus), ×5 pour un gros ou un lieutenant, 100 pour un boss.

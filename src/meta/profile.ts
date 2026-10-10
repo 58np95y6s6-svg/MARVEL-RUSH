@@ -83,6 +83,19 @@ export interface Profile {
   gemsRetro?: boolean;
   /** Packs dont le premier lot de 10 payé (Légendaire garanti) a déjà été tiré (src/meta/pulls.ts). */
   firstTen?: Record<string, boolean>;
+  // ---- Coop à deux (§5.2, §5.4) ----
+  /** Dernière partenaire vue en ligne (affichée hors ligne). */
+  partner?: { profileId: string; name: string; avatar: UnitId; seenAt: number; chapters?: number[] };
+  /** Record du duo en Coop Infini (vagues tenues). */
+  coopBest?: number;
+  /** Coop Infini : palier → date (AAAA-MM-JJ) du dernier coffre obtenu (une fois par jour et par mode). */
+  coopTiers?: Record<string, string>;
+  /** Coop Niveaux : étoiles communes du duo, par niveau (clé 'cc1-n3'). */
+  coopLevels?: Record<string, LevelResult>;
+  /** Coop Niveaux : coffres d'étoiles ouverts (clé 'cc1-10'). */
+  coopChests?: Record<string, boolean>;
+  /** Historique des dernières parties à deux (plus récente d'abord, 10 au plus). */
+  coopHistory?: { at: number; mode: 'coop-infini' | 'coop-niveaux'; levelId?: string; wave: number; won: boolean; partner: string }[];
 }
 
 /** Quêtes quotidiennes (3 par jour) et coffre de la semaine (src/meta/quests.ts). */

@@ -28,6 +28,14 @@ Jeu mobile de tower defense inspiré du système de Rush Royale : fusion d'unit�
 
 Chaque planche montre, pour chaque personnage, une boucle d'attaque animée, les trois poses clés (fiche, action 1, action 2), sa rareté et ses statistiques.
 
+## Jouer à deux (Coop)
+
+- Les deux téléphones se trouvent tout seuls : ouvrez le jeu (avec le même lien secret), le bouton « Jouer à deux » de l'accueil indique si l'autre est en ligne. « Inviter » envoie une invitation qui s'affiche chez l'autre (Accepter / Refuser), puis salon : chacun choisit son deck et touche « Prêt ».
+- Réseau : WebRTC pair à pair via PeerJS (serveur de rendez-vous public `0.peerjs.com`, STUN Google). L'espace de rendez-vous est dérivé du hash de la clé secrète : la clé n'apparaît jamais dans les identifiants.
+- Limite : certains réseaux mobiles (NAT symétrique) bloquent la connexion directe ; on passe alors par les relais TURN publics de PeerJS, sans garantie de disponibilité. Passer un des deux téléphones en Wi-Fi règle en général le problème. Un TURN peut être ajouté au build : `VITE_TURN_URL`, `VITE_TURN_USER`, `VITE_TURN_PASS`.
+- Serveur PeerJS privé (facultatif, aussi pour les tests) : `VITE_PEER_HOST`, `VITE_PEER_PORT`, `VITE_PEER_PATH`, `VITE_PEER_SECURE`, `VITE_PEER_KEY`.
+- Secours : « Autres options » crée une partie avec un code de 6 caractères et un lien `#k=<CLE>&room=<CODE>` à partager.
+
 ## Droits
 
 Les personnages appartiennent à Marvel et Disney. Ce projet est un prototype à usage personnel : les visuels sont des dessins SVG de prototypage, à ne pas diffuser publiquement ni monétiser sans licence.
