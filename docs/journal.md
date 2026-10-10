@@ -46,3 +46,15 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 | Dimanche 01/11/2026 | Pixar | `extension/pixar` | en préparation |
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
+
+## Extension Pixar — branche `extension/pixar`
+
+Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-pixar`, à partir de `main` (sans les extensions DC et Transformers). Contenu : la liste définitive de `docs/roadmap.md`.
+- Héros (15) : mrincredible, elastigirl, frozone, violetflash, sullimike, mcqueen, carlrussell, joysadness, remy, walleeve, lucaalberto, mei, jessie, ianbarley, joe. Mécanique propre : le coup de duo (`duoEvery`, `src/engine/pixar.ts`), le partenaire frappe toutes les N attaques.
+- Gros boss (5) : syndrome, randall, lotso, hopper (Le Borgne), muntz. Boss final : zurg (dans la rotation, « Je suis ton père » à 30 % de PV).
+- Chapitres 13 à 15 (numéros libres de toute collision avec DC 7 à 9 et Transformers 10 à 12) ; la campagne suit l'ordre des numéros installés (écran Campagne générique, repris de la branche Transformers).
+- Rotations de boss : `BossPool` = `tous` | `marvel-disney` | `pixar` ; les chapitres 1 à 6 jouent `marvel-disney`, les chapitres d'extension `tous`.
+- À la fusion avec Transformers et DC : réunir les `BossPool` (`dc`, `transformers`, `pixar`), garder `finalBossAt` (Darkseid 100, Unicron 150 ; Thanos sauf rotation `pixar`), concaténer les tableaux `growth`, `EXT_ROWS` et `EXPECTED`, et les sections de `heroStats`.
+
+État : prête à publier (01/11).
+

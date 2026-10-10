@@ -1,4 +1,4 @@
-# Campagne Solo — 6 chapitres × 10 niveaux
+# Campagne Solo — 6 chapitres × 10 niveaux (+ 3 chapitres de l'extension Pixar, numérotés 13 à 15)
 
 > Rédigé par l'agent **Game design et stratégie** (§5.1 du prompt). Lu par l'agent **Campagne et progression** (`src/campaign/`) et l'agent **Interface**.
 > Les chiffres sont un premier jet, à valider avec le simulateur (`docs/equilibrage.md`).
@@ -30,7 +30,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 
 ### Déblocage
 - Les niveaux d'un chapitre s'ouvrent l'un après l'autre (victoire au niveau précédent).
-- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180).
+- Un chapitre s'ouvre si le niveau 10 du chapitre précédent est gagné **et** si le total d'étoiles de la campagne atteint le seuil : ch. 2 = 0, ch. 3 = 30, ch. 4 = 60, ch. 5 = 95, ch. 6 = 130 (sur 180). **Extension Pixar** : chaque chapitre 13 à 15 demande le niveau 10 du chapitre installé juste avant et le seuil « 30 × rang du chapitre − 15 » (165, 195, 225 sans les autres extensions).
 - Le **Solo Infini** s'ouvre à la fin du chapitre 1.
 - Le chapitre N de la **campagne Coop** s'ouvre quand les deux joueurs ont fini le chapitre N en Solo (`docs/campagne-coop.md`).
 
@@ -198,6 +198,70 @@ Croissance des PV par vague : ×1,0425.
 | 10 | royaume-des-morts → arène | 50 | 1,9 | 1,4 | 1,3 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45), **B Thanos** (50) | Thanos tué sans perdre de vie |
 
 ---
+
+## 3 quater. Extension Pixar — chapitres 13 à 15
+
+**Numérotation** : DC occupe les chapitres 7 à 9 et Transformers les 10 à 12 sur leurs branches ; pour que les trois extensions s'installent seules ou ensemble sans collision, les chapitres Pixar sont les **13, 14 et 15**. La campagne suit l'ordre des numéros installés (sans les autres extensions, le chapitre 13 suit directement le chapitre 6) ; l'écran Campagne gère n'importe quel nombre de chapitres.
+
+**Durée** : à la suite des chapitres Transformers (100 → 150 vagues), **150 → 160** au chapitre 13, **160 → 175** au chapitre 14, **175 → 200** au chapitre 15, dont le niveau 10 finit sur **l'Empereur Zurg à la vague 200**. Mêmes règles qu'aux chapitres DC et Transformers : lieutenant du boss du chapitre au niveau 5, autre méchant au niveau 8, boss du chapitre au niveau 10, rotation « tous les univers » (`bossPool: 'tous'`) sans le boss intermédiaire ni le boss du chapitre.
+
+**Difficulté** : PV×, effectif× et PV boss× continuent la pente (niveau 15-10 à PV ×2,82, effectif ×1,86, PV boss ×1,76). Croissance des PV par vague : ch. 13 **×1,012**, ch. 14 **×1,0105**, ch. 15 **×1,0085** (de plus en plus douce, comme les chapitres longs d'avant : les PV par vague restent au-dessus de ceux du chapitre 12).
+
+| Chapitre | Vagues | PV× | Effectif× | PV boss× | Croissance | Boss du niveau 10 | Personnage garanti | Collection attendue (simulateur) |
+|---|---|---|---|---|---|---|---|---|
+| 13 (Metroville) | 150 → 160 | 2,52 → 2,61 | 1,71 → 1,76 | 1,61 → 1,66 | ×1,012 | Syndrome (160) ; Randall au niveau 8 | M. Indestructible | Iron Man, Thor, Hulk, Cap + WALL-E & EVE, niveau 10, 3 paliers, ★2 |
+| 14 (Paradise Falls) | 160 → 175 | 2,62 → 2,71 | 1,76 → 1,81 | 1,66 → 1,71 | ×1,0105 | Charles Muntz (175) ; Le Borgne au niveau 8 | WALL-E & EVE | Iron Man, Thor, M. Indestructible, Cap, McQueen, niveau 10, ★4 |
+| 15 (La planète Z) | 175 → 200 | 2,72 → 2,82 | 1,81 → 1,86 | 1,71 → 1,76 | ×1,0085 | **Empereur Zurg** (200) ; Lotso au niveau 8 | Joe & 22 | Iron Man, Thor, M. Indestructible, WALL-E & EVE, Cap, niveau 10, ★6 |
+
+Récompenses : coffre de victoire de base **héroïque** (comme les chapitres DC et Transformers) ; Zurg donne en plus 100 ✦. Maps : `metroville` (débloquée au chapitre 13), `monstropolis` (13), `paradise-falls` (14) ; arènes `arene-syndrome`, `arene-randall`, `arene-lotso`, `arene-hopper`, `arene-muntz`, `arene-zurg`.
+
+### Chapitre 13 — Metroville
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | metroville | 150 | 2,52 | 1,71 | 1,61 | — | Avec au moins 2 héros Pixar |
+| 2 | metroville | 151 | 2,53 | 1,72 | 1,62 | — | Sans perdre de vie |
+| 3 | monstropolis | 152 | 2,54 | 1,72 | 1,62 | — | Une unité de rang 6 |
+| 4 | metroville | 154 | 2,55 | 1,73 | 1,63 | — | Aucun bouclier ne passe |
+| 5 | metroville | 155 | 2,56 | 1,73 | 1,63 | **L Robot de Syndrome géant** (155) | Robot tué en moins de 25 s |
+| 6 | monstropolis | 154 | 2,57 | 1,74 | 1,64 | — | Moins de 240 invocations |
+| 7 | metroville | 156 | 2,58 | 1,74 | 1,64 | — | Bonus d’équipe Les Indestructibles actif |
+| 8 | monstropolis → arène | 158 | 2,59 | 1,75 | 1,65 | **B Randall** (158) | Boss tué en moins de 40 s |
+| 9 | metroville | 158 | 2,6 | 1,75 | 1,65 | — | Aucune unité ne perd de rang |
+| 10 | metroville → arène | 160 | 2,61 | 1,76 | 1,66 | **B Syndrome** (160) | Boss tué en moins de 40 s |
+
+### Chapitre 14 — Paradise Falls
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | paradise-falls | 160 | 2,62 | 1,76 | 1,66 | — | Sans perdre de vie |
+| 2 | paradise-falls | 162 | 2,63 | 1,77 | 1,67 | — | Aucun blindé ne passe |
+| 3 | monstropolis | 164 | 2,64 | 1,77 | 1,67 | — | Avec Carl & Russell dans le deck |
+| 4 | paradise-falls | 167 | 2,65 | 1,78 | 1,68 | — | Une unité de rang 7 |
+| 5 | paradise-falls | 170 | 2,66 | 1,78 | 1,68 | **L Alpha, le chien géant** (170) | Alpha tué en moins de 25 s |
+| 6 | monstropolis | 167 | 2,67 | 1,79 | 1,69 | — | Moins de 260 invocations |
+| 7 | paradise-falls | 169 | 2,68 | 1,79 | 1,69 | — | Sans perdre de vie |
+| 8 | metroville → arène | 172 | 2,69 | 1,8 | 1,7 | **B Le Borgne** (172) | Boss tué en moins de 40 s |
+| 9 | paradise-falls | 173 | 2,7 | 1,8 | 1,7 | — | Bonus d’équipe Monstres & Cie ou Toy Story actif |
+| 10 | paradise-falls → arène | 175 | 2,71 | 1,81 | 1,71 | **B Charles Muntz** (175) | Boss tué en moins de 45 s |
+
+### Chapitre 15 — La planète Z
+
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss imposé | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | monstropolis | 175 | 2,72 | 1,81 | 1,71 | — | Sans perdre de vie |
+| 2 | metroville | 180 | 2,73 | 1,82 | 1,72 | — | Une unité de rang 7 |
+| 3 | paradise-falls | 185 | 2,74 | 1,82 | 1,72 | — | Aucun bouclier ne passe |
+| 4 | monstropolis | 190 | 2,75 | 1,83 | 1,73 | — | Deux bonus d’équipe actifs |
+| 5 | monstropolis | 195 | 2,76 | 1,83 | 1,73 | **L Gros Bébé** (195) | Gros tué en moins de 25 s |
+| 6 | metroville | 185 | 2,77 | 1,84 | 1,74 | — | Moins de 300 invocations |
+| 7 | paradise-falls | 190 | 2,78 | 1,84 | 1,74 | — | Sans perdre de vie |
+| 8 | monstropolis → arène | 194 | 2,79 | 1,85 | 1,75 | **B Lotso** (194) | Boss tué en moins de 40 s |
+| 9 | metroville | 197 | 2,81 | 1,85 | 1,75 | — | Avec au moins 1 héros de chaque pack (Marvel, Disney, Pixar) |
+| 10 | monstropolis → arène | 200 | 2,82 | 1,86 | 1,76 | **B l’Empereur Zurg** (200) | l’Empereur Zurg tué sans perdre de vie |
+
+
+**Simulateur** (`--campagne c13|c14|c15 --attendu --casual`, 8 parties par niveau, collection attendue ci-dessus) : chapitre 13 **98 %** (pire niveau 88 %), chapitre 14 **91 %** (pire : Le Borgne, 14-8, 63 % à 69 % selon les graines ; Muntz 14-10 75 %), chapitre 15 **95 %** (pire : **Zurg, 15-10**, 63 % sur les graines 1 à 8, 94 % sur les graines 30 à 45).
 
 ## 4. Vérification par le simulateur
 

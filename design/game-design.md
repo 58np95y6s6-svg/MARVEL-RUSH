@@ -105,3 +105,41 @@ Paramètres pour `src/data/bosses.ts` (à reprendre par l'agent qui tient ce fic
 | Princesses (3-5) | Mulan, Rebelle, Tiana, Raiponce, Pocahontas | +mana par vague |
 | Duos Pixar (3) | Buzz & Woody, Nemo & Dory, Coco | Chance de double attaque |
 | Animaux (3) | Rox & Rouky, Nick & Judy, Nemo & Dory | +vitesse d'attaque |
+
+## Extension Pixar
+
+Pack Pixar : 15 héros (3 Légendaires, 6 Épiques, 6 Rares), presque tous en duo. Profils Rush Royale dans `docs/rush-royale-mapping.md`.
+
+**Coup de duo** (mécanique propre, `src/engine/pixar.ts`, clé `duoEvery`) : toutes les N attaques, le partenaire du duo ajoute son coup. Le dessin montre le partenaire au pied du héros, à gauche ; en pose 2 (frappe), c'est lui qui agit.
+
+| Héros | Rareté | Attaque / compétence | Coup de duo | Archétype |
+|---|---|---|---|---|
+| M. Indestructible | L | Coups de poing ; séisme sur toute la ligne de tête (7 s, étourdit 1,2 s) | — | — |
+| WALL-E & EVE | L | Cubes compactés | 1 sur 3 : rayon d'EVE, 150 % à 1,5 case autour | — |
+| Joe & 22 | L | Notes de jazz ; musique de l'âme (+25 % de cadence à tout le plateau 5 s, toutes les 10 s) | 1 sur 5 : étincelle de 22, dégâts ×2 | — |
+| Elastigirl | É | Bras élastiques : +50 % sur l'ennemi de tête, ralentit 15 % | — | — |
+| Frozone | É | Rafale de glace ; pont de glace (5 s, −45 % de vitesse 3 s) | — | — |
+| Sulli & Bob | É | Griffes ; rugissement (8 s, recul d'une case) | — | Mana par élimination |
+| Joie & Tristesse | É | Billes de souvenirs, mélancolie (poison) | 1 sur 4 : souvenir doré (+20 % à une alliée) ou bleu (ralentit) | Copieur |
+| Mei (panda roux) | É | Coups de patte, écrase autour (50 %) | — | Croissance |
+| Ian & Barley | É | Bâton ; un sort au hasard toutes les 6 s | — | — |
+| Violette & Flèche | R | Coups rapides ; champ de force sur l'alliée échangée (3 s) | 1 sur 3 : Flèche, deux coups de plus | Échangeur |
+| Flash McQueen & Martin | R | Fonce ; turbo +25 % de cadence aux voisines | 1 sur 5 : Martin remorque 1 s | Boost de vitesse |
+| Carl & Russell | R | Canne ; ballons (6 s, un ennemi soulevé 2 s) | — | Booster de fusion |
+| Rémy & Linguini | R | Louche ; +4 de mana par rang à chaque vague | 1 sur 4 : marmite, 60 % autour | Sacrifice → mana |
+| Luca & Alberto | R | Nageoires | 1 sur 5 : vague, recul ½ case | Formation |
+| Jessie & Pile-Poil | R | Lasso : +10 % de dégâts subis 4 s | 1 sur 4 : Pile-Poil, recul 1,5 s | — |
+
+**Méchants Pixar** (gros boss dans la rotation « tous les univers ») :
+
+| Boss | Pouvoir (toutes les 6 s, Zurg 8 s) | Sbires | Lieutenant (10 s) |
+|---|---|---|---|
+| Syndrome | Rayon à point zéro : 2 unités figées 3 s ; armure 15 % | Robots de Syndrome (blindés, duo) | Robot géant : 1 unité 2 s |
+| Randall | Camouflage : 2 unités hypnotisées 3 s, il se soigne de 3 % | Monstres de Monstropolis (rapides, trio) | Monstre géant : 1 unité 2 s |
+| Lotso | Tri des jouets : l'unité de plus bas rang (≤ 2) à la benne, une autre −1 rang | Jouets de Sunnyside (bouclier, trio) | Gros Bébé : une unité de rang ≥ 3 perd 1 rang |
+| Le Borgne | Nuée : 3 sauterelles et 1 unité étourdie 2 s | Sauterelles (volent, essaim) | Sauterelle géante : 2 sauterelles |
+| Charles Muntz | Alterne la meute (2 chiens) et le dirigeable (une colonne étourdie 1,5 s) | Chiens de Muntz (très rapides) | Alpha : version affaiblie |
+| **Empereur Zurg** (boss final) | Alterne pistolet à ions (2 unités étourdies 1,5 s, dont une −1 rang) et 3 robots ; à 30 % : **« Je suis ton père »** (2 échanges, plateau hypnotisé 1,5 s) | Robots de Zurg (bouclier, trio) | Robot de Zurg géant |
+
+**Équipes** : Les Indestructibles (3 ou plus : +15 % de dégâts, +10 % de cadence), Monstres & Cie (Sulli & Bob, Mei, Luca & Alberto, 2 ou plus : +12 % de dégâts, +10 de mana par vague), Émotions (Joie & Tristesse, Joe & 22, Ian & Barley, 2 ou plus : recharges −20 %), inter-univers **Toy Story** (Buzz & Woody et Jessie & Pile-Poil : +20 % de cadence, 10 % de double attaque).
+

@@ -49,6 +49,7 @@ Demande du joueur : chaque extension doit proposer des capacités de stratégie 
 | Formation | Exemplaires alignés (ligne ou colonne) : +15 % de dégâts par allié aligné (max 3), attaques de zone à 3 | Loki | à attribuer |
 
 Transformers et Pixar devront couvrir les huit archétypes (au moins un héros chacun), en plus de leur mécanique propre.
+Pixar (`extension/pixar`) : sacrifice Rémy & Linguini, copieur Joie & Tristesse, booster Carl & Russell, croissance Mei, mana par élimination Sulli & Bob, vitesse Flash McQueen & Martin, échangeur Violette & Flèche, formation Luca & Alberto.
 
 ## Mise à jour suivante : extension TRANSFORMERS (publication le 25/10)
 
@@ -87,7 +88,7 @@ Liste définitive, établie par le chef de projet à la demande du joueur.
 **Campagne** : chapitres 10 à 12 (+30 niveaux Solo et +30 Coop), Megatron au chapitre 12, niveau 10.
 **Équipes** : Autobots, Dinobots, Aériens ; inter-univers « Les Machines » (Iron Man, Cyborg, Optimus Prime).
 
-## Puis : extension PIXAR (publication le 01/11)
+## Puis : extension PIXAR (publication le 01/11) — prête sur `extension/pixar`
 
 Liste définitive, établie par le chef de projet à la demande du joueur.
 
@@ -118,7 +119,7 @@ Liste définitive, établie par le chef de projet à la demande du joueur.
 - Boss final : **l'Empereur Zurg**.
 - Sbires : robots de Syndrome, monstres de Monstropolis, jouets de Sunnyside, sauterelles, chiens de Muntz, robots de Zurg.
 
-**Maps** : Metroville, Monstropolis, Radiator Springs, Paradise Falls, le quartier général des émotions, l'Axiom, Portorosso.
+**Maps** : Metroville, Monstropolis, Radiator Springs, Paradise Falls, le quartier général des émotions, l'Axiom, Portorosso. *Livrées sur la branche : Metroville, Monstropolis et Paradise Falls (3 maps, comme les autres extensions) ; les quatre autres restent à faire.*
 **Arènes** : l'île de Nomanisan (Syndrome), l'usine de portes (Randall), Sunnyside (Lotso), l'île aux fourmis (Hopper), le dirigeable (Muntz), la planète Z (Zurg).
 **Campagne** : chapitres 13 à 15 (+30 niveaux Solo et +30 Coop), Zurg au chapitre 15, niveau 10.
 **Équipes** : Les Indestructibles, Monstres & Cie, Émotions ; inter-univers « Toy Story » (Buzz & Woody + Jessie & Pile-Poil).

@@ -134,6 +134,45 @@ Aucun emballement économique : les decks « mana » restent sous le témoin (le
 
 **Campagne longue** (« des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum ») : 10 → 50 vagues (`docs/campagne.md`). La difficulté d'un niveau = **effectif** (`script.enemyCountMultiplier`, divise l'intervalle d'apparition) et **PV** (`script.enemyHpMultiplier`, `script.bossHpMultiplier` pour les lieutenants et gros boss), en hausse régulière sur les 60 niveaux. Avec la rampe du Solo Infini (×1,18 par vague), aucune collection ne tiendrait 50 vagues (le deck méta niveau 9 meurt vers la vague 28) : la campagne adoucit la croissance par vague (`script.waveHpGrowth` : ×1,14 au chapitre 1, ×1,075 au 2, ×1,07 aux 3-5, ×1,0425 au 6). Repères mesurés (`--casual`, PV× et effectif× à 1) : le deck de départ niveau 1 tient ≈ 20 vagues à ×1,10, 26 à ×1,08, 40 à ×1,06 ; le deck Avengers niveau 8 (3 paliers) ≈ 42 à ×1,10, 53 à ×1,08, 69 à ×1,06. Taux de victoire par chapitre : `docs/campagne.md` §4.
 
+## 2 octies. Extension Pixar : profils Rush Royale, coup de duo et chapitres 13 à 15 (novembre 2026)
+
+Les 15 héros Pixar reprennent chacun une unité Rush Royale libre (ni Marvel, ni Disney, ni DC, ni Transformers : `docs/rush-royale-mapping.md`, « Extension Pixar »). Règle de fusion de Rush Royale (intervalle ÷ rang), portées de notre système. **Coup de duo** (`duoEvery`) : toutes les N attaques, le partenaire ajoute son coup (src/engine/pixar.ts) ; il compte dans les dégâts mesurés ci-dessous.
+
+| Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée | Coup de duo |
+|---|---|---|---|---|
+| M. Indestructible | Valkyrie | 420 / 1,0 s | courte | — (séisme toutes les 7 s) |
+| WALL-E & EVE | Robot | 360 / 1,0 s | toute la map | 1 sur 3 : rayon d'EVE 150 % autour |
+| Joe & 22 | Nécromancien | 260 / 0,8 s | longue | 1 sur 5 : dégâts ×2 |
+| Mei (panda roux) | Élémentaire de terre | 170 / 1,0 s | courte | — (croissance) |
+| Elastigirl | Rôdeur du crépuscule | 160 / 0,9 s | toute la map | — |
+| Sulli & Bob | Chaman | 150 / 1,0 s | moyenne | — |
+| Ian & Barley | Archimage | 140 / 1,0 s | longue | — (sort toutes les 6 s) |
+| Flash McQueen & Martin | Dryade des montagnes | 140 / 0,8 s | moyenne | 1 sur 5 : remorquage 1 s |
+| Rémy & Linguini | Médecin de peste | 135 / 0,9 s | moyenne | 1 sur 4 : marmite 60 % autour |
+| Carl & Russell | Invocateur | 135 / 1,0 s | longue | — (ballons toutes les 6 s) |
+| Jessie & Pile-Poil | Lierre | 135 / 0,8 s | moyenne | 1 sur 4 : recul 1,5 s |
+| Frozone | Alchimiste | 130 / 1,0 s | moyenne | — (pont de glace toutes les 5 s) |
+| Luca & Alberto | Tréant | 125 / 0,8 s | moyenne | 1 sur 5 : vague, recul ½ case |
+| Violette & Flèche | Maître des esprits | 115 / 0,6 s | courte | 1 sur 3 : deux coups de plus |
+| Joie & Tristesse | Empoisonneur | 110 / 0,9 s | longue | 1 sur 4 : souvenir doré ou bleu |
+
+Réglages : les six Rares ont été relevés de 75–90 à 115–140 de dégâts (premier passage : `pixar-rares` à 14,75, −24 % sous le départ Marvel). Méchants adoucis après la campagne : Syndrome armure 25 % → 15 %, Le Borgne 4 → 3 sauterelles, Muntz 3 → 2 chiens et étourdissement 2 → 1,5 s, Zurg PV ×2 → ×1 (il est dans la rotation de tous les modes infinis), pistolet à ions sur 2 unités dont une seule perd un rang, « Je suis ton père » 2 → 1,5 s.
+
+**Solo Infini**, niveau 1, graines 1..60, rotation « tous les univers » (vague moyenne) :
+
+| Deck | Référence | `--casual` | Écart au deck Marvel comparable |
+|---|---|---|---|
+| Départ Marvel | 19,32 | 17,48 | — |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 26,95 | 24,67 | — |
+| `meta-pixar` (M. Indestructible, WALL-E & EVE, Joe & 22, Frozone, McQueen) | **27,87** | **25,63** | +3,4 % / +3,9 % (méta Marvel) |
+| `pixar-rares` (Violette & Flèche, McQueen, Carl & Russell, Rémy, Jessie) | **19,75** | **16,40** | +2,2 % / −6,2 % (départ Marvel) |
+| `toy-story` (Buzz & Woody, Jessie, WALL-E & EVE, Joe, McQueen), avant le dernier réglage | 28,37 | 25,05 | — |
+| `indestructibles` (M. Indestructible, Elastigirl, Frozone, Violette, McQueen), après le réglage des Rares | 24,55 | 21,35 | — |
+
+**Campagne, chapitres 13 à 15** (`--campagne c13|c14|c15 --attendu --casual`, 8 parties par niveau) : chapitre 13 **98 %** (pire niveau 88 %), chapitre 14 **91 %** (pire : Le Borgne, 14-8, 63 à 69 %), chapitre 15 **95 %** (pire : **Zurg, 15-10**, 63 % sur les graines 1 à 8, 94 % sur 30 à 45). Collection attendue : `EXPECTED` de `scripts/simulate.ts` (docs/campagne.md §3 quater). `SIM_TRACE=1` affiche l'issue de chaque partie de campagne (vague, vies, boss en vie et ses PV).
+
+**À surveiller** : le joueur `--casual` avec les Rares Pixar perd 6 % sous le deck de départ (le booster Carl et le sacrifice Rémy lui servent peu, comme Bulkhead et Wheeljack côté Transformers) ; `pixar-rares` meurt surtout aux vagues de gros boss (10, 15, 20), sans unité anti-boss.
+
 ## 3. Le simulateur (`scripts/simulate.ts`)
 
 Le simulateur est écrit par l'agent Moteur en parallèle ; il n'existe pas encore au moment de ce document. Usage attendu :
