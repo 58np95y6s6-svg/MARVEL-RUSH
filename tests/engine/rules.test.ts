@@ -4,6 +4,7 @@ import { debugPlace, debugSpawn } from '../../src/engine/debug';
 import { GRID_SIZE } from '../../src/engine/types';
 import { MARVEL, ofType, quiet, setup, simState, solo, step } from './helpers';
 import { UNITS } from '../../src/data/units';
+import { waveHp } from '../../src/data/enemies';
 import { RANK_ATTACK_SPEED, RANK_DAMAGE } from '../../src/engine/combat';
 
 /** Dégâts de base de Captain Marvel (portée globale). */
@@ -84,7 +85,7 @@ describe('fusion', () => {
 });
 
 describe('améliorations en partie', () => {
-  it('coûtent 100/200/400/700, montent jusqu’au niveau 5 et donnent +15 % de dégâts', () => {
+  it('coûtent 100/200/400/800 (Rush Royale), montent jusqu’au niveau 5 et donnent +15 % de dégâts', () => {
     const e = quiet(MARVEL, { script: { startMana: 10000 } });
     const p = e.state.players[0]!;
     debugPlace(e, 0, 0, 'cmarvel', 1);
@@ -97,7 +98,7 @@ describe('améliorations en partie', () => {
       step(e);
       spent.push(m - p.mana);
     }
-    expect(spent).toEqual([100, 200, 400, 700, 0]);
+    expect(spent).toEqual([100, 200, 400, 800, 0]);
     expect(p.powerUps.cmarvel).toBe(5);
     e.state.players[0]!.grid[0]!.cooldown = 0;
     const after = ofType(step(e, 1), 'hit').find((h) => h.enemy === target.uid)!.damage;
@@ -114,11 +115,11 @@ describe('dégâts', () => {
     debugSpawn(e, { hp: 1e9 });
     return ofType(step(e), 'hit')[0]!.damage;
   };
-  it('dégâts selon le rang (+51 % par rang)', () => {
+  it('rang de fusion (Rush Royale) : les dégâts par coup ne changent pas', () => {
     expect(firstHit(MARVEL, {}, 1)).toBeCloseTo(CM);
     expect(firstHit(MARVEL, {}, 3)).toBeCloseTo(CM * (1 + 2 * RANK_DAMAGE));
   });
-  it('le rang accélère les attaques (+12 % par rang) ; DPS du rang 7 ≈ 7 × rang 1', () => {
+  it('rang de fusion (Rush Royale) : intervalle ÷ rang ; DPS du rang 7 = 7 × rang 1', () => {
     const count = (rank: number) => {
       const e = quiet();
       debugPlace(e, 0, 0, 'cmarvel', rank);
@@ -134,7 +135,7 @@ describe('dégâts', () => {
     expect(firstHit(MARVEL, { levels: { cmarvel: 4 } })).toBeCloseTo(CM * 1.3);
   });
   it('éveil : +6 % de dégâts et +4 % de vitesse par étoile', () => {
-    expect(firstHit(MARVEL, { awakening: { cmarvel: 5 } })).toBeCloseTo(CM * 1.3);
+    expect(firstHit(MARVEL, { awakening: { cmarvel: 5 } })).toBeCloseTo(CM * 1.3 * 1.1); // + passif ★2 (+10 %)
     const count = (stars: number) => {
       const e = quiet(MARVEL, {}, { awakening: { cmarvel: stars } });
       debugPlace(e, 0, 0, 'cmarvel', 1);
@@ -142,13 +143,13 @@ describe('dégâts', () => {
       return ofType(step(e, 20 * 60), 'attack').length;
     };
     const ratio = count(10) / count(0);
-    expect(ratio).toBeGreaterThan(1.35);
-    expect(ratio).toBeLessThan(1.45);
+    expect(ratio).toBeGreaterThan(1.48); // +40 % et passif ★6 (+10 % de vitesse)
+    expect(ratio).toBeLessThan(1.6);
   });
-  it('talents : palier actif au niveau 5 seulement', () => {
-    // Captain Marvel, palier 1 option b : +15 % de dégâts.
-    expect(firstHit(MARVEL, { levels: { cmarvel: 4 }, talents: { cmarvel: ['b'] } })).toBeCloseTo(CM * 1.3);
-    expect(firstHit(MARVEL, { levels: { cmarvel: 5 }, talents: { cmarvel: ['b'] } })).toBeCloseTo(CM * 1.4 * 1.15);
+  it('talents : palier 3 actif au niveau 9 seulement', () => {
+    // Captain Marvel, palier 3 option a : +25 % de dégâts.
+    expect(firstHit(MARVEL, { levels: { cmarvel: 8 }, talents: { cmarvel: ['a', 'a', 'a'] } })).toBeCloseTo(CM * 1.7);
+    expect(firstHit(MARVEL, { levels: { cmarvel: 9 }, talents: { cmarvel: ['a', 'a', 'a'] } })).toBeCloseTo(CM * 1.8 * 1.25);
   });
   it('armure et bouclier', () => {
     const e = quiet();
@@ -162,8 +163,8 @@ describe('dégâts', () => {
 });
 
 describe('mana par élimination', () => {
-  it('10 pour un normal, 30 pour un gros, 100 pour un boss (plus la récompense de boss, voir archetypes.test.ts)', () => {
-    for (const [kind, boss, mana] of [['normal', undefined, 10], ['gros', undefined, 30], ['normal', 'jafar', 100]] as const) {
+  it('vague 1 : 10 pour un normal, 50 pour un gros (×5, Rush Royale), 100 pour un boss (plus la récompense de boss)', () => {
+    for (const [kind, boss, mana] of [['normal', undefined, 10], ['gros', undefined, 50], ['normal', 'jafar', 100]] as const) {
       const e = quiet();
       debugPlace(e, 0, 0, 'cmarvel', 7);
       debugSpawn(e, { hp: 1, kind, bossId: boss });
@@ -197,7 +198,7 @@ describe('pause et script', () => {
     const e = solo(MARVEL, { script: { enemyHpMultiplier: 0.5, startMana: 300, noLifeLoss: true } });
     expect(e.state.players[0]!.mana).toBe(300);
     step(e, 1);
-    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(50 * 0.7); // vague 1 : PV ×0,7 (début allégé)
+    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(waveHp(1) * 0.5); // vague 1
     for (const en of simState(e).enemies) en.distance = 29.99;
     const ev = step(e, 5);
     expect(ofType(ev, 'lifeLost')).toHaveLength(0);

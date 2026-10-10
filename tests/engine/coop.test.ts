@@ -34,8 +34,8 @@ describe('Coop : deux branches qui se rejoignent', () => {
 
   it('toutes les unités touchent tous les ennemis, sur les deux branches et le tronc', () => {
     const e = quiet(MARVEL, { mode: 'coop' });
-    debugPlace(e, 0, 0, 'merida');
-    debugPlace(e, 1, 0, 'merida');
+    debugPlace(e, 0, 0, 'hawkeye');
+    debugPlace(e, 1, 0, 'hawkeye');
     const onB = debugSpawn(e, { lane: 'b', distance: 10, hp: 1e9 });
     const trunk = debugSpawn(e, { lane: 'tronc', distance: 1, hp: 1e9 });
     const hits = ofType(step(e, 1), 'attack');
@@ -70,7 +70,7 @@ describe('Coop : deux branches qui se rejoignent', () => {
     e.apply({ type: 'gift', player: 'p1', slot: 5 });
     expect(ofType(step(e, 1), 'rejected')[0]!.reason).toMatch(/déjà offert/);
     // Nouvelle vague : de nouveau possible, sauf plateau plein.
-    simState(e).waveTimeLeft = 0.01;
+    simState(e).spawnCount = simState(e).waveMonsters; // vague nettoyée (Rush Royale : vague suivante)
     step(e, 2);
     for (let i = 0; i < GRID_SIZE; i++) if (!e.state.players[1]!.grid[i]) debugPlace(e, 1, i, 'cmarvel');
     e.apply({ type: 'gift', player: 'p1', slot: 5 });

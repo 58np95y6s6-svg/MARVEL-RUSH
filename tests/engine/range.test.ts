@@ -34,7 +34,7 @@ describe('portées d’attaque (§4.1)', () => {
     }
     expect(rangeLabel('ironman')).toBe('toute la map');
     expect(rangeLabel('hulk')).toBe('courte');
-    expect(rangeLabel('spiderman')).toBe('moyenne');
+    expect(rangeLabel('venom')).toBe('moyenne');
     expect(rangeLabel('thor')).toBe('longue');
     expect(rangeClass({})).toBe('globale'); // absent = globale
     expect(unitRange({ range: 2 })).toBe(2);
@@ -71,12 +71,12 @@ describe('portées d’attaque (§4.1)', () => {
 
   it('le boss aussi doit entrer dans la zone', () => {
     const e = quiet();
-    debugPlace(e, 0, 7, 'venom');
+    debugPlace(e, 0, 7, 'hulk');
     const boss = debugSpawn(e, { hp: 1e9, bossId: 'cruella', distance: 1 });
     boss.x.powerIn = 1e9;
     expect(attacksOf(e, 20)).toHaveLength(0);
     boss.distance = coveredDistance(2, RANGE_SHORT); // au-dessus de la case (2, 0)
-    debugPlace(e, 0, 2, 'venom');
+    debugPlace(e, 0, 2, 'hulk');
     const atk = attacksOf(e, 1);
     expect(atk.map((a) => a.slot)).toEqual([2]);
     expect(atk[0]!.targets).toEqual([boss.uid]);

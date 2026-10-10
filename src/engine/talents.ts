@@ -81,5 +81,21 @@ export function resolveUnitParams(
   unit: UnitId, base: Record<string, number>, level: number, choices: readonly ('a' | 'b')[] | undefined, stars = 0,
 ): Record<string, number> {
   const withTalents = applyTalentParams(base, activeTalents(unit, level, choices));
-  return applyTalentParams(withTalents, activeAwakeningPassives(unit, stars));
+  return applyLevelParams(applyTalentParams(withTalents, activeAwakeningPassives(unit, stars)), level);
+}
+
+/**
+ * Tableaux par niveau de Rush Royale : une clé `xPerLevel` ajoute `valeur × (niveau − 1)` au paramètre `x`
+ * (niveau de collection 1 = niveau de carte 7 de Rush Royale). Appliqué après les talents et les éveils.
+ */
+export function applyLevelParams(p: Record<string, number>, level: number): Record<string, number> {
+  const steps = Math.max(0, Math.round(level) - 1);
+  if (steps === 0) return p;
+  const out = { ...p };
+  for (const [key, v] of Object.entries(p)) {
+    if (!key.endsWith('PerLevel') || key.length <= 8) continue;
+    const k = key.slice(0, -8);
+    out[k] = (out[k] ?? 0) + v * steps;
+  }
+  return out;
 }

@@ -12,6 +12,7 @@ import {
   type CampaignLevel, type Constraint,
 } from './levels';
 import type { BattleOutcome } from './tracker';
+import { CHEST_TIERS, tierAt, type ChestTier } from '../meta/chests';
 
 export type Stars = [boolean, boolean, boolean];
 
@@ -122,10 +123,19 @@ export function currentChapter(p: Progress): number {
 // ---------------------------------------------------------------------------------------------
 // Récompenses
 
-export const SHARDS_PER_NEW_STAR = 30;
-export const SHARDS_PER_REPLAY_STAR = 10;
+/** Or par étoile, pour 10 vagues : multiplié par `lengthFactor` (un niveau de 50 vagues donne ×5). */
+export const GOLD_PER_NEW_STAR = 20;
+export const GOLD_PER_REPLAY_STAR = 8;
+/** Gemmes par étoile obtenue pour la première fois. */
+export const GEMS_PER_NEW_STAR = 2;
+/** Premières 3 étoiles d'un niveau : bonus. */
+export const THREE_STAR_BONUS = { gold: 150, gems: 5 };
+/** Durée relative d'un niveau (vagues / 10) : l'or des étoiles et l'XP lui sont proportionnels. */
+export const lengthFactor = (level: CampaignLevel): number => level.waves / 10;
 export const BOSS_LEVEL_CRYSTALS = 25;
 export const THANOS_CRYSTALS = 100;
+/** Gemmes du premier boss de chapitre vaincu. */
+export const BOSS_FIRST_GEMS = 100;
 /**
  * Niveau 8 du chapitre 6 (Maléfique) : la table du doc lui donne « 1 parchemin », mais le total
  * annoncé (7 par chapitre, 42 pour la campagne) ne le compte pas. On suit le total : à 0.
@@ -134,16 +144,37 @@ export const C6N8_SCROLLS = 0;
 
 export interface StarChest { key: string; threshold: number; reward: Reward }
 
+/** Coffres d'étoiles du chapitre (10, 20 et 30 ★). */
 export function chestReward(threshold: number, cardUnit: UnitId | null): Reward {
-  if (threshold === 10) return { shards: 150, scrolls: 1, ...(cardUnit ? { cards: [{ unit: cardUnit, count: 5 }] } : {}) };
-  if (threshold === 20) return { shards: 250, scrolls: 1, ...(cardUnit ? { cards: [{ unit: cardUnit, count: 10 }] } : {}) };
-  return { shards: 400, scrolls: 2, freePulls: [{ pack: 'choix', count: 1 }] };
+  if (threshold === 10) return { gold: 400, shards: 40, scrolls: 1, ...(cardUnit ? { cards: [{ unit: cardUnit, count: 5 }] } : {}) };
+  if (threshold === 20) return { gold: 800, shards: 60, scrolls: 1, ...(cardUnit ? { cards: [{ unit: cardUnit, count: 10 }] } : {}) };
+  return { gold: 1200, shards: 80, scrolls: 2, freePulls: [{ pack: 'choix', count: 1 }] };
 }
 
 export const chestKey = (chapter: number, threshold: number): string => `c${chapter}-${threshold}`;
 
+/** Coffre de victoire : rang de base par chapitre (1-2 bois, 3-4 argent, 5-6 or). */
+const CHAPTER_CHEST: readonly ChestTier[] = ['bois', 'bois', 'argent', 'argent', 'or', 'or'];
+
+/**
+ * Coffre de victoire d'un niveau : rang du chapitre, +1 pour 3 étoiles dans ce combat, +1 au niveau 5
+ * (lieutenant), +2 au niveau du boss (10, et 8 du chapitre 6). Rejouer : un rang de moins, contenu × 0,5.
+ * Cristaux dans le coffre à la première victoire d'un niveau de boss (lieutenant 10 ✦, boss 20 ✦).
+ */
+export function victoryChest(level: CampaignLevel, earned: Stars, firstWin: boolean): VictoryChest {
+  let i = CHEST_TIERS.indexOf(CHAPTER_CHEST[level.chapter - 1] ?? 'bois');
+  if (earned.every(Boolean)) i += 1;
+  if (level.boss?.kind === 'lieutenant') i += 1;
+  if (level.boss?.kind === 'boss') i += 2;
+  if (!firstWin) i -= 1;
+  const crystals = firstWin && level.boss ? (level.boss.kind === 'boss' ? 20 : 10) : 0;
+  return { tier: tierAt(i), scale: firstWin ? 1 : 0.5, crystals };
+}
+
+export interface VictoryChest { tier: ChestTier; scale: number; crystals: number }
+
 export interface RewardLine {
-  kind: 'etoiles' | 'coffre' | 'lieutenant' | 'boss' | 'cristaux' | 'xp';
+  kind: 'etoiles' | 'coffre' | 'lieutenant' | 'boss' | 'cristaux' | 'xp' | 'bonus';
   label: string;
   reward: Reward;
 }
@@ -158,6 +189,8 @@ export interface LevelRewards {
   firstWin: boolean;
   /** Clés des coffres d'étoiles obtenus. */
   chests: string[];
+  /** Coffre de victoire (tiré au hasard et crédité à part, voir src/campaign/store.ts). null si défaite. */
+  chest: VictoryChest | null;
 }
 
 function pickUnit(pool: UnitId[], seed: string): UnitId | null {
@@ -167,7 +200,7 @@ function pickUnit(pool: UnitId[], seed: string): UnitId | null {
 
 export function addReward(a: Reward, b: Reward): Reward {
   const out: Reward = { ...a };
-  for (const k of ['shards', 'crystals', 'scrolls', 'xp'] as const) {
+  for (const k of ['gold', 'shards', 'crystals', 'scrolls', 'xp'] as const) {
     const v = (a[k] ?? 0) + (b[k] ?? 0);
     if (v) out[k] = v;
   }
@@ -181,13 +214,15 @@ export function addReward(a: Reward, b: Reward): Reward {
 }
 
 /**
- * Récompenses d'un niveau (première victoire ou rejouer), sans modifier le profil.
- * - Éclats : +30 par étoile obtenue pour la première fois, +10 par étoile déjà obtenue et refaite.
+ * Récompenses fixes d'un niveau (première victoire ou rejouer), sans modifier le profil. Le coffre de
+ * victoire (`chest`) est tiré à part.
+ * - Or : +40 par étoile obtenue pour la première fois, +15 par étoile refaite, pour 10 vagues (× vagues / 10).
+ * - Gemmes : +5 par étoile nouvelle ; premières 3 étoiles du niveau : +300 or et +15 gemmes.
  * - Coffres d'étoiles du chapitre à 10, 20 et 30 étoiles.
  * - Niveau 5, 1re victoire : 1 parchemin + 10 cartes d'une unité du deck.
- * - Niveau 10, 1re victoire : 2 parchemins + 300 éclats + personnage garanti (ch. 6 : + 100 ✦).
+ * - Niveau 10, 1re victoire : 2 parchemins + 300 gemmes + personnage garanti (ch. 6 : + 100 ✦).
  * - ★★★ sur un niveau de boss (5, 10 et 8 du ch. 6), la première fois : 25 ✦.
- * - XP : 20 par victoire + 10 par étoile nouvelle, ×2 sur les niveaux 10.
+ * - XP : (20 par victoire + 10 par étoile nouvelle) × vagues / 10, ×2 sur les niveaux 10.
  */
 export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress | null, deck: UnitId[], seed = 0): LevelRewards {
   const p = profile ?? EMPTY_PROGRESS;
@@ -202,11 +237,21 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
     if (!now[i]) continue;
     if (prevStars[i]) replayStars++; else newStars++;
   }
-  const empty: LevelRewards = { lines, total: {}, prev: prevStars, stars, newStars: 0, firstWin: false, chests: [] };
+  const empty: LevelRewards = { lines, total: {}, prev: prevStars, stars, newStars: 0, firstWin: false, chests: [], chest: null };
   if (!won) return empty;
 
-  const shards = newStars * SHARDS_PER_NEW_STAR + replayStars * SHARDS_PER_REPLAY_STAR;
-  if (shards) lines.push({ kind: 'etoiles', label: newStars ? `${newStars} étoile${newStars > 1 ? 's' : ''} nouvelle${newStars > 1 ? 's' : ''}` : 'Étoiles refaites', reward: { shards } });
+  const len = lengthFactor(level);
+  const gold = Math.round((newStars * GOLD_PER_NEW_STAR + replayStars * GOLD_PER_REPLAY_STAR) * len);
+  const gems = newStars * GEMS_PER_NEW_STAR;
+  if (gold || gems) {
+    lines.push({
+      kind: 'etoiles', label: newStars ? `${newStars} étoile${newStars > 1 ? 's' : ''} nouvelle${newStars > 1 ? 's' : ''}` : 'Étoiles refaites',
+      reward: { ...(gold ? { gold } : {}), ...(gems ? { shards: gems } : {}) },
+    });
+  }
+  if (stars.every(Boolean) && !prevStars.every(Boolean)) {
+    lines.push({ kind: 'bonus', label: 'Premières 3 étoiles !', reward: { gold: THREE_STAR_BONUS.gold, shards: THREE_STAR_BONUS.gems } });
+  }
 
   const ch = getChapter(level.chapter)!;
   if (firstWin && level.n === 5) {
@@ -217,7 +262,7 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
     const hero = guaranteedHero(ch, (profile as Profile | null) ?? null);
     lines.push({
       kind: 'boss', label: `${level.boss?.name ?? 'Boss'} vaincu`,
-      reward: { scrolls: 2, shards: 300, heroes: [hero], ...(ch.boss === 'thanos' || ch.boss === 'darkseid' ? { crystals: THANOS_CRYSTALS } : {}) },
+      reward: { scrolls: 2, shards: BOSS_FIRST_GEMS, heroes: [hero], ...(ch.boss === 'thanos' || ch.boss === 'darkseid' ? { crystals: THANOS_CRYSTALS } : {}) },
     });
   }
   if (firstWin && level.chapter === 6 && level.n === 8 && C6N8_SCROLLS) {
@@ -242,11 +287,11 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
     }
   }
 
-  const xp = (20 + 10 * newStars) * (level.n === 10 ? 2 : 1);
+  const xp = Math.round((20 + 10 * newStars) * len) * (level.n === 10 ? 2 : 1);
   lines.push({ kind: 'xp', label: 'Expérience', reward: { xp } });
 
   const total = lines.reduce<Reward>((acc, l) => addReward(acc, l.reward), {});
-  return { lines, total, prev: prevStars, stars, newStars, firstWin, chests };
+  return { lines, total, prev: prevStars, stars, newStars, firstWin, chests, chest: victoryChest(level, now, firstWin) };
 }
 
 /** Applique le résultat d'un niveau sur une progression (mutation ; à appeler dans updateProfile). */

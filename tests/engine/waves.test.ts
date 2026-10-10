@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { bossWaveKind, createEngine } from '../../src/engine';
-import { debugPlace } from '../../src/engine/debug';
+import { debugPlace, debugSpawn } from '../../src/engine/debug';
 import { ROTATING_BOSSES } from '../../src/data/bosses';
-import { earlyHpMul, waveHp } from '../../src/data/enemies';
+import { ENEMIES, WAVE_RULES, killMana, monsterHp, waveGrowth, waveHp } from '../../src/data/enemies';
 import type { BossId } from '../../src/data/types';
 import type { Engine, EngineEvent, GameConfig } from '../../src/engine/types';
 import { MARVEL, ofType, setup, simState, solo, step } from './helpers';
@@ -27,39 +27,58 @@ function reachWave(e: Engine, w: number): EngineEvent[] {
 }
 
 describe('vagues', () => {
-  it('durent 30 s et les PV suivent 100 × 1,18^(vague-1), allégés au début (×0,7 en vague 1 → ×1 en vague 12)', () => {
-    const e = solo();
+  it('Coop de Rush Royale : 10 monstres par vague, PV qui montent à chaque monstre, vague suivante quand le terrain est nettoyé', () => {
+    expect(WAVE_RULES.monstersPerWave).toBe(10);
+    const e = solo(MARVEL, { script: { noLifeLoss: true } });
     expect(e.state.wave).toBe(1);
-    step(e, 1);
-    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(70);
-    expect(earlyHpMul(12)).toBe(1);
-    expect(waveHp(20)).toBeCloseTo(100 * Math.pow(1.18, 19));
-    const ev = stepKilling(e, 20 * 30);
-    expect(ofType(ev, 'waveStart').map((w) => w.wave)).toEqual([2]);
-    step(e, 1);
-    const normal = e.state.enemies.find((x) => x.kind === 'normal');
-    expect(normal!.maxHp).toBeCloseTo(118 * earlyHpMul(2));
+    const ev = step(e, 1);
+    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(waveHp(1));
+    for (let i = 0; i < 20 * 40; i++) {
+      for (const x of simState(e).enemies) x.speed = 0; // personne n'atteint la porte
+      ev.push(...step(e, 1));
+    }
+    expect(ofType(ev, 'enemySpawn')).toHaveLength(10);
+    // Chaque nouveau monstre est un peu plus solide (croissance de la vague répartie sur ses 10 monstres).
+    expect(monsterHp(1, 9, 10)).toBeCloseTo(waveHp(1) * Math.pow(WAVE_RULES.hpGrowth, 0.9));
+    expect(e.state.wave).toBe(1); // les monstres sont encore là
+    const next = stepKilling(e, 2);
+    expect(ofType(next, 'waveStart').map((w) => w.wave)).toEqual([2]);
+    expect(waveHp(2)).toBeCloseTo(waveHp(1) * WAVE_RULES.hpGrowth);
   });
 
-  it('les ennemis restants ne disparaissent pas à la fin de la vague', () => {
+  it('le taux de croissance des PV augmente toutes les 10 vagues ; mana d’élimination +10 toutes les 10 vagues (50 au plus)', () => {
+    const g = WAVE_RULES.hpGrowth - 1;
+    expect(waveGrowth(1)).toBeCloseTo(1 + g);
+    expect(waveGrowth(10)).toBeCloseTo(1 + g);
+    expect(waveGrowth(11)).toBeCloseTo(1 + g * (1 + WAVE_RULES.hpGrowthStep));
+    expect(waveGrowth(31)).toBeCloseTo(1 + g * (1 + 3 * WAVE_RULES.hpGrowthStep));
+    for (let w = 2; w <= 60; w++) expect(waveHp(w)).toBeGreaterThan(waveHp(w - 1));
+    expect([1, 10, 11, 21, 41, 51, 90].map(killMana)).toEqual([10, 10, 20, 30, 50, 50, 50]);
+    // Types de monstres de Rush Royale : rapide PV ×0,5 et vitesse ×2 ; gros PV ×5, mana ×5, 2 vies.
+    expect(ENEMIES.rapide).toMatchObject({ hpMul: 0.5, speedMul: 2 });
+    expect(ENEMIES.gros).toMatchObject({ hpMul: 5, mana: 5, lives: 2 });
+  });
+
+  it('la vague ne se termine pas tant qu’un monstre est en vie', () => {
     const e = solo(MARVEL, { script: { noLifeLoss: true } });
     step(e, 20 * 29);
     for (const en of simState(e).enemies) en.speed = 0;
-    const n = e.state.enemies.length;
-    step(e, 30);
-    expect(e.state.wave).toBe(2);
-    expect(e.state.enemies.length).toBeGreaterThanOrEqual(n);
+    step(e, 20 * 30);
+    expect(e.state.wave).toBe(1);
+    expect(e.state.enemies.length).toBeGreaterThan(0);
   });
 
   it('rythme : petit boss toutes les 5 vagues, gros toutes les 10, Thanos à la 50 en mode infini', () => {
     const inf: GameConfig = { mode: 'solo', seed: 1, mapId: 'x', players: [setup()] };
     const kinds = [5, 10, 15, 20, 7, 50].map((w) => bossWaveKind(inf, w));
     expect(kinds).toEqual(['petit', 'gros', 'petit', 'gros', null, 'gros']);
+    // Rush Royale (Coop) : après la vague 60, boss aux vagues paires, mini-boss aux impaires.
+    expect([61, 62, 63, 64].map((w) => bossWaveKind(inf, w))).toEqual(['petit', 'gros', 'petit', 'gros']);
     const custom = { ...inf, bossRhythm: { small: 3, big: 6, thanos: 12 } };
     expect([3, 6, 9, 12].map((w) => bossWaveKind(custom, w))).toEqual(['petit', 'gros', 'petit', 'gros']);
   });
 
-  it('petit boss : lieutenant géant du prochain gros boss (PV ×12), sans apparitions, vague suivante à sa mort', () => {
+  it('petit boss : lieutenant géant du prochain gros boss (PV ×12) avec des monstres communs, vague suivante au nettoyage', () => {
     const e = solo();
     const ev = reachWave(e, 5);
     const mini = ofType(ev, 'miniBossSpawn');
@@ -70,15 +89,21 @@ describe('vagues', () => {
     expect(boss.maxHp).toBeCloseTo(waveHp(5) * 12);
     expect(boss.minionOf).toBe(st.nextBigBoss);
     expect(e.state.phase).toBe('boss');
-    for (const x of st.enemies) if (x !== boss) x.hp = 0;
     boss.speed = 0;
-    const during = step(e, 20 * 40);
-    expect(ofType(during, 'enemySpawn')).toHaveLength(0);
+    const during: EngineEvent[] = [];
+    for (let i = 0; i < 20 * 40; i++) {
+      for (const x of st.enemies) if (x !== boss) x.hp = 0;
+      e.tick();
+      during.push(...e.drainEvents());
+    }
+    const commons = ofType(during, 'enemySpawn').length;
+    expect(commons).toBeGreaterThan(0);
+    expect(commons).toBeLessThanOrEqual(10);
     expect(e.state.wave).toBe(5);
     // Pouvoir affaibli du maître toutes les 10 s.
     expect(ofType(during, 'bossPower').length).toBeGreaterThanOrEqual(3);
     boss.hp = 0;
-    const after = step(e, 2);
+    const after = stepKilling(e, 2);
     expect(ofType(after, 'waveStart')[0]!.wave).toBe(6);
   });
 
@@ -147,11 +172,15 @@ describe('vagues', () => {
     expect(boss).toMatchObject({ giant: true, kind: 'sbire', minionOf: 'bouffon' });
     expect(boss.maxHp).toBeCloseTo(waveHp(2) * 8);
     boss.speed = 0;
-    for (const x of simState(e).enemies) if (x !== boss) x.hp = 0;
-    const during = step(e, 20 * 20);
+    const during: EngineEvent[] = [];
+    for (let i = 0; i < 20 * 20; i++) {
+      for (const x of simState(e).enemies) if (x !== boss) x.hp = 0;
+      e.tick();
+      during.push(...e.drainEvents());
+    }
     expect(ofType(during, 'bossPower')).toHaveLength(0);
     boss.hp = 0;
-    expect(ofType(step(e, 3), 'gameOver')[0]!.outcome).toBe('victoire');
+    expect(ofType(stepKilling(e, 20 * 30), 'gameOver')[0]!.outcome).toBe('victoire');
   });
 
   it('rage après 45 s : vitesse ×2', () => {
@@ -170,6 +199,9 @@ describe('vagues', () => {
     st.enemies[0]!.distance = 29.999;
     const ev = step(e, 2);
     expect(ofType(ev, 'lifeLost')[0]!.lives).toBe(2);
+    // Rush Royale : un gros monstre retire 2 vies.
+    debugSpawn(e, { kind: 'gros', hp: 1e9, distance: 29.999, speed: 2 });
+    expect(ofType(step(e, 2), 'lifeLost')[0]!.lives).toBe(0);
     const b = createEngine({ mode: 'solo', seed: 3, mapId: 'x', players: [setup()], script: { bossAtWave: 1, bossId: 'cruella' } });
     simState(b).enemies.find((x) => x.bossId)!.distance = 29.999;
     const ev2 = step(b, 2);

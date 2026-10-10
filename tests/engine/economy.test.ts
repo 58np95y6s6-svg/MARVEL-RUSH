@@ -30,7 +30,7 @@ describe('rendement du mana (« Mana + »)', () => {
     debugNoRange(x);
     debugPlace(x, 0, 0, 'cmarvel', 7);
     debugSpawn(x, { hp: 1, kind: 'gros' });
-    expect(ofType(step(x), 'kill')[0]!.mana).toBe(Math.round(30 * 1.4));
+    expect(ofType(step(x), 'kill')[0]!.mana).toBe(Math.round(50 * 1.4)); // gros : 5 × 10 (Rush Royale)
   });
 
   it('Coop : chaque joueur a son propre niveau ; sauvegardé', () => {

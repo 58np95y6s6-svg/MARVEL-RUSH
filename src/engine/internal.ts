@@ -10,10 +10,12 @@ import type { BoardGeometry } from './geometry';
 
 export const DT = 0.05; // 1 / TICKS_PER_SECOND
 export const EPS = 1e-9;
+/** Mana de départ : 150 (Rush Royale : 100 ; on garde 150 pour que le premier tirage permette 5 invocations). */
 export const START_MANA = 150;
 export const SUMMON_COST_START = 10;
 export const SUMMON_COST_STEP = 10;
-export const POWERUP_COSTS = [100, 200, 400, 700]; // passer au niveau 2, 3, 4, 5
+/** Rush Royale : 100 / 200 / 400 / 800 (doublement). Passer au niveau 2, 3, 4, 5. */
+export const POWERUP_COSTS = [100, 200, 400, 800];
 export const POWERUP_MAX = 5;
 export const POWERUP_DAMAGE = 0.15;
 /** Amélioration en partie : chaque niveau donne aussi +6 % de vitesse d'attaque au héros. */
@@ -36,7 +38,15 @@ export interface EnemyExtra {
   burnBy?: number;        // index du joueur qui a posé la brûlure
   bleed?: number; bleedFor?: number; bleedBy?: number;
   poison?: number; poisonFor?: number; poisonBy?: number;
-  knockFor?: number;      // recule (illusion de Loki)
+  knockFor?: number;      // recule (talents, équipes)
+  vuln?: number;          // dégâts subis en plus (Chimiste : Nick & Judy), jusqu'à la mort
+  netStacks?: number;     // toiles de Spider-Man (Trappeur) : cumuls actifs…
+  netFor?: number;        // …et leur durée restante
+  netVuln?: number;       // dégâts subis en plus par cumul de toile
+  teleports?: number;     // renvois au début du chemin déjà subis (Strange : Mage du portail)
+  bite?: number;          // morsure de Tiana (Vampire) : mana par seconde tant qu'il vit…
+  biteBy?: number;        // …versé à ce joueur
+  biteAcc?: number;       // mana accumulé pas encore versé (fractions)
   manaTag?: number;       // archétype « mana par élimination » : mana bonus versé à sa mort…
   manaTagBy?: number;     // …au joueur de l'unité qui l'a touché
   arrivalStun?: number; arrivalStunUnits?: number;
@@ -86,6 +96,8 @@ export interface SimState extends EngineState {
   nextUid: number;
   spawnTimer: number;
   spawnCount: number;
+  /** Monstres à faire apparaître dans la vague en cours (Rush Royale : 10 × script.enemyCountMultiplier). */
+  waveMonsters: number;
   waveElapsed: number;
   pendingBoss: BossId | null;
   /** Prochain gros boss (bandeau « N vagues avant le boss X »). */

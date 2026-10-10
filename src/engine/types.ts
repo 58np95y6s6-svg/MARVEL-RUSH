@@ -54,7 +54,14 @@ export interface GameConfig {
   /** Tutoriel et niveaux scénarisés : invocations imposées, ennemis affaiblis, etc. */
   script?: {
     forcedSummons?: UnitId[];   // les N premières invocations donnent ces unités, dans l'ordre
+    /** Multiplicateur de PV de tous les ennemis (boss compris). */
     enemyHpMultiplier?: number;
+    /** Multiplicateur d'effectif : > 1 = plus d'ennemis par vague (l'intervalle d'apparition est divisé d'autant). */
+    enemyCountMultiplier?: number;
+    /** Multiplicateur de PV des boss et des lieutenants, en plus de `enemyHpMultiplier`. */
+    bossHpMultiplier?: number;
+    /** Croissance des PV par vague (remplace WAVE_RULES.hpGrowth = 1,18) : campagne, niveaux longs. */
+    waveHpGrowth?: number;
     startMana?: number;
     noLifeLoss?: boolean;
     bossAtWave?: number;

@@ -53,7 +53,18 @@
 .sh-pill.down { animation: sh-down .4s ease-out; }
 @keyframes sh-up { 40% { transform: scale(1.2); background: rgba(58,168,58,.8); } }
 @keyframes sh-down { 40% { transform: scale(.92); background: rgba(232,65,59,.6); } }
-@media (max-width: 370px) { .sh-name { max-width: 58px; } .sh-xp { width: 54px; } .sh-pill { padding-right: 5px; } .sh-pill b { font-size: 14px; } }
+/* Or et gemmes en grand, cristaux et parchemins en petit, l'un sous l'autre. */
+.sh-pill.gold b { color: #ffe27a; }
+.sh-pill.gems b { color: #ffc2e2; }
+.sh-mini { display: grid; gap: 2px; }
+.sh-mini .sh-pill { height: 16px; padding: 0 5px 0 0; border-width: 2px; border-radius: 9px; }
+.sh-mini .sh-pill .ic { width: 15px; height: 15px; margin: -2px 0 -2px -3px; }
+.sh-mini .sh-pill b { font-size: 11.5px; -webkit-text-stroke: 2.5px var(--ink); }
+.sh-avatar.framed { box-shadow: inset 0 0 0 3px var(--frame), 0 0 8px var(--frame); }
+@media (max-width: 370px) {
+  .sh-name { max-width: 50px; } .sh-xp { width: 50px; }
+  .sh-pill { padding-right: 5px; } .sh-pill b { font-size: 14px; } .sh-money { gap: 3px; }
+}
 
 .sh-body { position: relative; overflow: hidden; min-height: 0; }
 .sh-screen { position: absolute; inset: 0; overflow: hidden; animation: sh-in .22s ease-out both; }
@@ -240,86 +251,10 @@
 .pc-group h4 small { margin-left: auto; font: 800 12px var(--body); }
 .pc-group.r-rare h4 { background: var(--rare); } .pc-group.r-epique h4 { background: var(--epique); } .pc-group.r-legendaire h4 { background: var(--legendaire); }
 
-/* ------------------------------------------------------------------ ouverture de pack */
-.po { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; overflow: hidden; color: #fff; animation: mk-fade .2s; }
-.po.out { opacity: 0; transition: opacity .22s; }
-.po-bg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, var(--c1) 0%, var(--c2) 45%, #0c0818 100%); }
-.po-bg::after {
-  content: ''; position: absolute; left: 50%; top: 45%; width: 200vmax; height: 200vmax; margin: -100vmax; opacity: .12;
-  background: repeating-conic-gradient(#fff 0 6deg, transparent 6deg 18deg); animation: po-spin 30s linear infinite;
-}
-.po-top { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; width: 100%; padding: calc(10px + var(--safe-top)) 12px 0; }
-.po-pack { font: 400 22px var(--display); paint-order: stroke fill; -webkit-text-stroke: 5px var(--ink); }
-.po-n { font: 900 15px var(--body); opacity: .9; }
-.po-skip {
-  margin-left: auto; padding: 7px 14px; border-radius: 14px; border: 3px solid var(--ink); cursor: pointer; color: #fff;
-  background: linear-gradient(#78b7ff, #3b6fd6); font: 400 18px var(--display); box-shadow: 0 4px 0 var(--ink);
-}
-.po-stage { position: relative; z-index: 1; flex: 1; width: 100%; display: grid; place-items: center; perspective: 1100px; min-height: 0; }
-.po-hint { position: relative; z-index: 2; margin: 0 0 calc(22px + var(--safe-bottom)); font: 800 15px var(--body); opacity: 0; transition: opacity .3s; }
-.po-hint.on { opacity: .85; animation: hm-pulse 1.6s infinite; }
-.po-card { --gc: #3c8bf0; position: relative; width: min(66vw, 280px); aspect-ratio: 3 / 4.2; }
-.po-card.g-epique { --gc: #b07aff; }
-.po-card.g-legendaire { --gc: #ffc23a; }
-.po-glow { position: absolute; inset: -10%; border-radius: 30%; background: radial-gradient(circle, var(--gc) 0%, transparent 65%); opacity: 0; transition: opacity .3s; }
-.po-burst {
-  position: absolute; left: 50%; top: 50%; width: 260%; aspect-ratio: 1; transform: translate(-50%, -50%); opacity: 0;
-  background: repeating-conic-gradient(rgba(255,214,90,.75) 0 7deg, transparent 7deg 20deg);
-  -webkit-mask: radial-gradient(circle, #000 18%, transparent 62%); mask: radial-gradient(circle, #000 18%, transparent 62%);
-  animation: po-spin 6s linear infinite; transition: opacity .4s;
-}
-.po-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.3,1.4,.5,1); }
-.po-back, .po-front { position: absolute; inset: 0; border-radius: 22px; border: 5px solid var(--ink); backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
-.po-back {
-  display: grid; place-content: center; gap: 4px; text-align: center;
-  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.35), transparent 60%), linear-gradient(135deg, var(--c1), var(--c2));
-  box-shadow: inset 0 0 0 5px rgba(255,255,255,.3), inset 0 0 0 12px rgba(0,0,0,.15);
-}
-.po-emblem { font: 400 72px var(--display); color: var(--gold); paint-order: stroke fill; -webkit-text-stroke: 10px var(--ink); filter: drop-shadow(0 5px 0 var(--ink)); }
-.po-back-name { font: 400 18px var(--display); paint-order: stroke fill; -webkit-text-stroke: 4px var(--ink); }
-.po-front { transform: rotateY(180deg); background: radial-gradient(circle at 50% 38%, rgba(255,255,255,.45), transparent 55%), linear-gradient(160deg, var(--u1), var(--u2)); }
-.po-front.r-rare { border-color: var(--rare); box-shadow: 0 0 0 4px var(--ink); }
-.po-front.r-epique { border-color: var(--epique); box-shadow: 0 0 0 4px var(--ink); }
-.po-front.r-legendaire { border-color: var(--legendaire); box-shadow: 0 0 0 4px var(--ink); }
-.po-art { position: absolute; inset: 0; background-size: cover; background-position: center top; }
-.po-front.has-fiche .po-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 45%, rgba(12,8,24,.92) 85%); }
-.po-fig { position: absolute; left: 50%; bottom: 22%; width: 96%; transform: translateX(-50%); filter: drop-shadow(0 6px 0 rgba(0,0,0,.35)); transition: transform .08s; }
-.po-fig.hit { transform: translateX(-50%) scale(1.05, .96); }
-.po-front.has-fiche .po-fig { left: 4%; width: 52%; bottom: 20%; transform: none; }
-.po-front.has-fiche .po-fig.hit { transform: scale(1.05, .96); }
-.po-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 10px 12px; display: grid; justify-items: center; gap: 2px; background: linear-gradient(transparent, rgba(12,8,24,.85) 40%); }
-.po-rar { padding: 0 10px; border-radius: 9px; border: 2.5px solid var(--ink); font: 900 12px var(--body); text-transform: uppercase; letter-spacing: .5px; }
-.r-rare .po-rar { background: var(--rare); } .r-epique .po-rar { background: var(--epique); } .r-legendaire .po-rar { background: var(--legendaire); }
-.po-name { font: 400 26px var(--display); line-height: 1.05; text-align: center; paint-order: stroke fill; -webkit-text-stroke: 6px var(--ink); }
-.po-tag { padding: 1px 10px; border-radius: 10px; border: 2.5px solid var(--ink); font: 400 16px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink); }
-.po-tag.new { background: linear-gradient(#ff7a6a, #e8413b); animation: hm-pulse 1s infinite; }
-.po-tag.dup { background: linear-gradient(#78b7ff, #3b6fd6); }
-/* chute, tremblement, lueur, retournement */
-.po-card.fall { animation: po-fall .56s cubic-bezier(.3,1.5,.6,1) both; }
-@keyframes po-fall { 0% { transform: translateY(-110vh) rotate(-14deg) scale(.8); } 70% { transform: translateY(0) rotate(2deg) scale(1.03, .95); } 100% { transform: none; } }
-.po-card.shake .po-glow { opacity: .9; animation: po-pulse .5s ease-in-out infinite alternate; }
-.po-card.shake:not(.flip) .po-inner { animation: po-shake .12s linear infinite; }
-.po-card.g-legendaire.shake:not(.flip) .po-inner { animation-duration: .08s; }
-.po-card.g-legendaire.shake .po-burst { opacity: 1; }
-.po-card.flip .po-inner { transform: rotateY(180deg); }
-.po-card.flip .po-glow { opacity: .75; }
-@keyframes po-shake { 25% { transform: translate(-3px, 1px) rotate(-1.5deg); } 75% { transform: translate(3px, -1px) rotate(1.5deg); } }
-@keyframes po-pulse { to { transform: scale(1.12); } }
+/* ouverture de pack : voir packOpening.css */
 @keyframes po-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 .pl-rays { animation-name: po-spin2; }
-.po-bg::after { animation-name: po-spin2; }
 @keyframes po-spin2 { to { transform: rotate(360deg); } }
-/* bilan du lot */
-.po-sum { width: 100%; max-width: 420px; padding: 0 12px; display: grid; gap: 12px; justify-items: center; }
-.po-sum h3 { margin: 0; font: 400 28px var(--display); color: var(--gold); paint-order: stroke fill; -webkit-text-stroke: 6px var(--ink); }
-.po-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px 8px; width: 100%; }
-.po-mini { position: relative; display: grid; gap: 3px; animation: po-mini .4s cubic-bezier(.3,1.5,.5,1) both; animation-delay: var(--d); }
-@keyframes po-mini { from { opacity: 0; transform: rotateY(90deg) scale(.6); } }
-.po-mini .hc { pointer-events: none; }
-.po-mini .hc-lv { font-size: 12px; }
-.po-out { text-align: center; font: 800 10px/1.1 var(--body); color: #fff; text-shadow: 0 1px 2px #000; overflow-wrap: anywhere; }
-.po-out.nouveau { color: #ffe27a; font-weight: 900; }
-.po-done { width: min(70vw, 260px); }
 
 /* ------------------------------------------------------------------ collection et deck */
 .co { position: absolute; inset: 0; display: flex; flex-direction: column; }
@@ -499,8 +434,12 @@
 .rw-list small { font-weight: 700; font-size: 12px; opacity: .9; }
 @keyframes rw-line { from { opacity: 0; transform: translateX(-20px) scale(.9); } }
 .rw-total { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 12px; }
-.rw-total span { display: flex; align-items: center; gap: 3px; padding: 2px 10px 2px 4px; border-radius: 12px; background: rgba(15,11,28,.7); border: 2.5px solid var(--ink); font: 400 16px var(--display); }
-.rw-total .ic { width: 22px; height: 22px; }
+.rw-chip { display: flex; align-items: center; gap: 3px; padding: 2px 10px 2px 4px; border-radius: 12px; background: rgba(15,11,28,.7); border: 2.5px solid var(--ink); font: 400 16px var(--display); }
+.rw-chip .ic { width: 22px; height: 22px; }
+.rw-chip.go { animation: rw-chip .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes rw-chip { 40% { transform: scale(1.18); background: rgba(58,168,58,.8); } }
+.rw-list { max-height: 40vh; overflow-y: auto; }
+.rw-list li.or { background: linear-gradient(90deg, rgba(255,210,63,.35), rgba(0,0,0,.2)); }
 .rw-heroes { margin: 0 0 10px; font-weight: 800; font-size: 13px; color: #ffe27a; }
 .rw-row { display: flex; gap: 10px; }
 .rw-row .mr-btn { flex: 1; }

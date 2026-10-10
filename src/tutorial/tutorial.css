@@ -1,0 +1,96 @@
+/* Tutoriel guidé (§5.0) et astuces : calque, trous de lumière, main animée, bulles du guide. */
+.tu { position: fixed; inset: 0; z-index: 9000; pointer-events: none; display: none; font-family: var(--body); }
+.tu.on { display: block; }
+.tu-dim { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .25s; }
+.tu-dim-r { fill: rgba(10, 6, 24, .68); }
+.tu.no-dim .tu-dim { opacity: 0; }
+.tu.no-dim .tu-rings { display: none; }
+.tu-rings i {
+  position: absolute; display: block; border: 3px solid #ffe46a;
+  box-shadow: 0 0 0 3px rgba(29,23,51,.6), 0 0 22px 4px rgba(255,214,74,.75);
+  animation: tu-ring 1.1s ease-in-out infinite alternate;
+}
+@keyframes tu-ring { from { opacity: .55; } to { opacity: 1; } }
+
+.tu-hand { position: absolute; left: 0; top: 0; width: 54px; height: 60px; opacity: 0; display: none; will-change: transform; filter: drop-shadow(0 4px 0 rgba(29,23,51,.45)); }
+.tu-hand.on { display: block; }
+.tu-hand svg { width: 100%; height: 100%; display: block; transform: rotate(-14deg); transform-origin: 30% 10%; }
+.tu-tapfx {
+  position: absolute; left: 6px; top: -10px; width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid #fff; opacity: calc(var(--press, 0) * .9); transform: scale(calc(.5 + var(--press, 0) * .7));
+}
+.tu-hand.nudge svg { animation: tu-nudge .4s ease-out; }
+@keyframes tu-nudge { 30% { transform: rotate(-24deg) scale(1.15); } }
+
+.tu-bubble {
+  position: absolute; left: 50%; top: 40%; transform: translateX(-50%);
+  width: min(370px, calc(100vw - 24px)); display: none; gap: 10px; align-items: flex-start;
+  padding: 10px 12px 10px 10px; border-radius: 20px; background: #fffaf0; color: var(--ink);
+  border: 4px solid var(--ink); box-shadow: 0 6px 0 rgba(29,23,51,.85), 0 12px 30px rgba(0,0,0,.35);
+  pointer-events: auto; animation: tu-in .28s cubic-bezier(.3,1.5,.6,1);
+}
+.tu-bubble.on { display: flex; }
+.tu-bubble.nudge { animation: tu-shake .35s; }
+@keyframes tu-in { from { opacity: 0; transform: translateX(-50%) scale(.85); } }
+@keyframes tu-shake { 25% { transform: translateX(calc(-50% - 6px)); } 75% { transform: translateX(calc(-50% + 6px)); } }
+.tu-guide { width: 58px; height: 58px; flex: none; border-radius: 50%; filter: drop-shadow(0 3px 0 rgba(29,23,51,.35)); }
+.tu-txt { flex: 1; min-width: 0; }
+.tu-txt p { margin: 2px 0 6px; font: 800 16px/1.28 var(--body); }
+.tu-txt b { color: #c9361f; }
+.tu-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tu-skip { border: 0; background: none; padding: 4px 0; font: 700 12px var(--body); color: #7a7190; text-decoration: underline; cursor: pointer; }
+.tu-next.mr-btn { font-size: 18px; padding: 6px 16px 7px; border-width: 3px; border-radius: 14px; box-shadow: 0 4px 0 #1d1733, inset 0 3px 0 rgba(255,255,255,.35); }
+
+.tu-confirm { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(10,6,24,.55); pointer-events: auto; animation: mk-fade .2s; }
+.tu-confirm-box {
+  width: min(330px, 100%); text-align: center; padding: 16px 16px 18px; border-radius: 22px;
+  background: #fffaf0; border: 4px solid var(--ink); box-shadow: 0 7px 0 rgba(29,23,51,.85);
+}
+.tu-confirm-box img { width: 64px; height: 64px; margin-top: -48px; }
+.tu-confirm-box h3 { margin: 4px 0 4px; font: 400 26px var(--display); }
+.tu-confirm-box p { margin: 0 0 14px; font: 700 15px/1.3 var(--body); color: #4a4262; }
+.tu-confirm-row { display: flex; gap: 10px; }
+.tu-confirm-row .mr-btn { flex: 1; font-size: 20px; padding: 8px 8px 10px; }
+
+/* Fin du combat tutoriel : éclats et XP expliqués. */
+.tu-win { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(12,8,24,.72); animation: mk-fade .3s; }
+.tu-win-box {
+  width: min(360px, 100%); text-align: center; color: #fff; padding: 18px 16px 20px; border-radius: 26px;
+  background: linear-gradient(#3b2c79, #241a4d); border: 4px solid var(--ink); box-shadow: 0 8px 0 rgba(29,23,51,.9);
+}
+.tu-win-box h2 { margin: 0 0 10px; font: 400 44px/1 var(--display); color: #ffe27a; text-shadow: 0 3px 0 var(--ink); }
+.tu-win-row { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; text-align: left; }
+.tu-win-row > div { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 16px; background: rgba(255,255,255,.1); }
+.tu-win-row .ic { width: 34px; height: 34px; flex: none; }
+.tu-win-row .ic svg { width: 100%; height: 100%; }
+.tu-win-row b { font: 400 22px var(--display); color: #ffe27a; display: block; }
+.tu-win-row span { font: 700 13px/1.3 var(--body); color: #e6defa; }
+.tu-win-box .mr-btn { width: 100%; }
+
+/* Rappels discrets en combat (« Pense à fusionner ! »). */
+.tu-remind {
+  position: fixed; left: 50%; bottom: calc(30% + var(--safe-bottom)); z-index: 50; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; pointer-events: none;
+  background: rgba(255,250,240,.96); border: 3px solid var(--ink); box-shadow: 0 4px 0 rgba(29,23,51,.8);
+  font: 800 15px var(--body); color: var(--ink); white-space: nowrap; animation: tu-remind 3.2s ease-in-out forwards;
+}
+.tu-remind img { width: 34px; height: 34px; }
+@keyframes tu-remind { 0% { opacity: 0; transform: translate(-50%, 12px); } 10%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -6px); } }
+
+/* Astuces (une seule fois chacune). */
+.tip { position: fixed; inset: 0; z-index: 8900; display: grid; place-items: center; padding: 16px; background: rgba(10,6,24,.5); animation: mk-fade .2s; }
+.tip-box {
+  position: relative; width: min(350px, 100%); padding: 16px 16px 14px; border-radius: 22px; color: var(--ink);
+  background: #fffaf0; border: 4px solid var(--ink); box-shadow: 0 7px 0 rgba(29,23,51,.85); animation: tu-pop .3s cubic-bezier(.3,1.5,.6,1);
+}
+@keyframes tu-pop { from { transform: scale(.85); opacity: 0; } }
+.tip-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.tip-head img { width: 54px; height: 54px; flex: none; }
+.tip-head small { display: block; font: 800 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: #9b59e6; }
+.tip-head h3 { margin: 0; font: 400 23px/1.05 var(--display); }
+.tip-box p { margin: 0 0 8px; font: 700 15px/1.35 var(--body); }
+.tip-box p b { color: #c9361f; }
+.tip-box ul { margin: 0 0 10px; padding-left: 18px; font: 700 14px/1.35 var(--body); }
+.tip-box .mr-btn { width: 100%; font-size: 20px; padding: 8px 10px 10px; margin-top: 4px; }
+.tu-win-row p { margin: 0; }
+.pf-tuto { display: block; width: 100%; margin-top: 6px; font-size: 20px; }

@@ -13,6 +13,7 @@ import {
 import { getMap } from '../maps';
 import { BattleScene, type Fit } from '../render/scene';
 import { createBattleTracker, type BattleOutcome } from '../campaign/tracker';
+import { notifyBattleReady, type BattleTutoApi } from './battleHooks';
 
 /** Résultat de fin de combat (campagne) : victoire, vague, vies restantes, deck et statistiques. */
 export type BattleResult = BattleOutcome;
@@ -34,7 +35,18 @@ export interface BattleOptions {
   title?: string;
   /** Fin de partie, avec le résultat et les statistiques. Renvoie true pour remplacer la fenêtre de fin par défaut. */
   onEnd?: (result: BattleResult) => boolean | void;
+  // ---- Ajouts Sauvegarde de partie (Campagne / Solo Infini, optionnels) ----
+  /** Reprise : état sérialisé (`engine.serialize()`) d'une partie sauvegardée, avec `config` identique. */
+  saved?: string;
+  /** Début de chaque vague ordinaire (hors boss) à partir de la 2e : l'état à sauvegarder. */
+  onWaveSave?: (wave: number, serialized: string) => void;
+  // ---- Ajouts Tutoriel (optionnels, sans effet si absents) ----
+  /** Scène prête : accès au moteur, aux cases à l'écran, au ralenti (tutoriel guidé, src/tutorial/). */
+  onReady?: (api: BattleTutoApi) => void;
 }
+
+// ---- Ajout Tutoriel : crochets optionnels (types et abonnés dans ./battleHooks, module léger) ----
+export { observeBattles, type BattleTutoApi, type ClientRect } from './battleHooks';
 
 const MANA_SVG = `<svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 C26 14 36 22 36 31 A16 16 0 0 1 4 31 C4 22 14 14 20 2Z" fill="#5fc4ff" stroke="#1d1733" stroke-width="4" stroke-linejoin="round"/><path d="M13 30 a8 8 0 0 0 6 9" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/></svg>`;
 const HEART_SVG = `<svg class="mr-heart" viewBox="0 0 58 52" aria-hidden="true"><path d="M29 48 C10 34 3 25 3 15 A12 12 0 0 1 29 9 A12 12 0 0 1 55 15 C55 25 48 34 29 48Z" fill="#ff4a5a" stroke="#1d1733" stroke-width="5" stroke-linejoin="round"/><ellipse cx="16" cy="16" rx="5" ry="3.5" fill="#fff" opacity=".7" transform="rotate(-30 16 16)"/></svg>`;
@@ -90,7 +102,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     ...o.config, // Campagne : configuration du niveau
   };
   config.mapId = map.id;
-  const engine: Engine = createEngine(config);
+  const engine: Engine = createEngine(config, o.saved); // Sauvegarde : reprise si `saved`
   const tracker = createBattleTracker(me); // Campagne : statistiques pour les contraintes d'étoiles
 
   // ---------------------------------------------------------------- squelette DOM
@@ -114,6 +126,8 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   let userSpeed = 1;
   try { if (localStorage.getItem('mr-speed') === '2') userSpeed = 2; } catch { /* stockage indisponible */ }
   const showSpeed = (): void => { speedBtn.textContent = `×${userSpeed}`; speedBtn.classList.toggle('on', userSpeed === 2); };
+  // Tutoriel : toujours ×1, bouton masqué.
+  if (config.mode === 'tutoriel') { userSpeed = 1; speedBtn.hidden = true; }
   showSpeed();
   speedBtn.addEventListener('click', () => {
     userSpeed = userSpeed === 2 ? 1 : 2;
@@ -176,6 +190,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const cardEls = deck.map((id) => {
     const c = el('button', `mr-card rarity-${UNITS[id].rarity}`, `<img alt="" src="${svgUrl(unitSvg(id, 0))}"><span class="lv mr-outline">Nv.1</span><span class="pct mr-outline-s"></span><span class="cost mr-outline">${MANA_SVG}<span>100</span></span>`);
     c.setAttribute('aria-label', `Améliorer ${UNITS[id].name}`);
+    c.dataset['tuto'] = `powerup-${id}`; // Tutoriel : repère du bouton d'amélioration
     cards.appendChild(c);
     return { id, el: c, lv: c.querySelector('.lv') as HTMLElement, pct: c.querySelector('.pct') as HTMLElement, cost: c.querySelector('.cost > span') as HTMLElement, costBox: c.querySelector('.cost') as HTMLElement };
   });
@@ -223,6 +238,10 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   let toastTimer = 0;
 
   const apply = (c: Command) => engine.apply(c);
+  // Tutoriel : ralenti, gel et abonnés aux événements (voir BattleTutoApi).
+  let tutoRate = 1;
+  let tutoHeld = false;
+  const tutoListeners = new Set<(evs: EngineEvent[]) => void>();
 
   // ---------------------------------------------------------------- mise à l'échelle de l'interface
   const onFit = (f: Fit) => {
@@ -416,6 +435,8 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
           if (bossWaveKind(engine.config, ev.wave) === null) {
             if ((engine.state.countdown ?? 0) > 0) pendingWavePop = ev.wave; // après le « GO ! »
             else popWave(ev.wave);
+            // Sauvegarde de partie : début de vague ordinaire (aucun boss en jeu).
+            if (o.onWaveSave && ev.wave > 1) o.onWaveSave(ev.wave, engine.serialize());
           }
           break;
         case 'bossSpawn':
@@ -654,8 +675,8 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
     // En Solo, la partie ralentit à 25 % pendant la lecture d'une bulle d'info.
-    const rate = speed * userSpeed * (infoSlot >= 0 ? 0.25 : 1);
-    acc += dt * rate;
+    const rate = speed * userSpeed * (infoSlot >= 0 ? 0.25 : 1) * tutoRate;
+    acc += tutoHeld ? 0 : dt * rate;
     let steps = 0;
     const maxSteps = Math.max(4, Math.ceil(speed * userSpeed * 3));
     while (acc >= DT && steps < maxSteps) {
@@ -669,6 +690,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       scene.afterTick(evs);
       scene.settleDrops();
       onEvents(evs);
+      if (tutoListeners.size && evs.length) for (const fn of tutoListeners) { try { fn(evs); } catch (err) { console.error(err); } }
     }
     if (steps >= maxSteps) acc = Math.min(acc, DT);
     if (infoSlot >= 0) {
@@ -698,6 +720,27 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       raf = requestAnimationFrame(frame);
       // Accès de débogage (tests de bout en bout).
       (window as unknown as { __marvelRush?: unknown }).__marvelRush = { engine, scene: s };
+      // Tutoriel : accès optionnel au combat.
+      const api: BattleTutoApi = {
+        engine, root: wrap, title: o.title,
+        cellRect(slot) {
+          const r = s.layout.board.cells[slot];
+          if (!r || destroyed) return null;
+          const hr = host.getBoundingClientRect();
+          const f = s.fit;
+          return { x: hr.left + f.x + r.x * f.scale, y: hr.top + f.y + r.y * f.scale, w: r.w * f.scale, h: r.h * f.scale };
+        },
+        onEvents(fn) { tutoListeners.add(fn); return () => { tutoListeners.delete(fn); }; },
+        setRate(r) { tutoRate = Math.max(0.05, r); },
+        hold(on) { tutoHeld = on; },
+        showMerges(slot) { if (!press) s.showHold(slot); },
+        hideMerges() { if (!press) s.hideHold(); },
+        isOver: () => over,
+        isDestroyed: () => destroyed,
+        toast: showToast,
+      };
+      o.onReady?.(api);
+      notifyBattleReady(api);
     } catch (err) {
       loading.innerHTML = `<span>Impossible de lancer le combat.</span>`;
       console.error(err);
@@ -709,6 +752,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       destroyed = true;
       signalGame(false);
       cancelAnimationFrame(raf);
+      tutoListeners.clear();
       clearTimeout(toastTimer);
       clearTimeout(holdTimer);
       document.removeEventListener('visibilitychange', onVis);

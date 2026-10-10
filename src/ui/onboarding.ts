@@ -65,7 +65,7 @@ export function mountOnboarding(root: HTMLElement, o: { onDone: () => void; onCa
 
   function stepStarter(): void {
     const p = getProfile();
-    header.innerHTML = `<h1 class="ob-title">Choisis ton équipe de départ</h1><p class="ob-sub">Bienvenue, <b>${esc(p?.name ?? '')}</b> ! Tu gardes ces 5 héros, et tu reçois <b>1 000 éclats</b> et <b>10 tirages offerts</b>.</p>`;
+    header.innerHTML = `<h1 class="ob-title">Choisis ton équipe de départ</h1><p class="ob-sub">Bienvenue, <b>${esc(p?.name ?? '')}</b> ! Tu gardes ces 5 héros, et tu reçois <b>1 000 gemmes</b>, <b>2 000 or</b> et <b>10 tirages offerts</b>.</p>`;
     content.innerHTML = (['marvel', 'disney'] as Starter[]).map((s, i) => `
       <button class="ob-starter ${s} ob-enter" style="--d:${i * 90}ms" data-s="${s}" data-tuto="ob-starter-${s}">
         <span class="ob-st-name">${s === 'marvel' ? 'Marvel' : 'Disney'}</span>

@@ -4,10 +4,14 @@
 //   #tirages     packs et ouverture   │ dans la coquille (en-tête + barre d'onglets, src/ui/shell.ts)
 //   #collection  collection et deck   │
 //   #decks       idem, deck en avant  │
+//   #quetes      quêtes du jour       │
+//   #route       Route des récompenses│
 //   #campagne[/<ch>[/<n>]]  campagne : chapitre, fiche de niveau ┘
 //   #campagne/<ch>/<n>/jouer[/<vitesse>]  combat d'un niveau de campagne (plein écran)
 //   #encyclopedie[/mechants|/heros/<id>|/mechant/<id>]  encyclopédie des héros et des méchants
+//   #tutoriel    tutoriel guidé, partie 1 : combat scénarisé (src/tutorial/)
 //   #combat      combat Solo Infini (deck actif du profil, récompenses de fin)
+//   #reprendre   reprise de la partie Solo sauvegardée (campagne ou Solo Infini, src/meta/savegame.ts)
 //   #dev/fast    combat accéléré (×8 ; #dev/fast/16 pour ×16)
 //   #dev/art     prévisualisation des personnages
 //   #dev/maps    prévisualisation des maps
@@ -15,10 +19,12 @@
 import './base.css';
 import './battle.css';
 import { STARTER_DECKS } from '../data/units';
+import type { GameConfig } from '../engine/types';
 import { playerSetupFor } from '../meta/decks';
 import { emitMeta } from '../meta/events';
 import { activeDeck, getProfile, loadActiveProfile } from '../meta/profile';
 import type { Shell, TabId } from './shell';
+import { afterOnboardingRoute, initTutorial, migrateTutorial, replayTutorial, wantsTutorialBattle } from '../tutorial';
 
 type Cleanup = () => void;
 let cleanup: Cleanup | null = null;
@@ -46,7 +52,9 @@ function teardown(): void {
   root.innerHTML = '';
 }
 
-const SHELL_ROUTES: Record<string, TabId> = { '': 'accueil', tirages: 'tirages', collection: 'collection', decks: 'collection', campagne: 'campagne' };
+const SHELL_ROUTES: Record<string, TabId> = {
+  '': 'accueil', tirages: 'tirages', collection: 'collection', decks: 'collection', campagne: 'campagne', quetes: 'accueil', route: 'accueil',
+};
 
 async function route(): Promise<void> {
   const h = location.hash.replace(/^#/, '');
@@ -94,31 +102,73 @@ async function route(): Promise<void> {
     teardown();
     const { mountOnboarding } = await import('./onboarding');
     cleanup = mountOnboarding(root, {
-      onDone: () => { creatingProfile = false; go('#tirages'); },
+      onDone: () => { creatingProfile = false; go(afterOnboardingRoute()); },
       onCancel: creatingProfile && p?.starter ? () => { creatingProfile = false; void route(); } : undefined,
     });
     emitMeta('screen', { route: 'creation' });
     return;
   }
 
-  if (h === 'combat' || h.startsWith('dev/fast')) {
+  // Tutoriel guidé (§5.0), partie 1 : combat scénarisé. Reprise à l'étape sauvegardée.
+  await migrateTutorial();
+  if (wantsTutorialBattle() || h === 'tutoriel') {
+    if (!wantsTutorialBattle()) { location.replace('#'); return; }
+    if (h !== 'tutoriel') { location.replace('#tutoriel'); return; }
+    teardown();
+    const { mountTutorialBattle } = await import('../tutorial/part1');
+    cleanup = mountTutorialBattle(root, { onDone: () => go('#tirages'), onExit: () => void route() });
+    emitMeta('screen', { route: 'tutoriel' });
+    return;
+  }
+
+  // Reprise de la partie sauvegardée : la campagne rouvre son niveau, le Solo Infini son combat.
+  if (h === 'reprendre') {
+    const { currentSavedGame } = await import('../meta/savegame');
+    const sg = currentSavedGame();
+    if (!sg) { location.replace('#'); return; }
+    if (sg.kind === 'campagne' && sg.levelId) {
+      teardown();
+      const ch = Number(/^c(\d+)/.exec(sg.levelId)?.[1] ?? 1);
+      const { mountCampaignBattle } = await import('./campaign');
+      cleanup = await mountCampaignBattle(root, sg.levelId, {
+        resume: sg,
+        onExit: (c) => location.replace(`#campagne/${c}`),
+        onReplay: () => location.replace(`#campagne/${ch}/${sg.levelId!.split('-n')[1]}/jouer`),
+        onNext: (id) => { const [c, n] = id.slice(1).split('-n'); location.replace(`#campagne/${c}/${n}`); },
+      });
+      emitMeta('screen', { route: 'campagne-combat' });
+      return;
+    }
+  }
+
+  if (h === 'combat' || h === 'reprendre' || h.startsWith('dev/fast')) {
     teardown();
     const m = /^dev\/fast\/?(\d+)?/.exec(h);
     const speed = m ? Number(m[1] ?? 8) : 1;
+    const { clearSavedGame, currentSavedGame, saveGame } = await import('../meta/savegame');
+    const resume = h === 'reprendre' ? currentSavedGame() : null;
     const { mountBattle } = await import('./battle');
     const { showInfiniteRewards } = await import('./rewards');
     // Méta : deck actif du profil, avec ses niveaux, talents et éveils.
     const deck = activeDeck(p, STARTER_DECKS.marvel);
+    // Configuration complète (gardée telle quelle dans la sauvegarde pour la reprise).
+    const cfg: GameConfig = resume ? resume.state.config : {
+      mode: 'solo', seed: (Math.random() * 2 ** 31) >>> 0, mapId: 'toits-new-york', prepTime: 3,
+      players: [{ id: 'p1', deck: deck.slice(), ...playerSetupFor(p, deck) }],
+    };
     const b = mountBattle(root, {
       deck,
       mapId: 'toits-new-york',
       speed,
       onHome: () => go(''),
-      onReplay: () => void route(),
-      config: { players: [{ id: 'p1', deck: deck.slice(), ...playerSetupFor(p, deck) }] },
+      onReplay: () => (h === 'reprendre' ? location.replace('#combat') : void route()),
+      config: cfg,
+      saved: resume?.state.engine,
+      onWaveSave: speed === 1 ? (w, s) => { void saveGame('infini', undefined, cfg, s, w).catch(() => undefined); } : undefined,
       onEnd: (r) => {
+        void clearSavedGame().catch(() => undefined);
         // Méta : récompenses du Solo Infini à la place de la fenêtre de fin par défaut.
-        window.setTimeout(() => void showInfiniteRewards(root, { won: r.won, wave: r.wave, bossKills: r.bossKills }, {
+        window.setTimeout(() => void showInfiniteRewards(root, { won: r.won, wave: r.wave, bossKills: r.bossKills, merges: r.merges, summons: r.summons }, {
           onReplay: () => void route(), onHome: () => go(''),
         }), 900);
         return true;
@@ -151,13 +201,15 @@ async function route(): Promise<void> {
     teardown();
     const { mountShell } = await import('./shell');
     const { openProfileSheet } = await import('./profileSheet');
-    shell = mountShell(root, {
+    // Deux routes simultanées (ex. navigation du tutoriel) : une seule coquille.
+    if (!shell) shell = mountShell(root, {
       go,
       onProfile: () => {
         if (!shell) return;
         void openProfileSheet(shell.overlay, {
           onNewProfile: () => { creatingProfile = true; void route(); },
           onSwitched: () => { teardown(); void route(); },
+          onReplayTutorial: () => void replayTutorial(),
         });
       },
     });
@@ -181,9 +233,15 @@ async function route(): Promise<void> {
       onChapter: (n) => go(`#campagne/${n}`),
       onPlay: (id) => { const [c, n] = id.slice(1).split('-n'); go(`#campagne/${c}/${n}/jouer`); },
     }));
+  } else if (h === 'quetes') {
+    const { mountQuests } = await import('./quests');
+    s.show(tab, route_, (host) => mountQuests(host, { overlay: s.overlay, go }));
+  } else if (h === 'route') {
+    const { mountRoad } = await import('./road');
+    s.show(tab, route_, (host) => mountRoad(host, { overlay: s.overlay, go }));
   } else {
     const { mountHome } = await import('./home');
-    s.show(tab, route_, (host) => mountHome(host, { go, onInfinite: () => go('#combat') }));
+    s.show(tab, route_, (host) => mountHome(host, { go, onInfinite: () => go('#combat'), overlay: s.overlay }));
   }
 }
 
@@ -201,5 +259,6 @@ function unlockScroll(on: boolean): void {
 export function startApp(el: HTMLElement): void {
   root = el;
   window.addEventListener('hashchange', () => void route());
+  initTutorial({ go });
   void loadActiveProfile().catch(() => null).then(() => route());
 }

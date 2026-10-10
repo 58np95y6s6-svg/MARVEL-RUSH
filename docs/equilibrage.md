@@ -130,7 +130,7 @@ Mesures (`scripts/simulate.ts`, Solo Infini, niveau 1, toits de New York) :
 
 **Économie** : « Mana + » (50/100/200/400/800, +20 % de mana par élimination et par vague et par niveau) ; récompense de boss = 2,5 / 5,5 / 8 × le coût d'invocation actuel (lieutenant / gros boss / Thanos), × rendement, pour chaque joueur ; amélioration d'un héros : +15 % de dégâts **et +6 % de cadence** par niveau.
 
-**Début de partie allégé** (le joueur trouvait le premier niveau très dur) : 150 de mana au départ (au lieu de 100 : supprime les défaites en vague 1 quand les premières invocations tombent au centre, hors de portée) ; PV ×0,7 en vague 1, remontant jusqu'à ×1 en vague 12 (`earlyHpStart`, `earlyHpUntil`) ; la rampe tardive (×1,18 par vague) est inchangée.
+**Début de partie allégé** (le joueur trouvait le premier niveau très dur) : 150 de mana au départ (au lieu de 100 : supprime les défaites en vague 1 quand les premières invocations tombent au centre, hors de portée) ; PV ×0,7 en vague 1, remontant jusqu'à ×1 en vague 12 (`earlyHpStart`, `earlyHpUntil`) ; la rampe tardive (×1,18 par vague) est inchangée. *(Allègement des PV remplacé en octobre 2026 par moins d’apparitions en début de partie : voir §2 quater.)*
 
 **Joueur automatique** : la règle « fusionne aussi quand le mana manque » est retirée (elle vidait le plateau : l'ancien bot faisait moins bien qu'un joueur au hasard) ; le bot achète « Mana + » et les améliorations quand elles coûtent moins que la prochaine invocation, copie / booste plateau plein (il n'utilise ni l'échange ni la formation exprès). Nouveau `--casual` (réagit une fois par seconde, fusionne au hasard plateau plein, n'achète pas « Mana + ») : approximation d'un joueur débutant. `--no-manaup` désactive l'achat de « Mana + ». Le simulateur affiche aussi le taux de passage des vagues 5, 10 et 15.
 
@@ -162,7 +162,16 @@ Mesures (Solo Infini, niveau 1, toits de New York, graines 1..100) :
 
 Aucun emballement économique : les decks « mana » restent sous le témoin (le mana ne compense pas les dégâts perdus). « Mana + » vaut +3 % (T0 : 16,75 → 17,20) à +9 % (deck mana : 14,70 → 15,99). À surveiller : Tiana un peu faible (−10 %) ; la Croissance de Venom en parties très longues (courbe en puissance 0,75, sans plafond) ; la Formation de Loki (+30 % et zone) n'est pas mesurée par le bot.
 
-## 2 quater. Extension DC : portées, archétypes et rééquilibrage (octobre 2026)
+## 2 quater. Premières vagues plus solides et campagne longue (octobre 2026)
+
+**Retour joueur** : « Dans les premières manches on one-shot quasi tous les sbires… c'est pas drôle. » Avant : 70 PV en vague 1 (allègement ×0,7), soit 1 à 3 coups pour un héros de départ (dégâts de rang 1, niveau 1 : 11 à 51, moyenne 25,2 pour les 10 héros des deux decks de départ). Après :
+- `earlyHpStart` 0,7 → **1** : **100 PV en vague 1**, soit **4 coups en moyenne** (Rox & Rouky 2, Tiana 9), puis ×1,18 par vague, sans palier. Test : `tests/engine/difficulty.test.ts` (≥ 3 coups en moyenne, ≤ 5, aucun héros de départ ne tue en un coup).
+- Accessibilité par le **nombre** d'ennemis plutôt que par des PV en papier : `spawnIntervalStart` 1,8 → **2,6 s**, `spawnIntervalStep` 0,06 → **0,1** (≈ 12 apparitions en vague 1 au lieu de 17 ; le plancher de 0,6 s est toujours atteint à la vague 21). Moins d'ennemis mais plus solides au début, puis de plus en plus nombreux et solides. Mana de départ inchangé (150).
+- Solo Infini, niveau 1, 60 parties : départ Marvel **16,0** (`--casual`) / 16,9 (référence) ; départ Disney **16,2** / 17,6 (avant : 15,4 / 16,6 et 15,9 / 17,7). Cible ≈ 14-16 pour le joueur occasionnel tenue.
+
+**Campagne longue** (« des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum ») : 10 → 50 vagues (`docs/campagne.md`). La difficulté d'un niveau = **effectif** (`script.enemyCountMultiplier`, divise l'intervalle d'apparition) et **PV** (`script.enemyHpMultiplier`, `script.bossHpMultiplier` pour les lieutenants et gros boss), en hausse régulière sur les 60 niveaux. Avec la rampe du Solo Infini (×1,18 par vague), aucune collection ne tiendrait 50 vagues (le deck méta niveau 9 meurt vers la vague 28) : la campagne adoucit la croissance par vague (`script.waveHpGrowth` : ×1,14 au chapitre 1, ×1,075 au 2, ×1,07 aux 3-5, ×1,0425 au 6). Repères mesurés (`--casual`, PV× et effectif× à 1) : le deck de départ niveau 1 tient ≈ 20 vagues à ×1,10, 26 à ×1,08, 40 à ×1,06 ; le deck Avengers niveau 8 (3 paliers) ≈ 42 à ×1,10, 53 à ×1,08, 69 à ×1,06. Taux de victoire par chapitre : `docs/campagne.md` §4.
+
+## 2 quinquies. Extension DC : portées, archétypes et rééquilibrage (octobre 2026)
 
 Après la fusion de `main` (portées, cadence par rang, archétypes, économie), les valeurs du §2 bis (mesurées en portée globale) sont remplacées par celles-ci.
 
@@ -301,20 +310,20 @@ Coffres du prompt §5.2, donnés **à chacun** à la fin de la partie, selon le 
 
 | Palier | Coffre (pour chacun) |
 |---|---|
-| Vague 10 | bronze : 150 éclats, 10 cartes |
-| Vague 20 | argent : 300 éclats, 1 parchemin, 20 cartes |
-| Vague 30 | or : 500 éclats, 2 parchemins, 1 carte Épique garantie |
-| Vague 40 | héroïque : 800 éclats, 3 parchemins, 1 skin au hasard |
-| Vague 50 (Thanos vaincu) | légendaire : 1 500 éclats, 1 Légendaire garanti, cadre « Vainqueur de Thanos » |
-| Ensuite, tous les 10 | +300 éclats et 1 parchemin |
-| **Vague 75** (extension DC) | **cosmique** : 2 000 éclats, 4 parchemins, 30 cartes, 1 Légendaire garanti |
-| **Vague 100** (Darkseid vaincu, extension DC) | **cosmique suprême** : 3 000 éclats, 5 parchemins, 40 cartes, 1 Légendaire garanti, cadre « Vainqueur de Darkseid » |
+| Vague 10 | coffre en bois (§6 bis) |
+| Vague 20 | coffre d'argent, 1 parchemin |
+| Vague 30 | coffre d'or, 2 parchemins, 1 carte Épique garantie |
+| Vague 40 | coffre héroïque, 3 parchemins, 1 skin au hasard |
+| Vague 50 (Thanos vaincu) | coffre légendaire, 1 Légendaire garanti, cadre « Vainqueur de Thanos » |
+| Ensuite, tous les 10 | coffre d'or et 1 parchemin |
+| Vague 75 (extension DC) | coffre légendaire, 4 parchemins, 1 Légendaire garanti |
+| Vague 100 (Darkseid vaincu, extension DC) | coffre légendaire, 5 parchemins, 1 Légendaire garanti, cadre « Vainqueur de Darkseid » |
 
 Les paliers sont des données (`src/data/milestones.ts`, `INFINITE_MILESTONES`) ; le moteur émet `milestone` tous les 10 et à la 75 (avec `chest`).
 
 **Extension DC — boss des modes infinis** : les 5 gros boss DC rejoignent la rotation (11 boss sans répétition). **Thanos** reste à la vague 50 (puis 150, 250…), **Darkseid** arrive à la vague **100** (puis toutes les 100) et a la priorité. Option de rotation (`GameConfig.bossPool`) : « Tous les univers » (`tous`, par défaut), « Marvel et Disney » (`marvel-disney` : 6 boss, Thanos à chaque palier final, pas de Darkseid) ou « DC seul » (`dc` : 5 boss, Darkseid à chaque palier final, 50 comprise). Cible : Darkseid (PV ×2 à la vague 100, soit ≈ 37 fois les PV de Thanos à la 50) n'est battu que par des decks méta niveau 10 avec éveils ★4 et plus : **< 10 %** en Solo, **15 – 30 %** en Coop.
 
-À cela s'ajoutent +10 éclats par vague pour chacun (§6.1). Les coffres se cumulent (atteindre la vague 30 donne bronze + argent + or).
+À cela s'ajoutent +15 or par vague pour chacun et le butin d'or des boss (§6.1 du prompt). Les coffres se cumulent (atteindre la vague 30 donne bronze + argent + or).
 
 **Cibles** (simulateur `--coop`, deux joueurs automatiques, 1 000 parties par paire de decks) :
 
@@ -327,12 +336,14 @@ Les paliers sont des données (`src/data/milestones.ts`, `INFINITE_MILESTONES`) 
 
 Règles de cohérence :
 - un duo tient en moyenne **+30 à +50 %** de vagues de plus que le meilleur des deux decks seul en Solo Infini (deux plateaux, mais des vagues Coop plus fortes : PV ×1,6 et 1,5 fois plus d'apparitions, à régler par l'agent Moteur) ;
-- **économie** : une partie Coop Infini rapporte environ **50 à 80 éclats par minute** et par joueur jusqu'à la vague 30, contre 15 à 25 en campagne Solo ; c'est voulu (jouer ensemble est la récompense), mais **les parchemins Coop** (0 à 6 par partie jusqu'à la vague 40) ne doivent pas dépasser **40 %** des parchemins gagnés par un profil sur une semaine de jeu type (mesurer avec les journaux de partie) ;
+- **économie** : une partie Coop Infini rapporte environ **50 à 80 or par minute** et par joueur jusqu'à la vague 30, contre 15 à 25 en campagne Solo ; c'est voulu (jouer ensemble est la récompense), mais **les parchemins Coop** (0 à 6 par partie jusqu'à la vague 40) ne doivent pas dépasser **40 %** des parchemins gagnés par un profil sur une semaine de jeu type (mesurer avec les journaux de partie) ;
 - **contribution** : aucun des deux joueurs ne doit faire plus de **65 %** des dégâts dans une paire de decks de même niveau (sinon la jonction des chemins avantage trop un côté).
 
 Paires de decks de référence pour la Coop : `depart-marvel` + `depart-disney` ; `meta-marvel` + `meta-disney` ; `agents-ailes` + `princesses` ; `arcanes` + `pixar-animaux` ; `controle` + `anti-boss`.
 
 ## 6. Économie et Éveils : simulation de la progression
+
+> **Octobre 2026 : deux monnaies.** Les « éclats » payaient à la fois les packs et les montées de niveau ; ils sont remplacés par l'**or** (montées de niveau) et les **gemmes** (packs), avec des coffres partout. La simulation à jour, faite avec les vraies règles du jeu, est au **§6 bis** ; ce qui suit est l'historique du réglage des éveils (toujours valable pour les cartes, copies et cristaux).
 
 Modèle de **valeur attendue** jour par jour (script de travail de l'agent Game design, à reprendre dans `scripts/simulate.ts --economie` par l'agent Moteur ou Méta). Il vérifie le rythme visé du §6.6 : premier ★1 dans la première semaine, ★5 sur un Rare en 2 à 3 mois, ★10 sur un Légendaire en plus de 8 mois.
 
@@ -391,6 +402,54 @@ Sensibilité (vague atteinte en Infini multipliée par k) : k = 0,8 → ★5 au 
 - Le Légendaire garanti du coffre légendaire (vague 50) accélère le ★10 Légendaire si le joueur le choisit ; le modèle le compte comme aléatoire. Avec un Légendaire **au choix**, le ★10 tomberait vers le jour 200 : garder le tirage aléatoire.
 - À mesurer dans les journaux de partie réels après un mois : vague moyenne atteinte en Infini, nombre de parties par jour, et revenu réel (éclats et ✦ par jour) pour recaler le facteur k.
 
+## 6 bis. Deux monnaies, coffres, quêtes et Route des récompenses (octobre 2026)
+
+Retour joueur : « La même monnaie pour pack et pour évoluer c'est nul… Les récompenses c'est pas dingue non plus. » Refonte façon Rush Royale :
+- **Or** (abondant) : seulement les montées de niveau (avec les cartes) ; **gemmes** : seulement les packs (100 le tirage, 900 les 10). Cristaux ✦ et parchemins inchangés.
+- Départ : 1 000 gemmes + 2 000 or + le lot de 10 offert. Profils existants : éclats → gemmes, or = 2 000 + 120/étoile + 60/vague de record + 1/XP (≤ 40 000), migration v1 → v2 (`migrateProfile`).
+
+### Chiffres (code : `src/meta/chests.ts`, `economy.ts`, `quests.ts`, `road.ts`, `src/campaign/progress.ts`)
+| Poste | Valeur |
+|---|---|
+| Montées de niveau (or) | 300, 700, 1 200, 2 000, 3 000, 4 500, 6 500, 9 000, 12 000 → **39 200 or** du niveau 1 au 10 (+ 21 cartes, inchangé) |
+| Coffres (or ±10 % · gemmes · cartes) | bois 120 · 4 · 6 R + 1 É (50 %) ; argent 250 · 8 · 12 R, 3 É, 1 L (10 %) ; or 500 · 16 · 24 R, 6 É, 1 L (35 %) ; héroïque 1 000 · 30 · 40 R, 13 É, 1 L (75 %) ; légendaire 2 000 · 60 · 60 R, 20 É, 2-3 L. Nouveau héros : 0 / 2 / 5 / 10 / 25 %. Piles : deck actif 6 fois sur 10 |
+| Campagne, victoire | coffre : rang du chapitre (1-2 bois, 3-4 argent, 5-6 or), +1 si 3 ★ dans le combat, +1 niveau 5, +2 niveau du boss ; rejouer : −1 rang, contenu × 0,5 ; 1re victoire d'un niveau de boss : +10 ✦ (lieutenant) / +20 ✦ (boss) dans le coffre |
+| Campagne, fixe | +20 or par étoile nouvelle (+8 refaite) × vagues / 10 ; +2 gemmes par étoile nouvelle ; premières 3 ★ : +150 or +5 gemmes ; coffres d'étoiles 10/20/30 ★ : 400/800/1 200 or + 40/60/80 gemmes (+ parchemins, cartes, tirage, inchangés) ; boss de chapitre : +100 gemmes |
+| Butin des boss (combat) | lieutenant 20 or, gros boss 60, Thanos 300 |
+| Solo Infini | 15 or par vague ; paliers 10/20/30/40/50 : coffres bois/argent/or/héroïque/légendaire (+ ✦ et parchemins inchangés), puis coffre d'or tous les 10 ; record battu : +500 or +50 gemmes |
+| Coffre quotidien | coffre d'argent + 40 gemmes + 10 ✦ (minuit, heure locale) |
+| Quêtes du jour | 3 par jour parmi 8, 250 à 500 or + 25 à 35 gemmes chacune ; coffre de la semaine (12 quêtes) : coffre légendaire + 150 gemmes + 40 ✦ |
+| Route des récompenses | niveau n : 100 + 40 n or, + 40 gemmes (pair) ou 30 ✦ (impair) ; tous les 5 : coffre (or, héroïque dès 20, légendaire dès 40) ; tous les 10 : lot de 10 tirages offert ; cadres aux niveaux 5, 10, 20, 30, 50 |
+
+### Simulation (`npx vite-node scripts/economie.ts -- --seeds 10 --days 400`, moteur `src/meta/economySim.ts`)
+Mêmes hypothèses de joueur régulier que plus haut, mais **avec les vraies fonctions du jeu** (coffres tirés au hasard à graine, cartes réparties sur la collection réelle, packs « Complet », montées de niveau et éveils) : 3 niveaux de campagne gagnés à 3 ★ par jour (campagne finie au jour 20), puis 2 niveaux rejoués par jour ; 1 partie de Solo Infini par jour (vague 15 → 20 → 30 au jour 60 → 40 au jour 120 → 50 au jour 240) ; coffre quotidien, 3 quêtes et coffre de la semaine ; la route réclamée chaque jour ; un lot de 10 acheté dès 900 gemmes ; l'or va d'abord au héros visé, puis au deck. Les éveils se mesurent héros par héros (un Rare du deck de départ, ou le premier Légendaire obtenu).
+
+| Revenu moyen par jour | Or | Gemmes | ✦ | Lot de 10 acheté tous les… |
+|---|---|---|---|---|
+| Jours 1-30 (campagne) | 6 260 | 326 | 52 | 2,5 jours |
+| Jours 31-90 | 4 790 | 217 | 43 | 4,3 jours |
+| Jours 91-240 | 6 150 | 246 | 77 | 3,7 jours |
+| Jours 241-400 | 8 550 | 307 | 192 | 2,9 jours |
+
+En moyenne sur 400 jours : **un lot de 10 tous les 3,3 jours**, plus les 10 tirages offerts par la route tous les 10 niveaux de compte (niveaux 10, 20, 30, 40 vers les jours 8, 18, 53, 101). Niveau de compte : 9 au jour 7, 24 au jour 30, 38 au jour 90, 62 au jour 240.
+
+Sources des jours 1 à 30 (or · gemmes · ✦ par jour) : coffres de victoire 1 780 · 54 · 7 ; quêtes 1 000 · 84 · 0 ; Solo Infini 770 · 21 · 10 ; étoiles et boss de campagne 700 · 42 · 14 ; butin des boss 610 · 0 · 0 ; route 510 · 14 · 9 ; coffres d'étoiles 480 · 36 · 0 ; coffre de la semaine 270 · 28 · 5 ; coffre quotidien 250 · 48 · 10.
+
+| Objectif | Visé | Obtenu (10 joueurs) | Sensibilité k = 0,8 / 1,15 |
+|---|---|---|---|
+| Premier ★1 | 1re semaine | **jour 8** | 8 / 8 |
+| ★5 sur un Rare | 60 – 90 jours | **jour 84** | 105 / 77 |
+| ★10 sur un Légendaire | > 240 jours | **jour 287** (≈ 9,4 mois) | 411 / 236 |
+| Lot de 10 avec les gemmes | tous les 3 – 4 jours | **3,3 jours** en moyenne | 2,7 jours sur le 1er mois dans les deux cas |
+| Deck niveau 9 | fin de campagne (≈ jour 21) | **9,2 au jour 21**, 10 au jour 30 | — |
+
+Garde-fous automatiques : `tests/meta/economySim.test.ts` (★1 ≤ 12 jours, ★5 Rare entre 55 et 100 jours, un lot de 10 tous les 2,5 à 4,5 jours sur 120 jours, pas de ★10 Légendaire avant 245 jours), `tests/meta/rewards.test.ts` (coffres à graine, quêtes, route, migration).
+
+Points de vigilance :
+- Le premier mois est le plus généreux (campagne + route) : c'est voulu, la collection se construit. Si les packs paraissent trop faciles, baisser d'abord les gemmes des coffres d'étoiles (40/60/80).
+- L'or ne limite plus la fin de partie (8 500 or par jour au-delà du jour 240) : il sert alors à monter toute la collection (28 héros × 39 200 or ≈ 1,1 million). Si l'or s'accumule, ajouter un coût en or aux éveils.
+- Les Légendaires du coffre de palier 50 et des coffres légendaires accélèrent le ★10 si k ≥ 1,15 (jour 236) : garder le Légendaire garanti du palier 50 au hasard.
+
 ## 7. Boucle de réglage
 
 1. Lancer tous les decks de référence au niveau 1 puis au niveau 5 (1 000 parties chacun).
@@ -398,3 +457,40 @@ Sensibilité (vague atteinte en Infini multipliée par k) : k = 0,8 → ★5 au 
 3. Corriger ensuite les unités hors bande (IP), une variable à la fois, par pas de 10 %.
 4. Relancer ; consigner chaque changement (valeur avant / après, effet mesuré) dans `docs/journal.md`.
 5. Vérifier la campagne (`docs/campagne.md`, §4) après chaque réglage d'ennemis ou de boss.
+
+## 8. Profils et monstres de Rush Royale (octobre 2026)
+
+> Agent Moteur / équilibrage. Demande : « copie complète Rush Royale ». Données et sources :
+> `docs/rush-royale-donnees.md` ; correspondance des 28 héros : `docs/rush-royale-mapping.md`.
+
+**Ce qui change dans le moteur**
+
+- **Rang de fusion** (règle Rush Royale) : intervalle ÷ rang, dégâts par coup indépendants du rang
+  (`RANK_ATTACK_SPEED = 1`, `RANK_DAMAGE = 0`) ; jusqu'à 3 coups par tick pour les cadences élevées.
+- **Unités** : dégâts de base = niveau de carte 7 de Rush Royale (notre niveau 1) ; compétences, ciblage et
+  intervalles de l'unité Rush Royale correspondante ; tableaux par niveau via les clés `…PerLevel`, effets
+  par rang via `…PerRank`. Statue (Captain America), Bannière (Pocahontas) et Meule (Raiponce) n'attaquent pas.
+- **Monstres** (Coop de Rush Royale) : 10 monstres par vague (× `enemyCountMultiplier`), vague suivante
+  quand le terrain est nettoyé ; PV qui montent à chaque nouveau monstre, taux de croissance +25 % (de sa
+  valeur de départ) à chaque bloc de 10 vagues ; rapide PV ×0,5 vitesse ×2 ; gros PV ×5, vitesse ×0,8,
+  mana ×5, 2 vies ; mana d'élimination 10, +10 toutes les 10 vagues, 50 au plus ; mini-boss avec des
+  monstres communs ; après la vague 60 (modes infinis), boss aux vagues paires et mini-boss aux impaires.
+- **Valeurs Marvel Rush** (Rush Royale ne les publie pas) : PV de base 200 en vague 1, croissance ×1,17 par
+  vague au 1er bloc (`WAVE_RULES.hpGrowth`, remplacée par `script.waveHpGrowth` en campagne) ; PV des boss
+  inchangés (×12 lieutenant, ×25 gros boss, × PV d'un normal au début de la vague).
+- Économie : améliorations 100/200/400/**800** (Rush Royale) ; mana de départ gardé à 150 (Rush Royale :
+  100 ; à 100, le deck Disney de départ perdait parfois dès la vague 1).
+
+**Mesures** (simulateur, octobre 2026)
+
+| Mesure | Avant | Après |
+|---|---|---|
+| Solo Infini, départ Marvel, niveau 1 (référence / `--casual`, 20 parties) | 16,9 / 16,0 | 19,9 / 17,8 |
+| Solo Infini, départ Disney, niveau 1 (référence / `--casual`) | 17,6 / 16,2 | 17,4 / 14,3 |
+| Campagne `--casual --attendu`, victoire moyenne (pire niveau), 12 parties par niveau | — | ch. 1 99 % (92 %) · ch. 2-4 100 % · ch. 5 87 % (58 %, c5-n10) · ch. 6 98 % (92 %) |
+| Deck de départ niveau 1 sur le chapitre 3 (`--casual`, 8 parties) | 17 % | 40 % (avec la croissance relevée ci-dessous ; 100 % sans) |
+
+Réglage de campagne (`src/campaign/levels.ts`, `DIFFICULTY.growth`) : ×1,14 / **1,10 / 1,10 / 1,09** /
+1,07 / 1,0425 (avant : 1,075 / 1,07 / 1,07 aux chapitres 2 à 4) pour que le deck de départ peine dès le
+chapitre 3. Le deck Disney de départ est plus faible que le Marvel (deux soutiens qui n'attaquent pas ou peu :
+Bannière, Chaudron) : c'est le profil Rush Royale.

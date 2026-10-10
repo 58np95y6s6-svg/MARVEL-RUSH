@@ -1,5 +1,7 @@
 // Simulateur d'équilibrage headless (agent Game design).
-// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--campagne <c1-n3|c1|all>]
+// Usage : npx vite-node scripts/simulate.ts -- <id1> <id2> <id3> <id4> <id5> <parties> [--coop] [--casual] [--no-manaup] [--max <vague>] [--seed <n>] [--level <n>] [--campagne <c1-n3|c1|all>] [--attendu]
+// --attendu (avec --campagne) : chaque chapitre est joué avec le deck, le niveau de collection et les
+// paliers de talents attendus à ce stade (tableau EXPECTED, docs/campagne.md §2).
 // --campagne : joue un niveau de campagne (ou tous ceux d'un chapitre, ou les 60) et affiche le taux de
 // victoire et la part de chaque étoile (contraintes évaluées comme en jeu, src/campaign).
 // --casual : joueur « occasionnel » (réagit une fois par seconde, ne fusionne que plateau plein et au hasard,
@@ -32,6 +34,8 @@ const flag = (name: string): string | undefined => {
 };
 const coop = argv.includes('--coop');
 if (coop) argv.splice(argv.indexOf('--coop'), 1);
+const expected = argv.includes('--attendu');
+if (expected) argv.splice(argv.indexOf('--attendu'), 1);
 const casual = argv.includes('--casual');
 if (casual) argv.splice(argv.indexOf('--casual'), 1);
 const noManaUp = argv.includes('--no-manaup');
@@ -181,20 +185,36 @@ function play(seed: number): number {
   return engine.state.result?.wave ?? engine.state.wave;
 }
 
+/** Collection attendue par chapitre (docs/campagne.md §2) : deck, niveau de collection, paliers de talents (option a). */
+const EXPECTED: Record<number, { deck: UnitId[]; level: number; tiers: number }> = {
+  1: { deck: ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow'], level: 1, tiers: 0 },   // deck de départ
+  2: { deck: ['spiderman', 'hawkeye', 'cmarvel', 'widow', 'bucky'], level: 2, tiers: 0 },    // + 1 Épique
+  3: { deck: ['thor', 'spiderman', 'hawkeye', 'cmarvel', 'bucky'], level: 4, tiers: 0 },     // + Thor (ch. 2)
+  4: { deck: ['thor', 'ironman', 'spiderman', 'bucky', 'widow'], level: 5, tiers: 1 },       // 2 Légendaires, palier 1
+  5: { deck: ['ironman', 'thor', 'hulk', 'cap', 'widow'], level: 6, tiers: 2 },              // équipe complète, palier 2
+  6: { deck: ['ironman', 'thor', 'hulk', 'cap', 'widow'], level: 8, tiers: 3 },              // deck « méta », palier 3
+};
+
 if (campaignArg) {
   const targets: CampaignLevel[] = campaignArg === 'all' ? LEVELS
     : /^c\d+$/.test(campaignArg) ? LEVELS.filter((l) => `c${l.chapter}` === campaignArg)
       : [getLevel(campaignArg)].filter((l): l is CampaignLevel => !!l);
   if (!targets.length) throw new Error(`Niveau de campagne inconnu : ${campaignArg}`);
-  console.log(`Campagne · deck ${deck.join(', ')} · niveau de collection ${level} · ${games} parties par niveau${casual ? ' · joueur occasionnel' : ''}`);
+  console.log(`Campagne · ${expected ? 'collection attendue par chapitre' : `deck ${deck.join(', ')} · niveau de collection ${level}`} · ${games} parties par niveau${casual ? ' · joueur occasionnel' : ''}`);
+  const byChapter = new Map<number, number[]>();
   for (const lv of targets) {
-    let wins = 0;
+    const exp = expected ? EXPECTED[lv.chapter]! : null;
+    const d = exp ? exp.deck : deck;
+    const lvlN = exp ? exp.level : level;
+    const talents = exp && exp.tiers ? Object.fromEntries(d.map((u) => [u, Array.from({ length: exp.tiers }, () => 'a' as const)])) : {};
+    let wins = 0, waveSum = 0;
     const st = [0, 0, 0];
     for (let g = 0; g < games; g++) {
       const seed = seed0 + g;
       botRng = seed * 7919 + 17;
-      const cfg = levelConfig(lv, deck, null, seed);
-      cfg.players[0]!.levels = Object.fromEntries(deck.map((u) => [u, level]));
+      const cfg = levelConfig(lv, d, null, seed);
+      cfg.players[0]!.levels = Object.fromEntries(d.map((u) => [u, lvlN]));
+      cfg.players[0]!.talents = talents;
       const engine = createEngine(cfg);
       const tr = createBattleTracker();
       while (!engine.state.result) {
@@ -205,12 +225,18 @@ if (campaignArg) {
         tr.after(engine.state, engine.drainEvents());
       }
       const res = engine.state.result!;
-      const stars = evaluateStars(lv, { ...tr.stats(engine.state), won: res.outcome === 'victoire', wave: res.wave, livesLeft: engine.state.lives, deck, seed });
+      const stars = evaluateStars(lv, { ...tr.stats(engine.state), won: res.outcome === 'victoire', wave: res.wave, livesLeft: engine.state.lives, deck: d, seed });
+      waveSum += res.wave;
       if (stars[0]) wins++;
       stars.forEach((x, i) => { if (x) st[i]!++; });
     }
     const pc = (n: number) => `${String(Math.round((100 * n) / games)).padStart(3)} %`;
-    console.log(`${lv.id.padEnd(7)} ${String(lv.waves).padStart(2)} vagues ×${lv.hpMul.toFixed(2)} · victoire ${pc(wins)} · ★★ ${pc(st[1]!)} · ★★★ ${pc(st[2]!)}${wins ? ` (${Math.round((100 * st[2]!) / wins)} % des victoires)` : ''}`);
+    (byChapter.get(lv.chapter) ?? byChapter.set(lv.chapter, []).get(lv.chapter)!).push(wins / games);
+    console.log(`${lv.id.padEnd(7)} ${String(lv.waves).padStart(2)} vagues PV×${lv.hpMul.toFixed(2)} eff×${lv.countMul.toFixed(2)} boss×${lv.bossHpMul.toFixed(2)} g${lv.growth} · vague moy. ${(waveSum / games).toFixed(1)} · victoire ${pc(wins)} · ★★ ${pc(st[1]!)} · ★★★ ${pc(st[2]!)}${wins ? ` (${Math.round((100 * st[2]!) / wins)} % des victoires)` : ''}`);
+  }
+  for (const [c, rates] of byChapter) {
+    const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+    console.log(`Chapitre ${c}${expected ? ` (niveau ${EXPECTED[c]!.level}, ${EXPECTED[c]!.tiers} palier(s))` : ''} : victoire moyenne ${Math.round(100 * avg)} % · pire niveau ${Math.round(100 * Math.min(...rates))} %`);
   }
   process.exit(0);
 }

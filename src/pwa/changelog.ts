@@ -29,6 +29,41 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-10j',
+    title: 'Copie Rush Royale, or et gemmes, coffres',
+    date: '10 octobre 2026',
+    items: [
+      'Les 28 héros reprennent le profil d’une unité de Rush Royale : Thor l’éclair du Thunderer (et le Marteau de la foi en talent), Hulk le Minotaure, Iron Man la Tesla, Venom l’Inquisitrice, Loki l’Arlequin…',
+      'Règle de fusion de Rush Royale : chaque rang fait attaquer plus souvent ; Captain America, Pocahontas et Raiponce deviennent des soutiens qui n’attaquent pas.',
+      'Vagues comme en Coop de Rush Royale : 10 monstres par vague, de plus en plus solides, vague suivante une fois le terrain nettoyé, gros monstres à 5 fois les PV qui coûtent 2 vies.',
+      'Deux monnaies : l’or fait monter tes héros de niveau, les gemmes ouvrent les packs. Tes éclats deviennent des gemmes, et tu reçois de l’or selon ta progression.',
+      'Des coffres partout (bois, argent, or, héroïque, légendaire) : à chaque victoire de campagne, aux paliers du Solo Infini et chaque jour. Ils éclatent et le butin s’envole dans tes compteurs.',
+      'Nouvelles quêtes du jour (avec un coffre de la semaine) et Route des récompenses : chaque niveau de compte rapporte quelque chose. Les boss vaincus lâchent de l’or.',
+    ],
+  },
+  {
+    id: '2026-10-10i',
+    title: 'Campagne longue et tutoriel',
+    date: '10 octobre 2026',
+    items: [
+      'Campagne : des parties enfin longues, de 10 à 15 vagues au chapitre 1 jusqu’à 50 au chapitre 6, avec un lieutenant toutes les 5 vagues, un gros boss toutes les 10, et Thanos à la vague 50.',
+      'La difficulté monte au fil des 60 niveaux : plus de sbires et plus de points de vie (boss compris). Les sbires des premières vagues ne tombent plus en un coup.',
+      'Partie sauvegardée à chaque vague (campagne et Solo Infini) : « Reprendre la partie » depuis l’accueil ou la campagne.',
+      'Nouveau tutoriel guidé avec Spider-Man ou Vaïana : un premier combat sans risque pour apprendre à invoquer, fusionner, améliorer et battre un boss, puis ton premier pack et ton deck.',
+      'Des astuces apparaissent une seule fois au bon moment (ciblage, talents, bonus d’équipe, pouvoirs des boss, héros spéciaux, vitesse ×2). Le tutoriel se revoit depuis ton profil.',
+    ],
+  },
+  {
+    id: '2026-10-10h',
+    title: 'Ouverture de packs',
+    date: '10 octobre 2026',
+    items: [
+      'Ouverture de pack façon booster : déchire le sachet du doigt, la lumière qui s’en échappe annonce ta meilleure carte (et ça tremble fort pour un Légendaire !).',
+      'Révélation des cartes : retourne-les une à une ou d’un coup, les Épiques et Légendaires arrivent en grand (ralenti doré pour un Légendaire), avec « NOUVEAU ! » ou la barre de cartes qui se remplit.',
+      'Nouveau récapitulatif du lot avec les nouveaux héros en tête, et un bouton « Encore ! » pour enchaîner un tirage.',
+    ],
+  },
+  {
     id: '2026-10-10g',
     title: 'Campagne, tirages et collection',
     date: '10 octobre 2026',

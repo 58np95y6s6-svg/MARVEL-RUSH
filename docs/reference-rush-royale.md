@@ -93,7 +93,7 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 | **Annonce du boss** | Bandeau « 1 vague avant le boss X » la vague d'avant ; à l'arrivée : annonce plein écran avec le portrait, le nom et l'écran qui tremble ; barre de PV du boss. | Identique, plus la transition vers l'arène (§7 bis). Pour Thanos : illustration de fiche dans l'annonce (§6.5). |
 | **Pouvoir de boss** | Le boss s'arrête, joue une animation, une icône/effet apparaît sur les unités touchées. | Identique ; l'unité touchée porte l'icône de l'effet (spirale = hypnose, Zzz = sommeil, étoiles = étourdi) et un compte à rebours circulaire. |
 | **Perte de vie** | La porte du château tremble, un cœur se brise. | Identique, plus une vibration courte (si activée). |
-| **Fin de partie** | Écran Victoire/Défaite, trophées et récompenses qui volent dans les compteurs, bouton « Continuer ». | Écran Victoire/Défaite, vague atteinte, étoiles (campagne), éclats, XP, bouton « Rejouer » et « Continuer ». |
+| **Fin de partie** | Écran Victoire/Défaite, trophées et récompenses qui volent dans les compteurs, bouton « Continuer ». | Écran Victoire/Défaite, vague atteinte, étoiles (campagne), coffre à ouvrir puis or, gemmes et cartes qui volent dans la barre des monnaies, XP, bouton « Rejouer » et « Continuer ». |
 
 ---
 
@@ -128,7 +128,7 @@ D'après la capture (gauche, partie à deux plateaux avec le bandeau « 1 wave b
 | **Navigation par onglets en bas** | Boutique · Cartes (deck/collection) · **Combat au centre** · Clan · Événements/Quêtes. | **Adapté** : Tirages · Collection/Deck · **Combat** (centre) · Campagne · Profil (§0). |
 | **Écran Deck/Collection** | Onglets « Unités / Héros / Emotes », rangée des 5 cartes du deck avec « Lv.13 », encart de l'unité choisie, grille de collection à cadre de rareté avec barre de cartes (« 0/2 »). Barre du haut : niveau du joueur, or, gemmes, chacun avec « + ». | **À reproduire** avec onglets « Unités / Équipes / Emotes » (pas de héros) ; barre du haut : niveau de compte, éclats, parchemins (sans « + », rien à acheter). |
 | **Coffres** | Coffres de victoire, de saison, de boutique ; animation d'ouverture. | **Adapté** : coffres d'étoiles de la campagne et coffre quotidien, même animation. |
-| **Cartes et niveaux** | Doublons → cartes de niveau ; or pour monter ; niveaux 1 à 15. | **Adapté** : niveaux 1 à 10, 2/4/8/16… cartes + éclats (§6.2). |
+| **Cartes et niveaux** | Doublons → cartes de niveau ; or pour monter ; niveaux 1 à 15. | **Adapté** : niveaux 1 à 10, 1, 1, 2, 2, 2, 3, 3, 3, 4 cartes + or (§6.2) ; packs payés en gemmes (deux monnaies, comme Rush Royale). |
 | **Raretés** | Commun, rare, épique, légendaire (+ ascension). | **Adapté** : rare, épique, légendaire. |
 | **Talents** | À certains niveaux de carte (9, 11, 13, 15 dans les versions récentes), on **choisit 1 talent parmi 2** ; le choix se change librement hors combat. | **Adapté** : paliers aux niveaux **5, 7, 9**, 1 parmi 2, ouverts par des **parchemins de talent** gagnés en campagne ; le choix reste modifiable gratuitement hors combat, comme dans Rush Royale. Données : `src/data/talents.ts`. |
 | **Dégâts critiques (stat de compte)** | Chaque montée de niveau d'une carte augmente les dégâts critiques de tout le compte. | **Hors périmètre** (remplacé par +10 % de dégâts par niveau de collection, §4.5). |

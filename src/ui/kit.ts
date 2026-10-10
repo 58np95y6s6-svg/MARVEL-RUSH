@@ -7,6 +7,13 @@ import { UNITS } from '../data/units';
 
 export const esc = (s: string): string => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 export const fmt = (n: number): string => Math.floor(n).toLocaleString('fr-FR');
+/** Format court de l'en-tête : 9 999, puis 12,3 k, 123 k, 1,2 M. */
+export function fmtShort(n: number): string {
+  const v = Math.floor(n);
+  if (Math.abs(v) < 10000) return v.toLocaleString('fr-FR');
+  if (Math.abs(v) < 1e6) return `${(v / 1000).toLocaleString('fr-FR', { maximumFractionDigits: Math.abs(v) < 1e5 ? 1 : 0 })} k`;
+  return `${(v / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} M`;
+}
 
 export const RARITY_LABEL: Record<Rarity, string> = { rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
 export const RARITY_ORDER: Record<Rarity, number> = { legendaire: 0, epique: 1, rare: 2 };
@@ -50,7 +57,10 @@ export function attackLoop(img: HTMLImageElement, id: UnitId): () => void {
 
 // ------------------------------------------------------------------ icônes
 export const ICONS = {
-  eclats: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L33 15 L20 37 L7 15Z" fill="#ffd84a" stroke="#1d1733" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 3 L26 15 L20 37 L14 15Z" fill="#ffe98f"/><path d="M7 15 H33" stroke="#1d1733" stroke-width="3" /><path d="M13 9 l3 -2" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`,
+  /** Or : pièce dorée (montées de niveau). */
+  or: `<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="23" rx="15" ry="14" fill="#c97a12" stroke="#1d1733" stroke-width="3.5"/><ellipse cx="20" cy="19" rx="15" ry="14" fill="#ffd23f" stroke="#1d1733" stroke-width="3.5"/><ellipse cx="20" cy="19" rx="9.5" ry="8.6" fill="none" stroke="#e8a21a" stroke-width="2.6"/><path d="M17.5 14.5 h5 M20 13 v12 M17 23.5 h5.5" stroke="#b26a0a" stroke-width="2.6" stroke-linecap="round"/><path d="M10 13 q3 -5 9 -6" stroke="#fff7c2" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>`,
+  /** Gemmes : gemme rose taillée (packs). */
+  gemmes: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6 H30 L37 15 L20 36 L3 15Z" fill="#ff4fa3" stroke="#1d1733" stroke-width="3.5" stroke-linejoin="round"/><path d="M3 15 H37 M14 6 L11 15 L20 36 L29 15 L26 6 M11 15 L20 6 L29 15" fill="none" stroke="#1d1733" stroke-width="2" stroke-linejoin="round" opacity=".55"/><path d="M11 15 L20 36 L14 15Z" fill="#ff9ccf"/><path d="M13 9 l4 0" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`,
   cristaux: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 C22 14 26 18 38 20 C26 22 22 26 20 38 C18 26 14 22 2 20 C14 18 18 14 20 2Z" fill="#c17bff" stroke="#1d1733" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 9 C21 16 23 18 29 20 C23 21 21 23 20 30" fill="none" stroke="#f1dcff" stroke-width="3" stroke-linecap="round"/></svg>`,
   parchemins: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="8" y="7" width="22" height="26" rx="3" fill="#f7e2b0" stroke="#1d1733" stroke-width="3.5"/><path d="M6 9 a4 4 0 0 1 8 0 v2 h-8z M26 31 a4 4 0 0 0 8 0 v-2 h-8z" fill="#e0b56a" stroke="#1d1733" stroke-width="3"/><path d="M13 15 h12 M13 20 h12 M13 25 h8" stroke="#b07a3a" stroke-width="2.6" stroke-linecap="round"/></svg>`,
   xp: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 l5 11 12 1 -9 8 3 12 -11 -6 -11 6 3 -12 -9 -8 12 -1z" fill="#5fe08a" stroke="#1d1733" stroke-width="3.5" stroke-linejoin="round"/></svg>`,

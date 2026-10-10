@@ -632,7 +632,9 @@ describe('extension DC : rotation, Darkseid et paliers des modes infinis', () =>
     const big = ofType(ev, 'bossSpawn');
     expect(big.find((b) => b.boss === 'thanos')).toBeDefined();
     expect(big[4]!.boss).toBe('thanos');
-    expect(big[9]!.boss).toBe('darkseid');
+    // Après la vague 60 (alternance Rush Royale), gros boss aux vagues paires : Darkseid est le dernier, à la 100.
+    expect(big[big.length - 1]!.boss).toBe('darkseid');
+    expect(big.filter((b) => b.boss === 'darkseid')).toHaveLength(1);
     const ms = ofType(ev, 'milestone');
     expect(ms.map((m) => m.wave)).toEqual([10, 20, 30, 40, 50, 60, 70, 75, 80, 90, 100]);
     expect(ms.find((m) => m.wave === 75)!.chest).toBe('cosmique');

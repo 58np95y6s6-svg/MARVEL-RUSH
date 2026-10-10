@@ -6,7 +6,7 @@ import { accountLevel } from '../meta/economy';
 import { MAX_PROFILES, getProfile, listProfiles, switchProfile, updateProfile } from '../meta/profile';
 import { esc, fmt, icon, openSheet, portraitUrl, toast } from './kit';
 
-export async function openProfileSheet(overlay: HTMLElement, o: { onNewProfile: () => void; onSwitched: () => void }): Promise<void> {
+export async function openProfileSheet(overlay: HTMLElement, o: { onNewProfile: () => void; onSwitched: () => void; onReplayTutorial?: () => void }): Promise<void> {
   const p = getProfile();
   if (!p) return;
   const all = await listProfiles();
@@ -35,7 +35,8 @@ export async function openProfileSheet(overlay: HTMLElement, o: { onNewProfile: 
         <span class="pf-li"><b>${esc(q.name)}</b><small>Niveau ${accountLevel(q.xp).level} · ${Object.keys(q.heroes).length} héros</small></span>
         ${q.id === p.id ? '<em>Actif</em>' : `<button class="mr-btn green pf-sw" data-sw="${q.id}" data-tuto="profile-switch">Jouer</button>`}</li>`).join('')}</ul>
       ${all.length < MAX_PROFILES ? '<button class="mr-btn yellow pf-new" data-a="new" data-tuto="profile-new">Créer un deuxième profil</button>' : ''}
-      <p class="pf-note">Chacun sa progression : jouer avec un profil ne touche jamais à l’autre.</p>`,
+      <p class="pf-note">Chacun sa progression : jouer avec un profil ne touche jamais à l’autre.</p>
+      ${o.onReplayTutorial ? '<h3 class="pf-h">Réglages</h3><button class="mr-btn pf-tuto" data-a="tuto" data-tuto="profile-replay-tuto">Revoir le tutoriel</button>' : ''}`,
   });
   sheet.body.addEventListener('click', async (e) => {
     const t = e.target as HTMLElement;
@@ -55,5 +56,6 @@ export async function openProfileSheet(overlay: HTMLElement, o: { onNewProfile: 
       return;
     }
     if (t.closest('[data-a="new"]')) { sheet.close(); o.onNewProfile(); }
+    if (t.closest('[data-a="tuto"]')) { sheet.close(); o.onReplayTutorial?.(); }
   });
 }

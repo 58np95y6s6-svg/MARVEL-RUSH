@@ -1,15 +1,22 @@
 // Accueil (§8.1) : logo, deck actif, gros bouton Campagne, Solo Infini (débloqué après le chapitre 1),
-// coffre quotidien, raccourcis Tirages / Collection / Decks / Encyclopédie. Monté dans la coquille.
+// coffre quotidien (ouverture animée), quêtes du jour, Route des récompenses, Tirages. Monté dans la coquille.
 import './home.css';
 import { STARTER_DECKS } from '../data/units';
-import { claimDailyChest, dailyChestReady, infiniteUnlocked } from '../meta/economy';
-import { activeDeck, getProfile, onProfileChange, updateProfile, type Profile } from '../meta/profile';
+import { accountLevel, claimDailyChest, dailyChestReady, infiniteUnlocked } from '../meta/economy';
+import { activeDeck, getProfile, today, onProfileChange, updateProfile, type Profile } from '../meta/profile';
 import { freePullsTotal } from '../meta/pulls';
+import { ensureQuests, questsClaimable } from '../meta/quests';
+import { roadClaimable } from '../meta/road';
+import type { ChestContent } from '../meta/chests';
+import { balanceOf, playChests } from './chestOpening';
+import { readSavedGame, savedGameLabel } from '../meta/savegame';
 import { icon, tokenUrl, toast } from './kit';
 
 export interface HomeOptions {
   go: (hash: string) => void;
   onInfinite: () => void;
+  /** Hôte plein écran (ouverture du coffre quotidien). */
+  overlay?: HTMLElement;
 }
 
 export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
@@ -19,6 +26,9 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     <div class="hm-sky"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
     <h1 class="mr-logo hm-logo"><span>MARVEL</span> <em>RUSH</em></h1>
     <div class="hm-deck" data-tuto="home-deck" aria-label="Ton deck"></div>
+    <button class="mr-btn green hm-resume" data-a="reprendre" hidden>
+      <span class="t">Reprendre la partie</span><small class="sub"></small>
+    </button>
     <button class="mr-btn yellow hm-campaign" data-a="campagne" data-tuto="home-campagne">
       <span class="t">Campagne</span><small>Chapitres, étoiles et boss</small>
     </button>
@@ -27,9 +37,9 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     </button>
     <div class="hm-grid">
       <button class="hm-tile chest" data-a="coffre" data-tuto="home-coffre">${icon('coffre')}<b>Coffre</b><small class="chest-sub"></small></button>
-      <button class="hm-tile" data-a="tirages" data-tuto="home-tirages">${icon('tirages')}<b>Tirages</b><span class="hm-badge" hidden></span></button>
-      <button class="hm-tile" data-a="collection" data-tuto="home-collection">${icon('collection')}<b>Collection</b></button>
-      <button class="hm-tile" data-a="decks" data-tuto="home-decks">${icon('cartes')}<b>Decks</b></button>
+      <button class="hm-tile quests" data-a="quetes" data-tuto="home-quetes">${icon('record')}<b>Quêtes</b><small class="q-sub"></small><span class="hm-badge q-badge" hidden></span></button>
+      <button class="hm-tile road" data-a="route" data-tuto="home-route">${icon('xp')}<b>Route</b><small class="r-sub"></small><span class="hm-badge r-badge" hidden></span></button>
+      <button class="hm-tile" data-a="tirages" data-tuto="home-tirages">${icon('tirages')}<b>Tirages</b><small>Packs</small><span class="hm-badge p-badge" hidden></span></button>
     </div>`;
   host.appendChild(wrap);
 
@@ -38,7 +48,12 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
   const infSub = infBtn.querySelector<HTMLElement>('.sub')!;
   const chest = wrap.querySelector<HTMLButtonElement>('[data-a="coffre"]')!;
   const chestSub = chest.querySelector<HTMLElement>('.chest-sub')!;
-  const badge = wrap.querySelector<HTMLElement>('.hm-badge')!;
+  const badge = wrap.querySelector<HTMLElement>('.p-badge')!;
+  const qBadge = wrap.querySelector<HTMLElement>('.q-badge')!;
+  const rBadge = wrap.querySelector<HTMLElement>('.r-badge')!;
+  const qSub = wrap.querySelector<HTMLElement>('.q-sub')!;
+  const rSub = wrap.querySelector<HTMLElement>('.r-sub')!;
+  const resumeBtn = wrap.querySelector<HTMLButtonElement>('[data-a="reprendre"]')!;
   let deckKey = '';
 
   function render(p: Profile | null): void {
@@ -49,6 +64,9 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
       deckKey = key;
       deckEl.innerHTML = deck.map((id, i) => `<img src="${tokenUrl(id)}" alt="" style="--i:${i}">`).join('');
     }
+    const saved = readSavedGame(p);
+    resumeBtn.hidden = !saved;
+    if (saved) resumeBtn.querySelector<HTMLElement>('.sub')!.textContent = savedGameLabel(saved);
     const unlocked = infiniteUnlocked(p);
     infBtn.classList.toggle('locked', !unlocked);
     infSub.innerHTML = unlocked
@@ -60,7 +78,21 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     const free = freePullsTotal(p);
     badge.hidden = free === 0;
     badge.textContent = String(free);
+    const q = p.quests;
+    const qc = questsClaimable(p);
+    qBadge.hidden = qc === 0;
+    qBadge.textContent = String(qc);
+    const doneToday = q && q.day === today() ? q.list.filter((x) => x.claimed).length : 0;
+    qSub.textContent = `${doneToday}/3`;
+    const rc = roadClaimable(p).length;
+    rBadge.hidden = rc === 0;
+    rBadge.textContent = String(rc);
+    rSub.textContent = `Niv. ${accountLevel(p.xp).level}`;
+    wrap.querySelector('.quests')!.classList.toggle('ready', qc > 0);
+    wrap.querySelector('.road')!.classList.toggle('ready', rc > 0);
   }
+  // Quêtes du jour : tirées dès l'arrivée sur l'accueil (minuit, heure locale).
+  { const p = getProfile(); if (p && p.quests?.day !== today()) void updateProfile((q) => { ensureQuests(q); }); }
   render(getProfile());
   const off = onProfileChange(render);
 
@@ -68,19 +100,23 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset['a'];
     const p = getProfile();
     if (!a || !p) return;
-    if (a === 'campagne') o.go('#campagne');
+    if (a === 'reprendre') o.go('#reprendre');
+    else if (a === 'campagne') o.go('#campagne');
     else if (a === 'tirages') o.go('#tirages');
-    else if (a === 'collection') o.go('#collection');
-    else if (a === 'decks') o.go('#decks');
+    else if (a === 'quetes') o.go('#quetes');
+    else if (a === 'route') o.go('#route');
     else if (a === 'infini') {
       if (infiniteUnlocked(p)) o.onInfinite();
       else { infBtn.classList.remove('nope'); void infBtn.offsetWidth; infBtn.classList.add('nope'); toast('Termine le chapitre 1 de la campagne pour débloquer le Solo Infini.', 'warn'); }
     } else if (a === 'coffre') {
-      if (!dailyChestReady(p)) { toast('Le coffre quotidien revient demain.', 'warn'); return; }
-      await updateProfile((q) => { claimDailyChest(q); });
+      if (!dailyChestReady(p)) { toast('Le coffre quotidien revient demain, à minuit.', 'warn'); return; }
+      let got: ChestContent | null = null;
+      await updateProfile((q) => { got = claimDailyChest(q); });
+      const c = got as ChestContent | null;
+      if (!c) return;
       chest.classList.add('open');
       window.setTimeout(() => chest.classList.remove('open'), 900);
-      toast('Coffre quotidien : +150 éclats et +5 ✦ !');
+      await playChests(o.overlay ?? host, [{ content: c, subtitle: 'Coffre quotidien' }], balanceOf(getProfile()));
     }
   });
 
