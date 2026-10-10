@@ -1,7 +1,9 @@
-// Campagne Solo : 6 chapitres × 10 niveaux (docs/campagne.md), en données, et construction de la
+// Campagne Solo : 6 chapitres × 10 niveaux, plus les chapitres des extensions (Pixar : 13 à 15)
+// (docs/campagne.md), en données, et construction de la
 // configuration moteur d'un niveau. Module pur (aucun accès au DOM ni au stockage).
 
-import type { BossId, Pack, UnitId } from '../data/types';
+import { BOSSES } from '../data/bosses';
+import type { BossId, BossPool, Pack, UnitId } from '../data/types';
 import type { GameConfig, PlayerSetup } from '../engine/types';
 import type { Profile } from '../meta/profile';
 
@@ -18,7 +20,7 @@ export type Constraint =
   | { kind: 'bossTime'; max: number }                     // boss (ou lieutenant) imposé tué en moins de N s
   | { kind: 'summonsBelow'; max: number }                 // moins de N invocations
   | { kind: 'packCount'; pack: Pack; min: number }        // au moins N unités d'un pack dans le deck
-  | { kind: 'packEach' }                                  // au moins 1 unité de chaque pack
+  | { kind: 'packEach'; packs?: Pack[] }                  // au moins 1 unité de chaque pack (défaut : Marvel et Disney)
   | { kind: 'emptyCells'; min: number }                   // garder N cases vides à la fin
   | { kind: 'deckHasAny'; units: UnitId[] }               // avec l'une de ces unités dans le deck
   | { kind: 'team'; teams?: string[]; min?: number }      // bonus d'équipe actif (l'un de `teams`, ou au moins `min`)
@@ -49,6 +51,15 @@ export interface ChapterDef {
   unlockStars: number;
   /** Map de l'illustration du chapitre. */
   artMap: string;
+  /** Boss intermédiaire imposé au niveau 8 (ch. 6 : Maléfique ; chapitres des extensions). */
+  midBoss?: BossId;
+  /** Rotation des gros boss (défaut 'marvel-disney' ; 'tous' pour les chapitres des extensions). */
+  bossPool?: BossPool;
+  /**
+   * Chapitres d'extension : seuil d'étoiles calculé = étoiles de tous les chapitres d'avant − `unlockSlack`
+   * (le seuil reste juste, que l'extension DC soit installée ou non).
+   */
+  unlockSlack?: number;
 }
 
 export const CHAPTERS: ChapterDef[] = [
@@ -57,8 +68,29 @@ export const CHAPTERS: ChapterDef[] = [
   { n: 3, name: 'L’Océan', zone: 'Motunui, Atlantica et le récif', boss: 'ursula', lieutenant: 'Flotsam, la murène', lieutenantOf: 'ursula', bossLieutenant: 'Flotsam, la murène', hero: 'moana', unlockStars: 30, artMap: 'ile-motunui' },
   { n: 4, name: 'L’Empire', zone: 'Palais impérial et Zootopie', boss: 'jafar', lieutenant: 'Cobra royal', lieutenantOf: 'jafar', bossLieutenant: 'Cobra royal', hero: 'mulan', unlockStars: 60, artMap: 'palais-imperial' },
   { n: 5, name: 'Le Monde des jouets', zone: 'Chambre d’Andy et Sugar Rush', boss: 'cruella', lieutenant: 'Jasper, l’homme de main', lieutenantOf: 'cruella', bossLieutenant: 'Jasper, l’homme de main', hero: 'buzzwoody', unlockStars: 95, artMap: 'chambre-andy' },
-  { n: 6, name: 'Le Royaume des morts', zone: 'Royaume des morts, tour de Raiponce et Highlands', boss: 'thanos', lieutenant: 'Capitaine gobelin', lieutenantOf: 'malefique', bossLieutenant: 'Outrider alpha', hero: 'coco', unlockStars: 130, artMap: 'royaume-des-morts' },
+  { n: 6, name: 'Le Royaume des morts', zone: 'Royaume des morts, tour de Raiponce et Highlands', boss: 'thanos', lieutenant: 'Capitaine gobelin', lieutenantOf: 'malefique', bossLieutenant: 'Outrider alpha', hero: 'coco', unlockStars: 130, artMap: 'royaume-des-morts', midBoss: 'malefique' },
+  // ───────────── Extension Pixar (docs/campagne.md §3 quater) : 150 → 200 vagues, Zurg à la vague 200 ─────────────
+  // Numérotés 13 à 15 (7 à 9 : DC, 10 à 12 : Transformers) : ils suivent le dernier chapitre installé.
+  { n: 13, name: 'Metroville', zone: 'Metroville et Monstropolis', boss: 'syndrome', lieutenant: 'Robot de Syndrome géant', lieutenantOf: 'syndrome', bossLieutenant: 'Robot de Syndrome géant', hero: 'mrincredible', unlockStars: 0, unlockSlack: 15, artMap: 'metroville', midBoss: 'randall', bossPool: 'tous' },
+  { n: 14, name: 'Paradise Falls', zone: 'Paradise Falls et Monstropolis', boss: 'muntz', lieutenant: 'Alpha, le chien géant', lieutenantOf: 'muntz', bossLieutenant: 'Alpha, le chien géant', hero: 'walleeve', unlockStars: 0, unlockSlack: 15, artMap: 'paradise-falls', midBoss: 'hopper', bossPool: 'tous' },
+  { n: 15, name: 'La planète Z', zone: 'Monstropolis, Metroville et l’empire de Zurg', boss: 'zurg', lieutenant: 'Gros Bébé', lieutenantOf: 'lotso', bossLieutenant: 'Robot de Zurg géant', hero: 'joe', unlockStars: 0, unlockSlack: 15, artMap: 'monstropolis', midBoss: 'lotso', bossPool: 'tous' },
 ];
+// Ordre de la campagne (par numéro) et seuils d'étoiles des chapitres d'extension.
+CHAPTERS.sort((a, b) => a.n - b.n);
+CHAPTERS.forEach((c, i) => { if (c.unlockSlack !== undefined) c.unlockStars = 30 * i - c.unlockSlack; });
+
+/** Étoiles de la campagne complète (3 par niveau). */
+export const MAX_CAMPAIGN_STARS = (): number => CHAPTERS.length * 30;
+/** Chapitre précédent et suivant dans l'ordre de la campagne (null aux extrémités). */
+export function prevChapter(n: number): ChapterDef | null {
+  const i = CHAPTERS.findIndex((c) => c.n === n);
+  return i > 0 ? CHAPTERS[i - 1]! : null;
+}
+export function nextChapter(n: number): ChapterDef | null {
+  const i = CHAPTERS.findIndex((c) => c.n === n);
+  return i >= 0 && i < CHAPTERS.length - 1 ? CHAPTERS[i + 1]! : null;
+}
+export const isLastChapter = (n: number): boolean => CHAPTERS[CHAPTERS.length - 1]?.n === n;
 
 /** Seuils d'étoiles du chapitre ouvrant les 3 coffres d'étoiles. */
 export const STAR_CHEST_THRESHOLDS = [10, 20, 30] as const;
@@ -175,6 +207,49 @@ const ROWS: Row[][] = [
 ];
 
 /**
+ * Chapitres des extensions, par numéro de chapitre (Pixar : 13 à 15). Vagues : 150 → 160, 160 → 175, 175 → 200,
+ * à la suite des chapitres DC (50 → 100) et Transformers (100 → 150) ; l'Empereur Zurg à la vague 200.
+ */
+const EXT_ROWS: Record<number, Row[]> = {
+  13: [ // Chapitre 13 — Metroville
+    ['metroville', 150, { kind: 'packCount', pack: 'pixar', min: 2 }],
+    ['metroville', 151, NO_LIFE],
+    ['monstropolis', 152, { kind: 'rank', min: 6 }],
+    ['metroville', 154, { kind: 'noLeak', enemy: 'bouclier' }],
+    ['metroville', 155, { kind: 'bossTime', max: 25 }],
+    ['monstropolis', 154, { kind: 'summonsBelow', max: 240 }],
+    ['metroville', 156, { kind: 'team', teams: ['indestructibles'] }],
+    ['monstropolis', 158, { kind: 'bossTime', max: 40 }],
+    ['metroville', 158, { kind: 'noRankLoss' }],
+    ['metroville', 160, { kind: 'bossTime', max: 40 }],
+  ],
+  14: [ // Chapitre 14 — Paradise Falls
+    ['paradise-falls', 160, NO_LIFE],
+    ['paradise-falls', 162, { kind: 'noLeak', enemy: 'blinde' }],
+    ['monstropolis', 164, { kind: 'deckHasAny', units: ['carlrussell'] }],
+    ['paradise-falls', 167, { kind: 'rank', min: 7 }],
+    ['paradise-falls', 170, { kind: 'bossTime', max: 25 }],
+    ['monstropolis', 167, { kind: 'summonsBelow', max: 260 }],
+    ['paradise-falls', 169, NO_LIFE],
+    ['metroville', 172, { kind: 'bossTime', max: 40 }],
+    ['paradise-falls', 173, { kind: 'team', teams: ['monstres', 'toystory'] }],
+    ['paradise-falls', 175, { kind: 'bossTime', max: 45 }],
+  ],
+  15: [ // Chapitre 15 — La planète Z (Zurg à la vague 200)
+    ['monstropolis', 175, NO_LIFE],
+    ['metroville', 180, { kind: 'rank', min: 7 }],
+    ['paradise-falls', 185, { kind: 'noLeak', enemy: 'bouclier' }],
+    ['monstropolis', 190, { kind: 'team', min: 2 }],
+    ['monstropolis', 195, { kind: 'bossTime', max: 25 }],
+    ['metroville', 185, { kind: 'summonsBelow', max: 300 }],
+    ['paradise-falls', 190, NO_LIFE],
+    ['monstropolis', 194, { kind: 'bossTime', max: 40 }],
+    ['metroville', 197, { kind: 'packEach', packs: ['marvel', 'disney', 'pixar'] }],
+    ['monstropolis', 200, NO_LIFE],
+  ],
+};
+
+/**
  * Difficulté (docs/campagne.md §2) : le nombre d'ennemis (`countMul`) et leurs PV (`hpMul`, et
  * `bossHpMul` pour les boss et lieutenants) montent régulièrement sur les 60 niveaux. La croissance
  * des PV d'une vague à l'autre (`growth`) est plus douce dans les chapitres longs, pour que la 50e
@@ -185,43 +260,50 @@ export const DIFFICULTY = {
   count: [1.1, 1.4] as const,      // effectif× (apparitions par vague)
   bossHp: [1.0, 1.3] as const,     // PV× des boss et lieutenants, en plus
   /** Croissance des PV par vague, par chapitre (Solo Infini : 1,18), réglée au simulateur. */
-  growth: [1.14, 1.10, 1.10, 1.09, 1.07, 1.0425] as const,
+  // Chapitres 7 à 9 : extension DC ; 10 à 12 : extension Transformers (valeurs de leurs branches) ; 13 à 15 : Pixar.
+  growth: [1.14, 1.10, 1.10, 1.09, 1.07, 1.0425, 1.032, 1.024, 1.016, 1.02, 1.017, 1.0135, 1.012, 1.011, 1.009] as const,
 };
 
 const lerp = (a: readonly [number, number], t: number): number => Math.round((a[0] + (a[1] - a[0]) * t) * 100) / 100;
 
 function buildLevels(): CampaignLevel[] {
   const out: CampaignLevel[] = [];
-  ROWS.forEach((rows, ci) => {
-    const ch = CHAPTERS[ci]!;
+  CHAPTERS.forEach((ch, ci) => {
+    const rows = EXT_ROWS[ch.n] ?? ROWS[ci] ?? [];
     rows.forEach(([map, waves, bonus], ni) => {
       const n = ni + 1;
-      const t = (ci * 10 + ni) / 59;
+      // La pente de difficulté suit le numéro du chapitre (prolongée au-delà de 6-10 pour les extensions).
+      const t = ((ch.n - 1) * 10 + ni) / 59;
       const lvl: CampaignLevel = {
         id: levelId(ch.n, n), chapter: ch.n, n, map, waves, bonus,
         hpMul: lerp(DIFFICULTY.hp, t), countMul: lerp(DIFFICULTY.count, t), bossHpMul: lerp(DIFFICULTY.bossHp, t),
-        growth: DIFFICULTY.growth[ci]!,
+        growth: DIFFICULTY.growth[ch.n - 1] ?? DIFFICULTY.growth[DIFFICULTY.growth.length - 1]!,
       };
       if (n === 5) lvl.boss = { kind: 'lieutenant', id: ch.lieutenantOf, wave: waves, name: ch.lieutenant };
       if (n === 10) lvl.boss = { kind: 'boss', id: ch.boss, wave: waves, name: bossDisplayName(ch.boss) };
-      // Chapitre 6, niveau 8 : Maléfique dans son arène (boss intermédiaire).
-      if (ch.n === 6 && n === 8) lvl.boss = { kind: 'boss', id: 'malefique', wave: waves, name: bossDisplayName('malefique') };
-      // Le boss du chapitre n'apparaît pas avant son niveau ni avant la dernière vague de ce niveau
-      // (rotation sans lui ; au ch. 6, sans Maléfique jusqu'au niveau 8, Thanos étant hors rotation).
-      const firstBossLevel = ch.n === 6 ? 8 : 10;
-      const rotBoss = ch.n === 6 ? 'malefique' : ch.boss;
-      if (n <= firstBossLevel) lvl.exclude = [rotBoss];
+      // Niveau 8 : boss intermédiaire dans son arène (ch. 6 : Maléfique ; extensions : voir CHAPTERS).
+      if (ch.midBoss && n === 8) lvl.boss = { kind: 'boss', id: ch.midBoss, wave: waves, name: bossDisplayName(ch.midBoss) };
+      if (ch.bossPool === 'tous') {
+        // Chapitres d'extension : rotation complète, sans le boss intermédiaire ni le boss du chapitre.
+        lvl.exclude = ch.midBoss && ch.midBoss !== ch.boss ? [ch.midBoss, ch.boss] : [ch.boss];
+      } else {
+        // Le boss du chapitre n'apparaît pas avant son niveau ni avant la dernière vague de ce niveau
+        // (rotation sans lui ; au ch. 6, sans Maléfique jusqu'au niveau 8, Thanos étant hors rotation).
+        const firstBossLevel = ch.midBoss ? 8 : 10;
+        const rotBoss = ch.midBoss ?? ch.boss;
+        if (n <= firstBossLevel) lvl.exclude = [rotBoss];
+      }
       out.push(lvl);
     });
   });
   return out;
 }
 
-const BOSS_NAMES: Record<BossId, string> = {
+const BOSS_NAMES: Partial<Record<BossId, string>> = {
   jafar: 'Jafar & Iago', cruella: 'Cruella', ursula: 'Ursula', malefique: 'Maléfique',
   galactus: 'Galactus', bouffon: 'Bouffon Vert', thanos: 'Thanos',
 };
-export function bossDisplayName(id: BossId): string { return BOSS_NAMES[id]; }
+export function bossDisplayName(id: BossId): string { return BOSS_NAMES[id] ?? BOSSES[id].name; }
 
 export const levelId = (chapter: number, n: number): string => `c${chapter}-n${n}`;
 
@@ -229,11 +311,12 @@ export const LEVELS: CampaignLevel[] = buildLevels();
 const BY_ID = new Map(LEVELS.map((l) => [l.id, l]));
 
 export function getLevel(id: string): CampaignLevel | undefined { return BY_ID.get(id); }
-export function getChapter(n: number): ChapterDef | undefined { return CHAPTERS[n - 1]; }
+export function getChapter(n: number): ChapterDef | undefined { return CHAPTERS.find((c) => c.n === n); }
 export function chapterLevels(chapter: number): CampaignLevel[] { return LEVELS.filter((l) => l.chapter === chapter); }
 /** Niveau suivant dans la campagne (null après le dernier). */
 export function nextLevel(l: CampaignLevel): CampaignLevel | null {
-  return getLevel(levelId(l.chapter, l.n + 1)) ?? getLevel(levelId(l.chapter + 1, 1)) ?? null;
+  const next = nextChapter(l.chapter);
+  return getLevel(levelId(l.chapter, l.n + 1)) ?? (next ? getLevel(levelId(next.n, 1)) : undefined) ?? null;
 }
 
 /** Personnage garanti du chapitre pour ce profil (ch. 1 : Spider-Man s'il manque, sinon Venom). */
@@ -248,7 +331,7 @@ export function guaranteedHero(ch: ChapterDef, profile: Profile | null): UnitId 
 export function constraintLabel(c: Constraint, level?: CampaignLevel): string {
   switch (c.kind) {
     case 'merges': return `Fusionner au moins ${c.min} fois`;
-    case 'noLifeLost': return level?.boss?.id === 'thanos' ? 'Thanos tué sans perdre de vie' : 'Sans perdre de vie';
+    case 'noLifeLost': return level?.boss?.id === 'thanos' || level?.boss?.id === 'zurg' ? `${bossDisplayName(level.boss.id)} tué sans perdre de vie` : 'Sans perdre de vie';
     case 'powerup': return `Améliorer une unité au niveau ${c.min}`;
     case 'maxPowerup': return `Aucune amélioration au-delà du niveau ${c.max}`;
     case 'rank': return c.min === 3 ? 'Atteindre une unité de rang 3' : `Une unité de rang ${c.min}`;
@@ -257,13 +340,13 @@ export function constraintLabel(c: Constraint, level?: CampaignLevel): string {
       return `${who} tué en moins de ${c.max} s`;
     }
     case 'summonsBelow': return `Moins de ${c.max} invocations`;
-    case 'packCount': return `Avec au moins ${c.min} unités ${c.pack === 'marvel' ? 'Marvel' : 'Disney'}`;
-    case 'packEach': return 'Avec au moins 1 unité de chaque pack';
+    case 'packCount': return `Avec au moins ${c.min} ${c.pack === 'pixar' ? 'héros Pixar' : `unités ${c.pack === 'marvel' ? 'Marvel' : 'Disney'}`}`;
+    case 'packEach': return (c.packs?.length ?? 2) > 2 ? `Avec au moins 1 héros de chaque pack (${c.packs!.map((p) => PACK_NAMES[p] ?? p).join(', ')})` : 'Avec au moins 1 unité de chaque pack';
     case 'emptyCells': return `Garder ${c.min} cases vides à la fin`;
-    case 'deckHasAny': return c.units.length === 2 && c.units.includes('strange') ? 'Avec Doctor Strange ou Loki dans le deck' : 'Avec une unité imposée';
+    case 'deckHasAny': return c.units.length === 2 && c.units.includes('strange') ? 'Avec Doctor Strange ou Loki dans le deck' : c.units.length === 1 && c.units[0] === 'carlrussell' ? 'Avec Carl & Russell dans le deck' : 'Avec une unité imposée';
     case 'team': {
       if (c.teams?.length) {
-        const names: Record<string, string> = { ocean: 'Océan', princesses: 'Princesses', pixar: 'Duos Pixar', animaux: 'Animaux' };
+        const names: Record<string, string> = { ocean: 'Océan', princesses: 'Princesses', pixar: 'Duos Pixar', animaux: 'Animaux', indestructibles: 'Les Indestructibles', monstres: 'Monstres & Cie', toystory: 'Toy Story' };
         return `Bonus d’équipe ${c.teams.map((t) => names[t] ?? t).join(' ou ')} actif`;
       }
       return (c.min ?? 1) >= 2 ? 'Deux bonus d’équipe actifs' : 'Un bonus d’équipe actif';
@@ -277,11 +360,14 @@ export function constraintLabel(c: Constraint, level?: CampaignLevel): string {
   }
 }
 
+const PACK_NAMES: Partial<Record<Pack, string>> = { marvel: 'Marvel', disney: 'Disney', pixar: 'Pixar' };
+
 /** « Flotsam, la murène » → « Flotsam » ; « Cobra royal » → « Cobra » (libellé court de contrainte). */
 function shortName(name: string): string {
   if (name.includes(',')) return name.split(',')[0]!;
   if (name.startsWith('Citrouille')) return 'Lieutenant';
   if (name.startsWith('Drone')) return 'Lieutenant';
+  if (/géant$/.test(name)) return name.split(' ')[0]!;
   return name.split(' ')[0]!;
 }
 
@@ -349,6 +435,7 @@ export function levelConfig(level: CampaignLevel, deck: UnitId[], profile: Profi
     bossHpMultiplier: level.bossHpMul,
     waveHpGrowth: level.growth,
   };
+  const bossPool: BossPool = getChapter(level.chapter)?.bossPool ?? 'marvel-disney';
   if (level.exclude?.length) script.excludeBosses = level.exclude.slice();
   const b = level.boss;
   if (b?.kind === 'lieutenant') {
@@ -366,6 +453,7 @@ export function levelConfig(level: CampaignLevel, deck: UnitId[], profile: Profi
     mapId: level.map,
     players: [playerSetup(deck, profile)],
     targetWaves: level.waves,
+    bossPool,
     mapModifiers: {},
     script,
   };

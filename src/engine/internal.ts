@@ -61,6 +61,9 @@ export interface EnemyExtra {
   lieutenant?: number;    // petit boss : sbire géant du prochain gros boss
   mini?: number;          // petit boss (sbire géant) : compte comme un boss pour les vies, la rage et la fin de vague
   master?: BossId;        // petit boss : boss dont il utilise une version affaiblie du pouvoir
+  // Extension Pixar
+  powerUses?: number;     // Muntz, Zurg (et lieutenants) : alternance des pouvoirs
+  father?: number;        // Zurg : « Je suis ton père » déjà lancé
 }
 
 export interface SimEnemy extends EnemyInstance {

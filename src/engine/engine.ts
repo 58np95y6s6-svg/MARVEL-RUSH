@@ -1,7 +1,7 @@
 // Moteur de simulation pur à pas fixe (20 ticks/s), déterministe (graine mulberry32).
 // Aucune dépendance au DOM, à l'heure ou à Math.random.
 
-import { BOSSES, BOSS_STATS, LIEUTENANTS, ROTATING_BOSSES } from '../data/bosses';
+import { BOSSES, BOSS_POOLS, BOSS_STATS, LIEUTENANTS } from '../data/bosses';
 import { ENEMIES, WAVE_RULES, monsterHp, monstersInWave, spawnWeights, waveHp } from '../data/enemies';
 import { activeTeams } from '../data/teams';
 import { UNITS } from '../data/units';
@@ -22,6 +22,7 @@ import { pumpkinExplosion, updateBosses } from './bossPowers';
 import { mapLengths } from './maps';
 import { boardGeometry } from './geometry';
 import { inheritedGrowth, makeCopy, sacrifice, swapCells } from './archetypes';
+import { pxAfterSwap } from './pixar';
 
 const SAVE_VERSION = 1;
 
@@ -84,10 +85,16 @@ function buildCtx(cfg: GameConfig, st: SimState): Ctx {
 
 // ───────────── État initial ─────────────
 
+/** Gros boss de la rotation selon l'option choisie ('tous' par défaut). */
+function rotationPool(cfg: GameConfig): BossId[] {
+  return BOSS_POOLS[cfg.bossPool ?? 'tous'] ?? BOSS_POOLS.tous;
+}
+
 function shuffledBosses(ctx: Ctx): BossId[] {
   const excluded = ctx.cfg.script?.excludeBosses ?? [];
-  let arr = ROTATING_BOSSES.filter((b) => !excluded.includes(b));
-  if (arr.length === 0) arr = ROTATING_BOSSES.slice();
+  const pool = rotationPool(ctx.cfg);
+  let arr = pool.filter((b) => !excluded.includes(b));
+  if (arr.length === 0) arr = pool.slice();
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.min(i, Math.floor(spawnRand(ctx) * (i + 1)));
     [arr[i], arr[j]] = [arr[j]!, arr[i]!];
@@ -134,6 +141,13 @@ function rhythm(cfg: GameConfig): { small: number; big: number; thanos: number }
 
 const infinite = (cfg: GameConfig) => !cfg.targetWaves && cfg.mode !== 'tutoriel';
 
+/** Boss final d'une vague en mode infini : Thanos (vagues 50, 100…), sauf en rotation « Pixar seul ». */
+export function finalBossAt(cfg: GameConfig, wave: number): BossId | null {
+  if (!infinite(cfg)) return null;
+  const r = rhythm(cfg);
+  return r.thanos > 0 && wave % r.thanos === 0 && cfg.bossPool !== 'pixar' ? 'thanos' : null;
+}
+
 export type BossWaveKind = 'petit' | 'gros' | null;
 
 /** Type de boss d'une vague : gros toutes les 10, petit toutes les 5 (hors gros), plus le script. */
@@ -148,7 +162,7 @@ export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
   // Rush Royale (Coop) : après la vague 60, boss aux vagues paires et mini-boss aux vagues impaires.
   if (infinite(cfg) && !cfg.bossRhythm && wave > WAVE_RULES.alternateAfter) return wave % 2 === 0 ? 'gros' : 'petit';
   if (r.big > 0 && wave % r.big === 0) return 'gros';
-  if (infinite(cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'gros';
+  if (finalBossAt(cfg, wave)) return 'gros';
   if (r.small > 0 && wave % r.small === 0) return 'petit';
   return null;
 }
@@ -175,7 +189,6 @@ function shuffleBag(ctx: Ctx): void {
 /** Gros boss d'une vague ; `consume` avance la rotation (sans répétition avant que les 6 soient passés). */
 function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
   const s = ctx.cfg.script;
-  const r = rhythm(ctx.cfg);
   if (s?.bossId && (s.bossAtWave === undefined || s.bossAtWave === wave || s.miniBoss)) return s.bossId;
   const order = s?.bossOrder;
   if (order && ctx.st.scriptedBossIdx < order.length) {
@@ -183,7 +196,8 @@ function bigBossFor(ctx: Ctx, wave: number, consume: boolean): BossId {
     if (consume) ctx.st.scriptedBossIdx++;
     return id;
   }
-  if (infinite(ctx.cfg) && r.thanos > 0 && wave % r.thanos === 0 && !s?.excludeBosses?.includes('thanos')) return 'thanos';
+  const final = finalBossAt(ctx.cfg, wave);
+  if (final && !s?.excludeBosses?.includes(final)) return final;
   shuffleBag(ctx);
   const id = ctx.st.bossOrder[ctx.st.bossIdx]!;
   if (consume) ctx.st.bossIdx++;
@@ -358,7 +372,7 @@ function spawnBigBoss(ctx: Ctx, boss: BossId): void {
   const hp = bossHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1);
   const lane = bossLane(ctx);
   const e = addEnemy(ctx, {
-    kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: 0, shieldHits: 0,
+    kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: def.power.params.bossArmor ?? 0, shieldHits: 0,
     bossId: boss, x: { powerIn: def.power.interval, rageIn: BOSS_STATS.rageAfter },
   });
   emit(ctx, { type: 'bossSpawn', enemy: e.uid, boss, lane });
@@ -603,6 +617,7 @@ function applyCommand(ctx: Ctx, c: Command): void {
           delete b.status.stunnedFor; delete b.status.sleepingFor; delete b.status.hypnotizedFor;
           if (b.status.copyMul !== undefined) b.status.copyMul = 1;
         }
+        pxAfterSwap(ctx, pi, a, b); // Violette : champ de force sur l'alliée échangée
         if (prm.swapSleep && prm.swapSleep > 0) a.status.sleepingFor = Math.max(a.status.sleepingFor ?? 0, prm.swapSleep);
         emit(ctx, { type: 'swap', player: p.id, from: c.from, to: c.to, unit: a.unit, rank: a.rank });
         // Effet visuel du Glitch : `slot` = nouvelle case, `targets` = ancienne case.

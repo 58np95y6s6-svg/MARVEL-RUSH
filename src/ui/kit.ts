@@ -24,6 +24,8 @@ export const PACK_COLORS: Record<string, [string, string]> = {
   disney: ['#3fa8f0', '#23307a'],
   complet: ['#f6c64a', '#8a3fd0'],
   dc: ['#3b62e0', '#141f52'],
+  transformers: ['#e2382e', '#3a1414'],
+  pixar: ['#2fb4f0', '#0f3a6a'],
 };
 export const packColors = (id: Pack | string): [string, string] => PACK_COLORS[id] ?? ['#7b6be0', '#2c2458'];
 export const packLabel = (id: Pack | string): string => id === 'complet' ? 'Tous univers' : id.charAt(0).toUpperCase() + id.slice(1);

@@ -1,7 +1,10 @@
 // Pouvoirs des boss (§4.4) : 6 boss en rotation (toutes les 6 s) et Thanos (Gant de l'infini
 // toutes les 8 s, Claquement de doigts à 30 % de PV). Remember Me (Coco) réagit ici.
 
-import { BOSSES, BOSS_STATS, LIEUTENANTS, SNAP_NAME, THANOS_STONES } from '../data/bosses';
+import {
+  AIRSHIP_NAME, BOSSES, BOSS_STATS, DOGS_NAME, FATHER_NAME, LIEUTENANTS, SNAP_NAME, THANOS_STONES, ZURG_ROBOTS_NAME,
+} from '../data/bosses';
+import { waveHp } from '../data/enemies';
 import type { BossId } from '../data/types';
 import { GRID_COLS, GRID_SIZE } from './types';
 import {
@@ -177,8 +180,111 @@ export function useBossPower(ctx: Ctx, boss: SimEnemy): void {
       powerEvent(ctx, id, player, slots, stone.name);
       break;
     }
+    // ───────────── Extension Pixar ─────────────
+    case 'syndrome': {
+      const slots = pickMany(ctx, candidates(ctx, player), prm.units ?? 2);
+      disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 3);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'randall': {
+      const slots = pickMany(ctx, candidates(ctx, player), prm.units ?? 2);
+      disable(ctx, player, slots, 'hypnotizedFor', prm.duration ?? 3);
+      if (prm.heal) boss.hp = Math.min(boss.maxHp, boss.hp + boss.maxHp * prm.heal);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'lotso': {
+      // Tri des jouets : la benne (unité de plus bas rang, rang ≤ maxRank), puis une unité perd 1 rang.
+      const slots: number[] = [];
+      if (prm.maxRank) {
+        const low = candidates(ctx, player, (u) => u.rank <= (prm.maxRank ?? 2)).sort((a, b) => p.grid[a]!.rank - p.grid[b]!.rank || a - b)[0];
+        if (low !== undefined) {
+          const u = p.grid[low]!;
+          lost.push({ slot: low, uid: u.uid, unit: u.unit, rank: u.rank, destroyed: true });
+          sacrifice(ctx, player, low, u);
+          p.grid[low] = null;
+          slots.push(low);
+        }
+      }
+      const minRank = prm.maxRank ? 2 : 3;
+      const dg = pick(ctx, candidates(ctx, player, (u) => u.rank >= minRank));
+      if (dg !== undefined) { downgrade(ctx, player, dg, p.grid[dg]!.rank - (prm.rankLoss ?? 1), lost); slots.push(dg); }
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'hopper': {
+      callMinions(ctx, boss, 'hopper', prm.callCount ?? 4);
+      const slots = prm.units ? pickMany(ctx, candidates(ctx, player), prm.units) : [];
+      disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 2);
+      powerEvent(ctx, id, player, slots, def.power.name);
+      break;
+    }
+    case 'muntz': {
+      const dogs = (boss.x.powerUses ?? 0) % 2 === 0;
+      boss.x.powerUses = (boss.x.powerUses ?? 0) + 1;
+      if (dogs) {
+        callMinions(ctx, boss, 'muntz', prm.callCount ?? 3);
+        powerEvent(ctx, id, player, [], DOGS_NAME);
+      } else {
+        const all = candidates(ctx, player);
+        let slots: number[];
+        if (prm.units) slots = pickMany(ctx, all, prm.units);
+        else {
+          const cols = [...new Set(all.map((x) => x % GRID_COLS))].sort((a, b) => a - b);
+          const col = pick(ctx, cols);
+          slots = col === undefined ? [] : all.filter((x) => x % GRID_COLS === col);
+        }
+        disable(ctx, player, slots, 'stunnedFor', prm.duration ?? 2);
+        powerEvent(ctx, id, player, slots, AIRSHIP_NAME);
+      }
+      break;
+    }
+    case 'zurg': {
+      const call = (boss.x.powerUses ?? 0) % 2 === 1;
+      boss.x.powerUses = (boss.x.powerUses ?? 0) + 1;
+      if (!call) {
+        const slots = pickMany(ctx, candidates(ctx, player), prm.ionUnits ?? 2);
+        for (const sl of slots) if (prm.ionRankLoss) downgrade(ctx, player, sl, p.grid[sl]!.rank - prm.ionRankLoss, lost);
+        disable(ctx, player, slots, 'stunnedFor', prm.ionStun ?? 1.5);
+        powerEvent(ctx, id, player, slots, def.power.name);
+      } else {
+        callMinions(ctx, boss, 'zurg', prm.callCount ?? 3);
+        powerEvent(ctx, id, player, [], ZURG_ROBOTS_NAME);
+      }
+      break;
+    }
   }
   if (lost.length) rememberMe(ctx, player, lost);
+}
+
+/** Sbires appelés par un boss (Le Borgne, Muntz, Zurg) : ils surgissent juste derrière lui sur le chemin. */
+function callMinions(ctx: Ctx, boss: SimEnemy, master: BossId, count: number): void {
+  const prm = BOSSES[master].minion.params;
+  const s = ctx.cfg.script;
+  const hp = waveHp(Math.max(1, ctx.st.wave), s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1) * (prm.hpMul ?? 1);
+  for (let k = 0; k < Math.max(0, Math.round(count)); k++) {
+    const e: SimEnemy = {
+      uid: ctx.st.nextUid++, kind: 'sbire', lane: boss.lane, distance: Math.max(0, boss.distance - 0.4 * (k + 1)),
+      speed: 2 * (prm.speedMul ?? 1), hp, maxHp: hp, armor: prm.armor ?? 0, shieldHits: prm.shieldHits ?? 0,
+      effects: {}, minionOf: master, x: { flying: prm.flying ? 1 : undefined },
+    };
+    if (boss.x.from) e.x.from = boss.x.from;
+    if (boss.x.owner !== undefined) e.x.owner = boss.x.owner;
+    ctx.st.enemies.push(e);
+    emit(ctx, { type: 'enemySpawn', enemy: e.uid, kind: 'sbire', lane: e.lane });
+  }
+}
+
+/** « Je suis ton père » (Zurg, 30 % de PV) : des unités échangent leurs cases, tout le plateau est hypnotisé. */
+function father(ctx: Ctx): void {
+  const prm = BOSSES.zurg.power.params;
+  const player = targetPlayer(ctx);
+  const all = pickMany(ctx, candidates(ctx, player, () => true), 2 * Math.max(1, Math.round(prm.fatherSwaps ?? 2)));
+  for (let i = 0; i + 1 < all.length; i += 2) swap(ctx, player, [all[i]!, all[i + 1]!]);
+  const everyone = candidates(ctx, player);
+  disable(ctx, player, everyone, 'hypnotizedFor', prm.fatherDuration ?? 2);
+  powerEvent(ctx, 'zurg', player, everyone, FATHER_NAME);
 }
 
 /** Claquement de doigts : 3 unités perdent la moitié de leurs rangs (au moins 1 rang). */
@@ -270,6 +376,11 @@ export function updateBosses(ctx: Ctx): void {
         }
         continue; // le gant se tait pendant le claquement
       }
+    }
+    // Extension Pixar : « Je suis ton père » de Zurg (30 %), une fois.
+    if (e.bossId === 'zurg' && !e.x.father && e.hp <= e.maxHp * (BOSSES.zurg.power.params.fatherThreshold ?? 0.3)) {
+      e.x.father = 1;
+      father(ctx);
     }
     e.x.powerIn = (e.x.powerIn ?? interval) - DT;
     if (e.x.powerIn <= EPS) {

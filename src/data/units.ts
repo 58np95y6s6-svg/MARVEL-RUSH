@@ -1,4 +1,4 @@
-// Données des 28 unités. Octobre 2026 : chaque héros reprend le profil d'une unité Rush Royale
+// Données des 43 unités (28 Marvel et Disney, 15 Pixar). Octobre 2026 : chaque héros reprend le profil d'une unité Rush Royale
 // (docs/rush-royale-mapping.md, données et sources dans docs/rush-royale-donnees.md). Tout est lu par le moteur.
 //
 // Conversion Rush Royale → Marvel Rush :
@@ -320,7 +320,163 @@ export const UNIT_LIST: UnitDef[] = [
       params: { swapAlly: 1, swapSleep: 2, swapCleanse: 1 },
     },
   },
+  // ───────────── Pack Pixar (extension, publication le 01/11) ─────────────
+  // 3 Légendaires, 6 Épiques, 6 Rares (liste définitive de docs/roadmap.md, beaucoup de duos). Profils Rush Royale
+  // non utilisés par Marvel, Disney, DC et Transformers (docs/rush-royale-mapping.md, « Extension Pixar »).
+  // Mécanique propre : le coup de duo (src/engine/pixar.ts). Toutes les `duoEvery` attaques, le partenaire du duo
+  // (Bob, Martin, Russell, Tristesse, Linguini, EVE, Alberto, Pile-Poil, Barley, 22…) ajoute son propre coup.
+  {
+    // Rush Royale : Valkyrie (adaptation C).
+    id: 'mrincredible', name: 'M. Indestructible', pack: 'pixar', rarity: 'legendaire', role: 'Contrôle de zone',
+    targeting: 'premier', damage: 420, attackInterval: 1.0, range: 1.6,
+    ability: {
+      name: 'Coup de poing sismique',
+      description: 'Toutes les 7 s, M. Indestructible frappe le sol : toute la ligne du chemin de l’ennemi de tête subit 250 % de ses dégâts et les ennemis sont étourdis 1,2 s (sauf boss).',
+      params: { abilityCooldown: 7, lineDamage: 2.5, lineStun: 1.2 },
+    },
+  },
+  {
+    // Rush Royale : Rôdeur du crépuscule (Twilight Ranger, adaptation C).
+    id: 'elastigirl', name: 'Elastigirl', pack: 'pixar', rarity: 'epique', role: 'Tir de tête',
+    targeting: 'premier', damage: 160, attackInterval: 0.9, range: 'globale',
+    ability: {
+      name: 'Bras élastiques',
+      description: 'Ses bras s’étirent sur tout le chemin : +50 % de dégâts sur l’ennemi de tête, et chaque coup le ralentit de 15 % pendant 1 s.',
+      params: { leadBonus: 0.5, leadSlow: 0.15 },
+    },
+  },
+  {
+    // Rush Royale : Alchimiste (flaque périodique sur le chemin).
+    id: 'frozone', name: 'Frozone', pack: 'pixar', rarity: 'epique', role: 'Ralentissement / zone',
+    targeting: 'premier', damage: 130, attackInterval: 1.0, range: 2.4,
+    ability: {
+      name: 'Pont de glace',
+      description: 'Toutes les 5 s, un pont de glace gèle le chemin autour de l’ennemi de tête : 120 % des dégâts et 45 % de ralentissement pendant 3 s.',
+      params: { abilityCooldown: 5, iceDamage: 1.2, iceSlow: 0.45, iceDuration: 3, iceRadius: 1.2 },
+    },
+  },
+  {
+    // Rush Royale : Maître des esprits (dégâts, améliorations).
+    id: 'violetflash', name: 'Violette & Flèche', pack: 'pixar', rarity: 'rare', role: 'Échangeur',
+    targeting: 'premier', damage: 75, attackInterval: 0.6, range: 1.6,
+    ability: {
+      name: 'Champ de force',
+      description: 'Échangeur : glisse-les sur une alliée de même rang, elles échangent leurs cases ; Violette protège l’alliée par un champ de force (insensible aux pouvoirs de boss 3 s). Coup de duo (1 attaque sur 3) : Flèche frappe deux fois de plus.',
+      params: { swapAlly: 1, swapShield: 3, duoEvery: 3, dashHits: 2 },
+    },
+  },
+  {
+    // Rush Royale : Chaman (étourdit à la fusion).
+    id: 'sullimike', name: 'Sulli & Bob', pack: 'pixar', rarity: 'epique', role: 'Mana / recul',
+    targeting: 'premier', damage: 150, attackInterval: 1.0, range: 2.4,
+    ability: {
+      name: 'Rugissement',
+      description: 'Mana par élimination : Bob compte les points, chaque ennemi touché rapporte du mana à sa mort (+2 au rang 1, jusqu’à +12 au rang 7). Toutes les 8 s, Sulli rugit : les ennemis à portée reculent d’une case (sauf boss).',
+      params: { manaPerKill: 1.5, abilityCooldown: 8, roarPush: 1 },
+    },
+  },
+  {
+    // Rush Royale : Dryade des montagnes (Mountain Avens, adaptation C).
+    id: 'mcqueen', name: 'Flash McQueen & Martin', pack: 'pixar', rarity: 'rare', role: 'Soutien / vitesse',
+    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 2.4,
+    ability: {
+      name: 'Turbo',
+      description: 'Boost de vitesse : ses 4 voisines tirent 25 % plus vite. Coup de duo (1 attaque sur 5) : Martin remorque la cible en arrière pendant 1 s (sauf boss).',
+      params: { auraAttackSpeed: 0.25, duoEvery: 5, towDuration: 1 },
+    },
+  },
+  {
+    // Rush Royale : Invocateur (la fusion invoque une unité).
+    id: 'carlrussell', name: 'Carl & Russell', pack: 'pixar', rarity: 'rare', role: 'Booster de fusion',
+    targeting: 'premier', damage: 85, attackInterval: 1.0, range: 3.4,
+    ability: {
+      name: 'Ballons',
+      description: 'Booster de fusion : glisse-les sur une alliée de même rang, ils disparaissent et l’alliée gagne 1 rang. Toutes les 6 s, les ballons soulèvent un ennemi au hasard hors du chemin pendant 2 s (sauf boss).',
+      params: { promoteAlly: 1, abilityCooldown: 6, liftDuration: 2 },
+    },
+  },
+  {
+    // Rush Royale : Empoisonneur (poison qui monte avec le rang).
+    id: 'joysadness', name: 'Joie & Tristesse', pack: 'pixar', rarity: 'epique', role: 'Copieur',
+    targeting: 'premier', damage: 110, attackInterval: 0.9, range: 3.4,
+    ability: {
+      name: 'Souvenirs',
+      description: 'Copieur : glisse-les sur une alliée de même rang (autre héros) ; elles en deviennent le souvenir, à −25 % de dégâts. Tristesse empoisonne : chaque coup inflige 8 % des dégâts par seconde et par rang pendant 3 s. Coup de duo (1 sur 4) : un souvenir au hasard, doré (+20 % de dégâts à une alliée 5 s) ou bleu (cible ralentie de 40 % 2 s).',
+      params: { copyDamageMul: 0.75, poisonPerRank: 0.08, poisonDuration: 3, duoEvery: 4, memoryBuff: 0.2, memorySlow: 0.4 },
+    },
+  },
+  {
+    // Rush Royale : Médecin de peste (nuage).
+    id: 'remy', name: 'Rémy & Linguini', pack: 'pixar', rarity: 'rare', role: 'Sacrifice / mana',
+    targeting: 'premier', damage: 90, attackInterval: 0.9, range: 2.4,
+    ability: {
+      name: 'Recette',
+      description: 'Sacrifice : fusionné ou détruit, rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190). Recette : +4 de mana par rang au début de chaque vague. Coup de duo (1 sur 4) : Linguini renverse la marmite, 60 % des dégâts autour de la cible.',
+      params: { sacrificeMana: 1, waveManaPerRank: 4, duoEvery: 4, potSplash: 0.6 },
+    },
+  },
+  {
+    // Rush Royale : Robot (adaptation C).
+    id: 'walleeve', name: 'WALL-E & EVE', pack: 'pixar', rarity: 'legendaire', role: 'Dégâts / rayon',
+    targeting: 'premier', damage: 360, attackInterval: 1.0, range: 'globale',
+    ability: {
+      name: 'Directive',
+      description: 'WALL-E lance des cubes compactés. Coup de duo (1 attaque sur 3) : le rayon d’EVE frappe la cible et tous les ennemis à 1,5 case autour (150 %).',
+      params: { duoEvery: 3, eveDamage: 1.5, eveRadius: 1.5 },
+    },
+  },
+  {
+    // Rush Royale : Tréant (adaptation C).
+    id: 'lucaalberto', name: 'Luca & Alberto', pack: 'pixar', rarity: 'rare', role: 'Formation',
+    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 2.4,
+    ability: {
+      name: 'Silenzio, Bruno !',
+      description: 'Formation : chaque autre Luca & Alberto relié (cases voisines) lui donne +15 % de dégâts (3 au plus) ; à 3, ses coups touchent aussi autour (50 %). Coup de duo (1 sur 5) : une vague de mer fait reculer la cible d’une demi-case (sauf boss).',
+      params: { formationDamagePerAlly: 0.15, formationMax: 3, formationSplashAt: 3, formationSplash: 0.5, duoEvery: 5, wavePush: 0.5 },
+    },
+  },
+  {
+    // Rush Royale : Élémentaire de terre (dégâts qui montent à chaque coup).
+    id: 'mei', name: 'Mei (panda roux)', pack: 'pixar', rarity: 'epique', role: 'Croissance',
+    targeting: 'premier', damage: 170, attackInterval: 1.0, range: 1.6,
+    ability: {
+      name: 'Panda géant',
+      description: 'Croissance : chaque élimination et chaque seconde rendent le panda plus grand, sans plafond (de plus en plus lentement) ; fusionnée, elle garde la moitié de son bonus. Chaque coup écrase aussi les ennemis autour (50 %).',
+      params: { growthPerSecond: 0.004, growthPerKill: 0.03, growthScale: 0.28, growthExponent: 0.75, growthKeepOnMerge: 0.5, crushSplash: 0.5 },
+    },
+  },
+  {
+    // Rush Royale : Lierre (malus et graines).
+    id: 'jessie', name: 'Jessie & Pile-Poil', pack: 'pixar', rarity: 'rare', role: 'Contrôle / malus',
+    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 2.4,
+    ability: {
+      name: 'Lasso',
+      description: 'Chaque coup marque la cible : +10 % de dégâts subis pendant 4 s. Coup de duo (1 sur 4) : Jessie lance son lasso et Pile-Poil galope, la cible recule pendant 1,5 s (sauf boss).',
+      params: { lassoMark: 0.1, lassoMarkDuration: 4, duoEvery: 4, lassoPull: 1.5 },
+    },
+  },
+  {
+    // Rush Royale : Archimage (adaptation C).
+    id: 'ianbarley', name: 'Ian & Barley', pack: 'pixar', rarity: 'epique', role: 'Sorts aléatoires',
+    targeting: 'premier', damage: 140, attackInterval: 1.0, range: 3.4,
+    ability: {
+      name: 'Bâton magique',
+      description: 'Toutes les 6 s, un sort au hasard : boule de feu (300 % autour d’un ennemi), arrêt du temps (ennemis à portée étourdis 1,5 s), sort de croissance (+30 % de dégâts à une alliée 8 s) ou rayon (200 % à 3 ennemis).',
+      params: { abilityCooldown: 6, fireball: 3, freeze: 1.5, growBuff: 0.3, growDuration: 8, rayDamage: 2, rayTargets: 3 },
+    },
+  },
+  {
+    // Rush Royale : Nécromancien (adaptation C).
+    id: 'joe', name: 'Joe & 22', pack: 'pixar', rarity: 'legendaire', role: 'Soutien / galvanisation',
+    targeting: 'premier', damage: 260, attackInterval: 0.8, range: 3.4,
+    ability: {
+      name: 'Musique de l’âme',
+      description: 'Toutes les 10 s, Joe joue : toutes tes unités gagnent +25 % de vitesse d’attaque pendant 5 s. Coup de duo (1 sur 5) : l’étincelle de 22 double les dégâts du coup.',
+      params: { abilityCooldown: 10, jazzHaste: 0.25, jazzDuration: 5, duoEvery: 5, sparkMul: 2 },
+    },
+  },
 ];
+
 
 export const UNITS: Record<UnitId, UnitDef> = Object.fromEntries(UNIT_LIST.map((u) => [u.id, u])) as Record<UnitId, UnitDef>;
 
@@ -330,4 +486,12 @@ export const UNIT_IDS: UnitId[] = UNIT_LIST.map((u) => u.id);
 export const STARTER_DECKS: Record<'marvel' | 'disney', UnitId[]> = {
   marvel: ['spiderman', 'hawkeye', 'falcon', 'cmarvel', 'widow'],
   disney: ['pocahontas', 'merida', 'tiana', 'nemo', 'foxhound'],
+};
+
+/** Decks de référence de l'extension Pixar (simulateur, docs/equilibrage.md). */
+export const PIXAR_REFERENCE_DECKS: Record<'pixar-rares' | 'meta-pixar' | 'indestructibles' | 'toy-story', UnitId[]> = {
+  'pixar-rares': ['violetflash', 'mcqueen', 'carlrussell', 'remy', 'jessie'],
+  'meta-pixar': ['mrincredible', 'walleeve', 'joe', 'frozone', 'mcqueen'],
+  indestructibles: ['mrincredible', 'elastigirl', 'frozone', 'violetflash', 'mcqueen'],
+  'toy-story': ['buzzwoody', 'jessie', 'walleeve', 'joe', 'mcqueen'],
 };

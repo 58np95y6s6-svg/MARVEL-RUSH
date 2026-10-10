@@ -57,6 +57,25 @@ export const TEAM_LIST: TeamBonusDef[] = [
     id: 'animaux', name: 'Animaux', units: ['foxhound', 'nickjudy', 'nemo'],
     description: '+15 % de vitesse d’attaque.', params: { attackSpeed: 0.15 },
   },
+
+  // ───────────── Extension Pixar ─────────────
+  {
+    id: 'indestructibles', name: 'Les Indestructibles', units: ['mrincredible', 'elastigirl', 'violetflash', 'frozone'],
+    description: 'Une famille de super-héros : +15 % de dégâts et +10 % de vitesse d’attaque (3 membres ou plus).', params: { minCount: 3, damage: 0.15, attackSpeed: 0.1 },
+  },
+  {
+    id: 'monstres', name: 'Monstres & Cie', units: ['sullimike', 'mei', 'lucaalberto'],
+    description: 'Les gentils monstres : +12 % de dégâts et +10 de mana par vague (2 ou plus).', params: { minCount: 2, damage: 0.12, manaPerWave: 10 },
+  },
+  {
+    id: 'emotions', name: 'Émotions', units: ['joysadness', 'joe', 'ianbarley'],
+    description: 'Souvenirs, musique et magie : compétences rechargées 20 % plus vite (2 ou plus).', params: { minCount: 2, cooldownReduction: 0.2 },
+  },
+  // Équipe inter-univers
+  {
+    id: 'toystory', name: 'Toy Story', units: ['buzzwoody', 'jessie'],
+    description: 'Le Club des jouets : +20 % de vitesse d’attaque et 10 % de chance d’attaquer deux fois.', params: { attackSpeed: 0.2, doubleAttackChance: 0.1 },
+  },
 ];
 
 export const TEAMS: Record<string, TeamBonusDef> = Object.fromEntries(TEAM_LIST.map((t) => [t.id, t]));

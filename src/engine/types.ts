@@ -2,7 +2,7 @@
 // (rendu, réseau, tutoriel, campagne). Le moteur ne touche jamais au DOM.
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-import type { BossId, EnemyKind, UnitId } from '../data/types';
+import type { BossId, BossPool, EnemyKind, UnitId } from '../data/types';
 
 export const TICKS_PER_SECOND = 20;
 export const GRID_COLS = 5;
@@ -38,6 +38,8 @@ export interface GameConfig {
   targetWaves?: number;
   /** Rythme des boss : petit boss toutes les 5 vagues, gros boss toutes les 10, Thanos à la 50 (§4.3). */
   bossRhythm?: { small: number; big: number; thanos: number };
+  /** Rotation des gros boss (extension Pixar) : 'tous' (par défaut), 'marvel-disney' (campagne, chapitres 1 à 6) ou 'pixar'. */
+  bossPool?: BossPool;
   /** Compte à rebours avant la 1re vague (s) : on peut déjà invoquer et fusionner. Absent = 0. */
   prepTime?: number;
   /** Modificateurs de map actifs (§7 bis), lus par le moteur. */

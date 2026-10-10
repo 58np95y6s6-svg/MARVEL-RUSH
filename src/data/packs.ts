@@ -11,6 +11,11 @@ export const PACK_LIST: PackDef[] = [
     id: 'disney', name: 'Pack Disney', price1: 100, price10: 900,
     rates: { rare: 0.72, epique: 0.24, legendaire: 0.04 }, pityLegendary: 30,
   },
+  // Extension Pixar : mêmes prix, taux et garantie (compteur de garantie propre au pack).
+  {
+    id: 'pixar', name: 'Pack Pixar', price1: 100, price10: 900,
+    rates: { rare: 0.72, epique: 0.24, legendaire: 0.04 }, pityLegendary: 30,
+  },
 ];
 
 export const PACKS: Record<Pack, PackDef> = Object.fromEntries(PACK_LIST.map((p) => [p.id, p])) as Record<Pack, PackDef>;

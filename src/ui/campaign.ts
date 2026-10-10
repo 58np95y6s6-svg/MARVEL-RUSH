@@ -10,7 +10,7 @@ import { getMap } from '../maps';
 import { firstClearGems } from '../meta/gems';
 import { getProfile, loadActiveProfile, onProfileChange, updateProfile, type Reward } from '../meta/profile';
 import {
-  CHAPTERS, STAR_CHEST_THRESHOLDS, chapterLevels, constraintIcon, constraintLabel, getChapter, getLevel, guaranteedHero,
+  CHAPTERS, MAX_CAMPAIGN_STARS, STAR_CHEST_THRESHOLDS, isLastChapter, nextChapter, prevChapter, chapterLevels, constraintIcon, constraintLabel, getChapter, getLevel, guaranteedHero,
   levelConfig, nextLevel, type CampaignLevel, type ChapterDef,
 } from '../campaign/levels';
 import {
@@ -132,7 +132,8 @@ export function mountCampaign(host: HTMLElement, o: CampaignOptions): () => void
   const overlay = o.overlay ?? wrap;
   let sheet: HTMLElement | null = null;
   let sheetLevel: string | null = o.openLevel ?? null;
-  const chapterN = Math.min(6, Math.max(1, o.chapter ?? currentChapterOf(getProgress())));
+  const wanted = o.chapter ?? currentChapterOf(getProgress());
+  const chapterN = getChapter(wanted) ? wanted : 1;
 
   function render(): void {
     if (destroyed) return;
@@ -146,7 +147,7 @@ export function mountCampaign(host: HTMLElement, o: CampaignOptions): () => void
     top.innerHTML = `
       ${artHtml(ch)}
       <button class="cp-chsel" data-a="chapters" aria-label="Changer de chapitre">${ICONS.grid}<span>Chapitres</span></button>
-      <span class="cp-pill" aria-label="Étoiles de la campagne">${ICONS.star(true)}<b>${totalStars(prog)}</b><small>/ 180</small></span>
+      <span class="cp-pill" aria-label="Étoiles de la campagne">${ICONS.star(true)}<b>${totalStars(prog)}</b><small>/ ${MAX_CAMPAIGN_STARS()}</small></span>
       <div class="cp-banner">
         <span class="cp-crest l"><b class="mr-outline-s">${ch.n}</b></span>
         <h2 class="mr-outline-s"><small>Chapitre ${ch.n}</small>${esc(ch.name)}</h2>
@@ -174,7 +175,8 @@ export function mountCampaign(host: HTMLElement, o: CampaignOptions): () => void
       if ((e.target as HTMLElement).closest('[data-a="resume"]')) { location.hash = '#reprendre'; return; } // Sauvegarde de partie
       const nextBtn = (e.target as HTMLElement).closest<HTMLElement>('[data-a="next-chapter"]');
       if (nextBtn) {
-        if (ch.n < 6 && isChapterUnlocked(prog, ch.n + 1)) o.onChapter(ch.n + 1);
+        const nx = nextChapter(ch.n);
+        if (nx && isChapterUnlocked(prog, nx.n)) o.onChapter(nx.n);
         return;
       }
       const card = (e.target as HTMLElement).closest<HTMLElement>('[data-level]');
@@ -252,7 +254,8 @@ function currentChapterOf(p: Progress): number {
 
 function lockReason(p: Progress, ch: ChapterDef): string {
   const bits: string[] = [];
-  if (ch.n > 1 && !isLevelWon(p, `c${ch.n - 1}-n10`)) bits.push(`battre le niveau ${ch.n - 1}-10`);
+  const prev = prevChapter(ch.n);
+  if (prev && !isLevelWon(p, `c${prev.n}-n10`)) bits.push(`battre le niveau ${prev.n}-10`);
   const t = totalStars(p);
   if (t < ch.unlockStars) bits.push(`${t} / ${ch.unlockStars} étoiles`);
   return bits.join(' et ');
@@ -339,8 +342,9 @@ function levelCard(l: CampaignLevel, prog: Progress, isNext: boolean): HTMLEleme
 }
 
 function nextChapterCard(ch: ChapterDef, prog: Progress): HTMLElement {
-  const last = ch.n === 6;
-  const nextCh = getChapter(ch.n + 1);
+  const last = isLastChapter(ch.n);
+  const nextCh = nextChapter(ch.n);
+  const finalName = ch.boss === 'thanos' ? 'Thanos' : BOSSES[ch.boss].name;
   const hero = guaranteedHero(ch, getProfile());
   const owned = !!getProfile()?.heroes[hero] && isLevelWon(prog, `c${ch.n}-n10`);
   const bossWon = isLevelWon(prog, `c${ch.n}-n10`);
@@ -352,11 +356,11 @@ function nextChapterCard(ch: ChapterDef, prog: Progress): HTMLElement {
     <div class="cp-next-hero${owned || bossWon ? ' revealed' : ''}"><img alt="" src="${unitUrl(hero, 0)}"></div>
     <div class="cp-next-txt">
       <small>${last ? 'Fin de la campagne' : 'Chapitre suivant'}</small>
-      <h3 class="mr-outline-s">${last ? 'Vainqueur de Thanos' : `${nextCh!.n} · ${esc(nextCh!.name)}`}</h3>
+      <h3 class="mr-outline-s">${last ? `Vainqueur de ${esc(finalName)}` : `${nextCh!.n} · ${esc(nextCh!.name)}`}</h3>
       <p>Personnage garanti : <b>${bossWon ? esc(UNITS[hero].name) : '???'}</b></p>
       <ul>
-        <li class="${bossWon ? 'ok' : ''}">${bossWon ? ICONS.check : '•'} Battre ${esc(ch.n === 6 ? 'Thanos' : (BOSSES[ch.boss].name))} (niveau 10)</li>
-        ${last ? '<li>Cadre de profil « Vainqueur de Thanos »</li>' : need > 0 ? `<li class="${total >= need ? 'ok' : ''}">${total >= need ? ICONS.check : '•'} ${ICONS.star(true)} ${Math.min(total, need)} / ${need} étoiles</li>` : ''}
+        <li class="${bossWon ? 'ok' : ''}">${bossWon ? ICONS.check : '•'} Battre ${esc(finalName)} (niveau 10)</li>
+        ${last ? `<li>Cadre de profil « Vainqueur de ${esc(finalName)} »</li>` : need > 0 ? `<li class="${total >= need ? 'ok' : ''}">${total >= need ? ICONS.check : '•'} ${ICONS.star(true)} ${Math.min(total, need)} / ${need} étoiles</li>` : ''}
       </ul>
     </div>
     ${!last ? `<button class="cp-play ${open ? 'yellow' : 'lock'}" data-a="next-chapter" ${open ? '' : 'disabled'}>${open ? 'Ouvrir' : ICONS.lock}</button>` : ''}`;
@@ -444,8 +448,9 @@ function chaptersSheet(prog: Progress, current: number, h: { onClose: () => void
   body.innerHTML = `<div class="cp-chapters">${CHAPTERS.map((c) => {
     const open = isChapterUnlocked(prog, c.n);
     const s = chapterStars(prog, c.n);
-    const prevWon = c.n === 1 || isLevelWon(prog, `c${c.n - 1}-n10`);
-    const req = open ? '' : `<small class="req">${prevWon ? '' : `Battre le niveau ${c.n - 1}-10`}${!prevWon && total < c.unlockStars ? ' · ' : ''}${total < c.unlockStars ? `${total} / ${c.unlockStars} ★` : ''}</small>`;
+    const pc = prevChapter(c.n);
+    const prevWon = !pc || isLevelWon(prog, `c${pc.n}-n10`);
+    const req = open ? '' : `<small class="req">${prevWon ? '' : `Battre le niveau ${pc!.n}-10`}${!prevWon && total < c.unlockStars ? ' · ' : ''}${total < c.unlockStars ? `${total} / ${c.unlockStars} ★` : ''}</small>`;
     return `<button class="cp-chap${open ? '' : ' locked'}${c.n === current ? ' cur' : ''}" data-ch="${c.n}" ${open ? '' : 'aria-disabled="true"'}>
       <img class="cp-chap-map" alt="" src="${mapUrl(c.artMap)}">
       <img class="cp-chap-boss" alt="" src="${bossUrl(c.boss)}">

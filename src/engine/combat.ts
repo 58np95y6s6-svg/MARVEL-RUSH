@@ -12,6 +12,7 @@ import {
 } from './internal';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitParams } from './talents';
 import { bossReward, formationBonus, growOnKill, growthBonus, growthPointsOf, tagForMana } from './archetypes';
+import { pxDamageBonus } from './pixar';
 
 // ───────────── Ennemis du chemin ─────────────
 // Solo : une branche 'a' jusqu'au château. Coop : deux branches 'a' et 'b' qui se rejoignent
@@ -386,6 +387,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
   if ((u.counters.restoredFor ?? 0) > EPS) dmg *= 1 + (u.counters.restoredBonus ?? 0);
   dmg *= prm.damageMul ?? 1;
+  dmg *= 1 + pxDamageBonus(u); // extension Pixar : souvenir doré (Joie), sort de croissance (Ian & Barley)
   dmg *= 1 + AWAKENING_DAMAGE * awakeningOf(ctx, player, id);
   // Archétypes : croissance sans plafond (Venom : mana en réserve, ou héritée d'une fusion) et malus de la copie (Loki).
   dmg *= 1 + growthBonus(prm, growthPointsOf(prm, u, p.mana));

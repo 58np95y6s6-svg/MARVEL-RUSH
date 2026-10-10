@@ -1,7 +1,7 @@
 // Contrat partagé : définitions statiques du contenu (unités, boss, ennemis, équipes, packs).
 // Toute modification passe par le chef de projet (voir docs/journal.md).
 
-export type Pack = 'marvel' | 'disney';
+export type Pack = 'marvel' | 'disney' | 'pixar';
 export type Rarity = 'rare' | 'epique' | 'legendaire';
 /** premier = le plus avancé sur le chemin, aleatoire = au hasard, fort = le plus de PV. */
 export type Targeting = 'premier' | 'aleatoire' | 'fort';
@@ -10,9 +10,20 @@ export type UnitId =
   | 'ironman' | 'spiderman' | 'hulk' | 'thor' | 'strange' | 'venom' | 'cmarvel'
   | 'cap' | 'loki' | 'bucky' | 'hawkeye' | 'falcon' | 'widow' | 'shangchi'
   | 'moana' | 'maui' | 'pocahontas' | 'mulan' | 'merida' | 'ariel' | 'foxhound'
-  | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph';
+  | 'tiana' | 'nemo' | 'coco' | 'nickjudy' | 'buzzwoody' | 'rapunzel' | 'vanralph'
+  // Extension Pixar (beaucoup de duos)
+  | 'mrincredible' | 'elastigirl' | 'frozone' | 'violetflash' | 'sullimike' | 'mcqueen' | 'carlrussell' | 'joysadness'
+  | 'remy' | 'walleeve' | 'lucaalberto' | 'mei' | 'jessie' | 'ianbarley' | 'joe';
 
-export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos';
+export type BossId = 'jafar' | 'cruella' | 'ursula' | 'malefique' | 'galactus' | 'bouffon' | 'thanos'
+  // Extension Pixar (l'Empereur Zurg : boss final de l'extension)
+  | 'syndrome' | 'randall' | 'lotso' | 'hopper' | 'muntz' | 'zurg';
+
+/**
+ * Rotation des gros boss en mode infini et en campagne : tous les univers (par défaut), Marvel et Disney
+ * seulement (chapitres 1 à 6), ou Pixar seul.
+ */
+export type BossPool = 'tous' | 'marvel-disney' | 'pixar';
 
 export type EnemyKind = 'normal' | 'rapide' | 'gros' | 'blinde' | 'bouclier' | 'sbire';
 

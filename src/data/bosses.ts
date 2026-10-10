@@ -7,7 +7,7 @@
 //   arrivalStun / arrivalStunUnits (étourdissement des unités quand il atteint la fin du chemin).
 // Boss : `hpMul` (× 25 PV d'un ennemi normal), `speed` (cases par seconde).
 
-import type { BossDef, BossId } from './types';
+import type { BossDef, BossId, BossPool } from './types';
 
 export const BOSS_LIST: BossDef[] = [
   {
@@ -89,12 +89,95 @@ export const BOSS_LIST: BossDef[] = [
     minion: { name: 'Outriders', description: 'Très rapides, ils arrivent en meute.', params: { speedMul: 2.5, hpMul: 0.5, packSize: 4 } },
     arenaMapId: 'arene-thanos',
   },
+  // ───────────── Extension Pixar ─────────────
+  {
+    id: 'syndrome', name: 'Syndrome',
+    power: {
+      name: 'Rayon à point zéro', interval: 6,
+      description: 'Syndrome fige 2 unités dans son rayon pendant 3 s. Son Omnidroïde l’accompagne : il encaisse 25 % des dégâts.',
+      params: { units: 2, duration: 3, bossArmor: 0.25 },
+    },
+    minion: { name: 'Robots de Syndrome', description: 'Blindés (armure 30 %), en duo.', params: { speedMul: 1, hpMul: 1.2, armor: 0.3, packSize: 2 } },
+    arenaMapId: 'arene-syndrome',
+  },
+  {
+    id: 'randall', name: 'Randall',
+    power: {
+      name: 'Camouflage', interval: 6,
+      description: 'Randall se fond dans le décor : 2 unités le perdent de vue et cessent d’attaquer 3 s, et il se soigne de 3 %.',
+      params: { units: 2, duration: 3, heal: 0.03 },
+    },
+    minion: { name: 'Monstres de Monstropolis', description: 'Rapides, en trio.', params: { speedMul: 1.6, hpMul: 0.6, packSize: 3 } },
+    arenaMapId: 'arene-randall',
+  },
+  {
+    id: 'lotso', name: 'Lotso',
+    power: {
+      name: 'Tri des jouets', interval: 6,
+      description: 'Lotso jette à la benne l’unité de plus bas rang (rang 2 ou moins), et une autre unité perd 1 rang.',
+      params: { maxRank: 2, rankLoss: 1 },
+    },
+    minion: { name: 'Jouets de Sunnyside', description: 'Ils arrivent en bande de 3, protégés par un bouclier (1 coup).', params: { speedMul: 1, hpMul: 0.8, shieldHits: 1, packSize: 3 } },
+    arenaMapId: 'arene-lotso',
+  },
+  {
+    id: 'hopper', name: 'Le Borgne',
+    power: {
+      name: 'Nuée de sauterelles', interval: 6,
+      description: 'Le Borgne appelle 4 sauterelles près de lui et en étourdit 1 unité 2 s.',
+      params: { callCount: 4, units: 1, duration: 2 },
+    },
+    minion: { name: 'Sauterelles', description: 'Elles volent vite, en essaim de 3.', params: { speedMul: 1.7, hpMul: 0.5, flying: 1, packSize: 3 } },
+    arenaMapId: 'arene-hopper',
+  },
+  {
+    id: 'muntz', name: 'Charles Muntz',
+    power: {
+      name: 'Dirigeable', interval: 6,
+      description: 'En alternance : les chiens de Muntz (3 chiens surgissent près de lui) ou le canon du dirigeable (une colonne d’unités étourdie 2 s).',
+      params: { callCount: 3, duration: 2 },
+    },
+    minion: { name: 'Chiens de Muntz', description: 'Très rapides, en meute de 3.', params: { speedMul: 2, hpMul: 0.55, packSize: 3 } },
+    arenaMapId: 'arene-muntz',
+  },
+  {
+    id: 'zurg', name: 'l’Empereur Zurg',
+    power: {
+      name: 'Pistolet à ions', interval: 8,
+      description: 'Toutes les 8 s, en alternance : Pistolet à ions (2 unités perdent 1 rang et sont étourdies 1,5 s) ou Robots de Zurg (3 robots surgissent près de lui). À 30 % de PV, une fois, « Je suis ton père » : 4 unités échangent leurs cases et tout le plateau est hypnotisé 2 s.',
+      params: {
+        hpMul: 2,
+        ionUnits: 2, ionRankLoss: 1, ionStun: 1.5,
+        callCount: 3,
+        fatherThreshold: 0.3, fatherSwaps: 2, fatherDuration: 2,
+      },
+    },
+    minion: { name: 'Robots de Zurg', description: 'Robots d’assaut, en trio, avec un bouclier (1 coup).', params: { speedMul: 1.1, hpMul: 0.8, shieldHits: 1, packSize: 3 } },
+    arenaMapId: 'arene-zurg',
+  },
 ];
 
 export const BOSSES: Record<BossId, BossDef> = Object.fromEntries(BOSS_LIST.map((b) => [b.id, b])) as Record<BossId, BossDef>;
 
-/** Les 6 boss en rotation (Thanos est hors rotation). */
-export const ROTATING_BOSSES: BossId[] = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'];
+/**
+ * Gros boss en rotation, par option de rotation (campagne et modes infinis). Thanos (vague 50) est hors
+ * rotation ; l'Empereur Zurg, boss final de l'extension Pixar, est dans la rotation.
+ */
+export const BOSS_POOLS: Record<BossPool, BossId[]> = {
+  'marvel-disney': ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'],
+  pixar: ['syndrome', 'randall', 'lotso', 'hopper', 'muntz', 'zurg'],
+  tous: ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon', 'syndrome', 'randall', 'lotso', 'hopper', 'muntz', 'zurg'],
+};
+
+/** Rotation par défaut (« Tous les univers »). */
+export const ROTATING_BOSSES: BossId[] = BOSS_POOLS.tous;
+
+/** Libellés des options de rotation. */
+export const BOSS_POOL_LABELS: Record<BossPool, string> = {
+  tous: 'Tous les univers',
+  'marvel-disney': 'Marvel et Disney',
+  pixar: 'Pixar seul',
+};
 
 /**
  * Petits boss (§4.4) : le lieutenant du prochain gros boss, un de ses sbires en version géante
@@ -119,6 +202,16 @@ export const LIEUTENANTS: Record<BossId, LieutenantDef> = {
       name: 'Gant de l’infini', description: 'Le pouvoir affaibli d’une Pierre au hasard.', interval: 10,
       params: { powerUnits: 1, powerDuration: 1, spaceUnits: 2, realityUnits: 1, soulManaSteal: 0.1, timeHeal: 0.02, mindUnits: 1, mindDuration: 2 },
     },
+  },
+  // ───────────── Extension Pixar ─────────────
+  syndrome: { name: 'Robot de Syndrome géant', power: { name: 'Rayon à point zéro', description: 'Fige 1 unité pendant 2 s.', interval: 10, params: { units: 1, duration: 2 } } },
+  randall: { name: 'Monstre géant', power: { name: 'Camouflage', description: '1 unité cesse d’attaquer 2 s.', interval: 10, params: { units: 1, duration: 2, heal: 0 } } },
+  lotso: { name: 'Gros Bébé', power: { name: 'Tri des jouets', description: 'Une unité de rang 3 ou plus perd 1 rang.', interval: 10, params: { maxRank: 0, rankLoss: 1 } } },
+  hopper: { name: 'Sauterelle géante', power: { name: 'Nuée de sauterelles', description: '2 sauterelles en renfort.', interval: 10, params: { callCount: 2, units: 0, duration: 0 } } },
+  muntz: { name: 'Alpha, le chien géant', power: { name: 'Dirigeable', description: 'En alternance : 2 chiens, ou 1 unité étourdie 1,5 s.', interval: 10, params: { callCount: 2, duration: 1.5, units: 1 } } },
+  zurg: {
+    name: 'Robot de Zurg géant',
+    power: { name: 'Pistolet à ions', description: 'En alternance : 1 unité étourdie 1,5 s, ou 2 robots en renfort.', interval: 10, params: { ionUnits: 1, ionRankLoss: 0, ionStun: 1.5, callCount: 2 } },
   },
 };
 
@@ -155,3 +248,10 @@ export const THANOS_STONES: StoneDef[] = [
 
 /** Nom de l'événement bossPower du Claquement de doigts (émis deux fois : annonce sans case, puis effet). */
 export const SNAP_NAME = 'Claquement de doigts';
+
+/** Noms des événements bossPower des méchants Pixar. */
+export const ION_NAME = 'Pistolet à ions';
+export const ZURG_ROBOTS_NAME = 'Robots de Zurg';
+export const FATHER_NAME = 'Je suis ton père';
+export const DOGS_NAME = 'Les chiens de Muntz';
+export const AIRSHIP_NAME = 'Canon du dirigeable';

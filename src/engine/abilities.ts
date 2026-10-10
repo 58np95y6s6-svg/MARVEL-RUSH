@@ -1,4 +1,4 @@
-// Attaques et compétences des 28 unités, sur les profils Rush Royale (docs/rush-royale-mapping.md).
+// Attaques et compétences des 43 unités (28 + 15 Pixar, src/engine/pixar.ts), sur les profils Rush Royale (docs/rush-royale-mapping.md).
 // Une fonction par tick et par joueur : timers, compétences à recharge, attaques de base (le rang de
 // fusion divise l'intervalle d'attaque, règle de Rush Royale : plusieurs coups par tick si besoin).
 
@@ -15,6 +15,7 @@ import {
 } from './combat';
 import { enemyGridPos, inReach, unitRange } from './geometry';
 import { formationSplash, growOverTime } from './archetypes';
+import { pxAttack, pxTick, pxTimedAbility, pxWaveMana } from './pixar';
 
 /** Recharge de la compétence périodique selon le rang (`abilityCooldownPerRank`, Stase). */
 export function abilityCd(prm: Record<string, number>, rank: number): number {
@@ -129,6 +130,7 @@ export function updateUnits(ctx: Ctx, player: number): void {
     const slot = p.grid.indexOf(u);
     if (slot < 0) continue; // détruite pendant ce tick
     tickTimers(ctx, player, u);
+    pxTick(u);
     const id = effectiveId(u);
     const def = effectiveDef(u);
     if ((u.counters.rockfallFor ?? 0) > EPS) rockfall(ctx, player, slot, u);
@@ -361,7 +363,8 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
       return true;
     }
     default:
-      return true;
+      // Extension Pixar (src/engine/pixar.ts).
+      return pxTimedAbility(ctx, player, slot, u, all, enemies) ?? true;
   }
 }
 
@@ -654,6 +657,9 @@ function attackOf(
       return { targets: [target], fx: 'nemo:ralenti' };
     }
     default: {
+      // Extension Pixar : attaques et coups de duo.
+      const px = pxAttack(ctx, player, slot, u, id, target, enemies, dmg, hit, splash);
+      if (px) return px;
       // falcon, moana, tiana, coco… : coup simple.
       hit(target, dmg);
       return { targets: [target], fx: `${id}:${BASE_FX[id] ?? 'tir'}` };
@@ -679,7 +685,8 @@ export function onWaveStart(ctx: Ctx, player: number): number {
     if (!u) continue;
     u.counters.restores = 0;
   }
-  return 0;
+  // Extension Pixar : la recette de Rémy.
+  return pxWaveMana(ctx, player);
 }
 
 export { UNITS, applyBurn };

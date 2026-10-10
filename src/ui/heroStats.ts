@@ -6,7 +6,7 @@ import type { UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, resolveUnitParams } from '../engine/talents';
 import { LEVEL_DAMAGE, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE } from '../engine/internal';
-import { growthBonus } from '../engine/archetypes';
+import { growthBonus, KILL_MANA, SACRIFICE_MANA } from '../engine/archetypes';
 
 export interface StatCtx {
   level: number;       // niveau de collection (1..10)
@@ -89,6 +89,30 @@ const ABILITY_ROWS: Record<string, Row> = {
   formationDamagePerAlly: { label: 'Dégâts par allié relié', icon: 'aura', fmt: P, delta: dP },
   formationMax: { label: 'Alliés comptés au plus', icon: 'aura', fmt: N },
   swapSleep: { label: 'Bug après échange', icon: 'temps', fmt: S },
+  // ——— Extension Pixar : archétypes et profils Rush Royale ———
+  auraAttackSpeed: { label: 'Vitesse aux voisines', icon: 'aura', fmt: P },
+  manaPerKill: { label: 'Mana par ennemi marqué', icon: 'mana', fmt: (v, _u, c) => nf(Math.round((KILL_MANA[c.rank - 1] ?? 1) * v), 0) },
+  growthPerKill: { label: 'Croissance par élimination', icon: 'epee', fmt: N },
+  growthKeepOnMerge: { label: 'Croissance gardée à la fusion', icon: 'aura', fmt: P },
+  sacrificeMana: { label: 'Mana du sacrifice', icon: 'mana', fmt: (v, _u, c, prm) => prm.sacrificeManaPerRank ? '' : nf(Math.round((SACRIFICE_MANA[c.rank - 1] ?? 10) * v), 0) },
+  auraDamage: { label: 'Dégâts aux voisines', icon: 'aura', fmt: P },
+  duoEvery: { label: 'Coup de duo toutes les', icon: 'temps', fmt: (v) => `${nf(v, 0)} attaques` },                // mécanique Pixar
+  lineDamage: { label: 'Coup de poing sismique', icon: 'zone', fmt: P },                                  // Valkyrie (M. Indestructible)
+  lineStun: { label: 'Étourdissement', icon: 'controle', fmt: S },
+  leadBonus: { label: 'Bonus sur l’ennemi de tête', icon: 'epee', fmt: (v) => `+${pct(v)}` },             // Rôdeur (Elastigirl)
+  iceDamage: { label: 'Dégâts du pont de glace', icon: 'zone', fmt: P },                                  // Alchimiste (Frozone)
+  iceSlow: { label: 'Ralentissement', icon: 'controle', fmt: P },
+  swapShield: { label: 'Champ de force', icon: 'temps', fmt: S },                                         // Maître des esprits (Violette)
+  roarPush: { label: 'Recul du rugissement', icon: 'controle', fmt: (v) => `${nf(v, 1)} case` },          // Chaman (Sulli)
+  liftDuration: { label: 'Soulevé par les ballons', icon: 'controle', fmt: S },                           // Invocateur (Carl)
+  poisonPerRank: { label: 'Poison par seconde', icon: 'epee', fmt: (v, _u, c) => pct(v * c.rank) },        // Empoisonneur (Tristesse)
+  waveManaPerRank: { label: 'Mana par vague', icon: 'mana', fmt: (v, _u, c) => nf(v * c.rank, 0) },        // Médecin de peste (Rémy)
+  eveDamage: { label: 'Rayon d’EVE', icon: 'zone', fmt: P },                                              // Robot (WALL-E)
+  crushSplash: { label: 'Écrasement', icon: 'zone', fmt: P },                                             // Élémentaire de terre (Mei)
+  lassoMark: { label: 'Dégâts subis (lasso)', icon: 'epee', fmt: (v) => `+${pct(v)}` },                   // Lierre (Jessie)
+  fireball: { label: 'Boule de feu', icon: 'zone', fmt: P },                                              // Archimage (Ian)
+  jazzHaste: { label: 'Vitesse à tout le plateau', icon: 'aura', fmt: (v) => `+${pct(v)}` },             // Nécromancien (Joe)
+  jazzDuration: { label: 'Durée de la musique', icon: 'temps', fmt: S },
   abilityCooldown: { label: 'Recharge de la compétence', icon: 'temps', fmt: (v, _u, c, prm) => sec(Math.max(0.5, v + (prm.abilityCooldownPerRank ?? 0) * (c.rank - 1))), delta: dS },
 };
 
@@ -134,7 +158,9 @@ export function abilityStats(id: UnitId, c: StatCtx): StatTile[] {
   for (const [key, row] of Object.entries(ABILITY_ROWS)) {
     const v = prm[key];
     if (v === undefined || !(key in base)) continue;
-    const tile: StatTile = { key, label: row.label, value: row.fmt(v, u, c, prm), icon: row.icon };
+    const value = row.fmt(v, u, c, prm);
+    if (!value) continue;
+    const tile: StatTile = { key, label: row.label, value, icon: row.icon };
     const nv = nxt[key];
     if (row.delta && nv !== undefined && Math.abs(nv - v) > 1e-9) tile.next = row.delta(nv - v);
     out.push(tile);

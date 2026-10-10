@@ -80,6 +80,22 @@ export const UNIT_CATEGORIES: Partial<Record<string, HeroCategory[]>> = {
   catwoman: ['mana'],
   harley: ['mana'],
   greenarrow: ['tireur', 'critique'],
+  // ───────────── Pixar (extension) ─────────────
+  mrincredible: ['melee', 'zone', 'controle'],
+  elastigirl: ['tireur', 'antiboss', 'controle'],
+  frozone: ['zone', 'controle'],
+  violetflash: ['melee', 'manipulation'],
+  sullimike: ['mana', 'controle'],
+  mcqueen: ['soutien', 'controle'],
+  carlrussell: ['manipulation', 'controle'],
+  joysadness: ['manipulation', 'tireur'],
+  remy: ['mana'],
+  walleeve: ['tireur', 'zone', 'antiboss'],
+  lucaalberto: ['zone', 'controle'],
+  mei: ['melee', 'croissance', 'zone'],
+  jessie: ['controle', 'antiboss'],
+  ianbarley: ['zone', 'controle', 'soutien'],
+  joe: ['soutien'],
 };
 
 type CategorySource = Pick<UnitDef, 'role' | 'range'> & { id: string; ability: { params: Record<string, number> } };
