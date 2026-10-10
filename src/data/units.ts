@@ -38,16 +38,15 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Trappeur.
-    id: 'spiderman', name: 'Spider-Man', pack: 'marvel', rarity: 'epique', role: 'Contrôle / malus',
-    targeting: 'premier', damage: 40, attackInterval: 1.0, range: 3.4,
+    // Rush Royale : Catapulte (épique). Tir sur le premier ennemi : dégâts de zone et étourdissement, le même
+    // ennemi ne peut être réétourdi qu'après 9 s ; le rang augmente les dégâts, pas la cadence (texte du jeu).
+    // Chiffres absolus non publiés (C) : 100 dégâts, 2 s, zone 100 % sur 1 case, étourdissement 1 s.
+    id: 'spiderman', name: 'Spider-Man', pack: 'marvel', rarity: 'epique', role: 'Contrôle de zone',
+    targeting: 'premier', damage: 100, attackInterval: 2.0, range: 3.4,
     ability: {
-      name: 'Toiles',
-      description: 'Toutes les 6 s (−0,3 s par niveau), lance 2 toiles sur le chemin : 123 dégâts (+19 par niveau), les ennemis pris ralentissent de 30 % et subissent +10 % de dégâts pendant 5 s. Les toiles se cumulent (3 au plus).',
-      params: {
-        abilityCooldown: 6, abilityCooldownPerLevel: -0.3, nets: 2, netRadius: 1, netDamage: 123, netDamagePerLevel: 19,
-        netSlow: 0.3, netVuln: 0.1, netMaxStacks: 3, netDuration: 5,
-      },
+      name: 'Boule de toile',
+      description: 'Tire une boule de toile sur le premier ennemi : 100 % des dégâts autour de lui (1 case) et les ennemis touchés sont collés 1 s (sauf boss). Un même ennemi ne peut être recollé qu’après 9 s. Le rang de fusion multiplie les dégâts (rang 7 : ×7) au lieu de la cadence.',
+      params: { rankDamage: 1, webSplash: 1, webRadius: 1, webStun: 1, webRestun: 9 },
     },
   },
   {
@@ -89,7 +88,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Zélote (dégâts selon le mana en réserve : ×2 vers 1 000, ×3 vers 60 000).
-    id: 'venom', name: 'Venom', pack: 'marvel', rarity: 'epique', role: 'Croissance',
+    id: 'venom', name: 'Venom', pack: 'marvel', rarity: 'rare', role: 'Croissance',
     targeting: 'premier', damage: 145, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Symbiote',
@@ -119,7 +118,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Arlequin.
-    id: 'loki', name: 'Loki', pack: 'marvel', rarity: 'epique', role: 'Copieur',
+    id: 'loki', name: 'Loki', pack: 'marvel', rarity: 'legendaire', role: 'Copieur',
     targeting: 'aleatoire', damage: 60, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Illusion',
@@ -128,13 +127,15 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Voleur (Bucky tireur d'élite → portée globale, dégâts ÷1,4 : 70 → 50).
-    id: 'bucky', name: 'Soldat de l’hiver', pack: 'marvel', rarity: 'epique', role: 'Critique',
-    targeting: 'premier', damage: 50, attackInterval: 0.8, range: 'globale',
+    // Rush Royale : Bourreau (épique, premier). Exécute sous 17,5 % (niv. 5) → 29,5 % (niv. 13) des PV, soit
+    // 20,5 % au niv. 7 (notre niveau 1) et +1,5 point par niveau ; seuil réduit de moitié contre boss et mini-boss.
+    // Dégâts 104 (niv. 5) → 252 (niv. 13) : 141 au niv. 7, +18,5 par niveau. Bucky tireur d'élite : portée globale.
+    id: 'bucky', name: 'Soldat de l’hiver', pack: 'marvel', rarity: 'epique', role: 'Exécution',
+    targeting: 'premier', damage: 141, damagePerLevel: 18.5, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Bras bionique',
-      description: 'Chaque coup ajoute un bonus aléatoire de 0 à 200 % des dégâts (dégâts critiques ×3).',
-      params: { rogueCritMul: 3 },
+      description: 'Le Soldat de l’hiver achève tout ennemi touché sous 20,5 % de ses PV (+1,5 point par niveau). Contre les boss et les mini-boss, le seuil est réduit de moitié.',
+      params: { executeThreshold: 0.205, executeThresholdPerLevel: 0.015, executeBossFactor: 0.5 },
     },
   },
   {
@@ -159,7 +160,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Prêtresse.
-    id: 'widow', name: 'Black Widow', pack: 'marvel', rarity: 'epique', role: 'Mana',
+    id: 'widow', name: 'Black Widow', pack: 'marvel', rarity: 'rare', role: 'Mana',
     targeting: 'premier', damage: 43, damagePerLevel: 16.6, attackInterval: 0.9, range: 3.4,
     ability: {
       name: 'Sacrifice',
@@ -168,14 +169,16 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Danse-lames (lames lancées → portée longue, dégâts ×1,4/3 de la table niv. 7 : 215 → 100,
-    // +98,25 → +45,85 par niveau ; docs/rush-royale-mapping.md « Portées »).
-    id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Dégâts',
-    targeting: 'premier', damage: 100, damagePerLevel: 45.85, attackInterval: 1.2, range: 3.4,
+    // Rush Royale : Tonnerre (Thunderer, épique, premier). Chaque attaque lance un éclair en chaîne : dégâts en
+    // plus à la cible et aux ennemis derrière elle, autant de cibles que le rang (rang 5 : la cible et 4 derrière),
+    // et les étourdit un instant (texte du jeu). Chiffres non publiés (C) : éclair 50 %, étourdissement 0,2 s.
+    // Les Dix Anneaux lancés rebondissent d'ennemi en ennemi : portée longue.
+    id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Dégâts en chaîne',
+    targeting: 'premier', damage: 100, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Dix Anneaux',
-      description: 'Sans autre Shang-Chi sur une case voisine, il danse : +100 % de vitesse d’attaque. Chaque Shang-Chi qui danse donne +10 % de dégâts aux autres Shang-Chi (8 au plus).',
-      params: { aloneAttackSpeed: 1, dancerDamage: 0.1, dancerMax: 8 },
+      description: 'Chaque attaque lance les Dix Anneaux en chaîne : 50 % des dégâts en plus à la cible et aux ennemis qui la suivent, autant d’ennemis que son rang (rang 5 : la cible et les 4 suivants), étourdis 0,2 s (sauf boss).',
+      params: { thunderDamage: 0.5, thunderTargetsPerRank: 1, thunderDaze: 0.2 },
     },
   },
 
@@ -214,13 +217,15 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Pyrotechnicien (fusées → portée longue, dégâts ×1,4/1,7 : 229 → 189, +61,7 → +50,8 par niveau).
-    id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 189, damagePerLevel: 50.8, attackInterval: 1.0, range: 3.4,
+    // Rush Royale : Danse-lames (légendaire, premier). Lames qui volent jusqu'à leur cible → portée longue (dégâts
+    // de la table niv. 7 ×1,4/3 : 215 → 100, +98,25 → +45,85 par niveau ; docs/rush-royale-mapping.md « Portées »).
+    // Mulan, l'épée à la main, danse entre les ennemis ; Mushu souffle sur les lames.
+    id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts',
+    targeting: 'premier', damage: 100, damagePerLevel: 45.85, attackInterval: 1.2, range: 3.4,
     ability: {
-      name: 'Feu de Mushu',
-      description: 'Nombre impair de Mulan sur le plateau : cadence ×0,67, cible au hasard et explosion de 100 % autour de la cible (rayon qui grandit avec le rang). Nombre pair : −40 % de dégâts, tir sur le premier.',
-      params: { oddSpeedMul: 0.67, oddSplash: 1, oddRadius: 0.8, oddRadiusPerRank: 0.1, evenDamageMul: 0.6 },
+      name: 'Danse des lames',
+      description: 'Sans autre Mulan sur une case voisine, elle danse : +100 % de vitesse d’attaque. Chaque Mulan qui danse donne +10 % de dégâts aux autres Mulan (8 au plus).',
+      params: { aloneAttackSpeed: 1, dancerDamage: 0.1, dancerMax: 8 },
     },
   },
   {
@@ -235,7 +240,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Stase.
-    id: 'ariel', name: 'Ariel & Sébastien', pack: 'disney', rarity: 'epique', role: 'Contrôle',
+    id: 'ariel', name: 'Ariel & Sébastien', pack: 'disney', rarity: 'legendaire', role: 'Contrôle',
     targeting: 'premier', damage: 60, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Chant de sirène',
@@ -244,18 +249,20 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Jumeaux (mécanique chiffrée introuvable : double attaque gardée).
-    id: 'foxhound', name: 'Rox & Rouky', pack: 'disney', rarity: 'rare', role: 'Duo',
-    targeting: 'premier', damage: 70, attackInterval: 0.6, range: 1.6,
+    // Rush Royale : Voleur (Rogue, commun, premier) : chaque coup ajoute un bonus aléatoire entre 1 et les
+    // dégâts critiques. Morsures au contact → portée courte (dégâts ×3/1,4 de la valeur longue : 70 → 150,
+    // arrondis à 140 pour qu'un ennemi de la vague 1 prenne toujours deux coups sans bonus).
+    id: 'foxhound', name: 'Rox & Rouky', pack: 'disney', rarity: 'rare', role: 'Critique',
+    targeting: 'premier', damage: 140, attackInterval: 0.8, range: 1.6,
     ability: {
-      name: 'Meilleurs amis',
-      description: 'Double attaque ; le second coup fait +50 % si le premier a touché la même cible.',
-      params: { hits: 2, secondHitBonus: 0.5 },
+      name: 'Ruse du renard',
+      description: 'Chaque morsure ajoute un bonus aléatoire de 0 à 200 % des dégâts (dégâts critiques ×3).',
+      params: { rogueCritMul: 3 },
     },
   },
   {
     // Rush Royale : Vampire.
-    id: 'tiana', name: 'Tiana & Naveen', pack: 'disney', rarity: 'rare', role: 'Mana',
+    id: 'tiana', name: 'Tiana & Naveen', pack: 'disney', rarity: 'epique', role: 'Mana',
     targeting: 'premier', damage: 40, attackInterval: 1.0, range: 'globale',
     ability: {
       name: 'Restaurant',
@@ -278,7 +285,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Dryade.
-    id: 'coco', name: 'Coco (Miguel)', pack: 'disney', rarity: 'epique', role: 'Booster de fusion',
+    id: 'coco', name: 'Coco (Miguel)', pack: 'disney', rarity: 'legendaire', role: 'Booster de fusion',
     targeting: 'premier', damage: 50, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Remember Me',
@@ -288,7 +295,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Chimiste.
-    id: 'nickjudy', name: 'Nick & Judy', pack: 'disney', rarity: 'epique', role: 'Malus',
+    id: 'nickjudy', name: 'Nick & Judy', pack: 'disney', rarity: 'rare', role: 'Malus',
     targeting: 'premier', damage: 55, attackInterval: 0.9, range: 2.4,
     ability: {
       name: 'Arrestation',
@@ -298,7 +305,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Ingénieur.
-    id: 'buzzwoody', name: 'Buzz & Woody', pack: 'disney', rarity: 'legendaire', role: 'Dégâts reliés',
+    id: 'buzzwoody', name: 'Buzz & Woody', pack: 'disney', rarity: 'epique', role: 'Dégâts reliés',
     targeting: 'premier', damage: 70, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Vers l’infini',
@@ -308,7 +315,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Meule.
-    id: 'rapunzel', name: 'Raiponce & Pascal', pack: 'disney', rarity: 'epique', role: 'Soutien',
+    id: 'rapunzel', name: 'Raiponce & Pascal', pack: 'disney', rarity: 'rare', role: 'Soutien',
     targeting: 'aleatoire', damage: 0, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Cheveux magiques',
@@ -318,7 +325,7 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Gardien du portail.
-    id: 'vanralph', name: 'Vanellope & Ralph', pack: 'disney', rarity: 'legendaire', role: 'Échangeur',
+    id: 'vanralph', name: 'Vanellope & Ralph', pack: 'disney', rarity: 'epique', role: 'Échangeur',
     targeting: 'premier', damage: 45, damagePerLevel: 32.2, attackInterval: 0.66, range: 2.4,
     ability: {
       name: 'Glitch',

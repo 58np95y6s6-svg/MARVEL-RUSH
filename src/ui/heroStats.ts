@@ -52,6 +52,15 @@ const ABILITY_ROWS: Record<string, Row> = {
   chargeDamage: { label: 'Dégâts par charge (max)', icon: 'epee', fmt: P, delta: dP },
   chargedExtraTargets: { label: 'Cibles en plus (chargé)', icon: 'zone', fmt: N },
   chargedSplash: { label: 'Dégâts des cibles en plus', icon: 'zone', fmt: P },
+  webSplash: { label: 'Dégâts de zone', icon: 'zone', fmt: P },
+  webRadius: { label: 'Rayon de zone', icon: 'zone', fmt: (v) => `${nf(v, 1)} case${v >= 2 ? 's' : ''}` },
+  webStun: { label: 'Durée du collage', icon: 'controle', fmt: S },
+  webRestun: { label: 'Délai avant de recoller', icon: 'temps', fmt: S },
+  thunderDamage: { label: 'Dégâts de la chaîne', icon: 'zone', fmt: P },
+  thunderTargetsPerRank: { label: 'Ennemis dans la chaîne', icon: 'zone', fmt: (v, _u, c, prm) => nf(Math.round(v * c.rank + (prm.thunderTargetsAdd ?? 0)), 0) },
+  thunderDaze: { label: 'Étourdissement', icon: 'controle', fmt: S },
+  executeThreshold: { label: 'Seuil d’exécution', icon: 'epee', fmt: P, delta: dP },
+  executeBossFactor: { label: 'Seuil contre les boss', icon: 'crit', fmt: (v, _u, _c, prm) => pct(v * (prm.executeThreshold ?? 0)) },
   netDamage: { label: 'Dégâts des toiles', icon: 'epee', fmt: N, delta: dN },
   nets: { label: 'Toiles par lancer', icon: 'controle', fmt: N },
   netSlow: { label: 'Ralentissement', icon: 'controle', fmt: P },
@@ -94,14 +103,14 @@ const ABILITY_ROWS: Record<string, Row> = {
 
 /** Dégâts d'un coup (sans compétence) au niveau, à l'amélioration en partie et à l'éveil donnés. */
 export function offense(u: UnitDef, c: StatCtx, prm: Record<string, number>): number {
-  return u.damage * levelDamageMul(u, c.level) * (1 + POWERUP_DAMAGE * (c.powerUp - 1))
+  return u.damage * (prm.rankDamage ? c.rank : 1) * levelDamageMul(u, c.level) * (1 + POWERUP_DAMAGE * (c.powerUp - 1))
     * (1 + AWAKENING_DAMAGE * c.stars) * (prm.damageMul ?? 1);
 }
 
 /** Intervalle d'attaque (règle Rush Royale : ÷ rang). */
 export function interval(u: UnitDef, c: StatCtx, prm: Record<string, number>): number {
   const puSpeed = prm.powerUpAttackSpeed ?? POWERUP_ATTACK_SPEED;
-  return u.attackInterval / (c.rank * (1 + puSpeed * (c.powerUp - 1)) * (1 + AWAKENING_ATTACK_SPEED * c.stars) * (prm.attackSpeedMul ?? 1));
+  return u.attackInterval / ((prm.rankDamage ? 1 : c.rank) * (1 + puSpeed * (c.powerUp - 1)) * (1 + AWAKENING_ATTACK_SPEED * c.stars) * (prm.attackSpeedMul ?? 1));
 }
 
 export function paramsFor(id: UnitId, c: StatCtx): Record<string, number> {

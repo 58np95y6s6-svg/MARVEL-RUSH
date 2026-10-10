@@ -65,17 +65,27 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(ofType(ev, 'hit').some((h) => close(h.damage, full * 0.5))).toBe(true);
   });
 
-  it('Spider-Man (Trappeur) : 2 toiles toutes les 6 s, 123 dégâts, −30 % de vitesse et +10 % de dégâts subis', () => {
+  it('Spider-Man (Catapulte) : zone de 100 % autour du premier, collés 1 s, pas avant 9 s ; le rang monte les dégâts', () => {
     const e = arena('spiderman');
     const t = debugSpawn(e, { hp: BIG, distance: 10 });
-    const ev = step(e, 20 * 6 + 2);
-    const net = ofType(ev, 'ability').find((a) => a.name === 'Toiles')!;
-    expect(net.targets).toContain(t.uid);
-    expect(ofType(ev, 'hit').some((h) => close(h.damage, 123))).toBe(true);
-    expect(t.effects.slow).toBeCloseTo(0.3);
-    expect(t.x.netStacks).toBe(1);
-    const next = ofType(step(e, 25), 'hit');
-    expect(next.some((h) => close(h.damage, D('spiderman') * 1.1))).toBe(true);
+    const n = debugSpawn(e, { hp: BIG, distance: 10.5 });
+    const hits = ofType(step(e, 1), 'hit');
+    expect(hits.filter((h) => close(h.damage, D('spiderman')))).toHaveLength(2);
+    expect(t.effects.stunFor).toBeCloseTo(1, 1);
+    expect(n.effects.stunFor).toBeCloseTo(1, 1);
+    step(e, 20 * 3); // 2e tir à 2 s : pas de nouveau collage
+    expect(t.effects.stunFor ?? 0).toBe(0);
+    step(e, 20 * 7); // 9 s passées : recollé
+    expect(t.effects.stunFor ?? 0).toBeGreaterThan(0);
+    const boss = arena('spiderman');
+    const b = debugSpawn(boss, { hp: BIG, bossId: 'jafar', distance: 10 });
+    step(boss, 1);
+    expect(b.effects.stunFor ?? 0).toBe(0);
+    const r3 = arena('spiderman', 3);
+    debugSpawn(r3, { hp: BIG });
+    const ev = step(r3, 20 * 10);
+    expect(ofType(ev, 'hit')[0]!.damage).toBeCloseTo(D('spiderman') * 3);
+    expect(ofType(ev, 'attack').filter((a) => a.unit === 'spiderman').length).toBeLessThanOrEqual(6); // 2 s, quel que soit le rang
   });
 
   it('Hulk (Minotaure) : Séisme toutes les 5 s (ralentit, dégâts sur 3 s), Éboulement à la fusion', () => {
@@ -207,13 +217,16 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(crits.length).toBeGreaterThan(5);
   });
 
-  it('Soldat de l’hiver (Voleur) : bonus aléatoire de 0 à 200 % des dégâts', () => {
+  it('Soldat de l’hiver (Bourreau) : achève sous 20,5 % des PV, moitié contre les boss', () => {
     const e = arena('bucky', 1, ['bucky', 'merida', 'nemo', 'tiana', 'coco']); // sans bonus d'équipe
-    debugSpawn(e, { hp: BIG });
-    const dmg = ofType(step(e, 20 * 60), 'hit').map((h) => h.damage);
-    expect(Math.min(...dmg)).toBeGreaterThanOrEqual(D('bucky') - 1e-6);
-    expect(Math.max(...dmg)).toBeLessThanOrEqual(D('bucky') * 3 + 1e-6);
-    expect(Math.max(...dmg)).toBeGreaterThan(D('bucky') * 2.5);
+    const t = debugSpawn(e, { hp: D('bucky') * 1.15, distance: 10 }); // après un coup : 13 % des PV
+    const ev = step(e, 1);
+    expect(t.hp).toBeLessThanOrEqual(0);
+    expect(ofType(ev, 'ability').some((a) => a.name === 'Bras bionique')).toBe(true);
+    const b = arena('bucky', 1, ['bucky', 'merida', 'nemo', 'tiana', 'coco']);
+    const boss = debugSpawn(b, { hp: D('bucky') * 1.15, bossId: 'jafar', distance: 10 }); // 13 % > 10,25 %
+    step(b, 1);
+    expect(boss.hp).toBeGreaterThan(0);
   });
 
   it('Œil de faucon (Archer) : chaque amélioration donne +22 % de vitesse au lieu de +6 %', () => {
@@ -239,19 +252,19 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(ofType(step(b, 1), 'hit')[0]!.damage).toBeCloseTo(D('falcon') * 1.5);
   });
 
-  it('Shang-Chi (Danse-lames) : seul, +100 % de cadence ; chaque danseur donne +10 % aux autres', () => {
-    const solo = arena('shangchi');
-    debugSpawn(solo, { hp: BIG });
-    const alone = attacksOf(solo, 'shangchi', 20 * 30);
-    const pair = arena('shangchi');
-    debugPlace(pair, 0, 8, 'shangchi'); // voisin : ne dansent plus
-    debugSpawn(pair, { hp: BIG });
-    const linked = attacksOf(pair, 'shangchi', 20 * 30) / 2;
-    expect(alone / linked).toBeCloseTo(2, 1);
-    const two = arena('shangchi');
-    debugPlace(two, 0, 0, 'shangchi'); // pas voisin : les deux dansent
-    debugSpawn(two, { hp: BIG });
-    expect(ofType(step(two, 1), 'hit')[0]!.damage).toBeCloseTo(D('shangchi') * 1.1);
+  it('Shang-Chi (Tonnerre) : chaîne de 50 % sur la cible et les ennemis qui la suivent, autant que le rang', () => {
+    const e = arena('shangchi', 3);
+    const lead = debugSpawn(e, { hp: BIG, distance: 20 });
+    for (const d of [10, 12, 14]) debugSpawn(e, { hp: BIG, distance: d });
+    const ev = step(e, 1);
+    const atk = ofType(ev, 'attack').find((a) => a.unit === 'shangchi')!;
+    expect(atk.targets[0]).toBe(lead.uid);
+    expect(atk.targets).toHaveLength(3);
+    const hits = ofType(ev, 'hit');
+    expect(hits.filter((h) => close(h.damage, D('shangchi') * 0.5))).toHaveLength(3);
+    expect(hits.filter((h) => close(h.damage, D('shangchi')))).toHaveLength(1);
+    const dazed = simState(e).enemies.filter((x) => (x.effects.stunFor ?? 0) > 0);
+    expect(dazed).toHaveLength(3);
   });
 
   it('Vaïana (Archer du vent) : Ouragan toutes les 4 s (cadence ×3), +30 dégâts par rang', () => {
@@ -292,18 +305,19 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(ofType(step(e, 100), 'attack')).toHaveLength(0);
   });
 
-  it('Mulan (Pyrotechnicien) : nombre impair, explosion de 100 % ; nombre pair, −40 % de dégâts', () => {
-    const e = arena('mulan');
-    const t = debugSpawn(e, { hp: BIG, distance: 10 });
-    const n = debugSpawn(e, { hp: BIG, distance: 10.5 });
-    const hits = ofType(step(e, 1), 'hit');
-    expect(hits).toHaveLength(2);
-    expect(hits.every((h) => close(h.damage, D('mulan')))).toBe(true);
-    void t; void n;
-    const x = arena('mulan');
-    debugPlace(x, 0, 0, 'mulan');
-    debugSpawn(x, { hp: BIG, distance: 10 });
-    expect(ofType(step(x, 1), 'hit')[0]!.damage).toBeCloseTo(D('mulan') * 0.6);
+  it('Mulan (Danse-lames) : seule, +100 % de cadence ; chaque danseuse donne +10 % aux autres', () => {
+    const solo = arena('mulan');
+    debugSpawn(solo, { hp: BIG });
+    const alone = attacksOf(solo, 'mulan', 20 * 30);
+    const pair = arena('mulan');
+    debugPlace(pair, 0, 8, 'mulan'); // voisine : ne dansent plus
+    debugSpawn(pair, { hp: BIG });
+    const linked = attacksOf(pair, 'mulan', 20 * 30) / 2;
+    expect(alone / linked).toBeCloseTo(2, 1);
+    const two = arena('mulan');
+    debugPlace(two, 0, 0, 'mulan'); // pas voisine : les deux dansent
+    debugSpawn(two, { hp: BIG });
+    expect(ofType(step(two, 1), 'hit')[0]!.damage).toBeCloseTo(D('mulan') * 1.1);
   });
 
   it('Rebelle (Chasseur) : premier tir sur chaque nouvelle cible +210 %', () => {
@@ -329,13 +343,13 @@ describe('profils Rush Royale des 28 unités', () => {
     expect(ofType(step(r7, 20 * 10), 'ability').filter((a) => a.name === 'Chant de sirène').length).toBeGreaterThanOrEqual(5);
   });
 
-  it('Rox & Rouky : deux coups, le second +50 % sur la même cible', () => {
-    const e = arena('foxhound');
+  it('Rox & Rouky (Voleur) : bonus aléatoire de 0 à 200 % des dégâts', () => {
+    const e = arena('foxhound', 1, ['foxhound', 'merida', 'nemo', 'tiana', 'coco']);
     debugSpawn(e, { hp: BIG });
-    const dmg = ofType(step(e, 1), 'hit').map((h) => h.damage);
-    expect(dmg).toHaveLength(2);
-    expect(dmg[0]).toBeCloseTo(D('foxhound'));
-    expect(dmg[1]).toBeCloseTo(D('foxhound') * 1.5);
+    const dmg = ofType(step(e, 20 * 60), 'hit').map((h) => h.damage);
+    expect(Math.min(...dmg)).toBeGreaterThanOrEqual(D('foxhound') - 1e-6);
+    expect(Math.max(...dmg)).toBeLessThanOrEqual(D('foxhound') * 3 + 1e-6);
+    expect(Math.max(...dmg)).toBeGreaterThan(D('foxhound') * 2.5);
   });
 
   it('Tiana (Vampire) : la cible mordue rapporte 0,5 mana par seconde, et du mana à sa mort', () => {

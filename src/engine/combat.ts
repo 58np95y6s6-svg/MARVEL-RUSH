@@ -360,7 +360,7 @@ export function attackSpeedOf(ctx: Ctx, player: number, slot: number, u: SimUnit
   if ((u.counters.boostFor ?? 0) > EPS) bonus += u.counters.boost ?? 0;
   const puSpeed = prm.powerUpAttackSpeed ?? POWERUP_ATTACK_SPEED;
   let mul = (1 + bonus) * (prm.attackSpeedMul ?? 1) * (1 + AWAKENING_ATTACK_SPEED * awakeningOf(ctx, player, id))
-    * (1 + RANK_ATTACK_SPEED * (u.rank - 1))
+    * (prm.rankDamage ? 1 : 1 + RANK_ATTACK_SPEED * (u.rank - 1)) // Catapulte (Spider-Man) : le rang monte les dégâts
     * (1 + puSpeed * Math.max(0, (ctx.st.players[player]!.powerUps[id] ?? 1) - 1));
   // Compétences de cadence des profils Rush Royale.
   if (prm.hawkSpeed !== undefined) mul *= 1 + (u.counters.form ? prm.sharkSpeed ?? 0 : prm.hawkSpeed);   // Borée (Maui)
@@ -382,7 +382,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   const level = info.levels[id] ?? 1;
   const pu = p.powerUps[id] ?? 1;
   const flat = (prm.rankDamageFlat ?? 0) * (u.rank - 1); // Archer du vent (Vaïana) : +30 dégâts par rang
-  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * levelDamageMul(def, level) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  let dmg = (def.damage + flat) * (prm.rankDamage ? u.rank : 1 + RANK_DAMAGE * (u.rank - 1)) * levelDamageMul(def, level) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
   dmg *= 1 + teamFor(ctx, player, id).damage;
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
