@@ -278,7 +278,7 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'premier', damage: 50, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Remember Me',
-      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (autre héros) ; Coco disparaît et l’alliée gagne 1 rang.',
+      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (y compris un autre Coco) ; Coco disparaît et l’alliée gagne 1 rang.',
       params: { promoteAlly: 1 },
     },
   },

@@ -11,6 +11,14 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10r2',
+    title: 'Coco booste Coco',
+    date: '10 octobre 2026',
+    items: [
+      'Glisse un Coco sur un autre Coco du même rang : il disparaît et l’autre Coco monte d’un rang (il reste Coco), au lieu d’une fusion au hasard.',
+    ],
+  },
+  {
     id: '2026-10-10r',
     title: 'Jouer à deux',
     date: '10 octobre 2026',
