@@ -146,6 +146,10 @@ export const TOKEN_COLORS: Record<string, string> = {
   moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
   ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
   nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
+  // Extension Pixar : couleurs contrastées avec chaque duo, distinctes des autres.
+  mrincredible: '#ffc83a', elastigirl: '#3a8ad8', frozone: '#e85aa8', violetflash: '#7ae8a0', sullimike: '#c86af0',
+  mcqueen: '#4ad8f0', carlrussell: '#ff8a5a', joysadness: '#6a7af0', remy: '#e8d84a', walleeve: '#5ac8ff',
+  lucaalberto: '#ffa83a', mei: '#3ad8b0', jessie: '#b8e05a', ianbarley: '#ff6a8a', joe: '#f0b0ff',
 };
 /** Couleur de plaque d'un personnage (repli : couleur claire de sa planche). */
 export function tokenColor(id: UnitId): string {
@@ -213,6 +217,7 @@ export function bossTint(id: BossId): readonly [string, string] {
 /* ---------- sbires ---------- */
 const MOTION: Record<BossId, 'walk' | 'float'> = {
   jafar: 'walk', cruella: 'walk', ursula: 'float', malefique: 'walk', galactus: 'float', bouffon: 'float', thanos: 'walk',
+  syndrome: 'walk', randall: 'walk', lotso: 'walk', hopper: 'float', muntz: 'walk', zurg: 'walk',
 };
 /** Pas de marche : jambes « legA » / « legB » inclinées, pivot en haut de la jambe. */
 function walkLegs(svg: string, frameNo: 0 | 1): string {
