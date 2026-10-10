@@ -62,7 +62,7 @@ export function openGemsSheet(overlay: HTMLElement, p: Profile, go: (hash: strin
       <h4 class="gs-h">Tous les jours</h4>
       <ul class="gs-list">
         ${row('coffre', 'Coffre quotidien', `+${DAILY_CHEST.gems + CHESTS[DAILY_CHEST.tier].gems}`, `Coffre d’argent + ${DAILY_CHEST.gems} ${G}, à minuit.`)}
-        ${row('cartes', 'Quêtes du jour (3)', `+${Math.min(...qGems)} – ${Math.max(...qGems)}`, `Chacune. Coffre de la semaine (${WEEKLY_GOAL} quêtes) : +${WEEKLY_BONUS_GEMS + CHESTS.legendaire.gems} ${G}.`)}
+        ${row('cartes', 'Quêtes du jour (3)', `+${Math.min(...qGems)} – ${Math.max(...qGems)}`, `Chacune. Coffre de la semaine (${WEEKLY_GOAL} quêtes) : +${WEEKLY_BONUS_GEMS + CHESTS.legendaire.gems} ${G} et un lot de 10 tirages offert.`)}
         ${row('record', 'Solo Infini', `+${INFINITE_RECORD_BONUS.gems}`, `Par nouveau record. Coffres de palier (10, 20… 50) : +${CHESTS.bois.gems} à +${CHESTS.legendaire.gems} ${G}.`)}
       </ul>
       <h4 class="gs-h">Campagne</h4>

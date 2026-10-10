@@ -316,7 +316,7 @@ Retour joueur : « La même monnaie pour pack et pour évoluer c'est nul… Les 
 | Butin des boss (combat) | lieutenant 20 or, gros boss 60, Thanos 300 |
 | Solo Infini | 15 or par vague ; paliers 10/20/30/40/50 : coffres bois/argent/or/héroïque/légendaire (+ ✦ et parchemins inchangés), puis coffre d'or tous les 10 ; record battu : +500 or +50 gemmes |
 | Coffre quotidien | coffre d'argent + 40 gemmes + 10 ✦ (minuit, heure locale) |
-| Quêtes du jour | 3 par jour parmi 8, 250 à 500 or + 25 à 35 gemmes chacune (+20 gemmes « débutant » sous le niveau de compte 15) ; coffre de la semaine (12 quêtes) : coffre légendaire + 150 gemmes + 40 ✦ |
+| Quêtes du jour | 3 par jour parmi 8, 250 à 500 or + 25 à 35 gemmes chacune (+20 gemmes « débutant » sous le niveau de compte 15) ; coffre de la semaine (12 quêtes) : coffre légendaire + 150 gemmes + 40 ✦ + un lot de 10 offert |
 | Route des récompenses | niveau n : 100 + 40 n or ; **niveaux 2 à 15 : 200 gemmes (pair) ou 150 gemmes + 30 ✦ (impair), lot de 10 offert aux niveaux 5, 10 (+300 gemmes) et 15** ; ensuite 40 gemmes (pair) ou 30 ✦ (impair) ; tous les 5 : coffre (or, héroïque dès 20, légendaire dès 40) ; tous les 10 : lot de 10 tirages offert ; cadres aux niveaux 5, 10, 20, 30, 50 |
 | Calendrier de bienvenue | 7 jours de connexion (un par jour, sans obligation d'enchaîner) : 300 + lot de 10, 400, 500, 300 + lot de 10, 600, 700, 500 + lot de 10 → **3 300 gemmes + 30 tirages** |
 | Packs | ×1 : Rare 72 %, Épique 24 %, Légendaire 4 % ; **lot de 10 : 60 / 30 / 10 % par carte**, ≥ 1 Épique ; Légendaire garanti au **30e** tirage (compteur par pack) ; **1er lot de 10 payé de chaque pack : Légendaire garanti** |

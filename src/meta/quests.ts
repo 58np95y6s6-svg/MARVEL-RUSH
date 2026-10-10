@@ -2,7 +2,7 @@
 // - 3 quêtes par jour, tirées au sort (graine = jour + profil), remises à zéro à minuit (heure locale) ;
 // - chaque quête finie se réclame : or + gemmes ;
 // - 12 quêtes réclamées dans la semaine (lundi → dimanche) ouvrent le coffre de la semaine
-//   (coffre légendaire + 150 gemmes + 40 ✦).
+//   (coffre légendaire + 150 gemmes + 40 ✦ + un lot de 10 tirages offert : au moins 2 lots de 10 par semaine).
 
 import { hash32 } from '../campaign/levels';
 import { openChest, seededRng, type ChestContent, type Rng } from './chests';
@@ -39,6 +39,8 @@ export const QUESTS_PER_DAY = 3;
 export const WEEKLY_GOAL = 12;
 export const WEEKLY_BONUS_GEMS = 150;
 export const WEEKLY_BONUS_CRYSTALS = 40;
+/** Lot de 10 tirages offert par le coffre de la semaine. */
+export const WEEKLY_BONUS_PULLS = 10;
 
 /** Lundi de la semaine d'un jour AAAA-MM-JJ (heure locale). */
 export function weekOf(day: string): string {
@@ -126,11 +128,11 @@ export function weeklyReady(p: Profile, day = today()): boolean {
   return !q.weekClaimed && q.weekDone >= WEEKLY_GOAL;
 }
 
-/** Coffre de la semaine : coffre légendaire + 150 gemmes + 40 ✦. null s'il n'est pas prêt. Mutation. */
+/** Coffre de la semaine : coffre légendaire + 150 gemmes + 40 ✦ + 10 tirages offerts. null s'il n'est pas prêt. Mutation. */
 export function claimWeekly(p: Profile, rng: Rng = Math.random, day = today()): ChestContent | null {
   if (!weeklyReady(p, day)) return null;
   p.quests!.weekClaimed = true;
-  return openChest(p, 'legendaire', rng, { gems: WEEKLY_BONUS_GEMS, crystals: WEEKLY_BONUS_CRYSTALS });
+  return openChest(p, 'legendaire', rng, { gems: WEEKLY_BONUS_GEMS, crystals: WEEKLY_BONUS_CRYSTALS, freePulls: WEEKLY_BONUS_PULLS });
 }
 
 /** Nombre de récompenses à réclamer (pastille de l'accueil). Lecture seule. */

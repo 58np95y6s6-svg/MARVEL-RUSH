@@ -11,6 +11,14 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10m',
+    title: 'Coffre de la semaine',
+    date: '10 octobre 2026',
+    items: [
+      'Le coffre de la semaine (12 quêtes) contient maintenant un lot de 10 tirages offert : avec tes gemmes, ça fait au moins 2 lots de 10 par semaine, même après les premières semaines.',
+    ],
+  },
+  {
     id: '2026-10-10l',
     title: 'Thor Inquisiteur et nouvelle fiche',
     date: '10 octobre 2026',
