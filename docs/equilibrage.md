@@ -516,3 +516,34 @@ de vie 4-5,6 s → 2,2-3,3 s. Sans étourdissement : Iron Man, Œil de faucon, F
 (niveau 6) 30,8 contre 32,8 pour le même deck avec Spider-Man (−6 %) ; départ avec Rebelle à la place de
 Spider-Man 19,3 contre 18,1. La cible du §3 « Thanos battu par moins de 25 % des decks méta niveau 10 »
 est remplacée par ≈ 60-70 %.
+
+## 11. Raretés alignées sur Rush Royale (octobre 2026)
+
+> Retours de joueuse : « Les persos Légendaires devraient copier des persos Légendaires de Rush Royale… Mulan est
+> Légendaire mais copie un Rare, elle est donc faible » ; « Ralph ne devrait être qu'Épique ». Choix héros par héros :
+> `docs/rush-royale-mapping.md` (« Raretés ») ; raretés de toutes les unités Rush Royale : `docs/rush-royale-donnees.md` §4.
+
+**Changements** : nouveaux profils pour Spider-Man (Catapulte : zone + collage, le rang monte les dégâts, clé moteur
+`rankDamage`), Shang-Chi (Tonnerre : chaîne de `rang` cibles à 50 %), Soldat de l'hiver (Bourreau : 141, +18,5/niv.,
+exécution 20,5 % +1,5 pt/niv.), Mulan (Danse-lames, profil repris de Shang-Chi), Rox & Rouky (Voleur, portée courte,
+140) ; raretés changées pour 10 héros (Loki, Ariel, Coco → Légendaires ; Vanellope, Buzz & Woody, Tiana → Épiques ;
+Venom, Black Widow, Nick & Judy, Raiponce → Rares). Decks de départ inchangés.
+
+**Mesures** (`scripts/simulate.ts`, joueur `--casual` ; avant = commit 8b50af7)
+
+| Mesure | Avant | Après | Cible |
+|---|---|---|---|
+| Solo Infini, départ Marvel niveau 1 (40 parties) | 18,32 | 17,98 | 16-19 |
+| Solo Infini, départ Disney niveau 1 (40 parties) | 14,97 | 15,80 | ≈ 14-18 |
+| Méta Marvel niveau 8 (10 parties) | 41,1 | 41,1 | — |
+| Collection moyenne (Thor, Iron Man, Spider-Man, Soldat de l'hiver, Black Widow ; niv. 6, 1 palier, ★1 ; 20 parties) | 38,55 | 38,8 | 35-45 |
+| Collection forte (niv. 10, 3 paliers, ★3 ; 20 parties) | 64,7 | 64,7 | 55-70 |
+| Campagne `--attendu`, 10 parties par niveau : victoire moyenne (pire niveau) | — | c1 96 % (80) · c2-c6 100 % | ≥ 85 % au ch. 1, ≥ 70 % ensuite |
+
+**Légendaire contre Rare au même niveau** : DPS effectif (2 exemplaires de rang 3, 8 ennemis immortels, 60 s, × facteur
+de couverture de la portée ; soutiens exclus ; mesure qui sous-estime le contrôle, la copie, le booster et l'exécution),
+médiane par rareté au niveau 1 : **Légendaires 838** (avant 520), Épiques 719 (avant 343), Rares 513 (avant 513) ;
+au niveau 8 : Légendaires 1 452, Épiques 1 540, Rares 873. Mulan : 520 → **838** au niveau 1, 3 528 au niveau 8 (×4 une
+Rare médiane). Les Légendaires restent sous les Épiques au niveau 8 dans cette mesure parce que quatre d'entre elles
+sont des unités d'effet (Hulk au contact, Loki copieur, Ariel qui fige, Coco booster) ; en Solo Infini, Iron Man et Thor
+dominent (IP ×1,34 et ×1,09 au niveau 8).
