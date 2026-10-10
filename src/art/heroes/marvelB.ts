@@ -41,7 +41,7 @@ export const MARVEL_B: CharDef[] = [
   }
 },
 {
-  id:'loki',name:'Loki',role:'Trickster',rarity:'Épique',rar:'var(--epi)',tint:'#dcf3d6',tint2:'#8fd08c',stats:[3,3,3],
+  id:'loki',name:'Loki',role:'Trickster',rarity:'Légendaire',rar:'var(--leg)',tint:'#dcf3d6',tint2:'#8fd08c',stats:[3,3,3],
   atk:'Dague magique.',skill:'Illusion : se copie en un autre héros pendant 10 s ; les ennemis touchés s’attaquent entre eux.',
   sh:{L:[68,150],R:[132,150]},parts:['wR'],
   poses:[{L:14,R:-20,wR:208},{L:40,R:-150,wR:330,body:[0,-5,0,1,1.02]},{L:104,R:-104,wR:314,body:[0,-2,0,1,1]}],
@@ -99,8 +99,8 @@ export const MARVEL_B: CharDef[] = [
   }
 },
 {
-  id:'bucky',name:'Soldat de l’hiver',role:'Critique',rarity:'Épique',rar:'var(--epi)',tint:'#e0e5ee',tint2:'#9eabc0',stats:[4,3,3],shake:true,
-  atk:'Tir de précision.',skill:'Bras bionique : chaque 4e attaque est un critique assommant.',
+  id:'bucky',name:'Soldat de l’hiver',role:'Exécution',rarity:'Épique',rar:'var(--epi)',tint:'#e0e5ee',tint2:'#9eabc0',stats:[4,3,3],shake:true,
+  atk:'Tir de précision.',skill:'Bras bionique : achève les ennemis affaiblis.',
   sh:{L:[68,150],R:[132,150]},parts:['wR'],
   poses:[{L:14,R:-14,wR:[0,1]},{L:30,R:-160,wR:[0,1.12],body:[-5,2,-8,1,1]},{L:22,R:-92,wR:[0,1.5],body:[8,0,8,1.03,.98]}],
   draw(this: CharDef, x: Ctx): string {
@@ -237,7 +237,7 @@ export const MARVEL_B: CharDef[] = [
   }
 },
 {
-  id:'widow',name:'Black Widow',role:'Anti-boss',rarity:'Épique',rar:'var(--epi)',tint:'#ffe1dc',tint2:'#ee9f96',stats:[4,4,2],
+  id:'widow',name:'Black Widow',role:'Anti-boss',rarity:'Rare',rar:'var(--rare)',tint:'#ffe1dc',tint2:'#ee9f96',stats:[4,4,2],
   atk:'Tir rapide.',skill:'Morsure de la veuve : paralyse 1 s ; dégâts doublés contre les boss.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:14,R:-14},{L:-52,R:52,body:[0,6,0,1.03,.95]},{L:102,R:-102,body:[0,-4,0,1.02,1.02]}],
@@ -276,8 +276,8 @@ export const MARVEL_B: CharDef[] = [
   }
 },
 {
-  id:'shangchi',name:'Shang-Chi',role:'Combo',rarity:'Épique',rar:'var(--epi)',tint:'#d9f1ee',tint2:'#86ccc4',stats:[4,4,2],
-  atk:'Lancer des Dix Anneaux.',skill:'Dix Anneaux : des anneaux frappent jusqu’à 10 ennemis.',
+  id:'shangchi',name:'Shang-Chi',role:'Chaîne',rarity:'Épique',rar:'var(--epi)',tint:'#d9f1ee',tint2:'#86ccc4',stats:[4,4,2],
+  atk:'Lancer des Dix Anneaux.',skill:'Dix Anneaux : les anneaux rebondissent en chaîne.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:24,R:-96,body:[-3,0,-3,1,1]},{L:128,R:-128,body:[0,-8,0,1,1.02]},{L:96,R:-96,body:[0,2,0,1.06,.96]}],
   draw(this: CharDef, x: Ctx): string {

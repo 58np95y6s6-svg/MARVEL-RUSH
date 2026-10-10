@@ -57,7 +57,7 @@ export const TF_B: CharDef[] = [
   },
 },
 {
-  id: 'bulkhead', name: 'Bulkhead', role: 'Sacrifice', rarity: 'Rare', rar: 'var(--rare)', tint: '#e0f4d0', tint2: '#8ac46a', stats: [4, 1, 4],
+  id: 'bulkhead', name: 'Bulkhead', role: 'Sacrifice', rarity: 'Épique', rar: 'var(--epi)', tint: '#e0f4d0', tint2: '#8ac46a', stats: [4, 1, 4],
   atk: 'Boulet de démolition ; en tout-terrain, écrase.', skill: 'Démolition : rapporte du mana quand il est fusionné.',
   sh: { L: [58, 152], R: [142, 152] },
   poses: POSES,
@@ -128,7 +128,7 @@ export const TF_B: CharDef[] = [
   },
 },
 {
-  id: 'mirage', name: 'Mirage', role: 'Copieur', rarity: 'Épique', rar: 'var(--epi)', tint: '#e4eeff', tint2: '#8aa8e0', stats: [3, 3, 3],
+  id: 'mirage', name: 'Mirage', role: 'Copieur', rarity: 'Légendaire', rar: 'var(--leg)', tint: '#e4eeff', tint2: '#8aa8e0', stats: [3, 3, 3],
   atk: 'Tirs furtifs ; en voiture, leurres.', skill: 'Hologrammes : devient la copie d’une alliée.',
   sh: { L: [70, 150], R: [130, 150] },
   poses: POSES,

@@ -13,7 +13,7 @@
 import type { Targeting, UnitId } from '../data/types';
 import { DT, EPS, emit, pick, rand, type Ctx, type SimEnemy, type SimUnit } from './internal';
 import {
-  applyBurn, applySlow, applyStun, baseDamage, bestBy, controlMul, effectiveId, isAlive, isDisabled, nearest,
+  applyBurn, applySlow, applyStun, baseDamage, bestBy, controlMul, countOnBoard, effectiveId, isAlive, isDisabled, nearest,
   neighbors, progress, pushBack, selectTarget, unitHit, unitParams, within,
 } from './combat';
 
@@ -203,17 +203,15 @@ export function tfAttack(
       return { targets: list, fx: 'bumblebee:rafale' };
     }
     case 'ironhide': {
-      if (veh) {
-        hit(target, dmg);
-        const around = splash(target, dmg * (prm.vanSplash ?? 0.5), prm.vanRadius ?? 1.1);
-        return { targets: [target, ...around], fx: 'ironhide:fourgon' };
-      }
-      // Chasseur de démons : autant de cibles que le rang.
-      const n = Math.min(Math.round(prm.targetsMax ?? 4), Math.max(1, Math.round((prm.targetsPerRank ?? 1) * u.rank)));
-      const others = pool.filter((e) => isAlive(e) && e !== target).sort((a, b) => b.hp - a.hp || a.uid - b.uid).slice(0, n - 1);
+      // Pyrotechnicien : en nombre impair, roquettes de zone sur une cible au hasard (rayon qui grandit avec le
+      // rang, cadence réduite) ; en nombre pair, dégâts réduits sur la cible du mode (cadence et dégâts : combat.ts).
       hit(target, dmg);
-      for (const e of others) hit(e, dmg, { noOnHit: true });
-      return { targets: [target, ...others], fx: 'ironhide:canons' };
+      if (prm.oddSplash && countOnBoard(ctx, player, id) % 2 === 1) {
+        const r = (prm.oddRadius ?? 0.8) + (prm.oddRadiusPerRank ?? 0.1) * u.rank;
+        const around = splash(target, dmg * prm.oddSplash, r);
+        return { targets: [target, ...around], fx: 'ironhide:canons' };
+      }
+      return { targets: [target], fx: veh ? 'ironhide:fourgon' : 'ironhide:canons' };
     }
     case 'ratchet': {
       hit(target, dmg);

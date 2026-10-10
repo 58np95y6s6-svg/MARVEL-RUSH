@@ -58,28 +58,28 @@ describe('Sacrifice → mana (Black Widow)', () => {
 
 describe('Copieur (Loki)', () => {
   it('glissé sur une alliée de même rang : devient sa copie (compétence complète, −35 % de dégâts au niveau 1)', () => {
-    const e = quiet(['loki', 'cmarvel', 'falcon', 'hawkeye', 'spiderman']);
+    const e = quiet(['loki', 'cmarvel', 'falcon', 'hawkeye', 'ariel']);
     debugNoRange(e);
     debugPlace(e, 0, 0, 'loki', 2);
-    debugPlace(e, 0, 1, 'spiderman', 2);
+    debugPlace(e, 0, 1, 'ariel', 2);
     e.apply({ type: 'copy', player: 'p1', from: 0, to: 1 });
     const ev = step(e);
-    expect(ofType(ev, 'copy')[0]).toMatchObject({ from: 0, to: 1, unit: 'spiderman', rank: 2 });
+    expect(ofType(ev, 'copy')[0]).toMatchObject({ from: 0, to: 1, unit: 'ariel', rank: 2 });
     const c = grid(e)[0]!;
-    expect(c.unit).toBe('spiderman');
+    expect(c.unit).toBe('ariel');
     expect(c.rank).toBe(2);
     expect(c.status).toMatchObject({ copyMul: 0.65, copyOf: 'loki' });
-    expect(c.counters.cd).toBeGreaterThan(0); // recharge des Toiles
-    expect(grid(e)[1]!.unit).toBe('spiderman');
+    expect(c.counters.cd).toBeGreaterThan(0); // recharge du Chant de sirène
+    expect(grid(e)[1]!.unit).toBe('ariel');
     // Dégâts : 65 % de ceux de l'original (Arlequin de Rush Royale).
     grid(e)[1] = null;
     debugSpawn(e, { hp: BIG, distance: 10 });
     c.cooldown = 0;
     const hit = ofType(step(e), 'hit')[0]!;
-    expect(hit.damage).toBeCloseTo(UNITS.spiderman.damage * 0.65);
-    // La compétence complète (Toiles) se déclenche aussi.
+    expect(hit.damage).toBeCloseTo(UNITS.ariel.damage * 0.65);
+    // La compétence complète (Chant de sirène) se déclenche aussi.
     const more = step(e, 20 * 7);
-    expect(ofType(more, 'ability').some((a) => a.name === 'Toiles' && a.slot === 0)).toBe(true);
+    expect(ofType(more, 'ability').some((a) => a.name === 'Chant de sirène' && a.slot === 0)).toBe(true);
   });
 
   it('la pénalité de copie baisse avec le niveau : −35 % au niveau 1, −5 % au niveau 9', () => {

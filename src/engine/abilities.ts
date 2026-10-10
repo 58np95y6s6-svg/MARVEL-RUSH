@@ -282,26 +282,6 @@ function timedAbility(ctx: Ctx, player: number, slot: number, u: SimUnit, all: S
   const ctrl = controlMul(ctx, player, id);
   const scale = UNITS[id].damage > 0 ? baseDamage(ctx, player, slot, u) / UNITS[id].damage : 1;
   switch (id) {
-    case 'spiderman': {
-      // Trappeur : filets lancés sur des ennemis au hasard de la zone.
-      const centers = pickMany(ctx, enemies, Math.max(1, Math.round(prm.nets ?? 2)));
-      if (centers.length === 0) return false;
-      const hit = new Set<SimEnemy>();
-      for (const c of centers) for (const e of [c, ...within(ctx, all, c, prm.netRadius ?? 1)]) hit.add(e);
-      const targets = [...hit].filter(isAlive);
-      emit(ctx, { type: 'attack', player: ctx.st.players[player]!.id, slot, unit: id, targets: targets.map((e) => e.uid), fx: 'spiderman:toile' });
-      for (const e of targets) {
-        unitHit(ctx, player, u, e, (prm.netDamage ?? 0) * scale, { noOnHit: true });
-        if (!isAlive(e)) continue;
-        applySlow(ctx, e, prm.netSlow ?? 0.3, (prm.netDuration ?? 5) * ctrl);
-        e.x.netStacks = Math.min(Math.max(1, Math.round(prm.netMaxStacks ?? 3)), ((e.x.netFor ?? 0) > EPS ? e.x.netStacks ?? 0 : 0) + 1);
-        e.x.netFor = (prm.netDuration ?? 5) * ctrl;
-        e.x.netVuln = Math.max(e.x.netVuln ?? 0, prm.netVuln ?? 0.1);
-        if (prm.netStun) applyStun(e, prm.netStun * ctrl);
-      }
-      abilityEvent(ctx, player, slot, id, 'Toiles', targets);
-      return true;
-    }
     case 'hulk': {
       // Minotaure : Séisme autour de l'ennemi de tête (pas pendant le Berserker « vitesse »).
       if (prm.berserkSpeed && (u.counters.berserkFor ?? 0) > EPS) return true;
@@ -517,11 +497,11 @@ export function inRange(ctx: Ctx, player: number, slot: number, u: SimUnit, enem
 function chooseTarget(ctx: Ctx, player: number, u: SimUnit, pool: SimEnemy[]): SimEnemy | undefined {
   const def = effectiveDef(u);
   const prm = unitParams(ctx, player, def.id);
+  // Pyrotechnicien (Ironhide) : en nombre impair, cible au hasard (avant le ciblage du mode).
+  if (prm.oddSplash && countOnBoard(ctx, player, def.id) % 2 === 1) return selectTarget(ctx, pool, 'aleatoire');
   // Transformation (Autobots) : robot = le plus de PV, véhicule = le plus avancé.
   const tf = chooseTfTarget(ctx, prm, u, pool);
   if (tf !== null) return tf;
-  // Pyrotechnicien (Mulan) : en nombre impair, cible au hasard.
-  if (prm.oddSplash && countOnBoard(ctx, player, def.id) % 2 === 1) return selectTarget(ctx, pool, 'aleatoire');
   // Chimiste (Nick & Judy) : le premier ennemi qui n'est pas encore fiché.
   if (prm.vulnPerRank) {
     const fresh = pool.filter((e) => !(e.x.vuln ?? 0));
@@ -666,11 +646,17 @@ function attackOf(
       return { targets: [target], fx: 'loki:dague' };
     }
     case 'bucky': {
-      // Voleur : bonus aléatoire jusqu'aux dégâts critiques.
-      const bonus = rand(ctx) * Math.max(0, (prm.rogueCritMul ?? 3) - 1);
-      const crit = bonus >= 1;
-      hit(target, dmg * (1 + bonus), { crit });
-      return { targets: [target], fx: crit ? 'bucky:critique' : 'bucky:tir' };
+      // Bourreau : achève sous un seuil de PV (réduit de moitié contre les boss et les mini-boss).
+      hit(target, dmg);
+      if (isAlive(target)) {
+        const th = (prm.executeThreshold ?? 0.2) * (target.bossId || target.x.mini ? prm.executeBossFactor ?? 0.5 : 1);
+        if (target.hp / target.maxHp < th) {
+          killEnemy(ctx, target, player, u);
+          abilityEvent(ctx, player, slot, id, 'Bras bionique', [target]);
+          return { targets: [target], fx: 'bucky:critique' };
+        }
+      }
+      return { targets: [target], fx: 'bucky:tir' };
     }
     case 'hawkeye': {
       // Archer ; talents de Rush Royale : flèches empoisonnées (2 cibles au hasard) ou explosives.
@@ -695,8 +681,17 @@ function attackOf(
       return { targets: [target], fx: 'widow:tir' };
     }
     case 'shangchi': {
+      // Tonnerre : éclair en chaîne sur la cible et les ennemis qui la suivent (autant que le rang), qui étourdit un instant.
       hit(target, dmg);
-      return { targets: [target], fx: (prm.aloneAttackSpeed && !hasNeighborTwin(ctx, player, slot, id)) ? 'shangchi:anneaux' : 'shangchi:combo' };
+      const n = Math.max(1, Math.round((prm.thunderTargetsPerRank ?? 1) * u.rank + (prm.thunderTargetsAdd ?? 0)));
+      const behind = enemies.filter((e) => isAlive(e) && e !== target && progress(ctx, e) <= progress(ctx, target))
+        .sort((a, b) => progress(ctx, b) - progress(ctx, a)).slice(0, n - 1);
+      const chain = [target, ...behind].filter(isAlive);
+      for (const e of chain) {
+        hit(e, dmg * (prm.thunderDamage ?? 0.5), { noOnHit: e !== target });
+        if (isAlive(e) && notBoss(e) && prm.thunderDaze) applyStun(e, prm.thunderDaze * ctrl);
+      }
+      return { targets: [target, ...behind], fx: chain.length > 1 ? 'shangchi:anneaux' : 'shangchi:combo' };
     }
     case 'maui': {
       // Borée, phase 2 (requin) : critiques, talents de double flèche et de pluie de flèches.
@@ -719,13 +714,8 @@ function attackOf(
       return { targets: [target], fx: 'maui:faucon' };
     }
     case 'mulan': {
-      // Pyrotechnicien : zone en nombre impair (rayon qui grandit avec le rang).
+      // Danse-lames : la cadence (seule) et le bonus des danseuses sont dans attackSpeedOf / baseDamage.
       hit(target, dmg);
-      if (prm.oddSplash && countOnBoard(ctx, player, id) % 2 === 1) {
-        const r = (prm.oddRadius ?? 0.8) + (prm.oddRadiusPerRank ?? 0.1) * u.rank;
-        const around = splash(target, dmg * prm.oddSplash, r);
-        return { targets: [target, ...around], fx: 'mulan:avalanche' };
-      }
       return { targets: [target], fx: 'mulan:souffle' };
     }
     case 'merida': {
@@ -755,15 +745,10 @@ function attackOf(
       return { targets: [target], fx: 'ariel:bulles' };
     }
     case 'foxhound': {
-      const n = Math.max(1, Math.round(prm.hits ?? 2));
-      hit(target, dmg);
-      const out = [target];
-      for (let k = 1; k < n; k++) {
-        if (isAlive(target)) { hit(target, dmg * (1 + (prm.secondHitBonus ?? 0.5))); continue; }
-        const next = selectTarget(ctx, pool.filter(isAlive), 'premier');
-        if (next) { hit(next, dmg); out.push(next); }
-      }
-      return { targets: out, fx: 'foxhound:double' };
+      // Voleur : bonus aléatoire jusqu'aux dégâts critiques.
+      const bonus = rand(ctx) * Math.max(0, (prm.rogueCritMul ?? 3) - 1);
+      hit(target, dmg * (1 + bonus), { crit: bonus >= 1 });
+      return { targets: [target], fx: 'foxhound:double' };
     }
     case 'nickjudy': {
       // Chimiste : la cible subit plus de dégâts jusqu'à sa mort.
@@ -780,8 +765,15 @@ function attackOf(
       return { targets: [target], fx: 'vanralph:poing' };
     }
     case 'spiderman': {
+      // Catapulte : zone autour du premier ennemi, étourdissement (un même ennemi : pas avant webRestun s).
       hit(target, dmg);
-      return { targets: [target], fx: 'spiderman:toile' };
+      const around = splash(target, dmg * (prm.webSplash ?? 1), prm.webRadius ?? 1);
+      const now = ctx.st.time;
+      for (const e of [target, ...around]) {
+        if (!isAlive(e) || !notBoss(e) || (e.x.webAt !== undefined && now - e.x.webAt < (prm.webRestun ?? 9) - EPS)) continue;
+        if (applyStun(e, (prm.webStun ?? 1) * ctrl)) e.x.webAt = now;
+      }
+      return { targets: [target, ...around], fx: 'spiderman:toile' };
     }
     case 'nemo': {
       hit(target, dmg);
@@ -789,17 +781,11 @@ function attackOf(
     }
     // ───────────── Extension DC (profils Rush Royale) ─────────────
     case 'batman': {
-      // Bourreau : exécute sous un seuil de PV (moitié contre les boss et les lieutenants).
-      hit(target, dmg);
-      if (isAlive(target)) {
-        const th = (prm.executeThreshold ?? 0.2) * (isBossLike(target) ? prm.executeBossFactor ?? 0.5 : 1);
-        if (target.hp / target.maxHp < th) {
-          killEnemy(ctx, target, player, u);
-          abilityEvent(ctx, player, slot, id, 'Justicier', [target]);
-          return { targets: [target], fx: 'batman:batarangs' };
-        }
-      }
-      return { targets: [target], fx: 'batman:batarang' };
+      // Chasseur de démons : frappe autant de premiers ennemis que son rang (4 au plus).
+      const n = Math.max(1, Math.min(Math.round(prm.targetsMax ?? 4), Math.round((prm.targetsPerRank ?? 1) * u.rank)));
+      const firsts = [target, ...pool.filter((e) => isAlive(e) && e !== target).sort((a, b) => progress(ctx, b) - progress(ctx, a))].slice(0, n);
+      for (const e of firsts) hit(e, dmg, { noOnHit: e !== target });
+      return { targets: firsts, fx: firsts.length > 1 ? 'batman:batarangs' : 'batman:batarang' };
     }
     case 'wonderwoman': {
       // Moine : en Fureur, chaque coup éclabousse.

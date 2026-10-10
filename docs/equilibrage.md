@@ -30,29 +30,29 @@ DPS brut de départ (rang 1, niveau 1, sans compétence) = dégâts / cadence ; 
 | Hulk | Légendaire | Zone + étourdissement | 37,5 | 1,10 – 1,16 | Rage + Smash : vérifier le DPS à la 60e seconde d'un boss. |
 | Thor | Légendaire | Dégâts en chaîne | ~61 (3 cibles) | 1,10 – 1,16 | Fort sur les vagues, faible sur boss seul ; c'est voulu. |
 | Doctor Strange | Épique | Contrôle de position | 15 | 1,03 – 1,08 | Le Portail sauve des vies ; mesurer « vies sauvées » plutôt que les dégâts. |
-| Venom | Épique | Exécution + Croissance | 35 | 1,05 – 1,12 | Croissance sans plafond (+0,5 %/s, +2 %/élimination), 50 % gardés en fusion : surveiller les parties longues (vague 30+). |
+| Venom | Rare | Exécution + Croissance | 35 | 1,05 – 1,12 | Croissance sans plafond (+0,5 %/s, +2 %/élimination), 50 % gardés en fusion : surveiller les parties longues (vague 30+). |
 | Captain Marvel | Rare | Dégâts monocible (pic) | 27,8 | 0,98 – 1,05 | Rare la plus forte en dégâts : rester sous 1,05. |
 | Captain America | Légendaire | Soutien + rebonds | 20 × 3 | 1,08 – 1,14 | La valeur dépend du placement ; le joueur auto doit placer au centre. |
-| Loki | Épique | Copieur | 22,5 | 1,03 – 1,08 | Copie une alliée de même rang à −25 % : sa valeur dépend du meilleur héros du deck. |
+| Loki | Légendaire | Copieur | 22,5 | 1,03 – 1,08 | Copie une alliée de même rang à −25 % : sa valeur dépend du meilleur héros du deck. |
 | Soldat de l'hiver | Épique | Critique + étourdissement | 37,5 (moyenne) | 1,05 – 1,10 | Équipe Les Agents (+30 % de critiques) le pousse fort. |
 | Œil de faucon | Rare | Polyvalent | 25,7 | 0,97 – 1,03 | Bonne Rare de base, sans pic. |
 | Falcon | Rare | Soutien (marque) | 25 | 0,95 – 1,02 | Valeur qui grandit avec les dégâts du deck ; c'est l'unité de remplacement du témoin. |
-| Black Widow | Épique | Sacrifice → mana | 28 | 1,00 – 1,06 | Plus de ×2 contre les boss ; rend 10/25/45/70/100/140/190 de mana par fusion ou destruction. |
+| Black Widow | Rare | Sacrifice → mana | 28 | 1,00 – 1,06 | Plus de ×2 contre les boss ; rend 10/25/45/70/100/140/190 de mana par fusion ou destruction. |
 | Shang-Chi | Épique | Multi-cibles aléatoires | 30 + anneaux | 1,05 – 1,10 | Les anneaux ne doivent pas tout nettoyer avant la vague 10. |
 | Vaïana & Pua | Épique | Contrôle (repousser) | 15 | 1,03 – 1,08 | Comme Strange : mesurer les vies sauvées. |
 | Maui | Légendaire | Dégâts alternés | 33 (×2,5 requin) | 1,10 – 1,16 | Vérifier que les deux formes ont une valeur proche sur 16 s. |
 | Pocahontas & Meeko | Rare | Soutien (cadence) + mana | 12,5 | 0,95 – 1,02 | IP calculé avec placement au centre. |
 | Mulan & Mushu | Légendaire | Brûlure + nettoyage par vague | 30 (+60 % brûlure) | 1,10 – 1,16 | Avalanche = filet de sécurité ; une seule par vague. |
 | Rebelle | Rare | Monocible sur la tête | 48,9 (crit) | 0,98 – 1,05 | DPS brut élevé mais monocible : à surveiller sur les boss. |
-| Ariel & Sébastien | Épique | Contrôle de masse | 11 | 1,03 – 1,08 | Saignement plafonné sur boss (`bleedBossFactor`). |
+| Ariel & Sébastien | Légendaire | Contrôle de masse | 11 | 1,03 – 1,08 | Saignement plafonné sur boss (`bleedBossFactor`). |
 | Rox & Rouky | Rare | Dégâts monocible | ~52 | 0,98 – 1,05 | Le doublé sur même cible rend Rox très bon contre les boss ; ajuster `secondHitBonus` d'abord. |
-| Tiana & Naveen | Rare | Mana par élimination | 8 | 0,95 – 1,02 | +1/2/3/4/5/6/8 de mana par ennemi touché qui tombe (au lieu du mana de vague) ; mesurer le mana total gagné (+10 à 15 % visé). |
+| Tiana & Naveen | Épique | Mana par élimination | 8 | 0,95 – 1,02 | +1/2/3/4/5/6/8 de mana par ennemi touché qui tombe (au lieu du mana de vague) ; mesurer le mana total gagné (+10 à 15 % visé). |
 | Nemo & Dory | Rare | Aléatoire | 20 | 0,95 – 1,02 | Écart-type élevé accepté. |
-| Coco (Miguel) | Épique | Booster de fusion + restaure | 10 | 1,03 – 1,08 | Fait monter d'un rang une alliée de même rang (en disparaissant) ; Remember Me contre Cruella et Galactus. |
-| Nick & Judy | Épique | Contrôle + malus d'armure | 20 | 1,03 – 1,08 | Fort contre les blindés et Maléfique (gobelins). |
-| Buzz & Woody | Légendaire | Perçant + contrôle | 27,5 (ligne) | 1,08 – 1,14 | Laser perçant : mesurer le nombre moyen d'ennemis touchés. |
-| Raiponce & Pascal | Épique | Anti-contrôle de boss | 12 | 1,03 – 1,08 | Valeur contre Jafar, Maléfique, Bouffon Vert, Thanos. |
-| Vanellope & Ralph | Légendaire | Anti-blindés/boucliers + soutien mobile | 32 | 1,08 – 1,14 | Téléportation aléatoire : écart-type élevé accepté. |
+| Coco (Miguel) | Légendaire | Booster de fusion + restaure | 10 | 1,03 – 1,08 | Fait monter d'un rang une alliée de même rang (en disparaissant) ; Remember Me contre Cruella et Galactus. |
+| Nick & Judy | Rare | Contrôle + malus d'armure | 20 | 1,03 – 1,08 | Fort contre les blindés et Maléfique (gobelins). |
+| Buzz & Woody | Épique | Perçant + contrôle | 27,5 (ligne) | 1,08 – 1,14 | Laser perçant : mesurer le nombre moyen d'ennemis touchés. |
+| Raiponce & Pascal | Rare | Anti-contrôle de boss | 12 | 1,03 – 1,08 | Valeur contre Jafar, Maléfique, Bouffon Vert, Thanos. |
+| Vanellope & Ralph | Épique | Anti-blindés/boucliers + soutien mobile | 32 | 1,08 – 1,14 | Téléportation aléatoire : écart-type élevé accepté. |
 
 ### 2 bis. Extension DC : bandes de puissance
 
@@ -68,12 +68,12 @@ Mêmes bandes que ci-dessus (Rare 0,95 – 1,05, Épique 1,03 – 1,12, Légenda
 | Aquaman | Épique | Perçant + contrôle | courte-moyenne 2,0 | 32 / 1,1 s | 1,07 | 1,03 – 1,10 | — |
 | Cyborg | Épique | Soutien (vitesse de tout le plateau) | globale | 21 / 0,8 s | 1,04 (après +17 % et +25 % de surcharge ; 1,01 avant) | 1,03 – 1,08 | Sa valeur grandit avec les dégâts du deck. |
 | Supergirl | Épique | Montée en puissance (charges) | longue 3,4 | 28 / 1,0 s | 1,00 (après réglage ; 0,98 avant) | 1,03 – 1,10 | Encore basse : elle cible « fort » et élimine peu ; prochain réglage `maxCharges` 6. |
-| Shazam | Épique | Transformation | moyenne 2,4 | 20 / 1,0 s | 1,08 | 1,03 – 1,10 | — |
+| Shazam | Légendaire | Transformation | moyenne 2,4 | 20 / 1,0 s | 1,08 | 1,03 – 1,10 | — |
 | Martian Manhunter | Épique | Anti-boss (intangible) + contrôle | longue 3,4 | 24 / 1,0 s | 1,00 (après réglage ; 0,99 avant) | 1,03 – 1,08 | Sa valeur est surtout contre les boss qui rétrogradent ou détruisent : rapporter l'IP par boss. |
 | Robin | Rare | Acrobate (balayage, Disciple) | courte 1,6 | 18 / 0,7 s | 1,00 | 0,95 – 1,05 | Avec Batman ou Batgirl à côté : +20 %. |
 | Batgirl | Rare | Anti-armure / anti-bouclier | courte 1,6 | 20 / 0,75 s | 0,98 | 0,95 – 1,02 | Valeur contre robots LexCorp et mercenaires. |
 | Catwoman | Rare | Économie + ralentissement | courte 1,6 | 17 / 0,6 s | 1,01 | 0,95 – 1,02 | Mesurer le mana volé (≈ +10 % visé). |
-| Harley Quinn | Rare | Chaos | courte 1,6 | 17 / 0,8 s | 1,00 | 0,95 – 1,02 | Écart-type élevé accepté. |
+| Harley Quinn | Épique | Chaos | courte 1,6 | 17 / 0,8 s | 1,00 | 0,95 – 1,02 | Écart-type élevé accepté. |
 | Green Arrow | Rare | Salves | globale | 16 / 0,8 s | 1,07 (salve à 80 % puis à 70 %) | 0,97 – 1,05 | Un peu haute : prochain réglage `abilityCooldown` 9. Avec Les Archers : vérifier ≤ +10 %. |
 
 **Équipes DC** (cible inchangée : +5 à +10 %) : Justice League (4 sur 8, +15 % / +10 % de vitesse), Trinité (+30 % contre les boss), Bat-famille (2 sur 3, +20 % de critiques), Lanternes et cosmiques (3 sur 5, recharges −20 %, contrôles +20 %), Sirènes de Gotham (+15 de mana par vague) ; inter-univers : Les Riches (Iron Man + Batman, +20 de mana par vague et +10 %), Les Archers (2 sur 3 parmi Œil de faucon, Green Arrow, Rebelle : +15 % de vitesse et +15 % de critiques).
@@ -235,7 +235,7 @@ Après la « copie Rush Royale » de `main`, les 15 héros DC reprennent chacun 
 
 | Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée |
 |---|---|---|---|
-| Batman | Bourreau | 200 / 1,0 s | moyenne |
+| Batman | Chasseur de démons | 270 / 1,0 s (Bourreau 200 avant la revue des raretés) | moyenne |
 | Superman | Givre | 150 / 1,0 s | globale |
 | Wonder Woman | Moine | 170 / 1,0 s | moyenne |
 | Green Lantern | Cultiste | 132 / 0,8 s | longue |
@@ -290,7 +290,7 @@ Les 15 Autobots reprennent chacun une unité Rush Royale libre (ni Marvel, ni Di
 | Optimus Prime | Banshee | 570 / 1,0 s | moyenne |
 | Grimlock | Chaperon rouge | 490 / 1,0 s | courte |
 | Ultra Magnus | Épées enchantées | 450 / 1,0 s | moyenne |
-| Ironhide | Chasseur de démons | 222 / 1,0 s (270 avant la revue des portées) | longue |
+| Ironhide | Pyrotechnicien | 189 / 1,0 s (Chasseur de démons 222 avant la revue des raretés) | longue |
 | Arcee | Cristallomancien | 85 / 0,8 s (150 avant la revue des portées) | moyenne |
 | Wheeljack | Corsaire | 107 / 1,0 s (130 avant la revue des portées) | longue |
 | Hot Rod | Blazey | 120 / 0,8 s | moyenne |
@@ -750,3 +750,34 @@ de vie 4-5,6 s → 2,2-3,3 s. Sans étourdissement : Iron Man, Œil de faucon, F
 (niveau 6) 30,8 contre 32,8 pour le même deck avec Spider-Man (−6 %) ; départ avec Rebelle à la place de
 Spider-Man 19,3 contre 18,1. La cible du §3 « Thanos battu par moins de 25 % des decks méta niveau 10 »
 est remplacée par ≈ 60-70 %.
+
+## 11. Raretés alignées sur Rush Royale (octobre 2026)
+
+> Retours de joueuse : « Les persos Légendaires devraient copier des persos Légendaires de Rush Royale… Mulan est
+> Légendaire mais copie un Rare, elle est donc faible » ; « Ralph ne devrait être qu'Épique ». Choix héros par héros :
+> `docs/rush-royale-mapping.md` (« Raretés ») ; raretés de toutes les unités Rush Royale : `docs/rush-royale-donnees.md` §4.
+
+**Changements** : nouveaux profils pour Spider-Man (Catapulte : zone + collage, le rang monte les dégâts, clé moteur
+`rankDamage`), Shang-Chi (Tonnerre : chaîne de `rang` cibles à 50 %), Soldat de l'hiver (Bourreau : 141, +18,5/niv.,
+exécution 20,5 % +1,5 pt/niv.), Mulan (Danse-lames, profil repris de Shang-Chi), Rox & Rouky (Voleur, portée courte,
+140) ; raretés changées pour 10 héros (Loki, Ariel, Coco → Légendaires ; Vanellope, Buzz & Woody, Tiana → Épiques ;
+Venom, Black Widow, Nick & Judy, Raiponce → Rares). Decks de départ inchangés.
+
+**Mesures** (`scripts/simulate.ts`, joueur `--casual` ; avant = commit 8b50af7)
+
+| Mesure | Avant | Après | Cible |
+|---|---|---|---|
+| Solo Infini, départ Marvel niveau 1 (40 parties) | 18,32 | 17,98 | 16-19 |
+| Solo Infini, départ Disney niveau 1 (40 parties) | 14,97 | 15,80 | ≈ 14-18 |
+| Méta Marvel niveau 8 (10 parties) | 41,1 | 41,1 | — |
+| Collection moyenne (Thor, Iron Man, Spider-Man, Soldat de l'hiver, Black Widow ; niv. 6, 1 palier, ★1 ; 20 parties) | 38,55 | 38,8 | 35-45 |
+| Collection forte (niv. 10, 3 paliers, ★3 ; 20 parties) | 64,7 | 64,7 | 55-70 |
+| Campagne `--attendu`, 10 parties par niveau : victoire moyenne (pire niveau) | — | c1 96 % (80) · c2-c6 100 % | ≥ 85 % au ch. 1, ≥ 70 % ensuite |
+
+**Légendaire contre Rare au même niveau** : DPS effectif (2 exemplaires de rang 3, 8 ennemis immortels, 60 s, × facteur
+de couverture de la portée ; soutiens exclus ; mesure qui sous-estime le contrôle, la copie, le booster et l'exécution),
+médiane par rareté au niveau 1 : **Légendaires 838** (avant 520), Épiques 719 (avant 343), Rares 513 (avant 513) ;
+au niveau 8 : Légendaires 1 452, Épiques 1 540, Rares 873. Mulan : 520 → **838** au niveau 1, 3 528 au niveau 8 (×4 une
+Rare médiane). Les Légendaires restent sous les Épiques au niveau 8 dans cette mesure parce que quatre d'entre elles
+sont des unités d'effet (Hulk au contact, Loki copieur, Ariel qui fige, Coco booster) ; en Solo Infini, Iron Man et Thor
+dominent (IP ×1,34 et ×1,09 au niveau 8).
