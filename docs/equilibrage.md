@@ -243,13 +243,18 @@ Après la « copie Rush Royale » de `main`, les 15 héros DC reprennent chacun 
 | Aquaman | Faucheuse | 140 / 1,0 s | moyenne |
 | Cyborg | Génie | 90 / 0,8 s | globale |
 | Supergirl | Barde | 100 / 1,0 s | longue |
-| Shazam | Météore | 90 / 1,0 s | moyenne |
+| Shazam | Météore | 74 / 1,0 s (90 avant la revue des portées) | longue |
 | Martian Manhunter | Mime | 30 / 1,0 s | longue |
 | Robin | Ferrailleur | 140 / 0,8 s | courte |
-| Batgirl | Bombardier | 130 / 0,8 s | courte |
+| Batgirl | Bombardier | 61 / 0,8 s (130 avant la revue des portées) | longue |
 | Catwoman | Démonologue | 140 / 0,7 s | courte |
 | Harley Quinn | Clown | 150 / 0,8 s | courte |
 | Green Arrow | Mage de glace | 82 / 0,5 s | globale |
+
+**Revue des portées DC** (`docs/rush-royale-mapping.md` « Portées DC ») : Shazam moyenne → longue (90 → 74), Batgirl
+courte → longue (130 → 61). `--casual`, niveau 1 : `dc-rares` 16,70 → 17,53 (30 parties), `bat-famille` 13,60 →
+14,90, `cosmiques` 16,85 → 17,65, `meta-dc` 20,80 inchangé, départ Marvel 18,00 inchangé (20 parties) ; chapitre 7
+`--attendu` 100 % (pire 100 %).
 
 **Solo Infini**, niveau 1, toits de New York, graines 1..60, rotation « tous les univers » (vague moyenne) :
 

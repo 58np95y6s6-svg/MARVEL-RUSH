@@ -411,9 +411,9 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Météore.
+    // Rush Royale : Météore (la foudre tombe du ciel → portée longue, dégâts ×1,4/1,7 : 90 → 74).
     id: 'shazam', name: 'Shazam', pack: 'dc', rarity: 'epique', role: 'Zone / contrôle',
-    targeting: 'aleatoire', damage: 90, attackInterval: 1.0, range: 2.4,
+    targeting: 'aleatoire', damage: 74, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'SHAZAM !',
       description: 'Toutes les 8 s (−0,6 s par rang), la foudre tombe sur un ennemi au hasard : 300 % des dégâts dans un rayon de 1 case, et les ennemis touchés sont étourdis 1 s (sauf boss).',
@@ -441,9 +441,9 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Bombardier.
+    // Rush Royale : Bombardier (batarangs lancés comme les bombes → portée longue, dégâts ×1,4/3 : 130 → 61).
     id: 'batgirl', name: 'Batgirl', pack: 'dc', rarity: 'rare', role: 'Zone',
-    targeting: 'premier', damage: 130, attackInterval: 0.8, range: 1.6,
+    targeting: 'premier', damage: 61, attackInterval: 0.8, range: 3.4,
     ability: {
       name: 'Batarangs explosifs',
       description: 'Chaque batarang explose : 60 % des dégâts aux ennemis autour de la cible.',

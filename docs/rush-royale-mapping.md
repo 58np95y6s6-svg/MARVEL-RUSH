@@ -145,7 +145,7 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 
 > Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et
 > Disney. Les archétypes DC sont gardés (clés génériques du moteur) et posés sur l'unité Rush Royale qui leur
-> ressemble le plus. Portées inchangées. Sources : recherche web (extraits des guides alucare.fr, touchtapplay,
+> ressemble le plus. Portées : voir « Portées DC » ci-dessous. Sources : recherche web (extraits des guides alucare.fr, touchtapplay,
 > wiki Fandom, tier lists 2024-2026) ; le wiki ne s'ouvre pas depuis l'environnement, d'où beaucoup de
 > chiffres **(C)** (approximation) : ils ont été réglés au simulateur pour que les decks DC restent à ~10 % des
 > decks Marvel (`docs/equilibrage.md` §2 sexies).
@@ -167,6 +167,29 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 | **Catwoman** | **Démonologue** (Demonologist) | Mana en plus sur les éliminations (doublé en Coop dans Rush Royale) → **archétype Mana par élimination** (barème ×2). | B |
 | **Harley Quinn** | **Clown** | Fusion : chance de copie, sinon **mana** et perte de rang → **archétype Sacrifice → mana** (barème standard). | B |
 | **Green Arrow** | **Mage de glace** (Cold Mage) | Chaque tir ralentit un peu plus la cible (6 % par flèche, 30 % au plus) : flèches cryogéniques. | C |
+
+### Portées DC (revue d'octobre 2026)
+
+Même règle que la section « Portées » (personnage + attaque de l'unité Rush Royale ; dégâts × facteur nouveau /
+facteur ancien en cas de changement de catégorie).
+
+| Héros | Unité Rush Royale | Avant → après | Pourquoi |
+|---|---|---|---|
+| Batman | Bourreau | moyenne → **moyenne** | Poings, grappin et batarangs de près ; la hache du Bourreau. |
+| Superman | Givre | globale → **globale** | Vision thermique et souffle glacial sur tout le chemin. |
+| Wonder Woman | Moine | moyenne → **moyenne** | Épée et lasso de vérité : allonge, pas tir. |
+| Green Lantern | Cultiste | longue → **longue** | Constructions de l'anneau projetées ; rayon du Cultiste. |
+| Flash | Cogneur | courte → **courte** | Poings à grande vitesse ; le Cogneur frappe au contact. |
+| Aquaman | Faucheuse | moyenne → **moyenne** | Trident ; faux de la Faucheuse. |
+| Cyborg | Génie | globale → **globale** | Canon sonique. |
+| Supergirl | Barde | longue → **longue** | Vision thermique, ondes du Barde. |
+| **Shazam** | Météore | moyenne → **longue** (90 → 74) | La foudre de SHAZAM ! tombe du ciel comme le Météore. |
+| Martian Manhunter | Mime | longue → **longue** | Télépathie et rayons martiens. |
+| Robin | Ferrailleur | courte → **courte** | Bâton bo au contact. |
+| **Batgirl** | Bombardier | courte → **longue** (130 → 61) | Batarangs explosifs lancés, comme les bombes du Bombardier. |
+| Catwoman | Démonologue | courte → **courte** | Griffes et fouet au contact. |
+| Harley Quinn | Clown | courte → **courte** | Maillet géant. |
+| Green Arrow | Mage de glace | globale → **globale** | Archer : flèches cryogéniques sur toute la map. |
 
 Talents DC : Rush Royale ne publie pas les talents de ces unités dans les extraits trouvés ; chaque héros a
 3 paliers de talents **de même famille** que son unité (seuil, cumuls, rage, charges, chance de double

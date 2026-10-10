@@ -76,7 +76,7 @@ export const UNIT_CATEGORIES: Partial<Record<string, HeroCategory[]>> = {
   shazam: ['zone', 'controle'],
   martian: ['manipulation'],
   robin: ['melee', 'manipulation'],
-  batgirl: ['melee', 'zone'],
+  batgirl: ['zone'],
   catwoman: ['melee', 'mana'],
   harley: ['melee', 'mana'],
   greenarrow: ['tireur', 'controle'],
