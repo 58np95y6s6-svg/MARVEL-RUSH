@@ -25,7 +25,7 @@ describe('options de script de la campagne', () => {
   });
 
   it('excludeBosses retire des boss de la rotation (et Thanos du mode infini)', () => {
-    const e = createEngine({ ...base, script: { excludeBosses: ['jafar', 'cruella', 'ursula', 'malefique'] } });
+    const e = createEngine({ ...base, bossPool: 'marvel-disney', script: { excludeBosses: ['jafar', 'cruella', 'ursula', 'malefique'] } });
     const ids = ofType(reachWave(e, 7), 'bossSpawn').map((b) => b.boss);
     expect(new Set(ids)).toEqual(new Set(['galactus', 'bouffon']));
     const t = createEngine({ ...base, bossRhythm: { small: 0, big: 2, thanos: 4 }, script: { excludeBosses: ['thanos'] } });

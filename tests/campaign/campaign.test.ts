@@ -35,9 +35,10 @@ const winAll = (chapters: number[], stars: Stars = ALL3): [string, Stars][] =>
   chapters.flatMap((c) => chapterLevels(c).map((l): [string, Stars] => [l.id, stars]));
 
 describe('données de la campagne', () => {
-  it('6 chapitres × 10 niveaux, identifiants c<ch>-n<n>', () => {
-    expect(CHAPTERS).toHaveLength(6);
-    expect(LEVELS).toHaveLength(60);
+  it('9 chapitres × 10 niveaux (6 + 3 Pixar, numérotés 13 à 15), identifiants c<ch>-n<n>', () => {
+    expect(CHAPTERS).toHaveLength(9);
+    expect(LEVELS).toHaveLength(90);
+    expect(CHAPTERS.map((c) => c.n)).toEqual([1, 2, 3, 4, 5, 6, 13, 14, 15]);
     for (const ch of CHAPTERS) {
       const ls = chapterLevels(ch.n);
       expect(ls.map((l) => l.id)).toEqual(Array.from({ length: 10 }, (_, i) => `c${ch.n}-n${i + 1}`));
@@ -57,9 +58,11 @@ describe('données de la campagne', () => {
   });
 
   it('courbe du doc : 10 à 15 vagues au chapitre 1, puis de plus en plus ; effectif et PV en hausse régulière', () => {
-    const ranges: [number, number][] = [[10, 15], [15, 20], [20, 25], [25, 30], [30, 40], [40, 50]];
+    const ranges: Record<number, [number, number]> = {
+      1: [10, 15], 2: [15, 20], 3: [20, 25], 4: [25, 30], 5: [30, 40], 6: [40, 50], 13: [150, 160], 14: [160, 175], 15: [175, 200],
+    };
     for (const ch of CHAPTERS) {
-      const [w0, w1] = ranges[ch.n - 1]!;
+      const [w0, w1] = ranges[ch.n]!;
       const ls = chapterLevels(ch.n);
       for (const l of ls) {
         expect(l.waves, l.id).toBeGreaterThanOrEqual(w0);
@@ -132,12 +135,22 @@ describe('données de la campagne', () => {
     for (const n of [1, 7, 8]) expect(getLevel(`c6-n${n}`)!.exclude).toEqual(['malefique']);
     expect(getLevel('c6-n9')!.exclude).toBeUndefined();
     expect(ROTATING_BOSSES).not.toContain('thanos');
+    // Chapitres Pixar : rotation complète, sans le boss intermédiaire ni le boss du chapitre.
+    expect(getLevel('c13-n3')!.exclude).toEqual(['randall', 'syndrome']);
+    expect(getLevel('c15-n10')!.exclude).toEqual(['lotso', 'zurg']);
+    expect(levelConfig(getLevel('c13-n1')!, DECK, null, 1).bossPool).toBe('tous');
+    expect(levelConfig(getLevel('c1-n1')!, DECK, null, 1).bossPool).toBe('marvel-disney');
+    expect(getLevel('c15-n10')!.boss).toMatchObject({ id: 'zurg', wave: 200 });
+    expect(getLevel('c14-n8')!.boss).toMatchObject({ id: 'hopper', wave: 172 });
   });
 
   it('nextLevel enchaîne les chapitres', () => {
     expect(nextLevel(getLevel('c1-n9')!)!.id).toBe('c1-n10');
     expect(nextLevel(getLevel('c1-n10')!)!.id).toBe('c2-n1');
-    expect(nextLevel(getLevel('c6-n10')!)).toBeNull();
+    // Extension Pixar : le chapitre 13 suit le dernier chapitre installé (6 sans les extensions DC et Transformers).
+    expect(nextLevel(getLevel('c6-n10')!)!.id).toBe('c13-n1');
+    expect(nextLevel(getLevel('c13-n10')!)!.id).toBe('c14-n1');
+    expect(nextLevel(getLevel('c15-n10')!)).toBeNull();
   });
 
   it('niveaux de collection, talents et éveils du profil passent au moteur', () => {
@@ -208,7 +221,10 @@ describe('déblocage', () => {
     expect(isLevelUnlocked(progress([]), 'c2-n1')).toBe(false);
   });
   it('seuils d’étoiles 0 / 30 / 60 / 95 / 130 et niveau 10 précédent gagné', () => {
-    expect(CHAPTERS.map((c) => c.unlockStars)).toEqual([0, 0, 30, 60, 95, 130]);
+    // Chapitres Pixar : étoiles des chapitres d'avant − 15 (165 après Thanos sans les autres extensions).
+    expect(CHAPTERS.map((c) => c.unlockStars)).toEqual([0, 0, 30, 60, 95, 130, 165, 195, 225]);
+    expect(isChapterUnlocked(progress(winAll([1, 2, 3, 4, 5, 6])), 13)).toBe(true);
+    expect(isChapterUnlocked(progress(winAll([1, 2, 3, 4, 5, 6], [true, false, false])), 13)).toBe(false);
     // Chapitre 2 : niveau 10 du ch. 1 suffit (même à 1 étoile).
     const ch1min = progress(winAll([1], [true, false, false]));
     expect(isChapterUnlocked(ch1min, 2)).toBe(true);
@@ -268,6 +284,10 @@ describe('récompenses', () => {
     expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
     expect(levelRewards(l('c3-n10'), [true, false, false], progress([]), DECK).total.heroes).toEqual(['moana']);
     expect(levelRewards(l('c6-n10'), [true, false, false], progress([]), DECK).total).toMatchObject({ heroes: ['coco'], crystals: 100 });
+    // Extension Pixar : coffres héroïques, Zurg donne aussi 100 ✦.
+    expect(levelRewards(l('c13-n1'), [true, false, false], progress([]), DECK).chest?.tier).toBe('heroique');
+    const zg = levelRewards(l('c15-n10'), [true, false, false], progress([]), DECK);
+    expect(zg.total).toMatchObject({ heroes: ['joe'], crystals: 100 });
     // Rejouer après la première victoire : plus de récompense spéciale.
     expect(levelRewards(l('c1-n10'), [true, false, false], progress([['c1-n10', [true, false, false]]]), DECK).total.scrolls).toBeUndefined();
   });
@@ -287,19 +307,19 @@ describe('récompenses', () => {
     expect(p.campaignChests['c1-10']).toBe(true);
     expect(levelRewards(l('c1-n5'), [true, false, false], p, DECK).chests).toEqual([]);
   });
-  it('campagne complète à 3 étoiles : 42 parchemins (7 par chapitre), 18 coffres, cristaux', () => {
+  it('campagne complète à 3 étoiles : 63 parchemins (7 par chapitre), 27 coffres, cristaux', () => {
     const t = campaignTotals();
-    expect(t.scrolls).toBe(42);
-    expect(t.heroes).toEqual(['spiderman', 'thor', 'moana', 'mulan', 'buzzwoody', 'coco']);
-    expect(t.freePulls?.length).toBe(6);
-    // 25 ✦ × 13 niveaux de boss (5 et 10 de chaque chapitre, + 8 du ch. 6) + 100 (Thanos)
-    expect(t.crystals).toBe(25 * 13 + 100);
-    // Or : 3 × 20 × (vagues / 10) par niveau + 60 × 150 (3 étoiles) + 6 × (400 + 800 + 1 200)
+    expect(t.scrolls).toBe(63);
+    expect(t.heroes).toEqual(['spiderman', 'thor', 'moana', 'mulan', 'buzzwoody', 'coco', 'mrincredible', 'walleeve', 'joe']);
+    expect(t.freePulls?.length).toBe(9);
+    // 25 ✦ × 22 niveaux de boss (5 et 10 de chaque chapitre, + 8 du ch. 6 et des ch. 13 à 15) + 100 (Thanos) + 100 (Zurg)
+    expect(t.crystals).toBe(25 * 22 + 200);
+    // Or : 3 × 20 × (vagues / 10) par niveau + 90 × 150 (3 étoiles) + 9 × (400 + 800 + 1 200)
     const stars = LEVELS.reduce((n, lv) => n + Math.round(60 * lv.waves / 10), 0);
-    expect(t.gold).toBe(stars + 60 * 150 + 6 * 2400);
-    // Gemmes : 180 × 2 + 3 ★ (20 × 30 + 10 × 15 + 30 × 5) + 6 × 100 (boss) + 6 × (40 + 60 + 80)
+    expect(t.gold).toBe(stars + 90 * 150 + 9 * 2400);
+    // Gemmes : 270 × 2 + 3 ★ (20 × 30 + 10 × 15 + 60 × 5) + 9 × 100 (boss) + 9 × (40 + 60 + 80)
     // + premières victoires des chapitres 1 à 3 (10 × 400 + 10 × 300 + 10 × 150)
-    expect(t.shards).toBe(360 + 900 + 600 + 1080 + 8500);
+    expect(t.shards).toBe(540 + 1050 + 900 + 1620 + 8500);
     expect(t.xp).toBe(LEVELS.reduce((n, lv) => n + Math.round(50 * lv.waves / 10) * (lv.n === 10 ? 2 : 1), 0));
   });
 });

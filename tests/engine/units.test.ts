@@ -22,9 +22,9 @@ const D = (u: UnitId): number => UNITS[u].damage;
 const attacksOf = (e: Engine, u: UnitId, ticks: number) => ofType(step(e, ticks), 'attack').filter((a) => a.unit === u).length;
 const close = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) < eps * Math.max(1, Math.abs(b));
 
-describe('profils Rush Royale des 28 unités', () => {
-  it('les 28 unités ont des données complètes ; seuls les soutiens « sans cible » n’attaquent pas', () => {
-    expect(UNIT_LIST).toHaveLength(28);
+describe('profils Rush Royale des 43 unités (28 + 15 Pixar)', () => {
+  it('les 43 unités ont des données complètes ; seuls les soutiens « sans cible » n’attaquent pas', () => {
+    expect(UNIT_LIST).toHaveLength(43);
     for (const u of UNIT_LIST) {
       expect(u.damage).toBeGreaterThanOrEqual(0);
       expect(u.attackInterval).toBeGreaterThan(0);

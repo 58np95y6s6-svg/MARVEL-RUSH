@@ -37,9 +37,10 @@ describe('géométrie du plateau', () => {
 });
 
 describe('maps', () => {
-  it('12 maps, 7 variantes et 7 arènes, identifiants uniques', () => {
-    expect(MAPS.length).toBe(19);
-    expect(ARENAS.length).toBe(7);
+  it('12 maps, 7 variantes, 3 maps Pixar et 13 arènes, identifiants uniques', () => {
+    expect(MAPS.length).toBe(22);
+    expect(ARENAS.length).toBe(13);
+    expect(mapsForUniverse('pixar')).toHaveLength(3);
     expect(new Set(ALL_MAPS.map((m) => m.id)).size).toBe(ALL_MAPS.length);
     expect(mapsForUniverse('marvel')).toHaveLength(6);
     expect(mapsForUniverse('disney')).toHaveLength(13);
@@ -89,6 +90,8 @@ describe('registre', () => {
     expect(mapForDeck(['moana', 'maui', 'mulan', 'coco', 'ironman']).id).toBe('ile-motunui');
     expect(mapForDeck(['cap', 'widow', 'hawkeye', 'thor', 'loki']).id).toBe('base-avengers');
     expect(mapForDeck(['ariel', 'tiana', 'nemo', 'rapunzel', 'merida'], ['toits-new-york', 'atlantica']).id).toBe('atlantica');
+    expect(mapForDeck(['mrincredible', 'elastigirl', 'frozone', 'joe', 'mei']).id).toBe('metroville');
+    expect(mapForDeck(['carlrussell', 'walleeve', 'jessie', 'remy', 'joysadness']).id).toBe('paradise-falls');
   });
 
   it('getMap retombe sur la map de départ', () => {
