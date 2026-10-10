@@ -11,6 +11,14 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10p',
+    title: 'Couleurs de Loki et Coco',
+    date: '10 octobre 2026',
+    items: [
+      'Loki a maintenant une forme blanche et Coco une forme vert clair, pour les repérer d’un coup d’œil sur le plateau.',
+    ],
+  },
+  {
     id: '2026-10-10o',
     title: 'Nouveau style façon Rush Royale',
     date: '10 octobre 2026',
