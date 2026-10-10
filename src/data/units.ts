@@ -329,7 +329,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Banshee (attaque périodique de tous les ennemis proches).
     id: 'optimus', name: 'Optimus Prime', pack: 'transformers', rarity: 'legendaire', role: 'Dégâts de zone / transformation',
-    targeting: 'fort', damage: 210, attackInterval: 1.0, range: 2.4,
+    targeting: 'fort', damage: 570, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Plus qu’il n’y paraît',
       description: 'Robot : la hache d’énergie frappe l’ennemi le plus fort et libère une onde de choc (60 % autour). Camion : charge sur l’ennemi de tête, qui recule d’une demi-case (sauf boss). Toutes les 6 s, cri de ralliement : 150 % des dégâts à tous les ennemis à portée.',
@@ -355,7 +355,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Chasseur de démons (frappe autant de premières cibles que son rang).
     id: 'ironhide', name: 'Ironhide', pack: 'transformers', rarity: 'epique', role: 'Multi-cibles / transformation',
-    targeting: 'fort', damage: 120, attackInterval: 1.0, range: 2.4,
+    targeting: 'fort', damage: 270, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Double canon',
       description: 'Robot : le double canon lourd frappe autant d’ennemis que son rang (les plus forts). Fourgon : 50 % des dégâts autour de la cible.',
@@ -368,13 +368,13 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Sorcière (en Coop, la fusion enchante une alliée).
     id: 'ratchet', name: 'Ratchet', pack: 'transformers', rarity: 'rare', role: 'Soutien / vitesse',
-    targeting: 'fort', damage: 45, attackInterval: 1.0, range: 3.4,
+    targeting: 'fort', damage: 60, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Médecin des Autobots',
-      description: 'Robot : toutes les 4 s, répare ses voisines (elles se libèrent des effets de boss). Ambulance : ses 4 voisines tirent 22 % plus vite. Fusionné, il enchante une alliée au hasard : +25 % de dégâts pendant 10 s.',
+      description: 'Robot : toutes les 4 s, répare ses voisines (elles se libèrent des effets de boss). Ambulance : ses 4 voisines tirent 30 % plus vite. Fusionné, il enchante une alliée au hasard : +25 % de dégâts pendant 10 s.',
       params: {
         transformEvery: 8, robotSpeed: 0.75, robotDamage: 1.45, vehicleSpeed: 1.6, vehicleDamage: 0.7,
-        abilityCooldown: 4, auraAttackSpeed: 0.22, auraVehicleOnly: 1, mergeEnchant: 0.25, mergeEnchantDuration: 10,
+        abilityCooldown: 4, auraAttackSpeed: 0.3, auraVehicleOnly: 1, mergeEnchant: 0.25, mergeEnchantDuration: 10,
       },
     },
   },
@@ -394,7 +394,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Cristallomancien (dégâts qui montent à chaque coup sur la même cible).
     id: 'arcee', name: 'Arcee', pack: 'transformers', rarity: 'epique', role: 'Critique / transformation',
-    targeting: 'fort', damage: 110, attackInterval: 0.8, range: 1.6,
+    targeting: 'fort', damage: 150, attackInterval: 0.8, range: 1.6,
     ability: {
       name: 'Lames d’Arcee',
       description: 'Robot : chaque coup sur la même cible +12 % de dégâts (+120 % au plus) et 20 % de chance de critique ×2. Moto : vise l’ennemi le plus rapide.',
@@ -407,7 +407,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Chaperon rouge (deux formes, la fillette et le loup).
     id: 'grimlock', name: 'Grimlock', pack: 'transformers', rarity: 'legendaire', role: 'Croissance / transformation',
-    targeting: 'fort', damage: 180, attackInterval: 1.0, range: 1.6,
+    targeting: 'fort', damage: 490, attackInterval: 1.0, range: 1.6,
     ability: {
       name: 'Moi, Grimlock !',
       description: 'Croissance : chaque élimination et chaque seconde le rendent plus fort, sans plafond (de plus en plus lentement) ; fusionné, il garde la moitié de son bonus. Robot : épée et bouclier. Dinobot T-rex : souffle de feu, 60 % autour de la cible et brûlure.',
@@ -421,7 +421,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Corsaire (pièges explosifs, deux sortes de bombes).
     id: 'wheeljack', name: 'Wheeljack', pack: 'transformers', rarity: 'epique', role: 'Booster de fusion',
-    targeting: 'fort', damage: 95, attackInterval: 1.0, range: 2.4,
+    targeting: 'fort', damage: 130, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Inventions',
       description: 'Booster de fusion : glisse-le sur une alliée de même rang, il disparaît et l’alliée gagne 1 rang. Robot : grenade expérimentale à effet aléatoire (étourdit, ralentit, brûle ou double dégâts). Voiture de course : toutes les 5 s, une mine explose sous l’ennemi de tête (200 % autour).',
@@ -434,7 +434,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Blazey (unité de feu).
     id: 'hotrod', name: 'Hot Rod', pack: 'transformers', rarity: 'epique', role: 'Dégâts / brûlure',
-    targeting: 'fort', damage: 85, attackInterval: 0.8, range: 2.4,
+    targeting: 'fort', damage: 120, attackInterval: 0.8, range: 2.4,
     ability: {
       name: 'Flamme de Rodimus',
       description: 'Robot : tir double (deux coups). Bolide : traînée de flammes, la cible et les ennemis proches brûlent (30 % des dégâts par seconde, 3 s).',
@@ -499,7 +499,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Wukong (clones, adaptation C).
     id: 'mirage', name: 'Mirage', pack: 'transformers', rarity: 'epique', role: 'Copieur',
-    targeting: 'fort', damage: 70, attackInterval: 0.9, range: 2.4,
+    targeting: 'fort', damage: 95, attackInterval: 0.9, range: 2.4,
     ability: {
       name: 'Hologrammes',
       description: 'Copieur : glisse Mirage sur une alliée de même rang (autre héros) ; il devient son hologramme, avec sa compétence, à −25 % de dégâts. Robot : invisible, un coup sur trois est un critique ×2,5. Voiture : ses leurres font reculer la cible 1 s (10 % de chance, sauf boss).',
@@ -512,7 +512,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Épées enchantées (épées bleues : bonus de dégâts aux unités).
     id: 'ultramagnus', name: 'Ultra Magnus', pack: 'transformers', rarity: 'legendaire', role: 'Formation / soutien',
-    targeting: 'fort', damage: 160, attackInterval: 1.0, range: 2.4,
+    targeting: 'fort', damage: 450, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Commandant de la ville',
       description: 'Formation : chaque autre Ultra Magnus relié (cases voisines) lui donne +15 % de dégâts (3 au plus) ; à 3, ses coups touchent aussi autour (50 %). Robot : marteau ; toutes les 12 s, bouclier d’équipe (ses voisines ignorent les pouvoirs de boss 4 s). Porte-voitures : toute sa ligne fait +10 % de dégâts.',
