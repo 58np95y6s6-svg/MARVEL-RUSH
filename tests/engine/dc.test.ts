@@ -115,12 +115,12 @@ describe('extension DC : profils Rush Royale des 15 héros', () => {
     const l1 = arena('batman');
     const y = debugSpawn(l1, { hp: 1000 });
     y.hp = 500; // 500 − 200 = 300 > 205
-    step(l1, 20);
+    step(l1, 1);
     expect(y.hp).toBeGreaterThan(0);
     const lv = arena('batman', 1, { levels: { batman: 5 } });
     const x = debugSpawn(lv, { hp: 1000 });
     x.hp = 500; // 500 − 200 × 1,4 = 220 < 265
-    step(lv, 20);
+    step(lv, 1);
     expect(x.hp).toBe(0);
   });
 
