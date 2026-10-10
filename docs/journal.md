@@ -47,11 +47,14 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 
 Quand une extension est terminée et vérifiée sur sa branche, passer son état à « prête à publier », dans ce fichier sur `main` **et** sur la branche de l'extension.
 
+**Branches empilées (10/10)** : `extension/dc` contient `main` (Jouer à deux, équilibrage Rush Royale) ; `extension/transformers` contient `extension/dc` ; `extension/pixar` contient `extension/transformers`. Chaque publication est donc une fusion simple de la branche du jour dans `main`, à condition de les publier dans l'ordre (DC, puis Transformers, puis Pixar).
+
 ## Extension DC — branche `extension/dc`
 
 Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-dc`. Contenu : la liste de `docs/roadmap.md`, validée par le joueur le 09/10.
 - Héros (15) : batman, superman, wonderwoman, flash, aquaman, greenlantern, cyborg, supergirl, shazam, robin, batgirl, catwoman, harley, martian, greenarrow.
 - Gros boss (5) : joker, luthor, bane, sinestro, blackadam. Boss final : darkseid.
 - Agents : DC Contenu et moteur, DC Dessins, DC Maps.
+- Fusion de `main` le 10/10 (Coop, présence, équilibrage Rush Royale) : les héros DC jouent en Coop Infini et en Coop Niveaux (chapitres 1 à 6) ; les chapitres Coop DC restent dans `docs/campagne-coop.md` (non codés).
 
-État : en préparation.
+État : prête à publier (18/10).
