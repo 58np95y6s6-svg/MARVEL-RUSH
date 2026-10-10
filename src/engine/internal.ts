@@ -53,7 +53,8 @@ export interface EnemyExtra {
   poison?: number; poisonFor?: number; poisonBy?: number;
   knockFor?: number;      // recule (talents, équipes)
   vuln?: number;          // dégâts subis en plus (Chimiste : Nick & Judy), jusqu'à la mort
-  netStacks?: number;     // toiles de Spider-Man (Trappeur) : cumuls actifs…
+  webAt?: number;         // dernier étourdissement par la boule de toile de Spider-Man (Catapulte)
+  netStacks?: number;     // toiles posées sur le chemin (Trappeur) : cumuls actifs…
   netFor?: number;        // …et leur durée restante
   netVuln?: number;       // dégâts subis en plus par cumul de toile
   teleports?: number;     // renvois au début du chemin déjà subis (Strange : Mage du portail)

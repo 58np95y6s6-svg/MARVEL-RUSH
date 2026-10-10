@@ -26,7 +26,11 @@ describe('fiche de héros : statistiques', () => {
     const ronin = abilityStats('thor', { ...base, level: 9, talents: ['a', 'a', 'a'] }).find((t) => t.key === 'rampMax')!;
     expect(ronin.value).toBe('800 %');
     // Les tableaux par niveau de Rush Royale ressortent en vert (gain au niveau suivant).
-    expect(abilityStats('spiderman', base).find((t) => t.key === 'netDamage')!.next).toBe('+19');
+    expect(abilityStats('bucky', base).find((t) => t.key === 'executeThreshold')!.next).toBe('+1,5 %');
+    expect(coreStats('bucky', base).offense.next).toBe('+19'); // Bourreau : +18,5 par niveau
+    // Catapulte (Spider-Man) : le rang multiplie les dégâts, pas la cadence.
+    expect(coreStats('spiderman', { ...base, rank: 3 }).offense.value).toBe('300');
+    expect(coreStats('spiderman', { ...base, rank: 3 }).interval.value).toBe('2 s');
   });
 
   it('extension DC : chaque héros DC a des chiffres de compétence sur sa fiche', () => {
@@ -38,8 +42,8 @@ describe('fiche de héros : statistiques', () => {
       for (const t of ab) expect(t.value, `${id}.${t.key}`).not.toMatch(/NaN|undefined/);
     }
     const bat = Object.fromEntries(abilityStats('batman', base).map((t) => [t.key, t]));
-    expect(bat.executeThreshold!.value).toBe('20,5 %');
-    expect(bat.executeThreshold!.next).toBe('+1,5 %');
+    expect(bat.targetsMax!.value).toBe('1');
+    expect(abilityStats('batman', { ...base, rank: 7 }).find((t) => t.key === 'targetsMax')!.value).toBe('4');
     expect(abilityStats('harley', { ...base, rank: 3 }).find((t) => t.key === 'sacrificeMana')!.value).toBe('45');
     expect(abilityStats('catwoman', { ...base, rank: 2 }).find((t) => t.key === 'manaPerKill')!.value).toBe('4');
   });

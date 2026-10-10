@@ -3,6 +3,8 @@
 
 export type Pack = 'marvel' | 'disney' | 'dc';
 export type Rarity = 'rare' | 'epique' | 'legendaire';
+/** Raretés de Rush Royale (la commune y existe : chez nous, une commune ou une rare donne un héros Rare). */
+export type RrRarity = 'commune' | 'rare' | 'epique' | 'legendaire';
 /** premier = le plus avancé sur le chemin, aleatoire = au hasard, fort = le plus de PV. */
 export type Targeting = 'premier' | 'aleatoire' | 'fort';
 
@@ -47,6 +49,11 @@ export interface UnitDef {
    * moyenne 2.4, longue 3.4.
    */
   range?: number | 'globale'; // absent = 'globale'
+  /**
+   * Unité Rush Royale dont le héros reprend le profil (docs/rush-royale-mapping.md) : id (image chiffrée
+   * public/rr/<id>.bin), nom français, rareté Rush Royale (même rareté que le héros, Rare ↔ commune ou rare).
+   */
+  rr?: { id: string; name: string; rarity: RrRarity };
   ability: {
     name: string;          // ex. « Uni-Beam »
     description: string;   // texte affiché

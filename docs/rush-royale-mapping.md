@@ -5,10 +5,12 @@
 > talents). Les données et leurs sources sont dans `docs/rush-royale-donnees.md` (niveau de confiance
 > A/B/C). Chaque unité Rush Royale n'est utilisée qu'une fois.
 >
-> **Ce qui ne change pas** : la rareté Marvel Rush (elle règle les tirages : voir « Écarts »), la portée
-> (Rush Royale n'en a pas ; on garde notre système et on choisit la portée selon le personnage et
-> l'attaque de l'unité copiée : voir « Portées »), les clés d'archétype du moteur (`copyDamageMul`, `promoteAlly`, `swapAlly`,
-> `sacrificeMana`, `manaPerKill`, `auraAttackSpeed`, croissance…).
+> **Règle des raretés (octobre 2026)** : chaque héros a la **même rareté que son unité Rush Royale**
+> (notre Rare ↔ commune ou rare, Épique ↔ épique, Légendaire ↔ légendaire). Voir « Raretés » plus bas.
+>
+> **Ce qui ne change pas** : la portée (Rush Royale n'en a pas ; on garde notre système et on choisit la portée
+> selon le personnage et l'attaque de l'unité copiée : voir « Portées »), les clés d'archétype du moteur
+> (`copyDamageMul`, `promoteAlly`, `swapAlly`, `sacrificeMana`, `manaPerKill`, `auraAttackSpeed`, croissance…).
 
 ## Conversion des chiffres
 
@@ -38,23 +40,23 @@
 | **Tiana & Naveen** | **Vampire** | Archétype mana par élimination : la morsure marque la cible, qui rapporte du mana. |
 | **Captain America** | **Statue de chevalier** | Boost de vitesse aux voisines ; en nombre pair, chance de critique 5 % × rang. Le Barde (mode Musique) est trop éloigné du « Leader ». |
 | **Pocahontas & Meeko** | **Bannière** | Boost de vitesse aux 4 voisines, base × rang. |
-| **Spider-Man** | **Trappeur** | Filets (toiles) lancés sur le chemin : ralentissent et font subir plus de dégâts, cumulables. |
+| **Spider-Man** | **Catapulte** | *(raretés, octobre 2026)* Épique ↔ épique (le Trappeur est légendaire). La boule de toile tirée sur le premier ennemi colle tout le groupe (étourdissement de zone), un même ennemi pas avant 9 s ; le rang monte les dégâts, pas la cadence, comme la Catapulte. Chiffres non publiés *(C)*. |
 | **Doctor Strange** | **Mage du portail** | Chance de renvoyer la cible au début du chemin (le portail de Strange). |
 | **Œil de faucon** | **Archer** | Archer pur ; ses talents Rush Royale sont des flèches spéciales (empoisonnées, explosives), comme Clint. |
 | **Falcon** | **Tireur d'élite** | Vise le plus de PV (Redwing marquait déjà le plus fort) ; Tir fou pendant les boss. |
 | **Rebelle (Merida)** | **Chasseur** | Archère de la forêt : premier tir renforcé sur chaque nouvelle cible. |
 | **Captain Marvel** | **Mage de feu** | Explosion autour de la cible à chaque tir (rafales photoniques). |
-| **Soldat de l'hiver** | **Voleur (Rogue)** | Bonus de dégâts aléatoire jusqu'aux dégâts critiques à chaque coup. |
-| **Shang-Chi** | **Danse-lames** | Les Dix Anneaux lancés ↔ les lames qui volent : plus rapide quand il est seul, chaque danseur isolé renforce les autres. Portée longue (voir « Portées »). |
+| **Soldat de l'hiver** | **Bourreau** | *(raretés)* Épique ↔ épique (le Voleur est commun). Le sniper achève les cibles affaiblies : 20,5 % des PV au niveau 1 (+1,5 point par niveau), moitié contre les boss. |
+| **Shang-Chi** | **Tonnerre** | *(raretés)* Épique ↔ épique (la Danse-lames est légendaire et passe à Mulan). Les Dix Anneaux rebondissent d'ennemi en ennemi comme l'éclair en chaîne du Tonnerre : la cible et les ennemis qui la suivent, autant que le rang, étourdis un instant. |
 | **Vaïana & Pua** | **Archer du vent** | Vent et océan : mode Ouragan périodique (cadence fortement augmentée), +dégâts et +durée par rang. Borée sert à Maui. |
 | **Maui** | **Borée** | Deux formes en alternance (faucon / requin) ↔ deux phases de tir (cadence / cadence + critique). Le Chasseur de démons et le Maître des esprits ne changent pas de forme. |
-| **Mulan & Mushu** | **Pyrotechnicien** | Feu de Mushu : zone en nombre impair, tir sur le premier en nombre pair. |
+| **Mulan & Mushu** | **Danse-lames** | *(raretés)* Légendaire ↔ légendaire (le Pyrotechnicien est épique : Mulan était faible). L'épée de Mulan danse comme les lames : plus rapide seule, chaque danseuse renforce les autres. Profil et tableau par niveau de la Danse-lames (215 → 1 001), portée longue. |
 | **Ariel & Sébastien** | **Stase** | Le chant qui « arrête » les ennemis ↔ sphères qui figent le temps. Aucune « Sirène » dans Rush Royale ; la Banshee ne fait que des dégâts. |
 | **Nemo & Dory** | **Chaudron magique** | Effets au hasard (potions) et mana : la mémoire de poisson de Dory. |
 | **Nick & Judy** | **Chimiste** | Malus « destruction d'armure » (Nick cassait déjà l'armure), vise le premier ennemi pas encore touché. Le Bourreau reste libre. |
 | **Buzz & Woody** | **Ingénieur** | Les jouets reliés : dégâts par Ingénieur adjacent relié. |
 | **Raiponce & Pascal** | **Meule** | Soutien : dégâts des voisines selon le rang. Le nettoyage des effets de boss devient un talent. |
-| **Rox & Rouky** | **Jumeaux** | Duo (Lune et Soleil). Mécanique chiffrée introuvable : on garde la double attaque *(C)*. |
+| **Rox & Rouky** | **Voleur (Rogue)** | *(raretés)* Rare ↔ commune (les Jumeaux sont légendaires). Les ruses du renard : chaque morsure ajoute un bonus aléatoire jusqu'aux dégâts critiques. |
 
 ## Portées (revue d'octobre 2026)
 
@@ -73,7 +75,7 @@
 | Héros | Unité Rush Royale | Avant → après | Pourquoi |
 |---|---|---|---|
 | Iron Man | Tesla | globale → **globale** | Répulseurs et uni-rayon ; la Tesla frappe à distance (éclair). |
-| Spider-Man | Trappeur | longue → **longue** | Toiles tirées au loin ; le Trappeur lance ses filets sur le chemin. |
+| Spider-Man | Catapulte | longue → **longue** | Toiles tirées au loin ; boule de toile lancée comme le projectile de la Catapulte. |
 | Hulk | Minotaure | courte → **courte** | Poings et sol frappé ; Minotaure au contact (séisme). |
 | Thor | Inquisiteur | longue → **longue** | Mjolnir lancé et éclairs ; marteau de l'Inquisiteur projeté. |
 | Doctor Strange | Mage du portail | globale → **globale** | Sorts et portails ; sort à distance. |
@@ -81,18 +83,18 @@
 | Captain Marvel | Mage de feu | globale → **globale** | Rafales photoniques ; boule de feu à distance. |
 | Captain America | Statue de chevalier | moyenne → **moyenne** | Bouclier lancé qui revient ; n'attaque pas (soutien). |
 | Loki | Arlequin | longue → **longue** | Dagues lancées et illusions ; cartes de l'Arlequin. |
-| **Soldat de l'hiver** | Voleur | longue → **globale** (70 → 50) | Tireur d'élite (fusil) : la portée d'un sniper ; dagues lancées du Voleur. |
+| **Soldat de l'hiver** | Bourreau | longue → **globale** (Bourreau : 141, +18,5/niv., table du niveau 7) | Tireur d'élite (fusil) : la portée d'un sniper. |
 | Œil de faucon | Archer | globale → **globale** | Archer : flèches sur toute la map. |
 | Falcon | Tireur d'élite | globale → **globale** | Tir aérien et drone Redwing. |
 | Black Widow | Prêtresse | longue → **longue** | Pistolets et Morsure de veuve ; sort de la Prêtresse. |
-| **Shang-Chi** | Danse-lames | courte → **longue** (215 → 100, +98,25 → +45,85/niv.) | Les Dix Anneaux sont lancés et reviennent, comme les lames du Danse-lames qui volent jusqu'à leurs cibles. |
+| **Shang-Chi** | Tonnerre | longue → **longue** (100 *(C)*) | Les Dix Anneaux lancés rebondissent d'un ennemi à l'autre. |
 | Vaïana & Pua | Archer du vent | longue → **longue** | Appel de l'océan, rame ; flèches de vent. |
 | Maui | Borée | moyenne → **moyenne** | Hameçon géant et piqué du faucon : allonge sans tir. |
 | Pocahontas & Meeko | Bannière | longue → **longue** | Couleurs du vent ; n'attaque pas (soutien). |
-| **Mulan & Mushu** | Pyrotechnicien | moyenne → **longue** (229 → 189, +61,7 → +50,8/niv.) | La fusée de Mushu (l'Avalanche du film) ; le Pyrotechnicien tire des fusées au loin. |
+| **Mulan & Mushu** | Danse-lames | longue → **longue** (215 → 100, +98,25 → +45,85/niv.) | Les lames volent jusqu'à leurs cibles (profil repris de Shang-Chi). |
 | Rebelle | Chasseur | globale → **globale** | Archère : premier tir sur toute la map. |
 | Ariel & Sébastien | Stase | longue → **longue** | Chant qui porte ; sphères de stase lancées. |
-| Rox & Rouky | Jumeaux | courte → **courte** | Renard et chien : morsures au contact. |
+| Rox & Rouky | Voleur | courte → **courte** (70 longue → 150, arrondi à 140) | Renard et chien : morsures au contact. |
 | Tiana & Naveen | Vampire | globale → **globale** | Ray la luciole guide Tiana partout ; morsure marquée à distance. |
 | Nemo & Dory | Chaudron magique | longue → **longue** | Potions lancées, courant marin. |
 | Coco (Miguel) | Dryade | longue → **longue** | Guitare et chanson ; sort de la Dryade. |
@@ -103,6 +105,55 @@
 
 Catégories (Encyclopédie) mises à jour : Shang-Chi et Mulan ne sont plus « Corps à corps », le Soldat de
 l'hiver devient « Tireur ».
+
+## Raretés (octobre 2026)
+
+> Retour de joueuse : « Les persos Légendaires devraient copier des persos Légendaires de Rush Royale… Mulan est
+> Légendaire mais copie un Rare, elle est donc faible. » Puis : « Ralph (Vanellope & Ralph), qui reprend le
+> Gardien du portail de Rush Royale, ne devrait être qu'Épique. » Raretés Rush Royale : tableau complet dans
+> `docs/rush-royale-donnees.md` §4.
+
+Pour chaque héros dont la rareté différait de celle de son unité, deux possibilités : **(a)** garder la rareté du
+héros et lui donner une unité libre de la bonne rareté qui colle à son style ; **(b)** garder l'unité (quand elle
+va très bien au personnage, ou qu'elle a été choisie par la joueuse) et changer la rareté du héros. Contrainte :
+garder chaque univers équilibré (environ 3 à 5 Légendaires, 5 à 7 Épiques, 4 à 6 Rares). Changer de rareté ne
+touche que les tirages et la couleur du cadre : les joueurs gardent leurs héros, niveaux et cartes.
+
+| Héros | Rareté avant → après | Unité avant → après | Choix |
+|---|---|---|---|
+| Spider-Man | Épique | Trappeur (lég.) → **Catapulte** (ép.) | (a) : reste Épique et dans le deck de départ ; la boule de toile colle le groupe. |
+| Soldat de l'hiver | Épique | Voleur (comm.) → **Bourreau** (ép.) | (a) : le sniper achève ; le Voleur va à Rox & Rouky. |
+| Shang-Chi | Épique | Danse-lames (lég.) → **Tonnerre** (ép.) | (a) : anneaux en chaîne ; la Danse-lames va à Mulan. |
+| Loki | Épique → **Légendaire** | Arlequin (lég.) | (b) : choix de la joueuse, aucun copieur épique (le Mime ne copie pas). |
+| Venom | Épique → **Rare** | Zélote (rare) | (b) : choix de la joueuse, aucun « mana en réserve » épique. |
+| Black Widow | Épique → **Rare** | Prêtresse (rare) | (b) : choix de la joueuse, aucun sacrifice épique. |
+| Mulan & Mushu | Légendaire | Pyrotechnicien (ép.) → **Danse-lames** (lég.) | (a) : demandée Légendaire forte. |
+| Rox & Rouky | Rare | Jumeaux (lég.) → **Voleur** (comm.) | (a) : un duo Rare ; les Jumeaux étaient de toute façon recopiés à l'aveugle *(C)*. |
+| Vanellope & Ralph | Légendaire → **Épique** | Gardien du portail (ép.) | (b) : demandé par la joueuse. |
+| Buzz & Woody | Légendaire → **Épique** | Ingénieur (ép.) | (b) : les jouets reliés vont très bien à l'Ingénieur (archétype Formation). |
+| Tiana & Naveen | Rare → **Épique** | Vampire (ép.) | (b) : la morsure qui rapporte du mana ; aucune unité rare de mana par élimination. |
+| Ariel & Sébastien | Épique → **Légendaire** | Stase (lég.) | (b) : le chant qui fige ↔ la Stase. |
+| Coco (Miguel) | Épique → **Légendaire** | Dryade (lég.) | (b) : choix de la joueuse (booster de fusion). |
+| Nick & Judy | Épique → **Rare** | Chimiste (rare) | (b) : la fiche de police ↔ destruction d'armure. |
+| Raiponce & Pascal | Épique → **Rare** | Meule (rare) | (b) : soutien qui n'attaque pas. |
+
+Bilan par univers : **Marvel** 5 Légendaires (Iron Man, Hulk, Thor, Captain America, Loki), 4 Épiques
+(Spider-Man, Doctor Strange, Soldat de l'hiver, Shang-Chi), 5 Rares ; **Disney** 4 Légendaires (Maui, Mulan,
+Ariel, Coco), 4 Épiques (Vaïana, Tiana, Buzz & Woody, Vanellope & Ralph), 6 Rares. Avant : Marvel 4/7/3, Disney
+4/5/5. Decks de départ inchangés (Marvel : 1 Épique, Spider-Man ; Disney : 1 Épique, Tiana).
+
+### Extension DC (revue des raretés)
+
+| Héros | Rareté avant → après | Unité avant → après | Choix |
+|---|---|---|---|
+| Batman | Légendaire | Bourreau (ép.) → **Chasseur de démons** (lég.) | (a) : le Bourreau va au Soldat de l'hiver ; le chasseur de la nuit aux batarangs multiples. |
+| Shazam | Épique → **Légendaire** | Météore (lég.) | (b) : la foudre du ciel ↔ le Météore. |
+| Harley Quinn | Rare → **Épique** | Clown (ép.) | (b) : le Clown va parfaitement à Harley (archétype Sacrifice). |
+| Flash, Cyborg, Supergirl | Épique | Cogneur, Génie, Barde (lég.) | **écart gardé** : aucune unité épique libre qui leur aille (Rush Royale n'a que 16 épiques), et passer Légendaires donnerait 8 Légendaires au pack. |
+| Robin, Catwoman | Rare | Ferrailleur, Démonologue (lég.) | **écart gardé** : seuls profils Rush Royale de leur archétype (Booster de fusion, mana par élimination) ; aucune rare ou commune libre. |
+
+Bilan DC : 5 Légendaires (Batman, Superman, Wonder Woman, Green Lantern, Shazam), 6 Épiques, 4 Rares (avant 4/6/5).
+Écarts déclarés dans `RR_RARITY_GAPS` (src/data/units.ts), vérifiés par `tests/rrRarity.test.ts`.
 
 ## Thor (Inquisiteur) — fiche d'unité et arbre de talents
 
@@ -126,12 +177,7 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 
 ## Écarts assumés
 
-- **Raretés** : on garde les raretés Marvel Rush (elles règlent les tirages, domaine de l'agent Économie).
-  Rush Royale : Tesla, Minotaure, Inquisiteur, Arlequin, Dryade, Statue, Trappeur, Danse-lames, Borée,
-  Stase, Jumeaux = légendaires ; Zélote, Gardien du portail, Vampire, Mage du portail, Archer du vent,
-  Pyrotechnicien, Ingénieur = épiques ; Prêtresse, Bannière, Tireur d'élite, Chaudron, Chimiste, Meule =
-  rares ; Archer, Chasseur, Mage de feu, Voleur = communes. Spider-Man (épique chez nous) a donc le profil
-  d'une légendaire, etc.
+- **Raretés** : remplacé par la règle « même rareté que l'unité Rush Royale » (section « Raretés »).
 - **Unités sans attaque** : dans Rush Royale, la Statue de chevalier, la Bannière et la Meule n'attaquent
   pas (« pas de cible »). Captain America, Pocahontas et Raiponce n'attaquent donc plus.
 - **Ennemis Blindé et Bouclier** : propres à Marvel Rush (des niveaux de campagne s'en servent) ; ils
@@ -152,7 +198,7 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
 
 | Héros | Unité Rush Royale | Profil repris | Conf. |
 |---|---|---|---|
-| **Batman** | **Bourreau** (Executioner) | Achève tout ennemi sous un seuil de PV : **17,5 % (niv. 5) → 29,5 % (niv. 13)**, soit 20,5 % à notre niveau 1, +1,5 point par niveau ; seuil réduit de moitié contre boss et mini-boss. Le justicier qui met hors d'état de nuire. | A (seuils) / C (dégâts) |
+| **Batman** | **Chasseur de démons** (Demon Hunter) | *(raretés, octobre 2026)* Légendaire ↔ légendaire (le Bourreau, épique, va au Soldat de l'hiver). Les batarangs du chevalier noir frappent autant de premiers ennemis que son rang (4 au plus) ; dégâts 270 (valeur du Chasseur de démons à portée moyenne). | B |
 | **Superman** | **Givre** (Frost) | Blizzard périodique sur tout le chemin, ralentissement qui monte avec le rang, cumulable 3 fois (souffle glacial). | A (mécanique) / C (chiffres : 4 % par rang, 6 s, 7 s) |
 | **Wonder Woman** | **Moine** (Monk) | Renforcement **sans mana**, limité dans le temps, avec recharge ; plus fort avec d'autres Moines reliés (Fureur amazone partagée). | A (mécanique) / C (+60 % de cadence, zone 50 %, 5 s / 12 s) |
 | **Green Lantern** | **Cultiste** (Cultist) | 132 dégâts / 0,8 s au niv. 7 ; chaque Cultiste voisin ajoute une cible (1 à 3), à 4 voisins les dégâts doublent → **archétype Formation** (groupe relié). | B |
@@ -175,7 +221,7 @@ facteur ancien en cas de changement de catégorie).
 
 | Héros | Unité Rush Royale | Avant → après | Pourquoi |
 |---|---|---|---|
-| Batman | Bourreau | moyenne → **moyenne** | Poings, grappin et batarangs de près ; la hache du Bourreau. |
+| Batman | Chasseur de démons | moyenne → **moyenne** | Poings, grappin et batarangs de près. |
 | Superman | Givre | globale → **globale** | Vision thermique et souffle glacial sur tout le chemin. |
 | Wonder Woman | Moine | moyenne → **moyenne** | Épée et lasso de vérité : allonge, pas tir. |
 | Green Lantern | Cultiste | longue → **longue** | Constructions de l'anneau projetées ; rayon du Cultiste. |

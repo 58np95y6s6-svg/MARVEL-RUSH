@@ -7,7 +7,7 @@ import { shadedW, fly, gather, rope, word, dot, pix, plus, twinkle, note, petal,
 export const DISNEY_B: CharDef[] = [
 /* ===== 08 · Tiana & Naveen ===== */
 {
-  id:'tiana',name:'Tiana & Naveen',role:'Économie',rarity:'Rare',rar:'var(--rare)',tint:'#e4f5d6',tint2:'#a6d68f',stats:[2,3,3],
+  id:'tiana',name:'Tiana & Naveen',role:'Économie',rarity:'Épique',rar:'var(--epi)',tint:'#e4f5d6',tint2:'#a6d68f',stats:[2,3,3],
   atk:'Lumière de luciole.',skill:'Restaurant : mana bonus à chaque vague ; la grenouille attrape un ennemi avec sa langue.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:12,R:-12},{L:-42,R:42,body:[0,-4,0,1,1]},{L:66,R:-54,body:[-3,-6,-3,1,1]}],
@@ -135,7 +135,7 @@ export const DISNEY_B: CharDef[] = [
 },
 /* ===== 10 · Coco (Miguel) ===== */
 {
-  id:'coco',name:'Coco (Miguel)',role:'Soutien',rarity:'Épique',rar:'var(--epi)',tint:'#ffe4cc',tint2:'#f4a867',stats:[2,3,4],
+  id:'coco',name:'Coco (Miguel)',role:'Soutien',rarity:'Légendaire',rar:'var(--leg)',tint:'#ffe4cc',tint2:'#f4a867',stats:[2,3,4],
   atk:'Notes de musique.',skill:'Remember Me : ressuscite un héros détruit.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:-30,R:-128},{L:-62,R:-132,body:[0,-3,-4,1,1]},{L:-8,R:-124,body:[2,-7,4,1,1]}],
@@ -187,7 +187,7 @@ export const DISNEY_B: CharDef[] = [
 },
 /* ===== 11 · Judy & Nick ===== */
 {
-  id:'nickjudy',name:'Judy & Nick',role:'Contrôle / malus',rarity:'Épique',rar:'var(--epi)',tint:'#dde6ff',tint2:'#97b0e8',stats:[3,4,3],
+  id:'nickjudy',name:'Judy & Nick',role:'Contrôle / malus',rarity:'Rare',rar:'var(--rare)',tint:'#dde6ff',tint2:'#97b0e8',stats:[3,4,3],
   atk:'Tir de carotte.',skill:'Arrestation : stoppe un ennemi 2 s ; Nick réduit l’armure.',
   sh:{L:[68,150],R:[132,150],J:[4,182]},
   poses:[{L:12,R:-12,J:10},{L:-34,R:-150,J:168,body:[-2,-5,-3,1,1]},{L:20,R:-96,J:140,body:[4,-3,4,1,1]}],
@@ -261,7 +261,7 @@ export const DISNEY_B: CharDef[] = [
 },
 /* ===== 12 · Buzz l'Éclair & Woody ===== */
 {
-  id:'buzzwoody',name:'Buzz l’Éclair & Woody',role:'Duo / polyvalent',rarity:'Légendaire',rar:'var(--leg)',tint:'#e5ddff',tint2:'#ab98e6',stats:[4,3,4],
+  id:'buzzwoody',name:'Buzz l’Éclair & Woody',role:'Duo / polyvalent',rarity:'Épique',rar:'var(--epi)',tint:'#e5ddff',tint2:'#ab98e6',stats:[4,3,4],
   atk:'Laser de Buzz.',skill:'Vers l’infini : laser perçant ; le lasso de Woody attrape un ennemi.',
   sh:{L:[68,150],R:[132,150],W:[0,176]},
   poses:[{L:12,R:-12,W:10},{L:-30,R:-118,W:172,body:[-2,-4,-3,1,1]},{L:-24,R:-112,W:148,body:[-5,0,-5,1,1]}],
@@ -330,7 +330,7 @@ export const DISNEY_B: CharDef[] = [
 },
 /* ===== 13 · Raiponce & Pascal ===== */
 {
-  id:'rapunzel',name:'Raiponce & Pascal',role:'Contrôle / soin',rarity:'Épique',rar:'var(--epi)',tint:'#f7e0fb',tint2:'#d5a0e8',stats:[2,3,3],
+  id:'rapunzel',name:'Raiponce & Pascal',role:'Contrôle / soin',rarity:'Rare',rar:'var(--rare)',tint:'#f7e0fb',tint2:'#d5a0e8',stats:[2,3,3],
   atk:'Coup de poêle.',skill:'Cheveux magiques : soigne et renforce les alliés ; Pascal se camoufle.',
   sh:{L:[68,150],R:[132,150]},
   poses:[{L:12,R:-48},{L:40,R:-166,body:[0,-6,-4,1,1]},{L:18,R:-64,body:[3,2,3,1.03,.97]}],
@@ -389,7 +389,7 @@ export const DISNEY_B: CharDef[] = [
 },
 /* ===== 14 · Vanellope & Ralph ===== */
 {
-  id:'vanralph',name:'Vanellope & Ralph',role:'Chaos',rarity:'Légendaire',rar:'var(--leg)',tint:'#ffe1e8',tint2:'#f39db2',stats:[5,2,2],shake:true,
+  id:'vanralph',name:'Vanellope & Ralph',role:'Chaos',rarity:'Épique',rar:'var(--epi)',tint:'#ffe1e8',tint2:'#f39db2',stats:[5,2,2],shake:true,
   atk:'Coup de poing de Ralph.',skill:'Glitch : Vanellope se téléporte ; Ralph détruit les boucliers.',
   sh:{L:[60,148],R:[140,148]},
   poses:[{L:16,R:-16},{L:160,R:-160,body:[0,-12,0,.96,1.06]},{L:-26,R:26,body:[0,6,0,1.1,.88],head:[0,8,1.03]}],
