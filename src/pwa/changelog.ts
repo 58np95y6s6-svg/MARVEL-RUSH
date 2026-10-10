@@ -11,6 +11,19 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-01a',
+    title: 'Extension Pixar',
+    date: '1er novembre 2026',
+    items: [
+      'Nouveau pack Pixar : 15 héros, presque tous en duo — M. Indestructible, Elastigirl, Frozone, Violette & Flèche, Sulli & Bob, Flash McQueen & Martin, WALL-E & EVE, Joe & 22 et bien d’autres.',
+      'Nouvelle mécanique : le coup de duo ! Toutes les quelques attaques, le partenaire frappe à son tour : rayon d’EVE, lasso de Jessie et Pile-Poil, étincelle de 22, marmite de Linguini…',
+      'Six nouveaux méchants avec leurs arènes : Syndrome, Randall, Lotso, Le Borgne, Charles Muntz et l’Empereur Zurg, qui rejoint la rotation du mode Infini.',
+      'Attention à Zurg : à 30 % de ses PV, « Je suis ton père » mélange tes unités et hypnotise tout ton plateau.',
+      'Trois nouveaux chapitres de campagne (13 à 15) : Metroville, Paradise Falls et la planète Z, avec trois nouvelles maps.',
+      'Nouvelles équipes : Les Indestructibles, Monstres & Cie, Émotions, et Toy Story avec Buzz & Woody et Jessie.',
+    ],
+  },
+  {
     id: '2026-10-10o',
     title: 'Nouveau style façon Rush Royale',
     date: '10 octobre 2026',

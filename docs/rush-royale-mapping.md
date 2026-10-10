@@ -92,3 +92,39 @@ complétées par des recherches (alucare.fr, notes de mise à jour 17.0 et 21.0,
   niveau), sauf l'Archer (Œil de faucon) dont la vitesse monte davantage, comme dans Rush Royale.
 - **Pas de critique de compte** : la chance de critique de base de Rush Royale (5 %) n'est pas reprise ;
   les critiques viennent des compétences (Statue, Borée, Voleur) et des équipes.
+
+## Extension Pixar (15 héros, surtout des duos)
+
+> Même règle : chaque unité Rush Royale n'est utilisée qu'une fois, **aucune** de celles des 28 héros Marvel et Disney,
+> **ni des 15 héros DC** (Bourreau, Givre, Moine, Cultiste, Cogneur, Faucheuse, Génie, Barde, Météore, Mime,
+> Ferrailleur, Bombardier, Démonologue, Clown, Mage de glace), **ni des 15 Autobots** (Banshee, Mage de foudre, Chasseur
+> de démons, Sorcière, Loup de mer, Cristallomancien, Chaperon rouge, Corsaire, Blazey, Sentinelle, Gargouille, Lanceur,
+> Maléfice, Wukong, Épées enchantées). Sources : extraits du moteur de recherche (table *Units* du wiki Fandom, tier
+> lists, notes de mise à jour). Conf. **B** = mécanique lue dans un extrait, **C** = adaptation (mécanique non trouvée
+> ou trop éloignée du héros). Les dégâts sont réglés au simulateur (`docs/equilibrage.md` §2 octies).
+>
+> **Mécanique propre** : le **coup de duo** (clé `duoEvery`, src/engine/pixar.ts). Toutes les N attaques, le partenaire
+> du duo ajoute son propre coup : Flèche frappe deux fois de plus, Martin remorque, Tristesse donne un souvenir, Linguini
+> renverse la marmite, EVE tire son rayon, Alberto lance une vague, Pile-Poil tire, 22 double le coup.
+
+| Héros | Unité Rush Royale | Profil repris | Archétype | Conf. |
+|---|---|---|---|---|
+| **M. Indestructible** | **Valkyrie** | Frappe une ligne entière d'ennemis → **coup de poing sismique** toutes les 7 s : toute la ligne du chemin de l'ennemi de tête (250 %, étourdit 1,2 s). | — | C |
+| **Elastigirl** | **Rôdeur du crépuscule** (Twilight Ranger) | Tireur à longue portée qui vise l'ennemi de tête → bras élastiques, +50 % sur la tête, ralentit 15 %. | — | C |
+| **Frozone** | **Alchimiste** | Flaque qui ralentit et blesse autour de la cible → pont de glace toutes les 5 s (120 %, −45 % de vitesse 3 s). | — | B |
+| **Violette & Flèche** | **Maître des esprits** (Spirit Master) | Échange de place avec une alliée → champ de force (l'alliée ignore les pouvoirs de boss 3 s) ; duo 1 sur 3 : Flèche frappe deux fois de plus. | Échangeur | B |
+| **Sulli & Bob** | **Chaman** (Shaman) | Mana par ennemi tué → Bob compte les points (+2 à +12 de mana par élimination) ; rugissement toutes les 8 s (recul d'une case). | Mana par élimination | B |
+| **Flash McQueen & Martin** | **Dryade des montagnes** (Mountain Avens) | Soutien qui accélère ses voisines → turbo +25 % de cadence aux 4 voisines ; duo 1 sur 5 : Martin remorque la cible. | Boost de vitesse | C |
+| **Carl & Russell** | **Invocateur** (Summoner) | Fait monter une alliée de rang → booster de fusion ; les ballons soulèvent un ennemi 2 s toutes les 6 s. | Booster de fusion | B |
+| **Joie & Tristesse** | **Empoisonneur** (Poisoner) | Poison qui monte avec le rang → mélancolie de Tristesse (8 % des dégâts par s et par rang, 3 s) ; copieur (−25 %) ; duo 1 sur 4 : souvenir doré ou bleu. | Copieur | B |
+| **Rémy & Linguini** | **Médecin de peste** (Plague Doctor) | Unité qu'on sacrifie pour l'effet → recette : mana selon le rang en sacrifice, +4 de mana par rang à chaque vague ; duo 1 sur 4 : marmite renversée (60 % autour). | Sacrifice → mana | B |
+| **WALL-E & EVE** | **Robot** | Unité à deux modes de tir → cubes compactés ; duo 1 sur 3 : rayon d'EVE (150 % à 1,5 case autour). | — | C |
+| **Luca & Alberto** | **Tréant** | Plus fort à plusieurs, reliés → formation (+15 % par Luca & Alberto voisin, 3 au plus, zone à 3) ; duo 1 sur 5 : vague qui fait reculer. | Formation | C |
+| **Mei (panda roux)** | **Élémentaire de terre** (Earth Elemental) | Grandit au fil du combat → croissance sans plafond (par seconde et par élimination), écrase autour (50 %). | Croissance | B |
+| **Jessie & Pile-Poil** | **Lierre** (Ivy) | Entrave et affaiblit la cible → lasso : la cible subit +10 % de dégâts 4 s ; duo 1 sur 4 : Pile-Poil galope, la cible recule 1,5 s. | — | B |
+| **Ian & Barley** | **Archimage** (Archmage) | Sorts au hasard → boule de feu, arrêt du temps, sort de croissance ou rayon, toutes les 6 s. | — | C |
+| **Joe & 22** | **Nécromancien** (Necromancer) | Soutien de fin de partie → musique de l'âme : +25 % de cadence à tout le plateau 5 s toutes les 10 s ; duo 1 sur 5 : l'étincelle de 22 double le coup. | — | C |
+
+Talents : trois paliers de même famille que l'unité Rush Royale, marqués *(C)* dans `src/data/talents.ts`.
+
+Unité Rush Royale encore libre après les extensions DC, Transformers et Pixar : Thunderer.

@@ -358,7 +358,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Maître des esprits (dégâts, améliorations).
     id: 'violetflash', name: 'Violette & Flèche', pack: 'pixar', rarity: 'rare', role: 'Échangeur',
-    targeting: 'premier', damage: 75, attackInterval: 0.6, range: 1.6,
+    targeting: 'premier', damage: 115, attackInterval: 0.6, range: 1.6,
     ability: {
       name: 'Champ de force',
       description: 'Échangeur : glisse-les sur une alliée de même rang, elles échangent leurs cases ; Violette protège l’alliée par un champ de force (insensible aux pouvoirs de boss 3 s). Coup de duo (1 attaque sur 3) : Flèche frappe deux fois de plus.',
@@ -378,7 +378,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Dryade des montagnes (Mountain Avens, adaptation C).
     id: 'mcqueen', name: 'Flash McQueen & Martin', pack: 'pixar', rarity: 'rare', role: 'Soutien / vitesse',
-    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 2.4,
+    targeting: 'premier', damage: 140, attackInterval: 0.8, range: 2.4,
     ability: {
       name: 'Turbo',
       description: 'Boost de vitesse : ses 4 voisines tirent 25 % plus vite. Coup de duo (1 attaque sur 5) : Martin remorque la cible en arrière pendant 1 s (sauf boss).',
@@ -388,7 +388,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Invocateur (la fusion invoque une unité).
     id: 'carlrussell', name: 'Carl & Russell', pack: 'pixar', rarity: 'rare', role: 'Booster de fusion',
-    targeting: 'premier', damage: 85, attackInterval: 1.0, range: 3.4,
+    targeting: 'premier', damage: 135, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Ballons',
       description: 'Booster de fusion : glisse-les sur une alliée de même rang, ils disparaissent et l’alliée gagne 1 rang. Toutes les 6 s, les ballons soulèvent un ennemi au hasard hors du chemin pendant 2 s (sauf boss).',
@@ -408,7 +408,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Médecin de peste (nuage).
     id: 'remy', name: 'Rémy & Linguini', pack: 'pixar', rarity: 'rare', role: 'Sacrifice / mana',
-    targeting: 'premier', damage: 90, attackInterval: 0.9, range: 2.4,
+    targeting: 'premier', damage: 135, attackInterval: 0.9, range: 2.4,
     ability: {
       name: 'Recette',
       description: 'Sacrifice : fusionné ou détruit, rapporte du mana selon son rang (10, 25, 45, 70, 100, 140, 190). Recette : +4 de mana par rang au début de chaque vague. Coup de duo (1 sur 4) : Linguini renverse la marmite, 60 % des dégâts autour de la cible.',
@@ -428,7 +428,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Tréant (adaptation C).
     id: 'lucaalberto', name: 'Luca & Alberto', pack: 'pixar', rarity: 'rare', role: 'Formation',
-    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 2.4,
+    targeting: 'premier', damage: 125, attackInterval: 0.8, range: 2.4,
     ability: {
       name: 'Silenzio, Bruno !',
       description: 'Formation : chaque autre Luca & Alberto relié (cases voisines) lui donne +15 % de dégâts (3 au plus) ; à 3, ses coups touchent aussi autour (50 %). Coup de duo (1 sur 5) : une vague de mer fait reculer la cible d’une demi-case (sauf boss).',
@@ -448,7 +448,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Lierre (malus et graines).
     id: 'jessie', name: 'Jessie & Pile-Poil', pack: 'pixar', rarity: 'rare', role: 'Contrôle / malus',
-    targeting: 'premier', damage: 90, attackInterval: 0.8, range: 2.4,
+    targeting: 'premier', damage: 135, attackInterval: 0.8, range: 2.4,
     ability: {
       name: 'Lasso',
       description: 'Chaque coup marque la cible : +10 % de dégâts subis pendant 4 s. Coup de duo (1 sur 4) : Jessie lance son lasso et Pile-Poil galope, la cible recule pendant 1,5 s (sauf boss).',
