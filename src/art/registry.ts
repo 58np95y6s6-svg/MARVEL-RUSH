@@ -8,6 +8,11 @@ import { DISNEY_B } from './heroes/disneyB';
 import { BOSSES } from './bosses/disneyVillains';
 import { MINIONS } from './bosses/minions';
 import { THANOS, OUTRIDER } from './bosses/thanos';
+import { TF_A } from './heroes/transformersA';
+import { TF_B } from './heroes/transformersB';
+import { TF_VEHICLES } from './heroes/transformersVehicles';
+import { TF_BOSSES } from './bosses/decepticons';
+import { TF_MINIONS } from './bosses/decepticonMinions';
 
 export interface Entry {
   def: CharDef;
@@ -15,13 +20,16 @@ export interface Entry {
 }
 
 const units = new Map<string, Entry>();
-for (const def of [...MARVEL_A, ...MARVEL_B, ...DISNEY_A, ...DISNEY_B]) units.set(def.id, { def, opts: { partMode: 'partT' } });
+for (const def of [...MARVEL_A, ...MARVEL_B, ...DISNEY_A, ...DISNEY_B, ...TF_A, ...TF_B]) units.set(def.id, { def, opts: { partMode: 'partT' } });
+/** Extension Transformers : mode véhicule des Autobots (clé = identifiant du héros). */
+const vehicles = new Map<string, Entry>();
+for (const def of TF_VEHICLES) vehicles.set(def.id, { def, opts: { partMode: 'partT' } });
 
 const bosses = new Map<string, Entry>();
-for (const def of [...BOSSES, THANOS]) bosses.set(def.id, { def, opts: { partMode: 'bodyT' } });
+for (const def of [...BOSSES, THANOS, ...TF_BOSSES]) bosses.set(def.id, { def, opts: { partMode: 'bodyT' } });
 
 const minions = new Map<string, Entry>();
-for (const [boss, def] of Object.entries(MINIONS)) minions.set(boss, { def, opts: { partMode: 'bodyT' } });
+for (const [boss, def] of Object.entries({ ...MINIONS, ...TF_MINIONS })) minions.set(boss, { def, opts: { partMode: 'bodyT' } });
 minions.set('thanos', { def: OUTRIDER, opts: { partMode: 'bodyT' } });
 
 export const UNIT_IDS: readonly UnitId[] = [
@@ -29,8 +37,11 @@ export const UNIT_IDS: readonly UnitId[] = [
   'cap', 'loki', 'bucky', 'hawkeye', 'falcon', 'widow', 'shangchi',
   'moana', 'maui', 'pocahontas', 'mulan', 'merida', 'ariel', 'foxhound',
   'tiana', 'nemo', 'coco', 'nickjudy', 'buzzwoody', 'rapunzel', 'vanralph',
+  'optimus', 'bumblebee', 'ironhide', 'ratchet', 'jazz', 'arcee', 'grimlock', 'wheeljack',
+  'hotrod', 'elita', 'bulkhead', 'sideswipe', 'prowl', 'mirage', 'ultramagnus',
 ];
-export const BOSS_IDS: readonly BossId[] = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon', 'thanos'];
+export const BOSS_IDS: readonly BossId[] = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon', 'thanos',
+  'starscream', 'soundwave', 'shockwave', 'devastator', 'blitzwing', 'megatron', 'unicron'];
 
 function must(map: Map<string, Entry>, id: string, what: string): Entry {
   const e = map.get(id);
@@ -40,3 +51,5 @@ function must(map: Map<string, Entry>, id: string, what: string): Entry {
 export const unitEntry = (id: UnitId): Entry => must(units, id, 'personnage');
 export const bossEntry = (id: BossId): Entry => must(bosses, id, 'boss');
 export const minionEntry = (id: BossId): Entry => must(minions, id, 'sbire');
+/** Mode véhicule d'un Autobot (undefined pour les héros qui ne se transforment pas). */
+export const vehicleEntry = (id: UnitId): Entry | undefined => vehicles.get(id);

@@ -4,7 +4,7 @@
 // sont préfixés par le personnage, la pose et le skin : deux SVG différents n'ont jamais d'id commun.
 import type { BossId, Rarity, UnitId } from '../data/types';
 import { O, f, ctx, gloss, uid, withIds, type CharDef, type PoseIdx } from './primitives';
-import { unitEntry, bossEntry, minionEntry, UNIT_IDS, BOSS_IDS, type Entry } from './registry';
+import { unitEntry, bossEntry, minionEntry, vehicleEntry, UNIT_IDS, BOSS_IDS, type Entry } from './registry';
 import { drawEnemy, type EnemyLook } from './enemies';
 import { neonSkin, winterSkin, snowDecor, type Skin } from './skins';
 
@@ -160,9 +160,27 @@ export function tokenPortraitSvg(id: UnitId, pose: PoseIdx = 0, skin: Skin = 'cl
   return cached(`tp-${id}-${pose}-${skin}`, () => wrap(TOKEN_FRAME, figureBody(id, pose, skin), `${unitEntry(id).def.name}`));
 }
 
-function figureBody(id: UnitId, pose: PoseIdx, skin: Skin): string {
-  const fig = applySkin(drawPose(unitEntry(id), pose), skin, 'unit');
+function figureBody(id: UnitId, pose: PoseIdx, skin: Skin, vehicle = false): string {
+  const e = vehicle ? vehicleEntry(id) ?? unitEntry(id) : unitEntry(id);
+  const fig = applySkin(drawPose(e, pose), skin, 'unit');
   return `<g transform="translate(${RANK_PLATE.cx} ${RANK_PLATE.cy + 22}) scale(.74) translate(-100 -118)">${fig}</g>`;
+}
+
+/* ---------- extension Transformers : mode véhicule ---------- */
+/** Le héros a-t-il un mode véhicule (Autobots) ? */
+export function hasVehicle(id: UnitId): boolean {
+  return !!vehicleEntry(id);
+}
+/** Une pose du mode véhicule d'un Autobot (repli : le robot). */
+export function vehicleSvg(id: UnitId, pose: PoseIdx, skin: Skin = 'classique'): string {
+  return cached(`v-${id}-${pose}-${skin}`, () => {
+    const e = vehicleEntry(id) ?? unitEntry(id);
+    return wrap(UNIT_FRAME, applySkin(drawPose(e, pose), skin, 'unit'), `${unitEntry(id).def.name} (véhicule), pose ${pose}`);
+  });
+}
+/** Figure seule du jeton en mode véhicule (même cadrage que tokenPortraitSvg). */
+export function tokenVehicleSvg(id: UnitId, pose: PoseIdx = 0, skin: Skin = 'classique'): string {
+  return cached(`tv-${id}-${pose}-${skin}`, () => wrap(TOKEN_FRAME, figureBody(id, pose, skin, true), `${unitEntry(id).def.name} (véhicule)`));
 }
 
 /**
