@@ -277,5 +277,8 @@ Résultats (octobre 2026, refonte « parties longues ») — victoire moyenne du
 | 4 (25-30) | 2 Légendaires, niv. 5, palier 1 | **94 % / 80 %** (c4-n9) | 97 % / 83 % | — |
 | 5 (30-40) | Avengers, niv. 6, paliers 1-2 | **97 % / 70 %** (c5-n10, Cruella) | 100 % / 100 % | — |
 | 6 (40-50) | Avengers, niv. 8, 3 paliers | **99 % / 85 %** (c6-n10, Thanos) | 100 % / 100 % | — |
+| 10 (100-110, Transformers) | méta + Optimus, niv. 10, ★2 | **100 % / 100 %** (8 parties) | — | — |
+| 11 (110-125, Transformers) | Iron Man, Thor, Optimus, Cap, Ratchet, niv. 10, ★4 | **100 % / 100 %** (8 parties) | — | — |
+| 12 (125-150, Transformers) | Iron Man, Thor, Optimus, Grimlock, Cap, niv. 10, ★6 | **96 % / 75 %** (c12-n10, Megatron ; 8 parties) | — | — |
 
 Lecture : les niveaux les plus durs d'un chapitre sont les niveaux 8-9 (dernière vague = gros boss tiré au hasard dans la rotation, à abattre avec tous les ennemis restants) et le niveau 10 (boss du chapitre ; Cruella et Thanos sont les plus solides). La ★★★ tombe à 0 % pour le joueur automatique sur les contraintes de deck (Doctor Strange ou Loki, unités Disney, bonus d'équipe, un de chaque pack) et de rang 6-7 (le joueur `--casual` fusionne au hasard) : c'est attendu.

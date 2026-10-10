@@ -134,6 +134,43 @@ Aucun emballement économique : les decks « mana » restent sous le témoin (le
 
 **Campagne longue** (« des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum ») : 10 → 50 vagues (`docs/campagne.md`). La difficulté d'un niveau = **effectif** (`script.enemyCountMultiplier`, divise l'intervalle d'apparition) et **PV** (`script.enemyHpMultiplier`, `script.bossHpMultiplier` pour les lieutenants et gros boss), en hausse régulière sur les 60 niveaux. Avec la rampe du Solo Infini (×1,18 par vague), aucune collection ne tiendrait 50 vagues (le deck méta niveau 9 meurt vers la vague 28) : la campagne adoucit la croissance par vague (`script.waveHpGrowth` : ×1,14 au chapitre 1, ×1,075 au 2, ×1,07 aux 3-5, ×1,0425 au 6). Repères mesurés (`--casual`, PV× et effectif× à 1) : le deck de départ niveau 1 tient ≈ 20 vagues à ×1,10, 26 à ×1,08, 40 à ×1,06 ; le deck Avengers niveau 8 (3 paliers) ≈ 42 à ×1,10, 53 à ×1,08, 69 à ×1,06. Taux de victoire par chapitre : `docs/campagne.md` §4.
 
+## 2 septies. Extension Transformers : profils Rush Royale, transformation et chapitres longs (octobre 2026)
+
+Les 15 Autobots reprennent chacun une unité Rush Royale libre (ni Marvel, ni Disney, ni DC : `docs/rush-royale-mapping.md`, « Extension Transformers »). Règle de fusion de Rush Royale (intervalle ÷ rang), portées de notre système. **Transformation** : robot ×1,45 dégâts et ×0,75 cadence (≈ ×1,09 de DPS, vise le plus de PV), véhicule ×0,7 dégâts et ×1,6 cadence (≈ ×1,12, vise le plus avancé), toutes les 8 s ou d'un appui. Les dégâts des unités sans chiffres publiés (C) sont réglés au simulateur : au premier jet (Optimus 210, Grimlock 180, Ultra Magnus 160), le méta Transformers plafonnait à la vague 20 (18,6, −30 % du méta Marvel) ; les Légendaires et Épiques ont été relevés en quatre passes.
+
+| Héros | Unité RR | Dégâts / intervalle (rang 1, niv. 1) | Portée |
+|---|---|---|---|
+| Optimus Prime | Banshee | 570 / 1,0 s | moyenne |
+| Grimlock | Chaperon rouge | 490 / 1,0 s | courte |
+| Ultra Magnus | Épées enchantées | 450 / 1,0 s | moyenne |
+| Ironhide | Chasseur de démons | 270 / 1,0 s | moyenne |
+| Arcee | Cristallomancien | 150 / 0,8 s | courte |
+| Wheeljack | Corsaire | 130 / 1,0 s | moyenne |
+| Hot Rod | Blazey | 120 / 0,8 s | moyenne |
+| Mirage | Wukong | 95 / 0,9 s | moyenne |
+| Bumblebee | Mage de foudre | 70 / 0,8 s | longue |
+| Ratchet | Sorcière | 60 / 1,0 s (ambulance : +30 % de cadence aux voisines) | longue |
+| Jazz | Loup de mer | 60 / 0,9 s | longue |
+| Elita-1 | Sentinelle | 85 / 0,9 s | toute la map |
+| Bulkhead | Gargouille | 130 / 1,0 s | courte |
+| Sideswipe | Lanceur | 75 / 0,8 s | moyenne |
+| Prowl | Maléfice | 55 / 1,0 s | toute la map |
+
+**Solo Infini**, niveau 1, toits de New York, graines 1..60, rotation « tous les univers » (vague moyenne) :
+
+| Deck | Référence | `--casual` | Écart au deck Marvel comparable |
+|---|---|---|---|
+| Départ Marvel | 19,42 | 17,22 | — |
+| Méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) | 26,58 | 24,20 | — |
+| `meta-tf` (Optimus, Grimlock, Ultra Magnus, Ironhide, Ratchet) | **25,05** | **21,57** | −5,8 % / −10,9 % (méta Marvel) |
+| `tf-rares` (Bumblebee, Jazz, Elita-1, Bulkhead, Sideswipe) | **18,97** | **16,95** | −2,3 % / −1,6 % (départ Marvel) |
+| `autobots` (Optimus, Bumblebee, Ironhide, Ratchet, Jazz), avant le dernier réglage | 19,15 | 18,77 | — |
+| `tf-epics` (Arcee, Wheeljack, Hot Rod, Mirage, Ironhide), avant le dernier réglage | 19,75 | 18,42 | — |
+
+**Campagne, chapitres 10 à 12** (`--campagne c10|c11|c12 --attendu --casual`, 8 parties par niveau) : chapitre 10 **100 %** (pire niveau 100 %), chapitre 11 **100 %** (100 %), chapitre 12 **96 %** (pire : **Megatron, 12-10, 75 %** ; 12-9 à 88 %). Collection attendue : ch. 10 Iron Man, Thor, Hulk, Cap, Optimus niveau 10 (3 paliers, ★2) ; ch. 11 Iron Man, Thor, Optimus, Cap, Ratchet (★4) ; ch. 12 Iron Man, Thor, Optimus, Grimlock, Cap (★6). Croissance des PV par vague réglée par paliers : ch. 10 ×1,02, ch. 11 ×1,017 (à ×1,018, Devastator 63 %), ch. 12 ×1,0135 (à ×1,014, Megatron 67 % ; à ×1,009, tout à 100 %).
+
+**À surveiller** : le joueur `--casual` perd 15 % de vagues avec le méta Transformers contre 9 % avec le méta Marvel (il ne profite pas des appuis de transformation) ; Unicron (vague 150, PV ×3) n'a été testé qu'en unitaire, aucun deck simulé n'atteint la vague 150 en Solo Infini.
+
 ## 3. Le simulateur (`scripts/simulate.ts`)
 
 Le simulateur est écrit par l'agent Moteur en parallèle ; il n'existe pas encore au moment de ce document. Usage attendu :
