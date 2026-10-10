@@ -15,6 +15,7 @@ import { bossReward, formationBonus, growOnKill, growthBonus, growthPointsOf, ta
 import { auraActive, enchantBonus, jammed, rowBonus, tfDamageMul, tfSpeedMul } from './transformers';
 import { BOSSES, REFORM_NAME } from '../data/bosses';
 import { pxDamageBonus } from './pixar';
+import { canTarget } from './geometry';
 
 // ───────────── Ennemis du chemin ─────────────
 // Solo : une branche 'a' jusqu'au château. Coop : deux branches 'a' et 'b' qui se rejoignent
@@ -189,7 +190,9 @@ function reform(ctx: Ctx, e: SimEnemy): boolean {
   if (e.bossId !== 'devastator' || e.x.reformed) return false;
   e.x.reformed = 1;
   e.hp = e.maxHp * (BOSSES.devastator.power.params.reformHp ?? 0.4);
-  emit(ctx, { type: 'bossPower', boss: 'devastator', player: ctx.st.players[0]!.id, slots: [], name: REFORM_NAME });
+  // Coop : annoncé du côté du boss (un Devastator par branche).
+  const side = ctx.st.players[e.x.owner ?? 0] ?? ctx.st.players[0]!;
+  emit(ctx, { type: 'bossPower', boss: 'devastator', player: side.id, slots: [], name: REFORM_NAME });
   return true;
 }
 
@@ -235,7 +238,9 @@ function plagueCloud(ctx: Ctx, e: SimEnemy): void {
   if (d <= 0) return;
   e.x.plague = 0;
   const by = e.x.plagueBy ?? 0;
-  for (const n of within(ctx, aliveAll(ctx), e, e.x.plagueRadius ?? 1.2)) {
+  // Coop : seulement les ennemis que le joueur de Frozone peut viser (règle de la dernière ligne droite).
+  const near = aliveAll(ctx).filter((n) => !ctx.coop || canTarget(ctx.geo, by, n.lane, n.distance, laneLength(ctx, n.lane)));
+  for (const n of within(ctx, near, e, e.x.plagueRadius ?? 1.2)) {
     dealDamage(ctx, n, d, by);
     if (isAlive(n)) applySlow(ctx, n, e.x.plagueSlow ?? 0.45, e.x.plagueFor ?? 3);
   }

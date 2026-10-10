@@ -458,7 +458,7 @@ export function playAttack(fx: CombatFx, slot: number, unit: UnitId, key: string
     }
     case 'cap': {
       const m = fx.shot('shield', o, t0, fx.travel(o, b0, 2200, 0.12, 0.3), capBounce);
-      m.list = targets; m.p0 = 0; m.p1 = slot; m.spin = 26; m.sy = 0.85; m.trail = trGhost; m.trailEvery = 0.025;
+      m.list = targets; m.p0 = 0; m.p1 = fx.host.cellKey?.(slot) ?? slot; m.spin = 26; m.sy = 0.85; m.trail = trGhost; m.trailEvery = 0.025;
       return;
     }
     case 'loki': {

@@ -68,7 +68,7 @@ function anims(c: Ctx) {
     at('Feux d\'artifice', 'blink', g, 40, fw(g.x, g.y, '#8ad0ff'), { period: 2.9, min: 0, phase: 0.7 }),
     at('Lanternes', 'sway', a, 40, lantern(a.x, a.y), { period: 3, amp: 8, oy: a.y - 34 }),
     at('Lanternes', 'sway', b, 40, lantern(b.x, b.y), { period: 3.4, amp: 8, oy: b.y - 34, phase: 0.5 }),
-    across('Pétales de cerisier', d.y - 20, 15, (x, y) => petal(x, y), { w: 60, h: 40 }, { x0: c.mode === 'solo' ? 160 : 180, x1: c.mode === 'solo' ? 820 : 420 }),
+    across('Pétales de cerisier', c.mode === 'solo' ? d.y - 20 : 60, 15, (x, y) => petal(x, y), { w: 60, h: 40 }, { x0: c.mode === 'solo' ? 160 : 180, x1: c.mode === 'solo' ? 820 : 420 }),
   ];
 }
 

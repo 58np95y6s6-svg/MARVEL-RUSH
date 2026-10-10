@@ -28,6 +28,23 @@ export interface LobbyState {
   mapId: string;
   hostPeer: string;
   players: LobbyPlayer[];
+  /** Reprise d'une partie sauvegardée : vague où elle reprend. */
+  resumeWave?: number;
+}
+
+/** Partie Coop sauvegardée par l'hôte à chaque vague (reprise plus tard par le même duo). */
+export interface CoopSave {
+  v: 1;
+  at: number;
+  mode: CoopMode;
+  levelId?: string;
+  mapId: string;
+  wave: number;
+  partnerProfileId: string;
+  partnerName: string;
+  config: GameConfig;
+  /** Moteur sérialisé (Engine.serialize). */
+  engine: string;
 }
 
 type Hs<T> = Set<(v: T) => void>;
@@ -81,7 +98,7 @@ export interface InviteHandle {
   cancel(): void;
 }
 
-export function sendInvite(ep: Endpoint, partnerPeer: string, o: { from: HelloInfo; mode: CoopMode; levelId?: string; ttlMs?: number }): InviteHandle {
+export function sendInvite(ep: Endpoint, partnerPeer: string | string[], o: { from: HelloInfo; mode: CoopMode; levelId?: string; ttlMs?: number; resumeWave?: number }): InviteHandle {
   const id = randomId(10);
   const ttl = o.ttlMs ?? INVITE_TTL_MS;
   let cancelFn: () => void = () => undefined;
@@ -97,7 +114,14 @@ export function sendInvite(ep: Endpoint, partnerPeer: string, o: { from: HelloIn
     };
     const timer = setTimeout(() => finish({ expired: true }), ttl);
     cancelFn = () => finish({ cancelled: true });
-    ep.connect(partnerPeer).then((l) => {
+    // Plusieurs identifiants possibles (présence, profil) : le premier qui répond.
+    const peers = (Array.isArray(partnerPeer) ? partnerPeer : [partnerPeer]).filter((x, i, a) => !!x && a.indexOf(x) === i);
+    const connectAny = async (): Promise<Link> => {
+      let err: unknown = new NetError('unreachable', 'Appareil introuvable.');
+      for (const p of peers) { try { return await ep.connect(p); } catch (e) { err = e; } }
+      throw err;
+    };
+    connectAny().then((l) => {
       link = l;
       if (done) { l.send(msg({ t: 'inviteCancel', inviteId: id })); setTimeout(() => l.close(), 300); return; }
       // Après l'acceptation, les premiers messages (hello) sont gardés jusqu'à la prise en main du lien.
@@ -109,7 +133,7 @@ export function sendInvite(ep: Endpoint, partnerPeer: string, o: { from: HelloIn
         if (m.accept) { accepted = true; finish({ link: l, early: () => { off(); offClose(); return early.splice(0); } }); } else finish({ refused: true, reason: m.reason });
       });
       const offClose = l.onClose(() => finish({ error: 'Ta partenaire s’est déconnectée.' }));
-      l.send(msg({ t: 'invite', inviteId: id, from: o.from, mode: o.mode, levelId: o.levelId, expiresAt: Date.now() + ttl }));
+      l.send(msg({ t: 'invite', inviteId: id, from: o.from, mode: o.mode, levelId: o.levelId, expiresAt: Date.now() + ttl, ...(o.resumeWave ? { resumeWave: o.resumeWave } : {}) }));
     }).catch((e: unknown) => finish({ error: e instanceof NetError && e.code === 'unreachable' ? 'Impossible de joindre ta partenaire.' : 'Connexion impossible pour le moment.' }));
   });
   return { id, result, cancel: () => cancelFn() };
@@ -121,6 +145,8 @@ export interface IncomingInvite {
   from: HelloInfo;
   mode: CoopMode;
   levelId?: string;
+  /** Reprise d'une partie sauvegardée (vague). */
+  resumeWave?: number;
   expiresAt: number;
   link: Link;
   accept(): Link;
@@ -133,7 +159,8 @@ export interface IncomingInvite {
  * ou arrivée par code de salon (hello).
  */
 export function classifyIncoming(l: Link, timeoutMs = 8000): Promise<
-  { kind: 'invite'; invite: IncomingInvite } | { kind: 'rejoin'; session: string; profileId: string } | { kind: 'hello'; first: NetMessage } | null
+  | { kind: 'invite'; invite: IncomingInvite } | { kind: 'rejoin'; session: string; profileId: string } | { kind: 'hello'; first: NetMessage }
+  | { kind: 'presence'; first: NetMessage } | null
 > {
   return new Promise((resolve) => {
     const timer = setTimeout(() => { off(); resolve(null); l.close(); }, timeoutMs);
@@ -148,13 +175,14 @@ export function classifyIncoming(l: Link, timeoutMs = 8000): Promise<
         resolve({
           kind: 'invite',
           invite: {
-            id: m.inviteId, from: m.from, mode: m.mode, levelId: m.levelId, expiresAt: m.expiresAt, link: l,
+            id: m.inviteId, from: m.from, mode: m.mode, levelId: m.levelId, expiresAt: m.expiresAt, link: l, resumeWave: m.resumeWave,
             accept() { offC(); l.send(msg({ t: 'inviteReply', inviteId: m.inviteId, accept: true })); return l; },
             refuse(reason) { offC(); l.send(msg({ t: 'inviteReply', inviteId: m.inviteId, accept: false, reason })); setTimeout(() => l.close(), 400); },
             onCancel(h) { if (cancelled) { h(); return () => undefined; } cancels.add(h); return () => { cancels.delete(h); }; },
           },
         });
       } else if (m.t === 'rejoin') resolve({ kind: 'rejoin', session: m.session, profileId: m.profileId });
+      else if (m.t === 'presence') resolve({ kind: 'presence', first: m });
       else if (m.t === 'hello') resolve({ kind: 'hello', first: m });
       else { l.close(); resolve(null); }
     });
@@ -174,6 +202,8 @@ export interface HostOptions {
   configFor?: (lobby: LobbyState) => Partial<GameConfig>;
   seed?: number;
   now?: () => number;
+  /** Reprise d'une partie sauvegardée (même duo) : configuration et moteur repris tels quels. */
+  resume?: CoopSave;
 }
 
 export class CoopHost {
@@ -202,6 +232,8 @@ export class CoopHost {
   private loadedHs: Hs<void> = new Set();
   private closed = false;
   private byeReceived = false;
+  /** L'invitée a quitté volontairement (« bye ») plutôt que perdu la connexion. */
+  partnerQuit = false;
 
   constructor(private o: HostOptions) {
     this.now = o.now ?? Date.now;
@@ -210,8 +242,16 @@ export class CoopHost {
       session: randomId(8), mode: o.mode, levelId: o.levelId, mapId: o.mapId, hostPeer: o.hostPeer,
       players: [{ id: 'p1', profileId: h.profileId, name: h.name, avatar: h.avatar, level: h.level, deck: o.me.setup.deck.slice(), ready: false, soloChapters: h.soloChapters }],
     };
+    if (o.resume) {
+      this.st.resumeWave = o.resume.wave;
+      this.st.players[0]!.deck = o.resume.config.players[0]?.deck.slice() ?? this.st.players[0]!.deck;
+    }
     this.setups.p1 = o.me.setup;
   }
+
+  /** Reprise : moteur sauvegardé à recharger par l'écran de combat de l'hôte. */
+  get savedEngine(): string | undefined { return this.o.resume?.engine; }
+  get resume(): CoopSave | undefined { return this.o.resume; }
 
   get lobby(): LobbyState { return this.st; }
   get session(): string { return this.st.session; }
@@ -258,6 +298,8 @@ export class CoopHost {
     this.lostAt = 0;
     if (this.goneTimer) { clearTimeout(this.goneTimer); this.goneTimer = null; }
     if (this.phase === 'game' && this.config) {
+      // Invitée qui revient (coupure ou application rouverte) : salon, puis reprise de la partie en cours.
+      link.send(msg({ t: 'lobby', ...this.st }));
       link.send(msg({ t: 'start', session: this.st.session, config: this.config, you: 'p2', startAt: this.now(), resume: true }));
       if (this.engine) this.sendSnapshot();
       if (this.result) link.send(msg({ t: 'result', result: this.result }));
@@ -281,6 +323,7 @@ export class CoopHost {
   // ---------------- partie
   /** Le moteur de la partie (créé par l'écran de combat de l'hôte avec `gameConfig`). */
   bindEngine(engine: Engine): void { this.engine = engine; }
+  get boundEngine(): Engine | null { return this.engine; }
 
   /** À appeler après chaque tick du moteur : diffuse un instantané tous les 2 ticks. */
   afterTick(events: EngineEvent[]): void {
@@ -355,7 +398,8 @@ export class CoopHost {
       emit(this.lobbyHs, this.st);
     }
     if (this.phase === 'over') return;
-    if (this.byeReceived) { this.byeReceived = false; emit(this.peerHs, 'gone'); return; }
+    if (this.byeReceived) { this.byeReceived = false; this.partnerQuit = true; emit(this.peerHs, 'gone'); return; }
+    this.partnerQuit = false;
     this.lostAt = this.now();
     emit(this.peerHs, 'lost');
     if (this.goneTimer) clearTimeout(this.goneTimer);
@@ -436,7 +480,9 @@ export class CoopHost {
       ],
     };
     const extra = this.o.configFor?.(this.st) ?? {};
-    this.config = { ...base, ...extra, players: base.players, mapId: extra.mapId ?? base.mapId, mode: 'coop' };
+    this.config = this.o.resume
+      ? { ...this.o.resume.config, mode: 'coop' }
+      : { ...base, ...extra, players: base.players, mapId: extra.mapId ?? base.mapId, mode: 'coop' };
     this.phase = 'game';
     this.link.send(msg({ t: 'start', session: this.st.session, config: this.config, you: 'p2', startAt: this.now() }));
     emit(this.startHs, this.config);
@@ -449,8 +495,12 @@ export class CoopHost {
 export interface GuestOptions {
   me: LocalPlayer;
   link: Link;
-  /** Point d'accès personnel, pour rappeler l'hôte après une coupure. */
-  endpoint: Endpoint | null;
+  /** Point d'accès personnel, pour rappeler l'hôte après une coupure (fonction : le plus récent). */
+  endpoint: Endpoint | null | (() => Endpoint | null);
+  /** Identifiants actuels de l'hôte (présence : il a pu changer d'identifiant en rouvrant l'application). */
+  hostPeers?: () => (string | null | undefined)[];
+  /** Application rouverte pendant une partie : on rejoint la session au lieu de dire bonjour. */
+  rejoin?: { session: string; hostPeer: string };
   now?: () => number;
 }
 
@@ -484,8 +534,12 @@ export class CoopGuest {
     this.link = o.link;
     this.bind(o.link);
     this.watch = setInterval(() => this.checkSilence(), 1000);
-    o.link.send(msg({ t: 'hello', who: o.me.hello, setup: o.me.setup }));
+    if (o.rejoin) { this.phase = 'game'; o.link.send(msg({ t: 'rejoin', session: o.rejoin.session, profileId: o.me.hello.profileId })); }
+    else o.link.send(msg({ t: 'hello', who: o.me.hello, setup: o.me.setup }));
   }
+
+  /** Session à rejoindre après une coupure (salon ou partie). */
+  get sessionId(): string | null { return this.st?.session ?? this.o.rejoin?.session ?? null; }
 
   get lobby(): LobbyState | null { return this.st; }
   get gameConfig(): GameConfig | null { return this.config; }
@@ -551,27 +605,35 @@ export class CoopGuest {
     void this.reconnect();
   }
 
+  private endpoint(): Endpoint | null {
+    const e = this.o.endpoint;
+    return typeof e === 'function' ? e() : e;
+  }
+
   private async reconnect(): Promise<void> {
     if (this.reconnecting || this.closed) return;
-    const st = this.st;
-    const ep = this.o.endpoint;
-    if (!st || !ep) { emit(this.peerHs, 'gone'); return; }
+    const session = this.sessionId;
+    if (!session) { emit(this.peerHs, 'gone'); return; }
     this.reconnecting = true;
     const until = this.now() + RECONNECT_WINDOW_MS;
     try {
       while (!this.closed && this.now() < until) {
-        try {
-          const l = await ep.connect(st.hostPeer, 6000);
-          if (this.closed) { l.close(); return; }
-          this.link = l;
-          this.bind(l);
-          l.send(msg({ t: 'rejoin', session: st.session, profileId: this.o.me.hello.profileId }));
-          if (this.phase === 'lobby') l.send(msg({ t: 'hello', who: this.o.me.hello, setup: this.o.me.setup }));
-          emit(this.peerHs, 'back');
-          return;
-        } catch {
-          await new Promise((r) => setTimeout(r, 2000));
+        const ep = this.endpoint();
+        const peers = [...(this.o.hostPeers?.() ?? []), this.st?.hostPeer, this.o.rejoin?.hostPeer]
+          .filter((x, i, a): x is string => !!x && a.indexOf(x) === i);
+        for (const peer of ep ? peers : []) {
+          try {
+            const l = await ep!.connect(peer, 6000);
+            if (this.closed) { l.close(); return; }
+            this.link = l;
+            this.bind(l);
+            l.send(msg({ t: 'rejoin', session, profileId: this.o.me.hello.profileId }));
+            if (this.phase === 'lobby') l.send(msg({ t: 'hello', who: this.o.me.hello, setup: this.o.me.setup }));
+            emit(this.peerHs, 'back');
+            return;
+          } catch { /* identifiant suivant */ }
         }
+        await new Promise((r) => setTimeout(r, 2000));
       }
       if (!this.closed) emit(this.peerHs, 'gone');
     } finally {
@@ -597,6 +659,7 @@ export class CoopGuest {
       }
       case 'start':
         if (this.st && m.session !== this.st.session) break;
+        if (!this.st && this.o.rejoin && m.session !== this.o.rejoin.session) break;
         if (m.resume && this.config) break; // reprise après coupure : la partie continue
         this.config = m.config;
         this.phase = 'game';
