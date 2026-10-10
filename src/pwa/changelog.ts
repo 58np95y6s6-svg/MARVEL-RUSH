@@ -20,6 +20,7 @@ export const CHANGELOG: ReleaseNote[] = [
       'Shang-Chi reprend le Tonnerre : les Dix Anneaux rebondissent en chaîne sur la cible et les ennemis qui la suivent (autant que son rang).',
       'Spider-Man reprend la Catapulte : sa boule de toile colle tout un groupe d’ennemis ; le rang augmente les dégâts.',
       'Le Soldat de l’hiver reprend le Bourreau : il achève les ennemis affaiblis. Rox & Rouky reprennent le Voleur : morsures aux dégâts aléatoires.',
+      'La fiche de chaque héros montre l’unité Rush Royale qu’il copie (onglet Principal et onglet Info → Carte).',
       'Nouvelles raretés : Loki, Ariel & Sébastien et Coco passent Légendaires ; Vanellope & Ralph, Buzz & Woody et Tiana & Naveen passent Épiques ; Venom, Black Widow, Nick & Judy et Raiponce & Pascal passent Rares. Tu gardes tes héros, leurs niveaux et leurs cartes.',
     ],
   },
