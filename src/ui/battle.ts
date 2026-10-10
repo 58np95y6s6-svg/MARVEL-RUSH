@@ -631,6 +631,12 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     clearTimeout(holdTimer);
     holdTimer = 0;
     if (!p.dragging) {
+      // Extension Transformers : un appui sur un Autobot le transforme (robot ↔ véhicule).
+      const tapped = engine.state.players[0]!.grid[p.slot];
+      if (tapped && !tapped.status.transformedInto && UNITS[tapped.unit].ability.params.transformEvery) {
+        apply({ type: 'transform', player: me, slot: p.slot });
+        navigator.vibrate?.(10);
+      }
       if (infoSlot === p.slot) hideInfo(); else showInfo(p.slot);
       return;
     }

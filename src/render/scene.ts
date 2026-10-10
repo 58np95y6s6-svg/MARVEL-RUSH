@@ -67,6 +67,9 @@ interface UnitView {
   target: boolean;
   /** Aura de l'Inquisiteur (Thor), créée à la première apparition d'un Thor dans cette vue. */
   aura: ThorAura | null;
+  /** Extension Transformers : mode véhicule affiché, et animation de transformation (s, -1 = aucune). */
+  veh: boolean;
+  morphT: number;
 }
 
 interface EnemyView {
@@ -463,7 +466,7 @@ export class BattleScene {
     this.unitLayer.addChild(root);
     return {
       uid: 0, unit: 'spiderman', shown: 'spiderman', rank: 1, slot: 0, root, body, sprite, pips, pipsShown: 0, glow, status, statusKind: '',
-      attackT: -1, hopT: -1, flashT: -1, pipT: 0, dragging: false, returnT: -1, rx: 0, ry: 0, dim: false, target: false, aura: null,
+      attackT: -1, hopT: -1, flashT: -1, pipT: 0, dragging: false, returnT: -1, rx: 0, ry: 0, dim: false, target: false, aura: null, veh: false, morphT: -1,
     };
   }
 
@@ -517,7 +520,9 @@ export class BattleScene {
     v.hopT = appear === 'none' ? -1 : 0;
     v.flashT = appear === 'merge' ? 0 : -1;
     v.pipT = 0;
-    v.sprite.texture = tokenTex(v.shown, 0) ?? Texture.EMPTY;
+    v.veh = !u.status.transformedInto && (u.counters.vehicle ?? 0) > 0;
+    v.morphT = -1;
+    v.sprite.texture = tokenTex(v.shown, 0, v.veh) ?? Texture.EMPTY;
     v.sprite.width = SIZES.token;
     v.sprite.height = SIZES.token;
     this.drawPips(v, appear === 'merge' ? Math.max(0, v.rank - 1) : v.rank);
@@ -545,6 +550,9 @@ export class BattleScene {
         const shown = u.status.transformedInto ?? u.unit;
         if (shown !== v.shown) { v.shown = shown; v.flashT = 0; }
         if (u.rank !== v.rank) { v.rank = u.rank; this.drawPips(v, u.rank); v.flashT = 0; }
+        // Transformation robot ↔ véhicule (Autobots) : la figurine pivote et change de forme à mi-course.
+        const veh = !u.status.transformedInto && (u.counters.vehicle ?? 0) > 0;
+        if (veh !== v.veh) { v.veh = veh; v.morphT = 0; }
       }
       const st = u.status;
       const kind = (st.sleepingFor ?? 0) > 0 ? 'zzz' : (st.hypnotizedFor ?? 0) > 0 ? 'hyp' : (st.stunnedFor ?? 0) > 0 ? 'stun' : '';
@@ -1045,7 +1053,19 @@ export class BattleScene {
       else if (t < 0.26) pose = 0;
       else v.attackT = -1;
     }
-    const tex = tokenTex(v.shown, pose) ?? tokenTex(v.shown, 0);
+    // Transformation : 0,32 s, la figurine s'aplatit (pivot), l'ancienne forme puis la nouvelle.
+    let morphSx = 1, morphHop = 0, showVeh = v.veh;
+    if (v.morphT >= 0) {
+      v.morphT += dt;
+      const k = v.morphT / 0.32;
+      if (k >= 1) v.morphT = -1;
+      else {
+        morphSx = Math.max(0.06, Math.abs(Math.cos(k * Math.PI)));
+        morphHop = Math.sin(k * Math.PI) * 26;
+        if (k < 0.5) showVeh = !v.veh;
+      }
+    }
+    const tex = tokenTex(v.shown, pose, showVeh) ?? tokenTex(v.shown, 0, showVeh) ?? tokenTex(v.shown, 0);
     if (tex && v.sprite.texture !== tex) {
       v.sprite.texture = tex;
       v.sprite.width = SIZES.token;
@@ -1063,8 +1083,8 @@ export class BattleScene {
         if (k > 0.75) { sx *= 1 + 0.12 * (1 - k) * 4 * 0.25; sy *= 1 - 0.12 * (1 - k) * 4 * 0.25; }
       }
     }
-    v.body.scale.set(sx * hs, sy * hs);
-    v.body.y = SIZES.token * 0.42 - hop;
+    v.body.scale.set(sx * hs * morphSx, sy * hs);
+    v.body.y = SIZES.token * 0.42 - hop - morphHop;
     // Pastilles qui s'ajoutent une à une après une fusion.
     if (v.pipsShown < v.rank) {
       v.pipT += dt;

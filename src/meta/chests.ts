@@ -197,10 +197,10 @@ export function chestPreview(tier: ChestTier, scale = 1): { gold: number; gems: 
 // ------------------------------------------------------------------------------- boss vaincus
 
 /** Petit bonus d'or pour chaque boss vaincu en combat (affiché à l'écran de fin). */
-export const BOSS_KILL_GOLD = { lieutenant: 20, boss: 60, thanos: 300 } as const;
+export const BOSS_KILL_GOLD = { lieutenant: 20, boss: 60, thanos: 300, unicron: 600 } as const;
 
 export function bossKillGold(kills: readonly { boss: BossId; small: boolean }[]): number {
-  return kills.reduce((n, k) => n + (k.small ? BOSS_KILL_GOLD.lieutenant : k.boss === 'thanos' ? BOSS_KILL_GOLD.thanos : BOSS_KILL_GOLD.boss), 0);
+  return kills.reduce((n, k) => n + (k.small ? BOSS_KILL_GOLD.lieutenant : k.boss === 'thanos' ? BOSS_KILL_GOLD.thanos : k.boss === 'unicron' ? BOSS_KILL_GOLD.unicron : BOSS_KILL_GOLD.boss), 0);
 }
 
 /** Générateur déterministe (mulberry32), pour les coffres rejouables et les tests. */

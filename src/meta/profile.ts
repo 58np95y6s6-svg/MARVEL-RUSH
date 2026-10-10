@@ -264,6 +264,7 @@ export function bigBossDailyBonus(p: Profile, boss: BossId): number {
   let gain = 0;
   if (p.firstBigBossOfDay !== today()) { p.firstBigBossOfDay = today(); gain += 5; }
   if (boss === 'thanos') gain += 50;
+  if (boss === 'unicron') gain += 150; // extension Transformers : boss cosmique
   p.crystals += gain;
   return gain;
 }
