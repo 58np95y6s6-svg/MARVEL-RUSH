@@ -7,7 +7,10 @@
 //   (docs/rush-royale-donnees.md §1), sinon +10 % par niveau (moteur). 0 = l'unité n'attaque pas
 //   (soutiens « sans cible » de Rush Royale).
 // - Rang de fusion (règle Rush Royale) : intervalle ÷ rang, dégâts par coup indépendants du rang.
-// - `range` : Rush Royale n'a pas de portée ; on garde notre système, cohérent avec le type d'unité.
+// - `range` : Rush Royale n'a pas de portée ; on garde notre système, choisi selon le style de combat du
+//   personnage et l'attaque de l'unité Rush Royale copiée (docs/rush-royale-mapping.md « Portées »). Changer
+//   de catégorie de portée multiplie les dégâts (et le pas par niveau) par le rapport des facteurs
+//   globale 1 · longue 1,4 · moyenne 1,7 · courte 3 (docs/equilibrage.md §2 bis).
 //
 // Convention des paramètres de compétence (`ability.params`) :
 // - `abilityCooldown` : recharge (s) de la compétence périodique ; `abilityCooldownPerRank` l'ajuste par rang
@@ -125,9 +128,9 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Voleur.
+    // Rush Royale : Voleur (Bucky tireur d'élite → portée globale, dégâts ÷1,4 : 70 → 50).
     id: 'bucky', name: 'Soldat de l’hiver', pack: 'marvel', rarity: 'epique', role: 'Critique',
-    targeting: 'premier', damage: 70, attackInterval: 0.8, range: 3.4,
+    targeting: 'premier', damage: 50, attackInterval: 0.8, range: 'globale',
     ability: {
       name: 'Bras bionique',
       description: 'Chaque coup ajoute un bonus aléatoire de 0 à 200 % des dégâts (dégâts critiques ×3).',
@@ -165,9 +168,10 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Danse-lames.
+    // Rush Royale : Danse-lames (lames lancées → portée longue, dégâts ×1,4/3 de la table niv. 7 : 215 → 100,
+    // +98,25 → +45,85 par niveau ; docs/rush-royale-mapping.md « Portées »).
     id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Dégâts',
-    targeting: 'premier', damage: 215, damagePerLevel: 98.25, attackInterval: 1.2, range: 1.6,
+    targeting: 'premier', damage: 100, damagePerLevel: 45.85, attackInterval: 1.2, range: 3.4,
     ability: {
       name: 'Dix Anneaux',
       description: 'Sans autre Shang-Chi sur une case voisine, il danse : +100 % de vitesse d’attaque. Chaque Shang-Chi qui danse donne +10 % de dégâts aux autres Shang-Chi (8 au plus).',
@@ -210,9 +214,9 @@ export const UNIT_LIST: UnitDef[] = [
     },
   },
   {
-    // Rush Royale : Pyrotechnicien.
+    // Rush Royale : Pyrotechnicien (fusées → portée longue, dégâts ×1,4/1,7 : 229 → 189, +61,7 → +50,8 par niveau).
     id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 229, damagePerLevel: 61.7, attackInterval: 1.0, range: 2.4,
+    targeting: 'premier', damage: 189, damagePerLevel: 50.8, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Feu de Mushu',
       description: 'Nombre impair de Mulan sur le plateau : cadence ×0,67, cible au hasard et explosion de 100 % autour de la cible (rayon qui grandit avec le rang). Nombre pair : −40 % de dégâts, tir sur le premier.',
@@ -278,7 +282,7 @@ export const UNIT_LIST: UnitDef[] = [
     targeting: 'premier', damage: 50, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Remember Me',
-      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (autre héros) ; Coco disparaît et l’alliée gagne 1 rang.',
+      description: 'Booster de fusion : glisse Coco sur une alliée de même rang (y compris un autre Coco) ; Coco disparaît et l’alliée gagne 1 rang.',
       params: { promoteAlly: 1 },
     },
   },
