@@ -29,16 +29,27 @@ import { areneMalefique } from './arene-malefique';
 import { areneGalactus } from './arene-galactus';
 import { areneBouffon } from './arene-bouffon';
 import { areneThanos } from './arene-thanos';
+import { cybertron } from './cybertron';
+import { baseAutobot } from './base-autobot';
+import { missionCity } from './mission-city';
+import { areneBlitzwing, areneDevastator, areneMegatron, areneShockwave, areneSoundwave, areneStarscream, areneUnicron } from './arenes-transformers';
 
-/** Maps d'univers (12) puis variantes Disney (7), dans l'ordre de déblocage. */
+/** Maps de l'extension Transformers (débloquées par les chapitres 10 à 12). */
+export const TF_MAPS: MapDefX[] = [cybertron, baseAutobot, missionCity];
+
+/** Maps d'univers (12), variantes Disney (7) puis maps Transformers (3), dans l'ordre de déblocage. */
 export const MAPS: MapDefX[] = [
   toitsNewYork, atelierStark, asgardBifrost, sanctumSanctorum, baseAvengers, templeDixAnneaux,
   ileMotunui, palaisImperial, royaumeDesMorts, zootopie, chambreAndy, sugarRush,
   foretPocahontas, highlandsRebelle, atlantica, bayou, recifNemo, tourRaiponce, foretRoxRouky,
+  ...TF_MAPS,
 ];
 
+/** Arènes des Decepticons (Unicron en dernier : boss cosmique des modes infinis). */
+export const TF_ARENAS: MapDefX[] = [areneStarscream, areneSoundwave, areneShockwave, areneDevastator, areneBlitzwing, areneMegatron, areneUnicron];
+
 /** Arènes de boss, une par boss. */
-export const ARENAS: MapDefX[] = [areneJafar, areneCruella, areneUrsula, areneMalefique, areneGalactus, areneBouffon, areneThanos];
+export const ARENAS: MapDefX[] = [areneJafar, areneCruella, areneUrsula, areneMalefique, areneGalactus, areneBouffon, areneThanos, ...TF_ARENAS];
 
 export const ALL_MAPS: MapDefX[] = [...MAPS, ...ARENAS];
 
@@ -69,6 +80,13 @@ export const ARENA_OF_BOSS: Record<BossId, string> = {
   galactus: 'arene-galactus',
   bouffon: 'arene-bouffon',
   thanos: 'arene-thanos',
+  starscream: 'arene-starscream',
+  soundwave: 'arene-soundwave',
+  shockwave: 'arene-shockwave',
+  devastator: 'arene-devastator',
+  blitzwing: 'arene-blitzwing',
+  megatron: 'arene-megatron',
+  unicron: 'arene-unicron',
 };
 
 export function arenaForBoss(boss: BossId | string): MapDefX | null {
@@ -89,9 +107,10 @@ export function mapForDeck(deck: readonly UnitId[], unlocked?: readonly string[]
     if (score > bestScore) { best = m; bestScore = score; }
   }
   if (bestScore > 0) return best;
-  // Aucun héros associé : on prend la première map de l'univers majoritaire.
-  const marvel = deck.filter((u) => MAPS.some((m) => m.universe === 'marvel' && m.heroes.includes(u))).length;
-  const disney = deck.filter((u) => MAPS.some((m) => m.universe === 'disney' && m.heroes.includes(u))).length;
-  const u: Universe = disney > marvel ? 'disney' : 'marvel';
+  // Aucun héros associé à une map débloquée : on prend la première map débloquée de l'univers majoritaire
+  // (à égalité, l'ordre marvel, disney, transformers).
+  const count = (u: Universe) => deck.filter((id) => MAPS.some((m) => m.universe === u && m.heroes.includes(id))).length;
+  let u: Universe = 'marvel';
+  for (const v of ['disney', 'transformers'] as const) if (count(v) > count(u)) u = v;
   return candidates.find((m) => m.universe === u) ?? best;
 }

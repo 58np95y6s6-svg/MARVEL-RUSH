@@ -1,4 +1,4 @@
-// Signatures visuelles des 28 unités : un tir, un impact et une version « compétence » propres à
+// Signatures visuelles des 43 unités (les 15 Autobots dans tfSignatures.ts) : un tir, un impact et une version « compétence » propres à
 // chacune, reprises des effets des planches (rayon, éclair, toile, bulles, notes…).
 // Les rappels de fin (impacts) sont des fonctions de module : aucune fermeture créée par tir.
 import type { BossId, UnitId } from '../../data/types';
@@ -6,6 +6,7 @@ import type { CombatFx, P } from './director';
 import { SNAP_NAME, THANOS_STONES } from '../../data/bosses';
 import { UNIT_FX_COLOR } from '../fxTable';
 import { BeamMode, Curve, Ease, Mode, type Mote } from './pools';
+import { playTfAbility, playTfAttack } from './tfSignatures';
 
 const fxOf = (m: Mote) => m.o as CombatFx;
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
@@ -645,6 +646,12 @@ export function playAttack(fx: CombatFx, slot: number, unit: UnitId, key: string
       m.face = true; m.s0 = 0.7; m.s1 = 1.25; m.ease = Ease.In;
       return;
     }
+    // Extension Transformers : un tir par mode (robot, véhicule), src/render/fx/tfSignatures.ts.
+    case 'optimus': case 'bumblebee': case 'ironhide': case 'ratchet': case 'jazz':
+    case 'arcee': case 'grimlock': case 'wheeljack': case 'hotrod': case 'elita':
+    case 'bulkhead': case 'sideswipe': case 'prowl': case 'mirage': case 'ultramagnus':
+      if (!playTfAttack(fx, slot, unit, name, targets, o, b0, t0, col)) fx.shot('dotInk', o, t0, fx.travel(o, b0, 2000), hitGeneric, col);
+      return;
     default: {
       const m = fx.shot('dotInk', o, t0, fx.travel(o, b0, 2000), hitGeneric, col);
       m.s.tint = col;
@@ -795,6 +802,8 @@ function mulanAvalanche(fx: CombatFx, slot: number, targets: readonly number[]):
 
 export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: string, targets: readonly number[]): void {
   const col = UNIT_FX_COLOR[unit] ?? 0xffffff;
+  // Extension Transformers : transformation robot ↔ véhicule et compétences des Autobots.
+  if (playTfAbility(fx, slot, unit, name, targets, col)) return;
   const c = fx.host.cell(slot);
   const t0 = targets[0];
   switch (unit) {
@@ -997,7 +1006,10 @@ export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: stri
 
 const BOSS_COLOR: Record<BossId, number> = {
   jafar: 0xc06aff, cruella: 0x8fcf3a, ursula: 0x9a5ad0, malefique: 0x6fe07a, galactus: 0xb07aff, bouffon: 0xff8a1f, thanos: 0xf6c64a,
+  starscream: 0xff8a2a, soundwave: 0xff5ad8, shockwave: 0xffd23a, devastator: 0xf2c33c, blitzwing: 0x7fd8ff, megatron: 0xb05aff, unicron: 0xff8a2a,
 };
+/** Decepticons : impact « Galactus » (débris et lueur) à leur couleur, explosion pour les missiles de Starscream. */
+const TF_BOSS_LAND: Partial<Record<BossId, number>> = { starscream: 5, soundwave: 0, shockwave: 4, devastator: 4, blitzwing: 4, megatron: 4, unicron: 4 };
 
 function bossLand(m: Mote): void {
   const fx = fxOf(m);
@@ -1050,7 +1062,7 @@ export function playBossPower(fx: CombatFx, boss: BossId, slots: readonly number
     fx.glow(src.x, src.y, col, 3.2, 0.5);
     fx.ring(src.x, src.y, col, 140, 0.45);
   }
-  const code = ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'].indexOf(boss);
+  const code = TF_BOSS_LAND[boss] ?? ['jafar', 'cruella', 'ursula', 'malefique', 'galactus', 'bouffon'].indexOf(boss);
   const tex = boss === 'bouffon' ? 'pumpkin' : boss === 'jafar' ? 'spiral' : boss === 'thanos' ? 'gem' : boss === 'ursula' ? 'bubble' : 'glow';
   slots.forEach((s, i) => {
     const c = fx.host.cell(s);

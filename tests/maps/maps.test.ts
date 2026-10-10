@@ -37,9 +37,10 @@ describe('géométrie du plateau', () => {
 });
 
 describe('maps', () => {
-  it('12 maps, 7 variantes et 7 arènes, identifiants uniques', () => {
-    expect(MAPS.length).toBe(19);
-    expect(ARENAS.length).toBe(7);
+  it('12 maps, 7 variantes, 3 maps Transformers et 14 arènes, identifiants uniques', () => {
+    expect(MAPS.length).toBe(22);
+    expect(ARENAS.length).toBe(14);
+    expect(mapsForUniverse('transformers')).toHaveLength(3);
     expect(new Set(ALL_MAPS.map((m) => m.id)).size).toBe(ALL_MAPS.length);
     expect(mapsForUniverse('marvel')).toHaveLength(6);
     expect(mapsForUniverse('disney')).toHaveLength(13);

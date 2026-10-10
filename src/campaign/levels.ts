@@ -1,7 +1,8 @@
 // Campagne Solo : 6 chapitres × 10 niveaux (docs/campagne.md), en données, et construction de la
 // configuration moteur d'un niveau. Module pur (aucun accès au DOM ni au stockage).
 
-import type { BossId, Pack, UnitId } from '../data/types';
+import { BOSSES } from '../data/bosses';
+import type { BossId, BossPool, Pack, UnitId } from '../data/types';
 import type { GameConfig, PlayerSetup } from '../engine/types';
 import type { Profile } from '../meta/profile';
 
@@ -217,11 +218,11 @@ function buildLevels(): CampaignLevel[] {
   return out;
 }
 
-const BOSS_NAMES: Record<BossId, string> = {
+const BOSS_NAMES: Partial<Record<BossId, string>> = {
   jafar: 'Jafar & Iago', cruella: 'Cruella', ursula: 'Ursula', malefique: 'Maléfique',
   galactus: 'Galactus', bouffon: 'Bouffon Vert', thanos: 'Thanos',
 };
-export function bossDisplayName(id: BossId): string { return BOSS_NAMES[id]; }
+export function bossDisplayName(id: BossId): string { return BOSS_NAMES[id] ?? BOSSES[id].name; }
 
 export const levelId = (chapter: number, n: number): string => `c${chapter}-n${n}`;
 

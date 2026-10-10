@@ -54,6 +54,22 @@ const DEMO: Record<UnitId, Demo> = {
   buzzwoody: { atk: [['buzzwoody:laser', 'line']], ab: { name: 'Lasso de Woody', tgt: 'first' } },
   rapunzel: { atk: [['rapunzel:poele', 'first']], ab: { name: 'Fleur magique', fx: 'rapunzel:poele', tgt: 'first' } },
   vanralph: { atk: [['vanralph:poing', 'first'], ['vanralph:brise-bouclier', 'first']], ab: { name: 'Glitch', tgt: 'first' } },
+  // Extension Transformers (mode robot puis mode véhicule ; compétence = transformation ou pouvoir)
+  optimus: { atk: [['optimus:hache', 'chain'], ['optimus:charge', 'first']], ab: { name: 'Cri de ralliement', fx: 'optimus:ralliement', tgt: 'all' } },
+  bumblebee: { atk: [['bumblebee:canon', 'first'], ['bumblebee:rafale', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first' } },
+  ironhide: { atk: [['ironhide:canons', 'chain'], ['ironhide:fourgon', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first' } },
+  ratchet: { atk: [['ratchet:cle', 'first'], ['ratchet:sirene', 'first']], ab: { name: 'Réparation', tgt: 'first' } },
+  jazz: { atk: [['jazz:tir', 'first'], ['jazz:projecteur', 'first'], ['jazz:notes', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first', status: { stunFor: 0.6 } } },
+  arcee: { atk: [['arcee:lames', 'first'], ['arcee:moto', 'first']], ab: { name: 'Transformation : robot', tgt: 'first' }, crit: true },
+  grimlock: { atk: [['grimlock:epee', 'first'], ['grimlock:feu', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, status: { burn: 1, burnFor: 3 } },
+  wheeljack: { atk: [['wheeljack:grenade', 'first'], ['wheeljack:course', 'first']], ab: { name: 'Mine', fx: 'wheeljack:mine', tgt: 'chain' } },
+  hotrod: { atk: [['hotrod:double', 'first'], ['hotrod:flammes', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, status: { burn: 1, burnFor: 3 } },
+  elita: { atk: [['elita:precision', 'first'], ['elita:marque', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first', status: { marked: 0.15, markedFor: 4 } } },
+  bulkhead: { atk: [['bulkhead:boulet', 'first'], ['bulkhead:ecrasement', 'chain']], ab: { name: 'Transformation : véhicule', tgt: 'first', status: { stunFor: 0.8 } } },
+  sideswipe: { atk: [['sideswipe:lames', 'chain'], ['sideswipe:traversee', 'line']], ab: { name: 'Transformation : véhicule', tgt: 'first' } },
+  prowl: { atk: [['prowl:analyse', 'first'], ['prowl:sirene', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, status: { slow: 0.25, slowFor: 2 } },
+  mirage: { atk: [['mirage:tir', 'first'], ['mirage:invisible', 'first'], ['mirage:leurre', 'first']], ab: { name: 'Transformation : véhicule', tgt: 'first' }, crit: true },
+  ultramagnus: { atk: [['ultramagnus:marteau', 'chain'], ['ultramagnus:porte-voitures', 'first']], ab: { name: 'Bouclier d’équipe', tgt: 'first' } },
 };
 
 const UNIT_IDS = UNIT_LIST.map((u) => u.id);
