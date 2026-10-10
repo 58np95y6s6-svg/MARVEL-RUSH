@@ -30,6 +30,35 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-10r',
+    title: 'Jouer à deux',
+    date: '10 octobre 2026',
+    items: [
+      'Nouveau : « Jouer à deux » ! Vois si ton ou ta partenaire est en ligne et invite-le d’un geste en Coop Infini ou en Coop Niveaux.',
+      'Combat à deux : vos deux plateaux, chemins qui se rejoignent, 3 vies partagées, bouton « Offrir » une fois par vague et 6 emotes.',
+      'Coop Infini : des coffres pour chacun selon le palier atteint (bois, argent, or + Épique, héroïque, légendaire + Légendaire), or et gemmes à chaque vague, record du duo.',
+      'Coop Niveaux : 60 niveaux à deux avec des étoiles communes ; chaque chapitre s’ouvre quand vous avez fini tous les deux le chapitre Solo.',
+    ],
+  },
+  {
+    id: '2026-10-10q',
+    title: 'Équilibrage façon Rush Royale',
+    date: '10 octobre 2026',
+    items: [
+      'Équilibrage copié sur Rush Royale : vagues de monstres communs, et toutes les 5 vagues un lieutenant (PV ×5, plus rapide) escorté de monstres rapides.',
+      'Un lieutenant ou un boss qui passe la porte retire 2 vies (au lieu de toutes) ; en Coop, la porte n’a plus qu’une vie, comme dans Rush Royale.',
+      'Départ à 100 de mana, 5 % de coups critiques pour tous les héros, et les Légendaires gagnent bien plus de dégâts par niveau (tableaux de Rush Royale : Thor +129, Iron Man +107 par niveau…).',
+    ],
+  },
+  {
+    id: '2026-10-10p',
+    title: 'Couleurs de Loki et Coco',
+    date: '10 octobre 2026',
+    items: [
+      'Loki a maintenant une forme blanche et Coco une forme vert clair, pour les repérer d’un coup d’œil sur le plateau.',
+    ],
+  },
+  {
     id: '2026-10-10o',
     title: 'Nouveau style façon Rush Royale',
     date: '10 octobre 2026',

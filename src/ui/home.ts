@@ -11,6 +11,9 @@ import type { ChestContent } from '../meta/chests';
 import { balanceOf, playChests } from './chestOpening';
 import { readSavedGame, savedGameLabel } from '../meta/savegame';
 import { icon, tokenUrl, toast } from './kit';
+import { coopService } from '../net/service';
+import { presenceBadgeHtml } from './coop';
+import './coop.css';
 
 export interface HomeOptions {
   go: (hash: string) => void;
@@ -34,6 +37,9 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     </button>
     <button class="mr-btn hm-infinite" data-a="infini" data-tuto="home-infini">
       <span class="t">Solo Infini</span><small class="sub"></small>
+    </button>
+    <button class="mr-btn hm-duo" data-a="duo" data-tuto="home-duo">
+      <span class="hm-duo-b"></span><span class="hm-duo-r"><span class="t">Jouer à deux</span><small class="duo-sub"></small></span>
     </button>
     <div class="hm-grid">
       <button class="hm-tile chest" data-a="coffre" data-tuto="home-coffre">${icon('coffre')}<b>Coffre</b><small class="chest-sub"></small></button>
@@ -95,6 +101,17 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
   { const p = getProfile(); if (p && p.quests?.day !== today()) void updateProfile((q) => { ensureQuests(q); }); }
   render(getProfile());
   const off = onProfileChange(render);
+  // Présence de la partenaire (avatar, point vert, ce qu'elle fait).
+  const duoB = wrap.querySelector<HTMLElement>('.hm-duo-b')!, duoSub = wrap.querySelector<HTMLElement>('.duo-sub')!;
+  const renderDuo = () => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = presenceBadgeHtml();
+    duoB.replaceChildren(tmp.firstElementChild!);
+    const pr = coopService.partner();
+    duoSub.textContent = pr ? `${pr.name} est en ligne !` : (tmp.querySelector('small')?.textContent ?? '');
+  };
+  renderDuo();
+  const offDuo = coopService.onChange(renderDuo);
 
   wrap.addEventListener('click', async (e) => {
     const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset['a'];
@@ -105,6 +122,7 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     else if (a === 'tirages') o.go('#tirages');
     else if (a === 'quetes') o.go('#quetes');
     else if (a === 'route') o.go('#route');
+    else if (a === 'duo') o.go('#coop');
     else if (a === 'infini') {
       if (infiniteUnlocked(p)) o.onInfinite();
       else { infBtn.classList.remove('nope'); void infBtn.offsetWidth; infBtn.classList.add('nope'); toast('Termine le chapitre 1 de la campagne pour débloquer le Solo Infini.', 'warn'); }
@@ -120,5 +138,5 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     }
   });
 
-  return () => { off(); wrap.remove(); };
+  return () => { off(); offDuo(); wrap.remove(); };
 }

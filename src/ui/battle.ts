@@ -6,7 +6,7 @@ import type { BossId, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import {
   GRID_SIZE, MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, MAX_RANK, POWERUP_ATTACK_SPEED, POWERUP_COSTS,
-  POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
+  COOP_LIVES, POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, START_LIVES, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
   formationLength, growthBonus, growthPointsOf, rangeLabel,
   type Command, type Engine, type EngineEvent, type GameConfig, type PlayerId,
 } from '../engine';
@@ -14,6 +14,8 @@ import { getMap } from '../maps';
 import { BattleScene, type Fit } from '../render/scene';
 import { createBattleTracker, type BattleOutcome } from '../campaign/tracker';
 import { notifyBattleReady, type BattleTutoApi } from './battleHooks';
+import type { CoopGuest, CoopHost } from '../net/coop';
+import { createCoopHud, type CoopHud } from './coopHud';
 
 /** Résultat de fin de combat (campagne) : victoire, vague, vies restantes, deck et statistiques. */
 export type BattleResult = BattleOutcome;
@@ -43,6 +45,21 @@ export interface BattleOptions {
   // ---- Ajouts Tutoriel (optionnels, sans effet si absents) ----
   /** Scène prête : accès au moteur, aux cases à l'écran, au ralenti (tutoriel guidé, src/tutorial/). */
   onReady?: (api: BattleTutoApi) => void;
+  // ---- Coop à deux (§5.2, §5.5) ----
+  /** Partie Coop : l'hôte fait tourner le moteur, l'invitée dessine les instantanés reçus. */
+  coop?: CoopBattle;
+}
+
+export interface CoopBattle {
+  /** Session réseau : hôte (moteur local) ou invitée (moteur distant). */
+  session: CoopHost | CoopGuest;
+  /** Moteur fourni (invitée : `remoteEngine`). Absent : créé depuis `config` (hôte). */
+  engine?: Engine & { setState?(s: Engine['state']): void };
+  partner: { name: string; avatar: UnitId };
+  /** Abandon confirmé : quitter la partie. */
+  onQuit: () => void;
+  /** Observateur de la partie (statistiques des deux joueurs) : avant et après chaque pas de simulation. */
+  observe?: { before(st: Engine['state']): void; after(st: Engine['state'], evs: EngineEvent[]): void };
 }
 
 // ---- Ajout Tutoriel : crochets optionnels (types et abonnés dans ./battleHooks, module léger) ----
@@ -91,7 +108,8 @@ function signalGame(running: boolean): void {
 export function isGameRunning(): boolean { return gameRunning; }
 
 export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
-  const me: PlayerId = 'p1';
+  const coop = o.coop ?? null;
+  const me: PlayerId = coop?.session.me ?? 'p1';
   const map = getMap(o.config?.mapId ?? o.mapId ?? 'toits-new-york');
   const config: GameConfig = {
     mode: 'solo',
@@ -102,11 +120,17 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     ...o.config, // Campagne : configuration du niveau
   };
   config.mapId = map.id;
-  const engine: Engine = createEngine(config, o.saved); // Sauvegarde : reprise si `saved`
+  const engine: Engine = coop?.engine ?? createEngine(config, o.saved); // Sauvegarde : reprise si `saved`
+  const remote = coop?.engine?.setState ? coop.engine as Engine & { setState(s: Engine['state']): void } : null;
+  const coopHost = coop && coop.session.isHost ? coop.session as CoopHost : null;
+  const guestSession = coop && !coop.session.isHost ? coop.session as CoopGuest : null;
+  if (coopHost) coopHost.bindEngine(engine);
+  const meIdx = Math.max(0, engine.state.players.findIndex((x) => x.id === me));
+  const myP = () => engine.state.players[meIdx]!;
   const tracker = createBattleTracker(me); // Campagne : statistiques pour les contraintes d'étoiles
 
   // ---------------------------------------------------------------- squelette DOM
-  const wrap = el('div', 'mr-battle');
+  const wrap = el('div', coop ? 'mr-battle coop' : 'mr-battle');
   const host = el('div');
   host.style.cssText = 'position:absolute;inset:0';
   const stage = el('div', 'mr-stage');
@@ -116,7 +140,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   // Barre du haut
   const top = el('div', 'mr-top');
-  const lives = el('div', 'mr-lives', HEART_SVG.repeat(3));
+  const lives = el('div', 'mr-lives', HEART_SVG.repeat(config.mode === 'coop' ? COOP_LIVES : START_LIVES));
   const wave = el('div', 'mr-wave', '<div class="mr-wave-n mr-outline">Vague 1</div><div class="mr-wave-t mr-outline">0:30</div>');
   const pauseBtn = el('button', 'mr-pause', '<i></i>');
   pauseBtn.setAttribute('aria-label', 'Pause');
@@ -127,7 +151,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   try { if (localStorage.getItem('mr-speed') === '2') userSpeed = 2; } catch { /* stockage indisponible */ }
   const showSpeed = (): void => { speedBtn.textContent = `×${userSpeed}`; speedBtn.classList.toggle('on', userSpeed === 2); };
   // Tutoriel : toujours ×1, bouton masqué.
-  if (config.mode === 'tutoriel') { userSpeed = 1; speedBtn.hidden = true; }
+  if (config.mode === 'tutoriel' || coop) { userSpeed = 1; speedBtn.hidden = true; }
   showSpeed();
   speedBtn.addEventListener('click', () => {
     userSpeed = userSpeed === 2 ? 1 : 2;
@@ -186,7 +210,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const manaUpLv = manaUp.querySelector('.lv') as HTMLElement, manaUpCost = manaUp.querySelector('.cost > span') as HTMLElement;
   extra.prepend(manaUp);
   const cards = el('div', 'mr-cards');
-  const deck = engine.state.players[0]!.deck;
+  const deck = myP().deck;
   const cardEls = deck.map((id) => {
     const c = el('button', `mr-card rarity-${UNITS[id].rarity}`, `<img alt="" src="${svgUrl(unitSvg(id, 0))}"><span class="lv mr-outline">Nv.1</span><span class="pct mr-outline-s"></span><span class="cost mr-outline">${MANA_SVG}<span>100</span></span>`);
     c.setAttribute('aria-label', `Améliorer ${UNITS[id].name}`);
@@ -236,6 +260,9 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   let infoSlot = -1;
   let infoUnit: UnitId | null = null;
   let toastTimer = 0;
+  let lastSnapAt = 0;
+  let giftArmed = false;
+  let coopHud: CoopHud | null = null;
 
   const apply = (c: Command) => engine.apply(c);
   // Tutoriel : ralenti, gel et abonnés aux événements (voir BattleTutoApi).
@@ -251,7 +278,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   };
 
   // ---------------------------------------------------------------- HUD
-  const cache = { manaUp: '', mana: -1, cost: -1, wave: -1, time: '', lives: 3, count: -1, summonOff: null as boolean | null, cards: [] as string[], banner: '', bossKey: '', bossPct: -1, rage: '' };
+  const cache = { manaUp: '', mana: -1, cost: -1, wave: -1, time: '', lives: -1, count: -1, summonOff: null as boolean | null, cards: [] as string[], banner: '', bossKey: '', bossPct: -1, rage: '' };
 
   function showToast(msg: string): void {
     toast.textContent = msg;
@@ -271,7 +298,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   function updateHud(): void {
     const st = engine.state;
     if (countdown.isConnected) updateCountdown(st.countdown ?? 0);
-    const p = st.players[0]!;
+    const p = st.players[meIdx]!;
     const m = Math.floor(p.mana);
     if (m !== cache.mana) {
       if (m > cache.mana && cache.mana >= 0) { mana.classList.remove('gain'); void mana.offsetWidth; mana.classList.add('gain'); }
@@ -461,8 +488,9 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
           const st = engine.state;
           const result: BattleResult = {
             ...tracker.stats(st), won: ev.outcome === 'victoire', wave: ev.wave, livesLeft: st.lives,
-            deck: st.players[0]!.deck.slice(), seed: engine.config.seed,
+            deck: st.players[meIdx]!.deck.slice(), seed: engine.config.seed,
           };
+          coopHud?.end();
           const handled = o.onEnd?.(result) === true;
           if (!handled) window.setTimeout(() => showEnd(ev.outcome, ev.wave), 900);
           over = true;
@@ -493,6 +521,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   function setPaused(p: boolean): void {
     if (over) return;
+    if (coop) { pauseModal.classList.toggle('on', p); return; } // Coop : la partie continue
     userPaused = p;
     apply({ type: 'pause', paused: p });
     pauseModal.classList.toggle('on', p);
@@ -501,9 +530,13 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   pauseModal.addEventListener('click', (e) => {
     const a = (e.target as HTMLElement).closest('button')?.dataset['a'];
     if (a === 'resume') setPaused(false);
-    if (a === 'home') o.onHome();
+    if (a === 'home') { if (coop) coop.onQuit(); else o.onHome(); }
   });
-  const onVis = () => { if (document.hidden && !over) setPaused(true); };
+  if (coop) {
+    pauseModal.querySelector('p')!.textContent = 'La partie continue pendant ce temps !';
+    pauseModal.querySelector('[data-a="home"]')!.textContent = 'Quitter la partie';
+  }
+  const onVis = () => { if (document.hidden && !over && !coop) setPaused(true); };
   document.addEventListener('visibilitychange', onVis);
 
   // ---------------------------------------------------------------- commandes
@@ -515,7 +548,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   manaUp.addEventListener('click', () => {
     if (over) return;
     hideInfo();
-    const p = engine.state.players[0]!;
+    const p = myP();
     const ml = p.manaLevel ?? 0;
     if (ml >= MANA_UPGRADE_MAX) { showToast('Rendement du mana au maximum.'); shakeEl(manaUp); return; }
     if (p.mana < MANA_UPGRADE_COSTS[ml]!) { showToast('Pas assez de mana.'); shakeEl(manaUp); return; }
@@ -524,7 +557,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   cardEls.forEach((c) => c.el.addEventListener('click', () => {
     if (over) return;
     hideInfo();
-    const p = engine.state.players[0]!;
+    const p = myP();
     const lv = p.powerUps[c.id] ?? 1;
     if (lv >= POWERUP_MAX) { showToast('Amélioration maximale atteinte.'); shakeEl(c.el); return; }
     if (p.mana < POWERUP_COSTS[lv - 1]!) { showToast('Pas assez de mana.'); shakeEl(c.el); return; }
@@ -533,15 +566,15 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   // Bulle d'info
   function showInfo(slot: number): void {
-    const u = engine.state.players[0]!.grid[slot];
+    const u = myP().grid[slot];
     if (!u || !scene) return;
     const id = u.status.transformedInto ?? u.unit;
     const d = UNITS[id];
-    const lv = engine.state.players[0]!.powerUps[u.unit] ?? 1;
+    const lv = myP().powerUps[u.unit] ?? 1;
     const copyMul = u.status.copyMul ?? 1;
-    const growth = growthBonus(d.ability.params, growthPointsOf(d.ability.params, u, engine.state.players[0]!.mana));
+    const growth = growthBonus(d.ability.params, growthPointsOf(d.ability.params, u, myP().mana));
     const formation = d.ability.params.formationDamagePerAlly && u.unit === id
-      ? d.ability.params.formationDamagePerAlly * (Math.min(formationLength(engine.state.players[0]!.grid, slot), d.ability.params.formationMax ?? 3) - 1) : 0;
+      ? d.ability.params.formationDamagePerAlly * (Math.min(formationLength(myP().grid, slot), d.ability.params.formationMax ?? 3) - 1) : 0;
     const formationTag = formation > 0 ? `<span class="grow">Formation +${Math.round(formation * 100)} %</span>` : '';
     const nextUp = lv < POWERUP_MAX
       ? `<p class="next">Prochaine amélioration (Nv.${lv + 1}, ${POWERUP_COSTS[lv - 1]} mana) : +${Math.round(POWERUP_DAMAGE * 100)} % de dégâts et +${Math.round(POWERUP_ATTACK_SPEED * 100)} % de cadence pour tous les ${d.name}.</p>`
@@ -572,7 +605,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   const HOLD_MS = 300;
   let holdTimer = 0;
   function showRangeTag(slot: number): void {
-    const u = engine.state.players[0]!.grid[slot];
+    const u = myP().grid[slot];
     if (!u) return;
     rangeTag.textContent = `Portée : ${rangeLabel(u.status.transformedInto ?? u.unit)}`;
     // Sous l'aire de jeu, au-dessus des améliorations.
@@ -593,7 +626,16 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     if (!scene || over || userPaused || press) return;
     scene.toLogical(e.clientX, e.clientY, pt);
     const slot = scene.slotAt(pt.x, pt.y);
-    const u = slot >= 0 ? engine.state.players[0]!.grid[slot] : null;
+    const u = slot >= 0 ? myP().grid[slot] : null;
+    if (giftArmed) {
+      // Offrir : l'unité touchée part sur une case vide du plateau de la partenaire.
+      giftArmed = false;
+      coopHud?.armGift(false);
+      if (u) { apply({ type: 'gift', player: me, slot }); navigator.vibrate?.(20); }
+      else showToast('Touche une de tes unités pour l’offrir.');
+      e.preventDefault();
+      return;
+    }
     if (!u) { hideInfo(); return; }
     press = { id: e.pointerId, slot, x: pt.x, y: pt.y, dragging: false, held: false, unit: u.unit };
     try { host.setPointerCapture(e.pointerId); } catch { /* ignoré */ }
@@ -603,7 +645,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     holdTimer = window.setTimeout(() => {
       holdTimer = 0;
       if (!scene || press !== p || p.dragging || over) return;
-      if (engine.state.players[0]!.grid[p.slot]?.unit !== p.unit) return;
+      if (myP().grid[p.slot]?.unit !== p.unit) return;
       hideInfo();
       p.held = scene.showHold(p.slot);
       if (p.held) { showRangeTag(p.slot); navigator.vibrate?.(15); }
@@ -616,7 +658,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       // Le doigt bouge : glisser-fusionner (même après un appui long).
       endHold();
       press.held = false;
-      if (!engine.state.players[0]!.grid[press.slot]) { press = null; return; }
+      if (!myP().grid[press.slot]) { press = null; return; }
       press.dragging = scene.startDrag(press.slot);
       hideInfo();
     }
@@ -635,7 +677,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       return;
     }
     const to = scene.slotAt(pt.x, pt.y);
-    const grid = engine.state.players[0]!.grid;
+    const grid = myP().grid;
     const a = grid[p.slot], b = to >= 0 && to !== p.slot ? grid[to] : null;
     // Fusion, ou archétypes Copieur (Loki) et Booster de fusion (Coco) : même règle que le moteur.
     const action = dropAction(a, b);
@@ -665,6 +707,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   host.addEventListener('pointermove', onMove);
   host.addEventListener('pointerup', onUp);
   host.addEventListener('pointercancel', onCancel);
+  wrap.addEventListener('coop-quit', () => coop?.onQuit());
   const noMenu = (e: Event) => e.preventDefault();
   wrap.addEventListener('contextmenu', noMenu);
 
@@ -674,32 +717,55 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
-    // En Solo, la partie ralentit à 25 % pendant la lecture d'une bulle d'info.
-    const rate = speed * userSpeed * (infoSlot >= 0 ? 0.25 : 1) * tutoRate;
-    acc += tutoHeld ? 0 : dt * rate;
-    let steps = 0;
-    const maxSteps = Math.max(4, Math.ceil(speed * userSpeed * 3));
-    while (acc >= DT && steps < maxSteps) {
-      acc -= DT;
-      steps++;
-      scene.beforeTick();
-      tracker.before(engine.state);
-      engine.tick();
-      const evs = engine.drainEvents();
-      tracker.after(engine.state, evs);
-      scene.afterTick(evs);
-      scene.settleDrops();
-      onEvents(evs);
-      if (tutoListeners.size && evs.length) for (const fn of tutoListeners) { try { fn(evs); } catch (err) { console.error(err); } }
+    let alpha: number;
+    if (remote && guestSession) {
+      // Invitée : l'état vient des instantanés de l'hôte (10/s), interpolés entre deux réceptions.
+      for (const snap of guestSession.drain()) {
+        scene.beforeTick();
+        tracker.before(engine.state);
+        coop?.observe?.before(engine.state);
+        remote.setState(snap.state);
+        tracker.after(engine.state, snap.events);
+        coop?.observe?.after(engine.state, snap.events);
+        scene.afterTick(snap.events);
+        scene.settleDrops();
+        onEvents(snap.events);
+        lastSnapAt = now;
+      }
+      alpha = Math.min(1, (now - lastSnapAt) / (1000 * DT * 2));
+    } else {
+      // En Solo, la partie ralentit à 25 % pendant la lecture d'une bulle d'info (pas en Coop).
+      const rate = speed * userSpeed * (infoSlot >= 0 && !coop ? 0.25 : 1) * tutoRate;
+      acc += tutoHeld ? 0 : dt * rate;
+      let steps = 0;
+      const maxSteps = Math.max(4, Math.ceil(speed * userSpeed * 3));
+      while (acc >= DT && steps < maxSteps) {
+        acc -= DT;
+        steps++;
+        scene.beforeTick();
+        tracker.before(engine.state);
+        coop?.observe?.before(engine.state);
+        engine.tick();
+        const evs = engine.drainEvents();
+        coopHost?.afterTick(evs);
+        tracker.after(engine.state, evs);
+        coop?.observe?.after(engine.state, evs);
+        scene.afterTick(evs);
+        scene.settleDrops();
+        onEvents(evs);
+        if (tutoListeners.size && evs.length) for (const fn of tutoListeners) { try { fn(evs); } catch (err) { console.error(err); } }
+      }
+      if (steps >= maxSteps) acc = Math.min(acc, DT);
+      alpha = acc / DT;
     }
-    if (steps >= maxSteps) acc = Math.min(acc, DT);
     if (infoSlot >= 0) {
-      const u = engine.state.players[0]!.grid[infoSlot];
+      const u = myP().grid[infoSlot];
       if (!u || u.unit !== infoUnit) hideInfo();
     }
-    if (press?.held && (over || engine.state.players[0]!.grid[press.slot]?.unit !== press.unit)) { endHold(); press.held = false; }
+    if (press?.held && (over || myP().grid[press.slot]?.unit !== press.unit)) { endHold(); press.held = false; }
     updateHud();
-    scene.render(dt, acc / DT, engine.state.phase === 'pause' || over);
+    coopHud?.update();
+    scene.render(dt, alpha, engine.state.phase === 'pause' || over);
   }
 
   // ---------------------------------------------------------------- démarrage
@@ -712,6 +778,31 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       onFit(s.fit);
       s.resize();
       engine.drainEvents();
+      if (coop) {
+        coopHud = createCoopHud({
+          stage, wrap, dock, extra, scene: s, engine, me, partner: coop.partner, session: coop.session,
+          toast: showToast,
+          onGift: () => {
+            if (over) return;
+            if (myP().giftUsedThisWave) { showToast('Tu as déjà offert une unité pendant cette vague.'); return; }
+            giftArmed = !giftArmed;
+            coopHud?.armGift(giftArmed);
+            if (giftArmed) { hideInfo(); showToast('Touche l’unité à offrir à ta partenaire.'); }
+          },
+        });
+        if (coopHost) {
+          // L'hôte attend que sa partenaire ait chargé la partie (15 s au plus) avant le compte à rebours.
+          if (!coopHost.isGuestLoaded) {
+            engine.apply({ type: 'pause', paused: true });
+            coopHud.waiting('Ta partenaire charge la partie…');
+            let released = false;
+            const release = () => { if (released) return; released = true; offLoaded(); engine.apply({ type: 'pause', paused: false }); coopHud?.waiting(null); };
+            const offLoaded = coopHost.onGuestLoaded(release);
+            window.setTimeout(release, 15000);
+          }
+        } else guestSession?.loaded();
+        lastSnapAt = performance.now();
+      }
       updateHud();
       popWave(1);
       signalGame(true);
@@ -753,6 +844,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       signalGame(false);
       cancelAnimationFrame(raf);
       tutoListeners.clear();
+      coopHud?.destroy();
       clearTimeout(toastTimer);
       clearTimeout(holdTimer);
       document.removeEventListener('visibilitychange', onVis);

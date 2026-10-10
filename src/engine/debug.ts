@@ -93,3 +93,8 @@ export function runSeconds(engine: Engine, seconds: number): void {
   const n = Math.round(seconds * 20);
   for (let i = 0; i < n; i++) engine.tick();
 }
+
+/** Tests : retire la chance de critique par défaut (5 %, Rush Royale) pour des dégâts exacts. */
+export function debugNoCrit(engine: Engine, on = true): void {
+  ctxOf(engine).debugNoCrit = on;
+}

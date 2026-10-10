@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine';
-import { debugPlace, debugSpawn } from '../../src/engine/debug';
+import { debugNoCrit, debugPlace, debugSpawn } from '../../src/engine/debug';
 import { GRID_SIZE } from '../../src/engine/types';
 import { MARVEL, ofType, quiet, setup, simState, solo, step } from './helpers';
 import { UNITS } from '../../src/data/units';
 import { waveHp } from '../../src/data/enemies';
 import { RANK_ATTACK_SPEED, RANK_DAMAGE } from '../../src/engine/combat';
+import { levelDamageMul } from '../../src/engine/internal';
 
 /** Dégâts de base de Captain Marvel (portée globale). */
 const CM = UNITS.cmarvel.damage;
@@ -14,7 +15,7 @@ describe('invocation', () => {
   it('coûte 10 puis +10, pose une unité du deck au rang 1 sur une case vide', () => {
     const e = quiet();
     const p = e.state.players[0]!;
-    expect(p.mana).toBe(150); // départ : 150 de mana (début de partie allégé)
+    expect(p.mana).toBe(100); // départ : 100 de mana (Rush Royale)
     const costs: number[] = [];
     for (let i = 0; i < 4; i++) {
       costs.push(p.summonCost);
@@ -26,7 +27,7 @@ describe('invocation', () => {
       expect(p.grid[ev[0]!.slot]?.unit).toBe(ev[0]!.unit);
     }
     expect(costs).toEqual([10, 20, 30, 40]);
-    expect(p.mana).toBe(50);
+    expect(p.mana).toBe(0);
     expect(p.grid.filter(Boolean)).toHaveLength(4);
   });
 
@@ -131,8 +132,15 @@ describe('dégâts', () => {
     expect(r3 / r1).toBeCloseTo(1 + 2 * RANK_ATTACK_SPEED, 1);
     expect((1 + 6 * RANK_ATTACK_SPEED) * (1 + 6 * RANK_DAMAGE)).toBeCloseTo(7, 0);
   });
-  it('niveau de collection : +10 % par niveau', () => {
-    expect(firstHit(MARVEL, { levels: { cmarvel: 4 } })).toBeCloseTo(CM * 1.3);
+  it('niveau de collection : tableau Rush Royale (Mage de feu : +6,2 par niveau), sinon +10 % par niveau', () => {
+    expect(UNITS.cmarvel.damagePerLevel).toBe(6.2);
+    expect(firstHit(MARVEL, { levels: { cmarvel: 4 } })).toBeCloseTo(CM + 3 * 6.2);
+    // Sans tableau Rush Royale (Falcon) : +10 % des dégâts de base par niveau.
+    expect(UNITS.falcon.damagePerLevel).toBeUndefined();
+    expect(levelDamageMul(UNITS.falcon, 4)).toBeCloseTo(1.3);
+    // Notre niveau 1 = niveau de carte 7 de Rush Royale : Tesla 260 → 1 118 au niveau 15 (notre niveau 9).
+    expect(UNITS.ironman.damage * levelDamageMul(UNITS.ironman, 9)).toBeCloseTo(1118);
+    expect(UNITS.thor.damage * levelDamageMul(UNITS.thor, 6)).toBeCloseTo(834); // Inquisiteur : 834 au niveau 12
   });
   it('éveil : +6 % de dégâts et +4 % de vitesse par étoile', () => {
     expect(firstHit(MARVEL, { awakening: { cmarvel: 5 } })).toBeCloseTo(CM * 1.3 * 1.1); // + passif ★2 (+10 %)
@@ -148,8 +156,20 @@ describe('dégâts', () => {
   });
   it('talents : palier 3 actif au niveau 9 seulement', () => {
     // Captain Marvel, palier 3 option a : +25 % de dégâts.
-    expect(firstHit(MARVEL, { levels: { cmarvel: 8 }, talents: { cmarvel: ['a', 'a', 'a'] } })).toBeCloseTo(CM * 1.7);
-    expect(firstHit(MARVEL, { levels: { cmarvel: 9 }, talents: { cmarvel: ['a', 'a', 'a'] } })).toBeCloseTo(CM * 1.8 * 1.25);
+    expect(firstHit(MARVEL, { levels: { cmarvel: 8 }, talents: { cmarvel: ['a', 'a', 'a'] } })).toBeCloseTo(CM + 7 * 6.2);
+    expect(firstHit(MARVEL, { levels: { cmarvel: 9 }, talents: { cmarvel: ['a', 'a', 'a'] } })).toBeCloseTo((CM + 8 * 6.2) * 1.25);
+  });
+  it('critique : 5 % de chance par défaut (Rush Royale), dégâts ×2', () => {
+    const e = quiet();
+    debugNoCrit(e, false);
+    debugPlace(e, 0, 0, 'hawkeye', 7);
+    debugSpawn(e, { hp: 1e12 });
+    const hits = ofType(step(e, 20 * 120), 'hit');
+    const crits = hits.filter((h) => h.crit);
+    expect(hits.length).toBeGreaterThan(1000);
+    expect(crits.length / hits.length).toBeGreaterThan(0.035);
+    expect(crits.length / hits.length).toBeLessThan(0.065);
+    expect(crits[0]!.damage).toBeCloseTo(2 * hits.find((h) => !h.crit)!.damage);
   });
   it('armure et bouclier', () => {
     const e = quiet();

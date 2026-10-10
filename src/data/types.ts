@@ -35,6 +35,11 @@ export interface UnitDef {
   role: string;            // ex. « Dégâts de zone »
   targeting: Targeting;
   damage: number;          // dégâts de base au rang 1, niveau 1
+  /**
+   * Dégâts ajoutés par niveau de collection au-dessus de 1 (tableau par niveau de carte de Rush Royale,
+   * notre niveau 1 = niveau de carte 7). Absent : +10 % des dégâts de base par niveau (LEVEL_DAMAGE).
+   */
+  damagePerLevel?: number;
   attackInterval: number;  // secondes entre deux attaques
   /**
    * Portée d'attaque (§4.1 bis) : 'globale' = tout le chemin, sinon un rayon en cases mesuré depuis le

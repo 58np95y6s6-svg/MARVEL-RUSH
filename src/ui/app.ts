@@ -10,6 +10,7 @@
 //   #campagne/<ch>/<n>/jouer[/<vitesse>]  combat d'un niveau de campagne (plein écran)
 //   #encyclopedie[/mechants|/heros/<id>|/mechant/<id>]  encyclopédie des héros et des méchants
 //   #tutoriel    tutoriel guidé, partie 1 : combat scénarisé (src/tutorial/)
+//   #coop        jouer à deux : invitation, salon (#coop/salon), combat (#coop/combat), code (#coop/rejoindre/<code>)
 //   #combat      combat Solo Infini (deck actif du profil, récompenses de fin)
 //   #reprendre   reprise de la partie Solo sauvegardée (campagne ou Solo Infini, src/meta/savegame.ts)
 //   #dev/fast    combat accéléré (×8 ; #dev/fast/16 pour ×16)
@@ -23,6 +24,7 @@ import type { GameConfig } from '../engine/types';
 import { playerSetupFor } from '../meta/decks';
 import { emitMeta } from '../meta/events';
 import { activeDeck, getProfile, loadActiveProfile } from '../meta/profile';
+import { hashParams } from '../access/gate';
 import type { Shell, TabId } from './shell';
 import { afterOnboardingRoute, initTutorial, migrateTutorial, replayTutorial, wantsTutorialBattle } from '../tutorial';
 
@@ -53,6 +55,7 @@ function teardown(): void {
 }
 
 const SHELL_ROUTES: Record<string, TabId> = {
+  coop: 'accueil', 'coop/salon': 'accueil',
   '': 'accueil', tirages: 'tirages', collection: 'collection', decks: 'collection', campagne: 'campagne', quetes: 'accueil', route: 'accueil',
 };
 
@@ -179,6 +182,14 @@ async function route(): Promise<void> {
     return;
   }
 
+  // Coop : combat à deux, plein écran.
+  if (h === 'coop/combat') {
+    teardown();
+    const { mountCoopBattle } = await import('./coop');
+    cleanup = await mountCoopBattle(root, { go });
+    return;
+  }
+
   // Campagne : combat d'un niveau, plein écran (#campagne/<chapitre>/<niveau>/jouer[/<vitesse de dev>]).
   const cm = /^campagne\/(\d+)\/(\d+)\/jouer(?:\/(\d+))?$/.exec(h);
   if (cm) {
@@ -197,6 +208,7 @@ async function route(): Promise<void> {
   }
 
   const tab = SHELL_ROUTES[h] ?? (h.startsWith('campagne/') ? 'campagne' : 'accueil');
+  if (h.startsWith('coop')) { void ensureCoop(); }
   if (!shell) {
     teardown();
     const { mountShell } = await import('./shell');
@@ -215,7 +227,7 @@ async function route(): Promise<void> {
     });
   }
   const s = shell;
-  const route_ = h in SHELL_ROUTES || tab === 'campagne' ? h : '';
+  const route_ = h in SHELL_ROUTES || tab === 'campagne' || h.startsWith('coop') ? h : '';
   if (tab === 'tirages') {
     const { mountPulls } = await import('./pulls');
     s.show(tab, route_, (host) => mountPulls(host, { overlay: s.overlay, go }));
@@ -233,6 +245,11 @@ async function route(): Promise<void> {
       onChapter: (n) => go(`#campagne/${n}`),
       onPlay: (id) => { const [c, n] = id.slice(1).split('-n'); go(`#campagne/${c}/${n}/jouer`); },
     }));
+  } else if (h === 'coop' || h.startsWith('coop/')) {
+    const { mountCoop, mountCoopLobby } = await import('./coop');
+    const code = /^coop\/rejoindre\/([A-Za-z0-9]{6})$/.exec(h)?.[1];
+    if (h === 'coop/salon') s.show(tab, h, (host) => mountCoopLobby(host, { go, overlay: s.overlay }));
+    else s.show(tab, h, (host) => mountCoop(host, { go, overlay: s.overlay, joinCode: code?.toUpperCase() }));
   } else if (h === 'quetes') {
     const { mountQuests } = await import('./quests');
     s.show(tab, route_, (host) => mountQuests(host, { overlay: s.overlay, go }));
@@ -256,9 +273,22 @@ function unlockScroll(on: boolean): void {
   document.documentElement.style.touchAction = on ? 'auto' : '';
 }
 
+/** Coop : présence du duo et invitations reçues, actives sur tous les écrans (après le profil). */
+let coopReady: Promise<void> | null = null;
+function ensureCoop(): Promise<void> {
+  return (coopReady ??= (async () => {
+    const [{ coopService }, { installInvitePopup }] = await Promise.all([import('../net/service'), import('./coop')]);
+    installInvitePopup(go);
+    await coopService.start().catch(() => undefined);
+  })());
+}
+
 export function startApp(el: HTMLElement): void {
   root = el;
+  // Lien d'invitation (secours) : #k=<clé>&room=<CODE> → écran Coop, connexion directe au salon.
+  const roomCode = hashParams().get('room');
+  if (roomCode && /^[A-Za-z0-9]{6}$/.test(roomCode)) history.replaceState(null, '', `#coop/rejoindre/${roomCode.toUpperCase()}`);
   window.addEventListener('hashchange', () => void route());
   initTutorial({ go });
-  void loadActiveProfile().catch(() => null).then(() => route());
+  void loadActiveProfile().catch(() => null).then(() => { void ensureCoop(); return route(); });
 }

@@ -141,10 +141,10 @@ export function rankShapePath(rank: number): string {
  */
 export const TOKEN_COLORS: Record<string, string> = {
   ironman: '#3fc9e8', spiderman: '#ffd23f', hulk: '#d94fd0', thor: '#22b5a0', strange: '#5fd068',
-  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#e8414b', bucky: '#f2b632',
+  venom: '#b5e83c', cmarvel: '#ff6fa8', cap: '#ff9a2e', loki: '#f4f4f8', bucky: '#f2b632',
   hawkeye: '#46d6a8', falcon: '#59b8ff', widow: '#3ee0e0', shangchi: '#3b62e0',
   moana: '#1fb5c9', maui: '#ffc23a', pocahontas: '#4cc96a', mulan: '#ff7aa8', merida: '#5cb3ff',
-  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#9b6bff',
+  ariel: '#ffb347', foxhound: '#4a7cf0', tiana: '#d65ad1', nemo: '#ffd84a', coco: '#a6ef9a',
   nickjudy: '#a6e04a', buzzwoody: '#ef5050', rapunzel: '#5bd47a', vanralph: '#a35cf0',
   // Extension DC : couleurs contrastées avec le costume de chaque héros, distinctes de toutes les autres.
   batman: '#f7e27a', superman: '#ff4a3d', wonderwoman: '#a8f0ff', greenlantern: '#e6e6f2', flash: '#8ff7e0',

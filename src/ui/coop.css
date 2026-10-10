@@ -1,0 +1,231 @@
+/* Combat Coop (§5.2) : deux plateaux de 120 px (le mien en bas), commandes plus compactes. Coordonnées de la
+   scène logique 1000 × 1600 (src/maps/layout.ts, coopLayout). */
+.mr-battle.coop .mr-bossbar { top: calc(118px - var(--ext-top)); height: 70px; left: 150px; right: 150px; }
+.mr-battle.coop .mr-boss-face { width: 70px; height: 70px; border-width: 5px; }
+.mr-battle.coop .mr-banner { top: 726px; left: 290px; max-width: 520px; font-size: 26px; padding: 8px 20px; }
+.mr-battle.coop .mr-banner img { width: 40px; height: 40px; }
+.mr-battle.coop .mr-toast { top: 1176px; font-size: 32px; }
+.mr-battle.coop .mr-wavepop { top: 640px; font-size: 100px; }
+.mr-battle.coop .mr-float-label { top: 1180px; font-size: 32px; }
+.mr-battle.coop .mr-boss-mana { top: 860px; }
+.mr-battle.coop .mr-cards { top: 1290px; height: 116px; gap: 12px; }
+.mr-battle.coop .mr-card { height: 116px; border-radius: 22px; }
+.mr-battle.coop .mr-card img { width: 128px; top: -10px; }
+.mr-battle.coop .mr-card .lv { font-size: 22px; }
+.mr-battle.coop .mr-card .pct { font-size: 20px; }
+.mr-battle.coop .mr-card .cost { height: 40px; font-size: 28px; }
+.mr-battle.coop .mr-card .cost svg { width: 20px; height: 26px; }
+.mr-battle.coop .mr-mana { top: 1440px; width: 250px; height: 110px; }
+.mr-battle.coop .mr-summon { top: 1428px; height: 150px; left: 300px; width: 340px; }
+.mr-battle.coop .mr-extra { top: 1420px; height: 166px; right: 24px; width: 330px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; }
+.mr-battle.coop .mr-manaup { width: 190px; height: 100px; }
+.mr-battle.coop .mr-manaup .t { font-size: 30px; }
+.mr-battle.coop .mr-manaup .lv { font-size: 22px; }
+.mr-battle.coop .mr-manaup .cost { font-size: 26px; }
+.mr-battle.coop .mr-board-count { order: 3; font-size: 24px; padding: 4px 16px; }
+
+/* Pastille de la partenaire, entre les deux plateaux (côté gauche, libre). */
+.co-chip {
+  position: absolute; left: 22px; top: 622px; display: flex; align-items: center; gap: 12px; max-width: 420px;
+  padding: 6px 22px 6px 6px; border-radius: 60px; background: rgba(20, 14, 40, .62); border: 3px solid rgba(255,255,255,.14);
+  font-size: 34px; pointer-events: none;
+}
+.co-chip img { width: 64px; height: 64px; border-radius: 50%; background: #3a2f6b; border: 4px solid var(--ink); object-fit: cover; }
+.co-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.co-dot { width: 18px; height: 18px; border-radius: 50%; background: #5ee36a; border: 3px solid var(--ink); flex: none; }
+.co-dot.off { background: #9aa0b4; }
+
+/* Bulles d'emote */
+.co-bubble {
+  position: absolute; display: flex; align-items: center; gap: 12px; padding: 8px 26px 8px 8px; border-radius: 50px;
+  background: #fff; color: var(--ink); border: 6px solid var(--ink); box-shadow: 0 8px 0 rgba(0,0,0,.3);
+  font-family: var(--body); font-weight: 900; font-size: 34px; white-space: nowrap; opacity: 0; pointer-events: none; z-index: 7;
+}
+.co-bubble img { width: 72px; height: 72px; border-radius: 50%; background: #ffe7a6; object-fit: cover; }
+.co-bubble.partner { left: 40px; top: 520px; }
+.co-bubble.me { right: 40px; top: 1180px; }
+.co-bubble.on { animation: co-bubble 2.6s ease-out forwards; }
+@keyframes co-bubble { 0% { opacity: 0; transform: scale(.4); } 10% { opacity: 1; transform: scale(1.1); } 18% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
+
+/* Bouton et palette d'emotes */
+.co-emote-btn {
+  width: 96px; height: 96px; border-radius: 28px; border: 6px solid var(--ink); padding: 10px; cursor: pointer;
+  background: linear-gradient(#8a7fb8, #4b4280); box-shadow: 0 8px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.3);
+}
+.co-emote-btn svg { width: 100%; height: 100%; display: block; }
+.co-palette {
+  position: absolute; right: 24px; top: calc(128px - var(--ext-top)); width: 600px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  padding: 16px; border-radius: 30px; background: rgba(20, 14, 40, .9); border: 5px solid var(--ink); z-index: 9;
+}
+.co-palette.on { display: grid; animation: mr-pop .16s ease-out; }
+.co-palette button {
+  display: grid; justify-items: center; gap: 4px; padding: 10px 4px; border-radius: 22px; border: 4px solid var(--ink); cursor: pointer;
+  background: linear-gradient(#fff, #dfe6f3); color: var(--ink); font-family: var(--body); font-weight: 900; font-size: 24px;
+}
+.co-palette img { width: 84px; height: 84px; border-radius: 50%; background: #ffe7a6; object-fit: cover; }
+
+/* Offrir */
+.co-gift {
+  position: relative; width: 130px; height: 100px; padding: 4px 0 0; border-radius: 26px; border: 6px solid var(--ink); cursor: pointer; color: #fff;
+  background: linear-gradient(#ff9ad0, #e0458f); box-shadow: 0 8px 0 #1d1733, inset 0 4px 0 rgba(255,255,255,.45);
+  display: grid; justify-items: center; align-content: center; font-size: 26px; line-height: 1;
+}
+.co-gift svg { width: 48px; height: 48px; }
+.co-gift.used { filter: saturate(.2) brightness(.75); }
+.co-gift.armed { animation: co-armed .6s ease-in-out infinite alternate; }
+@keyframes co-armed { to { transform: scale(1.08); box-shadow: 0 8px 0 #1d1733, 0 0 0 10px rgba(255, 154, 208, .55); } }
+
+/* Attente de la partenaire */
+.co-wait { z-index: 30; }
+.co-spin { width: 46px; height: 46px; margin: 4px auto 0; border-radius: 50%; border: 6px solid rgba(255,255,255,.25); border-top-color: #ffd23f; animation: co-spin .8s linear infinite; }
+.co-spin[hidden] { display: none; }
+@keyframes co-spin { to { transform: rotate(360deg); } }
+
+/* ======================= Écrans « Jouer à deux » (DA rr.css) ======================= */
+.du {
+  position: absolute; inset: 0; overflow-y: auto; color: #fff; padding: 8px 12px 16px; display: flex; flex-direction: column; gap: 10px;
+  background:
+    radial-gradient(120% 40% at 50% 0%, rgba(255,122,184,.22), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 14px, transparent 14px 28px),
+    linear-gradient(var(--rr-bg), var(--rr-bg2));
+}
+.du > * { flex: none; }
+.du-head { position: relative; display: flex; align-items: center; justify-content: center; min-height: 40px; }
+.du-head .scr-title { margin: 2px 0 2px; font-size: 26px; padding: 0 70px; }
+.du-back { position: absolute; left: 0; top: 2px; }
+.du-partner {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 18px; color: var(--rr-navy);
+  background: linear-gradient(var(--rr-tile-l) 0 50%, var(--rr-tile) 50%); border: 3px solid var(--ink); box-shadow: 0 0 0 4px var(--rr-frame), 0 0 0 7px var(--ink);
+  margin: 4px 6px;
+}
+.du-av { position: relative; flex: none; }
+.du-av img { width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--ink); background: #3a2f6b; object-fit: cover; display: block; }
+.du-av i, .du-badge i { position: absolute; right: -2px; bottom: 0; width: 16px; height: 16px; border-radius: 50%; background: #9aa0b4; border: 3px solid var(--ink); }
+.du-partner.on .du-av i, .du-badge.on i { background: #5ee36a; }
+.du-pt { display: grid; min-width: 0; }
+.du-pt b { font: 400 22px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.du-pt small { font: 800 14px var(--body); color: var(--rr-text); }
+.du-partner.on .du-pt small { color: #2a8a2e; }
+.du-seg { margin: 2px 6px; }
+.du-seg > button { flex: 1; }
+.du-panel { margin: 0 6px; padding: 10px; border-radius: 16px; background: var(--rr-in); color: var(--rr-navy); border: 3px solid var(--ink); box-shadow: 0 0 0 4px var(--rr-frame), 0 0 0 7px var(--ink); }
+.du-rec { margin: 0 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font: 400 18px var(--display); }
+.du-rec .ic { width: 24px; height: 24px; }
+.du-rec b { font-weight: 400; color: #c0392b; }
+.du-tiers { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.du-tiers li { display: grid; justify-items: center; gap: 2px; padding: 6px 2px 4px; border-radius: 12px; background: linear-gradient(var(--rr-tile-l), var(--rr-tile)); border: 2.5px solid var(--rr-tile-b); }
+.du-tiers li svg { width: 46px; height: 40px; }
+.du-tiers li b { font: 400 16px var(--display); }
+.du-tiers li.got { background: linear-gradient(#9fe26a, #7fcf4a); border-color: #4f9a2a; }
+.du-tiers li.next { border-color: #f59a1f; box-shadow: 0 0 0 2px #ffd23f; animation: hm-pulse 2.4s ease-in-out infinite; }
+.du-note { margin: 8px 2px 0; font: 700 13px/1.3 var(--body); color: var(--rr-text); text-align: center; }
+.du-chapters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 8px; }
+.du-chapters button, .du-levels button {
+  border-radius: 12px; border: 2.5px solid var(--ink); cursor: pointer; color: #fff; padding: 6px 0;
+  background: linear-gradient(#5ab4ff, #2b74de); box-shadow: 0 3px 0 #1b468f; font: 400 18px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink);
+}
+.du-chapters button.on, .du-levels button.on { background: linear-gradient(#ffc84a, #f59a1f); box-shadow: 0 3px 0 #a8461b; }
+.du-chapters button.locked, .du-levels button.locked { background: linear-gradient(#d3dae4, #a2adbd); box-shadow: 0 3px 0 #626d80; }
+.du-chapters .ic { width: 18px; height: 18px; }
+.du-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.du-levels button { display: grid; justify-items: center; padding: 4px 0; }
+.du-levels button span { font: 400 12px var(--display); color: #ffd23f; -webkit-text-stroke-width: 2.5px; letter-spacing: -1px; }
+.du-levels button.boss:not(.locked) { background: linear-gradient(#ff7a6e, #d8322c); box-shadow: 0 3px 0 #7e1620; }
+.du-levels button.boss.on { background: linear-gradient(#ffc84a, #f59a1f); box-shadow: 0 3px 0 #a8461b; }
+.du-lvl { margin: 8px 0 0; display: grid; text-align: center; }
+.du-lvl b { font: 400 17px var(--display); }
+.du-lvl small { font: 700 13px var(--body); color: var(--rr-text); }
+.du-invite-btn { margin: 4px auto 0; width: min(100%, 340px); padding: 10px 6px 12px; }
+.du-invite-btn .t { display: block; font-size: 28px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.du-invite-btn.off { filter: saturate(.35); }
+.du-inviting { margin: 4px 6px 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: rgba(20,14,40,.55); border: 3px solid rgba(255,255,255,.14); font: 800 15px var(--body); }
+.du-inviting > span:nth-child(2) { flex: 1; }
+.du-inviting .co-spin, .du-wait .co-spin, .du-pcard .co-spin { width: 24px; height: 24px; border-width: 4px; margin: 0; flex: none; }
+.du-inviting .mr-btn { font-size: 16px; padding: 6px 12px 8px; }
+.du-more { margin: 2px 6px 0; border-radius: 16px; background: rgba(20,14,40,.45); border: 3px solid rgba(255,255,255,.12); padding: 4px 10px 10px; }
+.du-more summary { cursor: pointer; padding: 6px 2px; font: 400 17px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); }
+.du-wide { width: 100%; font-size: 18px; padding: 8px 6px 10px; margin-bottom: 8px; }
+.du-join { display: flex; gap: 8px; }
+.du-join input {
+  flex: 1; min-width: 0; font: 400 20px var(--display); letter-spacing: 3px; text-transform: uppercase; text-align: center; padding: 8px; border-radius: 12px;
+  border: 3px solid var(--ink); background: var(--rr-in); color: var(--rr-navy); user-select: text; -webkit-user-select: text;
+}
+.du-join .mr-btn { font-size: 18px; padding: 6px 14px 8px; }
+.du-room { display: grid; justify-items: center; gap: 6px; margin-bottom: 10px; }
+.du-room > small { font: 800 13px var(--body); opacity: .85; }
+.du-code { font: 400 40px var(--display); letter-spacing: 6px; color: #ffd23f; paint-order: stroke fill; -webkit-text-stroke: 7px var(--ink); }
+.du-row { display: flex; gap: 8px; }
+.du-row .mr-btn { font-size: 17px; padding: 6px 14px 8px; }
+.du-wait { display: flex; align-items: center; gap: 8px; font: 800 14px var(--body); }
+.du-link { background: none; border: 0; color: #9fc3ff; text-decoration: underline; font: 700 13px var(--body); cursor: pointer; }
+.du-hist { margin: 0 6px; }
+.du-hist h3 { margin: 4px 0; font: 400 16px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); }
+.du-hist ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.du-hist li { display: grid; grid-template-columns: 1fr auto; padding: 6px 10px; border-radius: 10px; background: rgba(255,255,255,.08); font: 700 13px var(--body); }
+.du-hist li small { grid-column: 1 / 3; opacity: .75; }
+
+/* Salon */
+.du-mode { margin: 0; display: grid; text-align: center; font: 400 22px var(--display); color: #ffd23f; paint-order: stroke fill; -webkit-text-stroke: 5px var(--ink); }
+.du-mode small { font: 800 13px var(--body); color: #dfe8f0; -webkit-text-stroke: 0; }
+.du-players { display: grid; gap: 8px; margin: 0 6px; }
+.du-pcard {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 16px; color: var(--rr-navy);
+  background: linear-gradient(var(--rr-tile-l) 0 46%, var(--rr-tile) 46%); border: 3px solid var(--ink); box-shadow: 0 4px 0 rgba(0,0,0,.3);
+}
+.du-pcard.ready { background: linear-gradient(#9fe26a 0 46%, #7fcf4a 46%); border-color: #2a6e24; }
+.du-pcard.empty { justify-content: flex-start; min-height: 74px; }
+.du-pav { width: 54px; height: 54px; flex: none; border-radius: 50%; border: 3px solid var(--ink); background: #3a2f6b; object-fit: cover; }
+.du-pinfo { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.du-pinfo b { font: 400 18px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.du-pinfo b em { font-style: normal; font-size: 14px; color: var(--rr-text); }
+.du-pinfo small { font: 800 12px var(--body); color: var(--rr-text); }
+.du-deck { display: flex; gap: 0; }
+.du-deck img { width: 40px; height: 40px; }
+.du-ready { flex: none; font: 400 16px var(--display); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 3.5px var(--ink); }
+.du-decks { margin: 0 6px; display: grid; gap: 4px; }
+.du-decks > small { font: 400 15px var(--display); paint-order: stroke fill; -webkit-text-stroke: 3px var(--ink); }
+.du-deckpick { display: grid; gap: 6px; }
+.du-deckpick button {
+  display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 12px; cursor: pointer; color: var(--rr-navy);
+  background: var(--rr-in); border: 3px solid var(--rr-frame-dd);
+}
+.du-deckpick button b { font: 400 15px var(--display); flex: none; }
+.du-deckpick button.on { border-color: #f59a1f; box-shadow: 0 0 0 2px #ffd23f; background: #fff6d8; }
+.du-deckpick button:disabled { opacity: .75; }
+.du-deckpick .du-deck img { width: 36px; height: 36px; }
+.du-readybtn { margin: 6px auto 0; width: min(100%, 340px); padding: 10px 6px 12px; }
+.du-readybtn .t { display: block; font-size: 30px; line-height: 1; }
+.du-readybtn:disabled { filter: saturate(.3) brightness(.85); }
+.du-stars { font: 400 40px var(--display); color: #ffd23f; letter-spacing: 6px; }
+
+/* Invitation reçue (au-dessus de tout) */
+.du-invite { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: start center; padding: max(18px, env(safe-area-inset-top)) 14px 0; background: rgba(8,12,26,.45); animation: mk-fade .2s; }
+.du-invite-card {
+  width: min(360px, 100%); display: grid; justify-items: center; gap: 8px; padding: 14px 14px 12px; border-radius: 20px; color: var(--rr-navy); text-align: center;
+  background: var(--rr-in); border: 4px solid var(--ink); box-shadow: 0 0 0 5px var(--rr-frame), 0 0 0 8px var(--ink), 0 12px 0 4px rgba(0,0,0,.35);
+  animation: du-drop .35s cubic-bezier(.2,1.4,.4,1); font-family: var(--body);
+}
+@keyframes du-drop { from { transform: translateY(-60px); opacity: 0; } }
+.du-invite-card img { width: 76px; height: 76px; border-radius: 50%; border: 4px solid var(--ink); background: #ffe7a6; object-fit: cover; margin-top: -2px; }
+.du-invite-card p { margin: 0; font: 800 17px/1.3 var(--body); }
+.du-invite-bar { width: 100%; height: 8px; border-radius: 6px; background: #1e2f52; overflow: hidden; }
+.du-invite-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #ffd23f, #f59a1f); transition: width .25s linear; }
+.du-invite-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.du-invite-row .mr-btn { font-size: 20px; padding: 8px 6px 10px; }
+
+/* Accueil : bouton « Jouer à deux » avec la présence de la partenaire */
+.hm-duo { width: min(78vw, 310px); padding: 6px 10px 8px; background: linear-gradient(#ff9ad0, #e0458f); --sh: #8a1f55; display: flex; align-items: center; gap: 10px; text-align: left; }
+.hm-duo .t { font-size: 25px; line-height: 1; display: block; }
+.hm-duo .hm-duo-r { display: grid; min-width: 0; flex: 1; }
+.du-badge { position: relative; flex: none; display: inline-block; }
+.du-badge img { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--ink); background: #3a2f6b; object-fit: cover; display: block; }
+.du-badge-t { display: grid; min-width: 0; }
+.du-badge-t b { display: none; }
+.du-badge-t small { font: 400 13px var(--display) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block !important; margin: 0 !important; }
+.du-warn { color: #ffd0c8; background: rgba(160, 24, 44, .5); border-radius: 12px; padding: 8px; margin: 0 6px; }
+@media (max-height: 700px) {
+  .hm-duo { padding: 3px 10px 5px; }
+  .hm-duo .t { font-size: 22px; }
+  .hm-duo .du-badge img { width: 32px; height: 32px; }
+}
+.du-readybtn { position: sticky; bottom: 6px; z-index: 2; }

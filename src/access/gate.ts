@@ -22,6 +22,14 @@ export async function getAccessKey(): Promise<string | null> {
   try { return ((await get(RAW_KEY_STORE)) as string | undefined) ?? null; } catch { return null; }
 }
 
+/**
+ * Graine de l'espace de rendez-vous du duo (présence Coop) : le hash de la clé attendu au build, identique sur
+ * tous les appareils qui ont la clé (même si la clé brute n'a pas été mémorisée), sinon la clé brute.
+ */
+export async function presenceSeed(): Promise<string | null> {
+  return EXPECTED || (await getAccessKey());
+}
+
 /** Lit les paramètres du fragment d'URL (#k=…&room=…). */
 export function hashParams(): URLSearchParams {
   return new URLSearchParams(location.hash.replace(/^#/, ''));
