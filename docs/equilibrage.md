@@ -93,7 +93,7 @@ Mesures (`scripts/simulate.ts`, Solo Infini, niveau 1, toits de New York) :
 
 **Économie** : « Mana + » (50/100/200/400/800, +20 % de mana par élimination et par vague et par niveau) ; récompense de boss = 2,5 / 5,5 / 8 × le coût d'invocation actuel (lieutenant / gros boss / Thanos), × rendement, pour chaque joueur ; amélioration d'un héros : +15 % de dégâts **et +6 % de cadence** par niveau.
 
-**Début de partie allégé** (le joueur trouvait le premier niveau très dur) : 150 de mana au départ (au lieu de 100 : supprime les défaites en vague 1 quand les premières invocations tombent au centre, hors de portée) ; PV ×0,7 en vague 1, remontant jusqu'à ×1 en vague 12 (`earlyHpStart`, `earlyHpUntil`) ; la rampe tardive (×1,18 par vague) est inchangée.
+**Début de partie allégé** (le joueur trouvait le premier niveau très dur) : 150 de mana au départ (au lieu de 100 : supprime les défaites en vague 1 quand les premières invocations tombent au centre, hors de portée) ; PV ×0,7 en vague 1, remontant jusqu'à ×1 en vague 12 (`earlyHpStart`, `earlyHpUntil`) ; la rampe tardive (×1,18 par vague) est inchangée. *(Allègement des PV remplacé en octobre 2026 par moins d’apparitions en début de partie : voir §2 quater.)*
 
 **Joueur automatique** : la règle « fusionne aussi quand le mana manque » est retirée (elle vidait le plateau : l'ancien bot faisait moins bien qu'un joueur au hasard) ; le bot achète « Mana + » et les améliorations quand elles coûtent moins que la prochaine invocation, copie / booste plateau plein (il n'utilise ni l'échange ni la formation exprès). Nouveau `--casual` (réagit une fois par seconde, fusionne au hasard plateau plein, n'achète pas « Mana + ») : approximation d'un joueur débutant. `--no-manaup` désactive l'achat de « Mana + ». Le simulateur affiche aussi le taux de passage des vagues 5, 10 et 15.
 
@@ -124,6 +124,15 @@ Mesures (Solo Infini, niveau 1, toits de New York, graines 1..100) :
 | Deck « mana » (Spider-Man, Œil de faucon, Widow, Tiana, Pocahontas) | 15,99 (14,70 sans « Mana + ») | −7 % |
 
 Aucun emballement économique : les decks « mana » restent sous le témoin (le mana ne compense pas les dégâts perdus). « Mana + » vaut +3 % (T0 : 16,75 → 17,20) à +9 % (deck mana : 14,70 → 15,99). À surveiller : Tiana un peu faible (−10 %) ; la Croissance de Venom en parties très longues (courbe en puissance 0,75, sans plafond) ; la Formation de Loki (+30 % et zone) n'est pas mesurée par le bot.
+
+## 2 quater. Premières vagues plus solides et campagne longue (octobre 2026)
+
+**Retour joueur** : « Dans les premières manches on one-shot quasi tous les sbires… c'est pas drôle. » Avant : 70 PV en vague 1 (allègement ×0,7), soit 1 à 3 coups pour un héros de départ (dégâts de rang 1, niveau 1 : 11 à 51, moyenne 25,2 pour les 10 héros des deux decks de départ). Après :
+- `earlyHpStart` 0,7 → **1** : **100 PV en vague 1**, soit **4 coups en moyenne** (Rox & Rouky 2, Tiana 9), puis ×1,18 par vague, sans palier. Test : `tests/engine/difficulty.test.ts` (≥ 3 coups en moyenne, ≤ 5, aucun héros de départ ne tue en un coup).
+- Accessibilité par le **nombre** d'ennemis plutôt que par des PV en papier : `spawnIntervalStart` 1,8 → **2,6 s**, `spawnIntervalStep` 0,06 → **0,1** (≈ 12 apparitions en vague 1 au lieu de 17 ; le plancher de 0,6 s est toujours atteint à la vague 21). Moins d'ennemis mais plus solides au début, puis de plus en plus nombreux et solides. Mana de départ inchangé (150).
+- Solo Infini, niveau 1, 60 parties : départ Marvel **16,0** (`--casual`) / 16,9 (référence) ; départ Disney **16,2** / 17,6 (avant : 15,4 / 16,6 et 15,9 / 17,7). Cible ≈ 14-16 pour le joueur occasionnel tenue.
+
+**Campagne longue** (« des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum ») : 10 → 50 vagues (`docs/campagne.md`). La difficulté d'un niveau = **effectif** (`script.enemyCountMultiplier`, divise l'intervalle d'apparition) et **PV** (`script.enemyHpMultiplier`, `script.bossHpMultiplier` pour les lieutenants et gros boss), en hausse régulière sur les 60 niveaux. Avec la rampe du Solo Infini (×1,18 par vague), aucune collection ne tiendrait 50 vagues (le deck méta niveau 9 meurt vers la vague 28) : la campagne adoucit la croissance par vague (`script.waveHpGrowth` : ×1,14 au chapitre 1, ×1,075 au 2, ×1,07 aux 3-5, ×1,0425 au 6). Repères mesurés (`--casual`, PV× et effectif× à 1) : le deck de départ niveau 1 tient ≈ 20 vagues à ×1,10, 26 à ×1,08, 40 à ×1,06 ; le deck Avengers niveau 8 (3 paliers) ≈ 42 à ×1,10, 53 à ×1,08, 69 à ×1,06. Taux de victoire par chapitre : `docs/campagne.md` §4.
 
 ## 3. Le simulateur (`scripts/simulate.ts`)
 

@@ -11,6 +11,18 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-11a',
+    title: 'Campagne longue et tutoriel',
+    date: '11 octobre 2026',
+    items: [
+      'Campagne : des parties enfin longues, de 10 à 15 vagues au chapitre 1 jusqu’à 50 au chapitre 6, avec un lieutenant toutes les 5 vagues, un gros boss toutes les 10, et Thanos à la vague 50.',
+      'La difficulté monte au fil des 60 niveaux : plus de sbires et plus de points de vie (boss compris). Les sbires des premières vagues ne tombent plus en un coup.',
+      'Partie sauvegardée à chaque vague (campagne et Solo Infini) : « Reprendre la partie » depuis l’accueil ou la campagne.',
+      'Nouveau tutoriel guidé avec Spider-Man ou Vaïana : un premier combat sans risque pour apprendre à invoquer, fusionner, améliorer et battre un boss, puis ton premier pack et ton deck.',
+      'Des astuces apparaissent une seule fois au bon moment (ciblage, talents, bonus d’équipe, pouvoirs des boss, héros spéciaux, vitesse ×2). Le tutoriel se revoit depuis ton profil.',
+    ],
+  },
+  {
     id: '2026-10-10h',
     title: 'Ouverture de packs',
     date: '10 octobre 2026',

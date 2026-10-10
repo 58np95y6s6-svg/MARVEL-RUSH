@@ -4,6 +4,7 @@ import { debugPlace, debugSpawn } from '../../src/engine/debug';
 import { GRID_SIZE } from '../../src/engine/types';
 import { MARVEL, ofType, quiet, setup, simState, solo, step } from './helpers';
 import { UNITS } from '../../src/data/units';
+import { waveHp } from '../../src/data/enemies';
 import { RANK_ATTACK_SPEED, RANK_DAMAGE } from '../../src/engine/combat';
 
 /** Dégâts de base de Captain Marvel (portée globale). */
@@ -197,7 +198,7 @@ describe('pause et script', () => {
     const e = solo(MARVEL, { script: { enemyHpMultiplier: 0.5, startMana: 300, noLifeLoss: true } });
     expect(e.state.players[0]!.mana).toBe(300);
     step(e, 1);
-    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(50 * 0.7); // vague 1 : PV ×0,7 (début allégé)
+    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(waveHp(1) * 0.5); // vague 1
     for (const en of simState(e).enemies) en.distance = 29.99;
     const ev = step(e, 5);
     expect(ofType(ev, 'lifeLost')).toHaveLength(0);

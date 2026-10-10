@@ -122,8 +122,11 @@ export function currentChapter(p: Progress): number {
 // ---------------------------------------------------------------------------------------------
 // Récompenses
 
+/** Éclats par étoile, pour 10 vagues : multipliés par `lengthFactor` (un niveau de 50 vagues donne ×5). */
 export const SHARDS_PER_NEW_STAR = 30;
 export const SHARDS_PER_REPLAY_STAR = 10;
+/** Durée relative d'un niveau (vagues / 10) : les éclats d'étoiles et l'XP lui sont proportionnels. */
+export const lengthFactor = (level: CampaignLevel): number => level.waves / 10;
 export const BOSS_LEVEL_CRYSTALS = 25;
 export const THANOS_CRYSTALS = 100;
 /**
@@ -182,12 +185,13 @@ export function addReward(a: Reward, b: Reward): Reward {
 
 /**
  * Récompenses d'un niveau (première victoire ou rejouer), sans modifier le profil.
- * - Éclats : +30 par étoile obtenue pour la première fois, +10 par étoile déjà obtenue et refaite.
+ * - Éclats : +30 par étoile obtenue pour la première fois, +10 par étoile déjà obtenue et refaite,
+ *   pour 10 vagues (× vagues / 10 : 45 et 15 par étoile pour un niveau de 15 vagues, 150 et 50 pour 50 vagues).
  * - Coffres d'étoiles du chapitre à 10, 20 et 30 étoiles.
  * - Niveau 5, 1re victoire : 1 parchemin + 10 cartes d'une unité du deck.
  * - Niveau 10, 1re victoire : 2 parchemins + 300 éclats + personnage garanti (ch. 6 : + 100 ✦).
  * - ★★★ sur un niveau de boss (5, 10 et 8 du ch. 6), la première fois : 25 ✦.
- * - XP : 20 par victoire + 10 par étoile nouvelle, ×2 sur les niveaux 10.
+ * - XP : (20 par victoire + 10 par étoile nouvelle) × vagues / 10, ×2 sur les niveaux 10.
  */
 export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress | null, deck: UnitId[], seed = 0): LevelRewards {
   const p = profile ?? EMPTY_PROGRESS;
@@ -205,7 +209,8 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
   const empty: LevelRewards = { lines, total: {}, prev: prevStars, stars, newStars: 0, firstWin: false, chests: [] };
   if (!won) return empty;
 
-  const shards = newStars * SHARDS_PER_NEW_STAR + replayStars * SHARDS_PER_REPLAY_STAR;
+  const len = lengthFactor(level);
+  const shards = Math.round((newStars * SHARDS_PER_NEW_STAR + replayStars * SHARDS_PER_REPLAY_STAR) * len);
   if (shards) lines.push({ kind: 'etoiles', label: newStars ? `${newStars} étoile${newStars > 1 ? 's' : ''} nouvelle${newStars > 1 ? 's' : ''}` : 'Étoiles refaites', reward: { shards } });
 
   const ch = getChapter(level.chapter)!;
@@ -242,7 +247,7 @@ export function levelRewards(level: CampaignLevel, now: Stars, profile: Progress
     }
   }
 
-  const xp = (20 + 10 * newStars) * (level.n === 10 ? 2 : 1);
+  const xp = Math.round((20 + 10 * newStars) * len) * (level.n === 10 ? 2 : 1);
   lines.push({ kind: 'xp', label: 'Expérience', reward: { xp } });
 
   const total = lines.reduce<Reward>((acc, l) => addReward(acc, l.reward), {});

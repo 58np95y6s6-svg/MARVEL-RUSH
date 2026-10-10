@@ -27,8 +27,13 @@ export const WAVE_RULES = {
   duration: 30,          // secondes de vague
   baseHp: 100,           // PV d'un ennemi normal en vague 1
   hpGrowth: 1.18,        // PV = baseHp × hpGrowth^(vague-1) × earlyHpMul(vague)
-  /** Début de partie plus doux : PV ×earlyHpStart en vague 1, remontant linéairement jusqu'à ×1 en vague earlyHpUntil. */
-  earlyHpStart: 0.7,
+  /**
+   * Début de partie : PV ×earlyHpStart en vague 1, remontant linéairement jusqu'à ×1 en vague earlyHpUntil.
+   * Octobre 2026 : 1 (plus d'allègement). Les sbires des premières vagues tombaient en un coup ; un héros
+   * de départ de rang 1 en demande désormais 3 à 5 (PV 100 en vague 1, dégâts 11 à 51, moyenne 25).
+   * L'accessibilité passe par moins d'apparitions en début de partie (spawnInterval*).
+   */
+  earlyHpStart: 1,
   earlyHpUntil: 12,
   baseSpeed: 2,          // cases par seconde d'un ennemi normal
   /** Rythme des boss (§4.3), remplaçable par GameConfig.bossRhythm. */
@@ -37,9 +42,13 @@ export const WAVE_RULES = {
   thanosEvery: 50,       // modes infinis : Thanos à la 50, puis toutes les 50
   minionWavesBefore: 2,  // les sbires du prochain gros boss arrivent dans les 2 vagues d'avant
   milestoneEvery: 10,    // événement « milestone » tous les 10 vagues franchies
-  /** Intervalle entre deux apparitions : max(min, start − step × (vague − 1)). */
-  spawnIntervalStart: 1.8,
-  spawnIntervalStep: 0.06,
+  /**
+   * Intervalle entre deux apparitions : max(min, start − step × (vague − 1)).
+   * Moins d'ennemis mais plus solides au début (≈ 12 en vague 1, au lieu de 17), puis de plus en plus :
+   * le plancher de 0,6 s est atteint à la vague 21, comme avant (avant : 1,8 et 0,06).
+   */
+  spawnIntervalStart: 2.6,
+  spawnIntervalStep: 0.1,
   spawnIntervalMin: 0.6,
   minionEvery: 3,        // dans ces vagues, une apparition sur 3 est un groupe de sbires
 };
@@ -51,9 +60,9 @@ export function earlyHpMul(wave: number): number {
   return a + ((1 - a) * Math.max(0, wave - 1)) / (n - 1);
 }
 
-/** PV d'un ennemi normal à la vague `wave` (avant le multiplicateur de script). */
-export function waveHp(wave: number): number {
-  return WAVE_RULES.baseHp * Math.pow(WAVE_RULES.hpGrowth, wave - 1) * earlyHpMul(wave);
+/** PV d'un ennemi normal à la vague `wave` (avant le multiplicateur de script) ; `growth` = croissance par vague (campagne : `script.waveHpGrowth`). */
+export function waveHp(wave: number, growth: number = WAVE_RULES.hpGrowth): number {
+  return WAVE_RULES.baseHp * Math.pow(growth, wave - 1) * earlyHpMul(wave);
 }
 
 /**

@@ -9,11 +9,11 @@
 - Deux plateaux (le tien en bas, celui de ta partenaire en haut), **deux portails**, deux branches qui longent chacune un plateau puis **se rejoignent au centre** en un tronc commun vers la porte du château (§5.2). Les maps utilisent leur tracé `pathCoop`.
 - Toutes les unités des deux joueurs touchent tout ennemi. **Vies partagées (3)**, mana individuel (le coup final rapporte le mana), bouton « Offrir » une fois par vague.
 - **Petits et gros boss arrivent par le tronc commun** ; leurs pouvoirs visent un plateau au hasard.
-- Rythme des boss identique au Solo, **sans exception** : lieutenant aux vagues 5, 15, 25… ; gros boss aux vagues 10, 20, 30… ; Thanos au dernier niveau (chapitre 6, niveau 10, vague 30, à la place du gros boss de cette vague). Les gros boss tirés avant le niveau 10 excluent le boss du chapitre.
+- Rythme des boss identique au Solo, **sans exception** : lieutenant aux vagues 5, 15, 25… ; gros boss aux vagues 10, 20, 30… ; Thanos au dernier niveau (chapitre 6, niveau 10, **vague 50**, comme en Solo). Les gros boss tirés avant le niveau 10 excluent le boss du chapitre.
 
 ### Difficulté
-- Les vagues Coop sont **plus nombreuses et plus fortes** que celles du Solo : le moteur applique la base Coop (PV ×1,6 et 1,5 fois plus d'apparitions, répartis entre les deux portails ; réglage final par l'agent Moteur), puis le multiplicateur `PV×` du niveau ci-dessous.
-- La plupart des niveaux comptent **plus de vagues** que le niveau Solo de même numéro ; les niveaux 5 et 10 finissent toujours sur leur boss imposé, à une vague de boss du rythme (5/15/25 pour un lieutenant, 10/20/30 pour un gros boss).
+- **Refonte d'octobre 2026 (alignement sur la campagne Solo, `docs/campagne.md` §2)** : un niveau Coop compte **le même nombre de vagues** que le niveau Solo de même numéro (10 → 15 au chapitre 1, puis 15-20, 20-25, 25-30, 30-40, 40-50, Thanos à la vague 50), et reprend ses quatre réglages de difficulté : PV× (`enemyHpMultiplier`), effectif× (`enemyCountMultiplier`), PV des boss× (`bossHpMultiplier`) et croissance des PV par vague (`waveHpGrowth`). Les colonnes « Vagues » et « PV× » des tableaux du §3 datent de l'ancienne campagne courte (3 à 20 vagues) : elles seront recalculées quand la campagne Coop sera codée ; les cartes, maps et contraintes restent valables. Le boss ou lieutenant imposé des niveaux 5 et 10 arrive à la dernière vague du niveau. Les parties longues se sauvegardent à chaque vague (voir « Progression du duo »).
+- Les vagues Coop sont **plus nombreuses et plus fortes** que celles du Solo : le moteur applique la base Coop (PV ×1,6 et 1,5 fois plus d'apparitions, répartis entre les deux portails ; réglage final par l'agent Moteur), puis les multiplicateurs du niveau.
 - Le niveau visé suppose que **les deux joueurs** ont le niveau de collection attendu du chapitre Solo correspondant.
 
 ### Ouverture des chapitres

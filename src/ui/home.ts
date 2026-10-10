@@ -5,6 +5,7 @@ import { STARTER_DECKS } from '../data/units';
 import { claimDailyChest, dailyChestReady, infiniteUnlocked } from '../meta/economy';
 import { activeDeck, getProfile, onProfileChange, updateProfile, type Profile } from '../meta/profile';
 import { freePullsTotal } from '../meta/pulls';
+import { readSavedGame, savedGameLabel } from '../meta/savegame';
 import { icon, tokenUrl, toast } from './kit';
 
 export interface HomeOptions {
@@ -19,6 +20,9 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     <div class="hm-sky"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
     <h1 class="mr-logo hm-logo"><span>MARVEL</span> <em>RUSH</em></h1>
     <div class="hm-deck" data-tuto="home-deck" aria-label="Ton deck"></div>
+    <button class="mr-btn green hm-resume" data-a="reprendre" hidden>
+      <span class="t">Reprendre la partie</span><small class="sub"></small>
+    </button>
     <button class="mr-btn yellow hm-campaign" data-a="campagne" data-tuto="home-campagne">
       <span class="t">Campagne</span><small>Chapitres, étoiles et boss</small>
     </button>
@@ -39,6 +43,7 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
   const chest = wrap.querySelector<HTMLButtonElement>('[data-a="coffre"]')!;
   const chestSub = chest.querySelector<HTMLElement>('.chest-sub')!;
   const badge = wrap.querySelector<HTMLElement>('.hm-badge')!;
+  const resumeBtn = wrap.querySelector<HTMLButtonElement>('[data-a="reprendre"]')!;
   let deckKey = '';
 
   function render(p: Profile | null): void {
@@ -49,6 +54,9 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
       deckKey = key;
       deckEl.innerHTML = deck.map((id, i) => `<img src="${tokenUrl(id)}" alt="" style="--i:${i}">`).join('');
     }
+    const saved = readSavedGame(p);
+    resumeBtn.hidden = !saved;
+    if (saved) resumeBtn.querySelector<HTMLElement>('.sub')!.textContent = savedGameLabel(saved);
     const unlocked = infiniteUnlocked(p);
     infBtn.classList.toggle('locked', !unlocked);
     infSub.innerHTML = unlocked
@@ -68,7 +76,8 @@ export function mountHome(host: HTMLElement, o: HomeOptions): () => void {
     const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset['a'];
     const p = getProfile();
     if (!a || !p) return;
-    if (a === 'campagne') o.go('#campagne');
+    if (a === 'reprendre') o.go('#reprendre');
+    else if (a === 'campagne') o.go('#campagne');
     else if (a === 'tirages') o.go('#tirages');
     else if (a === 'collection') o.go('#collection');
     else if (a === 'decks') o.go('#decks');

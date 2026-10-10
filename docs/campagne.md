@@ -11,7 +11,7 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 - **Liste verticale de cartes de niveau** (comme « Étage 2 », « Étage 3 ») qui défile ; on arrive positionné sur le niveau suivant. Chaque carte montre :
   - le titre « Niveau 3 » en haut à gauche ;
   - une **mini-scène** : la map du niveau en fond, 2 ou 3 ennemis de la vague (et le lieutenant ou le boss pour les niveaux 5 et 10) ;
-  - en haut à droite, à la place du coût d'entrée de Rush Royale : **le nombre de vagues à tenir** (icône de vague + « 6 ») ;
+  - en haut à droite, à la place du coût d'entrée de Rush Royale : **le nombre de vagues à tenir** (icône de vague + « 15 ») ; la fiche du niveau donne aussi la durée estimée (≈ 0,55 min par vague) ;
   - à droite, le **coffre de récompense**, avec une **coche verte** une fois obtenu ;
   - sous le titre, les **3 étoiles** (pleines ou vides) et l'icône de la contrainte bonus ;
   - un **gros bouton « Jouer »** : **jaune** pour le prochain niveau, **bleu** pour un niveau déjà fait (rejouer), cadenas gris pour un niveau verrouillé.
@@ -35,17 +35,21 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 - Le chapitre N de la **campagne Coop** s'ouvre quand les deux joueurs ont fini le chapitre N en Solo (`docs/campagne-coop.md`).
 
 ### Combat et rythme des boss
-- Configuration moteur (`GameConfig`) : `mode: 'solo'`, `targetWaves` = vagues à tenir, `mapId`, et `script.enemyHpMultiplier` = multiplicateur de PV du niveau.
-- **Rythme du prompt §4.3, sans exception** : petit boss « lieutenant » aux vagues 5, 15, 25… ; gros boss aux vagues 10, 20, 30… ; Thanos seulement au dernier niveau de la campagne. Les lieutenants sont décrits dans `design/game-design.md`.
-- Un niveau de **moins de 5 vagues** n'a pas de boss ; de **5 à 9 vagues**, il croise le lieutenant de la vague 5 ; **à partir de 10 vagues**, il affronte au moins un gros boss.
-- **Gros boss avant le niveau 10** : tirés dans la rotation **sans le boss du chapitre**, pour que celui-ci apparaisse pour la première fois au niveau 10. Le lieutenant d'une vague annonce toujours le gros boss suivant de la partie, même si le niveau finit avant.
-- **Niveau 5** : le **lieutenant du boss du chapitre** est imposé (vague 5 ou 15) ; le niveau est **gagné quand il meurt**.
-- **Niveau 10** : le **boss du chapitre** est imposé à la dernière vague (10 ou 20), dans son arène ; le niveau est **gagné quand il meurt**. Au chapitre 6, c'est **Thanos** (vague 20).
-- Besoins de contrat (demande au chef de projet, `src/engine/types.ts`) : `script.bossOrder?: BossId[]` (ordre imposé des gros boss de la partie), `script.excludeBosses?: BossId[]` (boss retirés de la rotation) et `script.endOnBossKill?: boolean` (victoire à la mort du boss de la dernière vague). Le lieutenant se déduit du gros boss suivant.
+- Configuration moteur (`GameConfig`) : `mode: 'solo'`, `targetWaves` = vagues à tenir, `mapId`, et les quatre réglages de difficulté du niveau (voir « Courbe de difficulté ») : `script.enemyHpMultiplier`, `script.enemyCountMultiplier`, `script.bossHpMultiplier`, `script.waveHpGrowth`.
+- **Durée** (refonte d'octobre 2026, retour joueur : « des parties de 4 manches c'est trop ridicule ! C'est 10-15 minimum, et ça doit augmenter ») : **10 → 15 vagues au chapitre 1**, puis 15-20, 20-25, 25-30, 30-40 et 40-50. Dans un chapitre, les vagues montent de niveau en niveau ; les niveaux de boss (5 et 10) sont en haut de la fourchette. La campagne finit sur **Thanos à la vague 50** (niveau 6-10).
+- **Rythme du prompt §4.3** : petit boss « lieutenant » aux vagues 5, 15, 25… ; gros boss aux vagues 10, 20, 30… ; Thanos seulement au dernier niveau. Tout niveau a donc au moins un lieutenant et un gros boss.
+- **Gros boss avant le niveau 10** : tirés dans la rotation **sans le boss du chapitre** (`excludeBosses`), pour que celui-ci apparaisse pour la première fois au niveau 10. Le lieutenant d'une vague annonce toujours le gros boss suivant de la partie, même si le niveau finit avant.
+- **Niveau 5** : le **lieutenant du boss du chapitre** est imposé **à la dernière vague** (`script.miniBoss` + `bossAtWave`) ; le niveau est **gagné quand il meurt** (`endOnBossKill`). Les vagues de petit boss d'avant gardent le lieutenant du gros boss suivant (`miniBoss` ne s'applique plus qu'à la vague désignée).
+- **Niveau 10** : le **boss du chapitre** est imposé à la dernière vague, dans son arène (`bossId` + `bossAtWave`, même si cette vague est une vague de lieutenant du rythme, ex. vague 15 au chapitre 1) ; le niveau est **gagné quand il meurt**. Au chapitre 6 : **Maléfique** au niveau 8 (vague 48), **Thanos** au niveau 10 (vague 50).
 - Modificateurs de map : **désactivés** en campagne, pour que la difficulté reste lisible.
 
+### Sauvegarde et reprise
+- Une partie de 15 à 50 vagues dure de 8 à 30 minutes : la partie Solo en cours (campagne **et** Solo Infini) est **sauvegardée au début de chaque vague ordinaire** à partir de la 2e (pas pendant un boss) : `engine.serialize()` + la configuration exacte vont dans `profile.savedGame` (`src/meta/savegame.ts`).
+- L'accueil affiche alors **« Reprendre la partie »** (« Niveau 1-4 · vague 6 / 13 » ou « Solo Infini · vague 23 »), de même que l'écran Campagne en tête de liste ; la reprise (`#reprendre`) recrée le combat avec `createEngine(config, sauvegarde)`. Une seule partie à la fois : en lancer une autre remplace la sauvegarde à sa 2e vague.
+- La sauvegarde est effacée à la fin de la partie (victoire ou défaite). Les statistiques des contraintes ★★★ repartent de la reprise (invocations, fusions…).
+
 ### Récompenses (§6.1)
-- **Éclats** : +30 par étoile la **première fois**, +10 par étoile en rejouant (déjà dans le prompt).
+- **Éclats** : +30 par étoile la **première fois**, +10 par étoile en rejouant (prompt), **pour 10 vagues** : le montant est multiplié par vagues / 10 (`lengthFactor`, arrondi). Un niveau de 15 vagues donne 45 / 15 par étoile, un niveau de 50 vagues 150 / 50. Soit ≈ 9 éclats par vague à 3 étoiles, comme le Solo Infini (+10 par vague).
 - **Coffres d'étoiles** : 3 par chapitre, à 10, 20 et 30 étoiles du chapitre.
   - 10 ★ : 150 éclats + 5 cartes d'une unité possédée au hasard + **1 parchemin** ;
   - 20 ★ : 250 éclats + 10 cartes + **1 parchemin** ;
@@ -54,19 +58,28 @@ L'écran Campagne reprend l'écran **Donjons** de la capture `design/references/
 - **Niveau 10** (boss), première victoire : **2 parchemins** + 300 éclats + le **personnage garanti** du chapitre. S'il est déjà possédé : 20 cartes de ce personnage.
 - **Total des parchemins** par chapitre : 1 + 1 + 2 (coffres) + 1 (niv. 5) + 2 (niv. 10) = **7**, soit **42** pour la campagne. Un palier coûte 1 / 2 / 3 parchemins (`TALENT_TIER_SCROLLS`, `src/data/talents.ts`) : la campagne complète ouvre les 3 paliers d'environ **7 unités**, ce qui pousse à choisir. Des parchemins viennent aussi des paliers du Solo Infini et de la Coop Infini (argent : 1, or : 2, héroïque : 3, puis 1 tous les 10).
 - **Cristaux d'éveil** (§6.6) : 3 étoiles sur un niveau de boss (niveaux 5 et 10), la première fois : **25 ✦**.
-- **XP de compte** : 20 par victoire + 10 par étoile nouvelle ; ×2 sur les niveaux 10.
+- **XP de compte** : (20 par victoire + 10 par étoile nouvelle) × vagues / 10 ; ×2 sur les niveaux 10.
+- **Totaux d'une campagne à 3 étoiles** (`campaignTotals`) : ≈ 21 300 éclats (avant : 12 000 pour des niveaux 4 fois plus courts), 9 045 XP, **42 parchemins et 425 ✦ inchangés** (les parchemins, cristaux, cartes et personnages ne dépendent pas de la durée).
 
 ### Courbe de difficulté
-| Chapitre | Vagues | PV × | Boss du niveau 10 | Niveau de collection attendu | Deck attendu |
-|---|---|---|---|---|---|
-| 1 | 3 → 10 | 0,55 → 0,8 | vague 10 | 1 à 2 | Deck de départ |
-| 2 | 5 → 13 | 0,85 → 1,0 | vague 10 | 2 à 3 | Départ + 1-2 Épiques |
-| 3 | 8 → 20 | 0,95 → 1,05 | vague 20 | 3 à 5 | 1 Légendaire, premiers talents |
-| 4 | 10 → 20 | 1,05 → 1,25 | vague 20 | 4 à 6 | 2 Légendaires, palier 1 |
-| 5 | 12 → 20 | 1,25 → 1,5 | vague 20 | 6 à 7 | Équipe complète, palier 2 |
-| 6 | 14 → 20 | 1,5 → 1,8 | vague 20 (Thanos) | 7 à 9 | Deck « méta », palier 3 |
+Retour joueur : « L'évolution de la difficulté, c'est le nombre de sbires (les boss aussi) et leurs points de vie. » Chaque niveau règle donc (`src/campaign/levels.ts`, `DIFFICULTY`) :
+- **Effectif×** (`enemyCountMultiplier`) : nombre d'ennemis par vague (l'intervalle d'apparition est divisé d'autant) ; de ×1,1 (niveau 1-1) à ×1,4 (niveau 6-10), en hausse régulière sur les 60 niveaux.
+- **PV×** (`enemyHpMultiplier`) : PV de tous les ennemis, boss compris ; de ×1,3 à ×1,9.
+- **PV boss×** (`bossHpMultiplier`) : PV des lieutenants et des gros boss, en plus ; de ×1,0 à ×1,3.
+- **Croissance des PV par vague** (`waveHpGrowth`, Solo Infini : ×1,18) : plus douce dans les chapitres longs, pour que la vague 50 reste à la portée d'une collection de fin de campagne (au rythme du Solo Infini, une vague 50 aurait 3 300 fois les PV de la vague 1) : ch. 1 ×1,14, ch. 2 ×1,075, ch. 3 à 5 ×1,07, ch. 6 ×1,0425. Réglée au simulateur.
 
-Cible pour le simulateur : avec le deck de départ (niveau 1, sans talent), **taux de victoire ≥ 90 %** sur les niveaux 1 à 9 du chapitre 1 et **≥ 70 %** sur le niveau 10 ; chaque niveau 10 du chapitre N doit être gagné à ≥ 60 % avec le « deck attendu » du chapitre N et à ≤ 30 % avec celui du chapitre N−1 (voir `docs/equilibrage.md`).
+Les PV de base des premières vagues ont aussi été relevés (octobre 2026, « on one-shot quasi tous les sbires ») : 100 PV en vague 1 (au lieu de 70), soit 3 à 5 coups pour un héros de départ de rang 1 (moyenne 4), puis +18 % par vague ; en échange, moins d'apparitions au début (≈ 12 en vague 1 au lieu de 17, intervalle 2,6 s → 0,6 s à la vague 21). Voir `docs/equilibrage.md` §2 quater.
+
+| Chapitre | Vagues | PV× | Effectif× | PV boss× | Croissance | Boss du niveau 10 | Niveau de collection attendu | Deck attendu (simulateur) |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 10 → 15 | 1,30 → 1,39 | 1,10 → 1,15 | 1,00 → 1,05 | ×1,14 | vague 15 | 1 à 2 | Deck de départ, niveau 1 |
+| 2 | 15 → 20 | 1,40 → 1,49 | 1,15 → 1,20 | 1,05 → 1,10 | ×1,075 | vague 20 | 2 à 3 | Départ + 1 Épique (Soldat de l'hiver), niveau 2 |
+| 3 | 20 → 25 | 1,50 → 1,59 | 1,20 → 1,25 | 1,10 → 1,15 | ×1,07 | vague 25 | 3 à 5 | + Thor, niveau 4 |
+| 4 | 25 → 30 | 1,61 → 1,70 | 1,25 → 1,30 | 1,15 → 1,20 | ×1,07 | vague 30 | 4 à 6 | 2 Légendaires, niveau 5, palier 1 |
+| 5 | 30 → 40 | 1,71 → 1,80 | 1,30 → 1,35 | 1,20 → 1,25 | ×1,07 | vague 40 | 6 à 7 | Avengers (5), niveau 6, paliers 1-2 |
+| 6 | 40 → 50 | 1,81 → 1,90 | 1,35 → 1,40 | 1,25 → 1,30 | ×1,0425 | vague 50 (Thanos) | 7 à 9 | Avengers (5), niveau 8, 3 paliers |
+
+Cibles pour le simulateur (`--campagne <c> --attendu`, joueur `--casual`) : chapitre 1 gagné à **≥ 85 %** par le deck de départ niveau 1 ; chaque chapitre gagné à **≥ 70 %** par la collection attendue ; le deck de départ niveau 1 doit **peiner dès le chapitre 3**. Résultats : §4.
 
 ### Identifiants de map
 Les identifiants ci-dessous sont proposés à l'agent Maps (à aligner sur `src/maps/` quand il les aura fixés) :
@@ -76,111 +89,127 @@ Les identifiants ci-dessous sont proposés à l'agent Maps (à aligner sur `src/
 
 ## 3. Les chapitres
 
-Colonnes : **Niv.** · **Map** · **Vagues** à tenir · **PV×** (`enemyHpMultiplier`) · **Boss** rencontrés (L = lieutenant, B = gros boss ; « rot. » = tiré dans la rotation sans le boss du chapitre) · **Contrainte ★★★** · **Récompense spéciale** (en plus des éclats d'étoiles).
+Colonnes : **Niv.** · **Map** · **Vagues** à tenir · **PV×** (`enemyHpMultiplier`) · **Effectif×** (`enemyCountMultiplier`) · **PV boss×** (`bossHpMultiplier`) · **Boss** rencontrés (L = lieutenant, B = gros boss tiré dans la rotation sans le boss du chapitre ; en gras, le boss imposé de la dernière vague) · **Contrainte ★★★**. Récompenses spéciales : niveau 5, 1 parchemin + 10 cartes ; niveau 10, 2 parchemins + 300 éclats + personnage garanti (ch. 6 : + cadre de profil et 100 ✦) ; voir §2.
 
 ### Chapitre 1 — New York
 Boss : **Bouffon Vert** (`arene-bouffon`). Lieutenant : **Citrouille-bombe géante**. Personnage garanti : **Spider-Man** s'il manque (deck de départ Disney), sinon **Venom**.
+Croissance des PV par vague : ×1,14.
 
-| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
-|---|---|---|---|---|---|---|
-| 1 | toits-new-york | 3 | 0,55 | — | Fusionner au moins 3 fois | — |
-| 2 | toits-new-york | 4 | 0,6 | — | Sans perdre de vie | — |
-| 3 | atelier-stark | 4 | 0,65 | — | Améliorer une unité au niveau 3 | — |
-| 4 | atelier-stark | 4 | 0,7 | — | Atteindre une unité de rang 3 | — |
-| 5 | toits-new-york | 5 | 0,7 | **L Citrouille-bombe géante** (5) | Lieutenant tué en moins de 25 s | 1 parchemin |
-| 6 | base-avengers | 6 | 0,7 | L rot. (5) | Moins de 12 invocations | — |
-| 7 | base-avengers | 7 | 0,75 | L rot. (5) | Sans perdre de vie | — |
-| 8 | atelier-stark | 8 | 0,75 | L rot. (5) | Avec au moins 3 unités Marvel | — |
-| 9 | toits-new-york | 9 | 0,8 | L rot. (5) | Garder 2 cases vides à la fin | — |
-| 10 | toits-new-york → arène | 10 | 0,8 | L Citrouille (5), **B Bouffon Vert** (10) | Boss tué en moins de 40 s | 2 parchemins, personnage garanti |
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | toits-new-york | 10 | 1,3 | 1,1 | 1 | L (5), B (10) | Fusionner au moins 3 fois |
+| 2 | toits-new-york | 11 | 1,31 | 1,11 | 1,01 | L (5), B (10) | Sans perdre de vie |
+| 3 | atelier-stark | 12 | 1,32 | 1,11 | 1,01 | L (5), B (10) | Améliorer une unité au niveau 3 |
+| 4 | atelier-stark | 13 | 1,33 | 1,12 | 1,02 | L (5), B (10) | Atteindre une unité de rang 3 |
+| 5 | toits-new-york | 15 | 1,34 | 1,12 | 1,02 | L (5), B (10), **L Citrouille-bombe géante** (15) | Lieutenant tué en moins de 25 s |
+| 6 | base-avengers | 13 | 1,35 | 1,13 | 1,03 | L (5), B (10) | Moins de 30 invocations |
+| 7 | base-avengers | 14 | 1,36 | 1,13 | 1,03 | L (5), B (10) | Sans perdre de vie |
+| 8 | atelier-stark | 14 | 1,37 | 1,14 | 1,04 | L (5), B (10) | Avec au moins 3 unités Marvel |
+| 9 | toits-new-york | 15 | 1,38 | 1,14 | 1,04 | L (5), B (10), L (15) | Garder 2 cases vides à la fin |
+| 10 | toits-new-york → arène | 15 | 1,39 | 1,15 | 1,05 | L (5), B (10), **B Bouffon Vert** (15) | Boss tué en moins de 40 s |
 
 ### Chapitre 2 — Asgard et le Sanctum
 Boss : **Galactus** (`arene-galactus`). Lieutenant : **Drone-sentinelle** (volant). Personnage garanti : **Thor**.
+Croissance des PV par vague : ×1,075.
 
-| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
-|---|---|---|---|---|---|---|
-| 1 | asgard-bifrost | 6 | 0,85 | L rot. (5) | Sans perdre de vie | — |
-| 2 | asgard-bifrost | 7 | 0,85 | L rot. (5) | Une unité de rang 4 | — |
-| 3 | sanctum | 8 | 0,9 | L rot. (5) | Avec Doctor Strange ou Loki dans le deck | — |
-| 4 | sanctum | 9 | 0,9 | L rot. (5) | Moins de 15 invocations | — |
-| 5 | asgard-bifrost | 5 | 1,0 | **L Drone-sentinelle** (5) | Lieutenant tué en moins de 20 s | 1 parchemin |
-| 6 | temple-dix-anneaux | 10 | 0,9 | L (5), B rot. (10) | Aucune amélioration au-delà du niveau 2 | — |
-| 7 | temple-dix-anneaux | 11 | 0,95 | L (5), B rot. (10) | Sans perdre de vie | — |
-| 8 | sanctum | 12 | 0,95 | L (5), B rot. (10) | Un bonus d'équipe actif | — |
-| 9 | asgard-bifrost | 13 | 1,0 | L (5), B rot. (10) | Aucune unité détruite ou rétrogradée par un boss | — |
-| 10 | asgard-bifrost → arène | 10 | 1,0 | L Drone (5), **B Galactus** (10) | Boss tué en moins de 35 s | 2 parchemins, personnage garanti |
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | asgard-bifrost | 15 | 1,4 | 1,15 | 1,05 | L (5), B (10), L (15) | Sans perdre de vie |
+| 2 | asgard-bifrost | 16 | 1,41 | 1,16 | 1,06 | L (5), B (10), L (15) | Une unité de rang 4 |
+| 3 | sanctum-sanctorum | 17 | 1,42 | 1,16 | 1,06 | L (5), B (10), L (15) | Avec Doctor Strange ou Loki dans le deck |
+| 4 | sanctum-sanctorum | 18 | 1,43 | 1,17 | 1,07 | L (5), B (10), L (15) | Moins de 40 invocations |
+| 5 | asgard-bifrost | 20 | 1,44 | 1,17 | 1,07 | L (5), B (10), L (15), **L Drone-sentinelle** (20) | Lieutenant tué en moins de 25 s |
+| 6 | temple-dix-anneaux | 17 | 1,45 | 1,18 | 1,08 | L (5), B (10), L (15) | Aucune amélioration au-delà du niveau 2 |
+| 7 | temple-dix-anneaux | 18 | 1,46 | 1,18 | 1,08 | L (5), B (10), L (15) | Sans perdre de vie |
+| 8 | sanctum-sanctorum | 19 | 1,47 | 1,19 | 1,09 | L (5), B (10), L (15) | Un bonus d’équipe actif |
+| 9 | asgard-bifrost | 20 | 1,48 | 1,19 | 1,09 | L (5), B (10), L (15), B (20) | Aucune unité détruite ou rétrogradée par un boss |
+| 10 | asgard-bifrost → arène | 20 | 1,49 | 1,2 | 1,1 | L (5), B (10), L (15), **B Galactus** (20) | Boss tué en moins de 40 s |
 
 ### Chapitre 3 — L'Océan (Motunui et Atlantica)
 Boss : **Ursula** (`arene-ursula`). Lieutenant : **Flotsam, la murène** (avec Jetsam). Personnage garanti : **Vaïana & Pua**.
+Croissance des PV par vague : ×1,07.
 
-| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
-|---|---|---|---|---|---|---|
-| 1 | motunui | 8 | 0,95 | L rot. (5) | Avec au moins 2 unités Disney | — |
-| 2 | motunui | 10 | 0,95 | L (5), B rot. (10) | Sans perdre de vie | — |
-| 3 | atlantica | 11 | 1,0 | L (5), B rot. (10) | Une unité de rang 5 | — |
-| 4 | recif-nemo | 12 | 1,0 | L (5), B rot. (10) | Au moins 2 unités de contrôle (ralentir, arrêter, repousser) | — |
-| 5 | atlantica | 15 | 0,95 | L (5), B rot. (10), **L Flotsam** (15) | Flotsam tué en moins de 20 s | 1 parchemin |
-| 6 | recif-nemo | 13 | 1,0 | L (5), B rot. (10) | Moins de 20 invocations | — |
-| 7 | motunui | 14 | 1,0 | L (5), B rot. (10) | Sans perdre de vie | — |
-| 8 | atlantica | 15 | 1,05 | L (5), B rot. (10), L (15) | Bonus d'équipe Océan actif | — |
-| 9 | recif-nemo | 16 | 1,05 | L (5), B rot. (10), L (15) | Finir avec 300 de mana ou plus | — |
-| 10 | motunui → arène | 20 | 1,0 | L (5), B rot. (10), L Flotsam (15), **B Ursula** (20) | Ursula tuée en moins de 35 s | 2 parchemins, personnage garanti |
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | ile-motunui | 20 | 1,5 | 1,2 | 1,1 | L (5), B (10), L (15), B (20) | Avec au moins 2 unités Disney |
+| 2 | ile-motunui | 21 | 1,51 | 1,21 | 1,11 | L (5), B (10), L (15), B (20) | Sans perdre de vie |
+| 3 | atlantica | 22 | 1,52 | 1,21 | 1,11 | L (5), B (10), L (15), B (20) | Une unité de rang 5 |
+| 4 | recif-nemo | 23 | 1,53 | 1,22 | 1,12 | L (5), B (10), L (15), B (20) | Au moins 2 unités de contrôle |
+| 5 | atlantica | 25 | 1,54 | 1,22 | 1,12 | L (5), B (10), L (15), B (20), **L Flotsam, la murène** (25) | Flotsam tué en moins de 25 s |
+| 6 | recif-nemo | 22 | 1,55 | 1,23 | 1,13 | L (5), B (10), L (15), B (20) | Moins de 50 invocations |
+| 7 | ile-motunui | 23 | 1,56 | 1,23 | 1,13 | L (5), B (10), L (15), B (20) | Sans perdre de vie |
+| 8 | atlantica | 24 | 1,57 | 1,24 | 1,14 | L (5), B (10), L (15), B (20) | Bonus d’équipe Océan actif |
+| 9 | recif-nemo | 25 | 1,58 | 1,24 | 1,14 | L (5), B (10), L (15), B (20), L (25) | Finir avec 300 de mana ou plus |
+| 10 | ile-motunui → arène | 25 | 1,59 | 1,25 | 1,15 | L (5), B (10), L (15), B (20), **B Ursula** (25) | Boss tué en moins de 40 s |
 
 ### Chapitre 4 — L'Empire (Palais impérial et Zootopie)
 Boss : **Jafar & Iago** (`arene-jafar`). Lieutenant : **Cobra royal**. Personnage garanti : **Mulan & Mushu**.
+Croissance des PV par vague : ×1,07.
 
-| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
-|---|---|---|---|---|---|---|
-| 1 | palais-imperial | 10 | 1,05 | L (5), B rot. (10) | Sans perdre de vie | — |
-| 2 | palais-imperial | 11 | 1,1 | L (5), B rot. (10) | Une unité de rang 5 | — |
-| 3 | zootopie | 12 | 1,1 | L (5), B rot. (10) | Avec au moins 3 unités Disney | — |
-| 4 | zootopie | 13 | 1,15 | L (5), B rot. (10) | Aucun blindé ne passe | — |
-| 5 | palais-imperial | 15 | 1,15 | L (5), B rot. (10), **L Cobra royal** (15) | Cobra tué en moins de 20 s | 1 parchemin |
-| 6 | highlands | 15 | 1,15 | L (5), B rot. (10), L (15) | Moins de 22 invocations | — |
-| 7 | zootopie | 16 | 1,2 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
-| 8 | foret-pocahontas | 17 | 1,2 | L (5), B rot. (10), L (15) | Bonus d'équipe Princesses actif | — |
-| 9 | palais-imperial | 18 | 1,25 | L (5), B rot. (10), L (15) | Une unité de rang 6 | — |
-| 10 | palais-imperial → arène | 20 | 1,25 | L (5), B rot. (10), L Cobra (15), **B Jafar & Iago** (20) | Boss tué en moins de 30 s | 2 parchemins, personnage garanti |
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | palais-imperial | 25 | 1,61 | 1,25 | 1,15 | L (5), B (10), L (15), B (20), L (25) | Sans perdre de vie |
+| 2 | palais-imperial | 26 | 1,62 | 1,26 | 1,16 | L (5), B (10), L (15), B (20), L (25) | Une unité de rang 5 |
+| 3 | zootopie | 27 | 1,63 | 1,26 | 1,16 | L (5), B (10), L (15), B (20), L (25) | Avec au moins 3 unités Disney |
+| 4 | zootopie | 28 | 1,64 | 1,27 | 1,17 | L (5), B (10), L (15), B (20), L (25) | Aucun blindé ne passe |
+| 5 | palais-imperial | 30 | 1,65 | 1,27 | 1,17 | L (5), B (10), L (15), B (20), L (25), **L Cobra royal** (30) | Cobra tué en moins de 25 s |
+| 6 | highlands-rebelle | 27 | 1,66 | 1,28 | 1,18 | L (5), B (10), L (15), B (20), L (25) | Moins de 60 invocations |
+| 7 | zootopie | 28 | 1,67 | 1,28 | 1,18 | L (5), B (10), L (15), B (20), L (25) | Sans perdre de vie |
+| 8 | foret-pocahontas | 29 | 1,68 | 1,29 | 1,19 | L (5), B (10), L (15), B (20), L (25) | Bonus d’équipe Princesses actif |
+| 9 | palais-imperial | 30 | 1,69 | 1,29 | 1,19 | L (5), B (10), L (15), B (20), L (25), B (30) | Une unité de rang 6 |
+| 10 | palais-imperial → arène | 30 | 1,7 | 1,3 | 1,2 | L (5), B (10), L (15), B (20), L (25), **B Jafar & Iago** (30) | Boss tué en moins de 40 s |
 
 ### Chapitre 5 — Le Monde des jouets (Chambre d'Andy et Sugar Rush)
 Boss : **Cruella** (`arene-cruella`). Lieutenant : **Jasper, l'homme de main**. Personnage garanti : **Buzz & Woody**.
+Croissance des PV par vague : ×1,07.
 
-| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
-|---|---|---|---|---|---|---|
-| 1 | chambre-andy | 12 | 1,25 | L (5), B rot. (10) | Sans perdre de vie | — |
-| 2 | chambre-andy | 13 | 1,3 | L (5), B rot. (10) | Bonus d'équipe Duos Pixar ou Animaux actif | — |
-| 3 | sugar-rush | 14 | 1,3 | L (5), B rot. (10) | Aucun bouclier ne passe | — |
-| 4 | sugar-rush | 15 | 1,35 | L (5), B rot. (10), L (15) | Une unité de rang 6 | — |
-| 5 | chambre-andy | 15 | 1,35 | L (5), B rot. (10), **L Jasper** (15) | Jasper tué en moins de 20 s | 1 parchemin |
-| 6 | foret-rox-rouky | 16 | 1,35 | L (5), B rot. (10), L (15) | Moins de 24 invocations | — |
-| 7 | sugar-rush | 17 | 1,4 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
-| 8 | chambre-andy | 18 | 1,45 | L (5), B rot. (10), L (15) | Aucune unité ne perd de rang | — |
-| 9 | bayou | 19 | 1,5 | L (5), B rot. (10), L (15) | Avec au moins 1 unité de chaque pack | — |
-| 10 | sugar-rush → arène | 20 | 1,5 | L (5), B rot. (10), L Jasper (15), **B Cruella** (20) | Boss tué en moins de 30 s | 2 parchemins, personnage garanti |
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | chambre-andy | 30 | 1,71 | 1,3 | 1,2 | L (5), B (10), L (15), B (20), L (25), B (30) | Sans perdre de vie |
+| 2 | chambre-andy | 32 | 1,72 | 1,31 | 1,21 | L (5), B (10), L (15), B (20), L (25), B (30) | Bonus d’équipe Duos Pixar ou Animaux actif |
+| 3 | sugar-rush | 34 | 1,73 | 1,31 | 1,21 | L (5), B (10), L (15), B (20), L (25), B (30) | Aucun bouclier ne passe |
+| 4 | sugar-rush | 36 | 1,74 | 1,32 | 1,22 | L (5), B (10), L (15), B (20), L (25), B (30), L (35) | Une unité de rang 6 |
+| 5 | chambre-andy | 40 | 1,75 | 1,32 | 1,22 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), **L Jasper, l’homme de main** (40) | Jasper tué en moins de 25 s |
+| 6 | foret-rox-rouky | 34 | 1,76 | 1,33 | 1,23 | L (5), B (10), L (15), B (20), L (25), B (30) | Moins de 75 invocations |
+| 7 | sugar-rush | 36 | 1,77 | 1,33 | 1,23 | L (5), B (10), L (15), B (20), L (25), B (30), L (35) | Sans perdre de vie |
+| 8 | chambre-andy | 38 | 1,78 | 1,34 | 1,24 | L (5), B (10), L (15), B (20), L (25), B (30), L (35) | Aucune unité ne perd de rang |
+| 9 | bayou | 39 | 1,79 | 1,34 | 1,24 | L (5), B (10), L (15), B (20), L (25), B (30), L (35) | Avec au moins 1 unité de chaque pack |
+| 10 | sugar-rush → arène | 40 | 1,8 | 1,35 | 1,25 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), **B Cruella** (40) | Boss tué en moins de 40 s |
 
 ### Chapitre 6 — Le Royaume des morts
 Boss intermédiaire : **Maléfique** (niveau 8, `arene-malefique`), lieutenant **Capitaine gobelin**. Boss final : **Thanos** (`arene-thanos`), lieutenant **Outrider alpha**. Personnage garanti : **Coco (Miguel)**, plus le cadre de profil « Vainqueur de Thanos ».
+Croissance des PV par vague : ×1,0425.
 
-| Niv. | Map | Vagues | PV× | Boss | Contrainte ★★★ | Récompense spéciale |
-|---|---|---|---|---|---|---|
-| 1 | royaume-des-morts | 14 | 1,5 | L (5), B rot. (10) | Sans perdre de vie | — |
-| 2 | royaume-des-morts | 15 | 1,55 | L (5), B rot. (10), L (15) | Une unité de rang 6 | — |
-| 3 | tour-raiponce | 16 | 1,55 | L (5), B rot. (10), L (15) | Aucune unité endormie plus de 3 s | — |
-| 4 | royaume-des-morts | 17 | 1,6 | L (5), B rot. (10), L (15) | Moins de 26 invocations | — |
-| 5 | tour-raiponce | 15 | 1,6 | L (5), B rot. (10), **L Capitaine gobelin** (15) | Capitaine tué en moins de 20 s | 1 parchemin |
-| 6 | royaume-des-morts | 18 | 1,65 | L (5), B rot. (10), L (15) | Sans perdre de vie | — |
-| 7 | highlands | 19 | 1,7 | L (5), B rot. (10), L (15) | Une unité de rang 7 | — |
-| 8 | royaume-des-morts → arène | 20 | 1,7 | L (5), B rot. (10), L Capitaine (15), **B Maléfique** (20) | Boss tué en moins de 30 s | 1 parchemin |
-| 9 | royaume-des-morts | 20 | 1,75 | L (5), B rot. (10), L (15), B rot. (20) | Deux bonus d'équipe actifs | — |
-| 10 | royaume-des-morts → Titan | 20 | 1,8 | L (5), B rot. (10), **L Outrider alpha** (15), **Thanos** (20) | Thanos tué sans perdre de vie | 2 parchemins, personnage garanti, cadre de profil, 100 ✦ (Thanos vaincu) |
-
-Note : au niveau 10 du chapitre 6, Thanos remplace le gros boss de la vague 20 (exception de campagne au rythme « Thanos à la 50 », voulue par le prompt) ; les Outriders se mêlent aux vagues 18 et 19.
+| Niv. | Map | Vagues | PV× | Effectif× | PV boss× | Boss | Contrainte ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1 | royaume-des-morts | 40 | 1,81 | 1,35 | 1,25 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40) | Sans perdre de vie |
+| 2 | royaume-des-morts | 41 | 1,82 | 1,36 | 1,26 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40) | Une unité de rang 6 |
+| 3 | tour-raiponce | 42 | 1,83 | 1,36 | 1,26 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40) | Aucune unité endormie plus de 3 s |
+| 4 | royaume-des-morts | 44 | 1,84 | 1,37 | 1,27 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40) | Moins de 90 invocations |
+| 5 | tour-raiponce | 45 | 1,85 | 1,37 | 1,27 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), **L Capitaine gobelin** (45) | Capitaine tué en moins de 25 s |
+| 6 | royaume-des-morts | 44 | 1,86 | 1,38 | 1,28 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40) | Sans perdre de vie |
+| 7 | highlands-rebelle | 46 | 1,87 | 1,38 | 1,28 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45) | Une unité de rang 7 |
+| 8 | royaume-des-morts → arène | 48 | 1,88 | 1,39 | 1,29 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45), **B Maléfique** (48) | Boss tué en moins de 40 s |
+| 9 | royaume-des-morts | 48 | 1,89 | 1,39 | 1,29 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45) | Deux bonus d’équipe actifs |
+| 10 | royaume-des-morts → arène | 50 | 1,9 | 1,4 | 1,3 | L (5), B (10), L (15), B (20), L (25), B (30), L (35), B (40), L (45), **B Thanos** (50) | Thanos tué sans perdre de vie |
 
 ---
 
 ## 4. Vérification par le simulateur
 
-Pour chaque niveau, l'agent Campagne exporte sa configuration (`GameConfig`) et le simulateur (`scripts/simulate.ts`) joue 200 parties avec le deck attendu du chapitre (tableau du §2) et un joueur automatique simple (invoque dès que possible, fusionne le plus bas rang, améliore quand le mana dépasse le coût + 100). Résultats attendus :
-- chapitre 1 avec le deck de départ niveau 1 : ≥ 90 % de victoires (niv. 1-9), ≥ 70 % (niv. 10) ;
-- ★★★ atteignable dans ≥ 30 % des victoires (sinon la contrainte est trop dure) ;
-- aucun niveau dont le taux de victoire **remonte** de plus de 15 points par rapport au niveau précédent du même chapitre (courbe régulière).
+Commande : `npx vite-node scripts/simulate.ts -- 20 --campagne c3 --casual --attendu` (`--attendu` : deck, niveau de collection et paliers de talents attendus du chapitre, tableau `EXPECTED` du simulateur ; sans `--attendu`, le deck et `--level` donnés). Joueur `--casual` : réagit une fois par seconde, fusionne au hasard plateau plein, n'achète pas « Mana + » (proche d'un débutant). Sans `--casual` : joueur de référence.
+
+Cibles : chapitre 1 gagné à ≥ 85 % par le deck de départ niveau 1 (`--casual`) ; chaque chapitre gagné à ≥ 70 % (`--casual`) avec la collection attendue ; le deck de départ niveau 1 doit peiner dès le chapitre 3.
+
+Résultats (octobre 2026, refonte « parties longues ») — victoire moyenne du chapitre / pire niveau :
+
+| Chapitre | Collection attendue | `--casual` (20 parties par niveau) | Joueur de référence (12 parties) | Deck de départ niveau 1, `--casual` (12 parties) |
+|---|---|---|---|---|
+| 1 (10-15 vagues) | départ, niv. 1 | **98 % / 85 %** (c1-n9) | 100 % / 100 % | = colonne de gauche (98 % / 83 %) |
+| 2 (15-20) | + Soldat de l'hiver, niv. 2 | **95 % / 75 %** (c2-n8, c2-n9) | 99 % / 92 % | 88 % / 67 % |
+| 3 (20-25) | + Thor, niv. 4 | **95 % / 85 %** (c3-n10) | 100 % / 100 % | **17 % / 0 %** (c3-n4 et suivants à 0-17 %) |
+| 4 (25-30) | 2 Légendaires, niv. 5, palier 1 | **94 % / 80 %** (c4-n9) | 97 % / 83 % | — |
+| 5 (30-40) | Avengers, niv. 6, paliers 1-2 | **97 % / 70 %** (c5-n10, Cruella) | 100 % / 100 % | — |
+| 6 (40-50) | Avengers, niv. 8, 3 paliers | **99 % / 85 %** (c6-n10, Thanos) | 100 % / 100 % | — |
+
+Lecture : les niveaux les plus durs d'un chapitre sont les niveaux 8-9 (dernière vague = gros boss tiré au hasard dans la rotation, à abattre avec tous les ennemis restants) et le niveau 10 (boss du chapitre ; Cruella et Thanos sont les plus solides). La ★★★ tombe à 0 % pour le joueur automatique sur les contraintes de deck (Doctor Strange ou Loki, unités Disney, bonus d'équipe, un de chaque pack) et de rang 6-7 (le joueur `--casual` fusionne au hasard) : c'est attendu.

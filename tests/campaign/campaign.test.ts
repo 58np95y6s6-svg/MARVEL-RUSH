@@ -56,38 +56,52 @@ describe('données de la campagne', () => {
     }
   });
 
-  it('courbe de difficulté du doc (vagues et PV× par chapitre)', () => {
-    const ranges: [number, number, number, number][] = [[3, 10, 0.55, 0.8], [5, 13, 0.85, 1.0], [8, 20, 0.95, 1.05], [10, 20, 1.05, 1.25], [12, 20, 1.25, 1.5], [14, 20, 1.5, 1.8]];
+  it('courbe du doc : 10 à 15 vagues au chapitre 1, puis de plus en plus ; effectif et PV en hausse régulière', () => {
+    const ranges: [number, number][] = [[10, 15], [15, 20], [20, 25], [25, 30], [30, 40], [40, 50]];
     for (const ch of CHAPTERS) {
-      const [w0, w1, h0, h1] = ranges[ch.n - 1]!;
-      for (const l of chapterLevels(ch.n)) {
-        expect(l.waves).toBeGreaterThanOrEqual(w0);
-        expect(l.waves).toBeLessThanOrEqual(w1);
-        expect(l.hpMul).toBeGreaterThanOrEqual(h0 - 1e-9);
-        expect(l.hpMul).toBeLessThanOrEqual(h1 + 1e-9);
+      const [w0, w1] = ranges[ch.n - 1]!;
+      const ls = chapterLevels(ch.n);
+      for (const l of ls) {
+        expect(l.waves, l.id).toBeGreaterThanOrEqual(w0);
+        expect(l.waves, l.id).toBeLessThanOrEqual(w1);
       }
+      // Les vagues montent de niveau en niveau (1→5 et 6→10) ; les niveaux de boss sont en haut de la fourchette.
+      for (let i = 1; i < 10; i++) if (i !== 5) expect(ls[i]!.waves, ls[i]!.id).toBeGreaterThanOrEqual(ls[i - 1]!.waves);
+      expect(ls[9]!.waves).toBe(w1);
+      expect(ls[4]!.waves).toBeGreaterThanOrEqual(w1 - 5);
+      expect(ls[4]!.waves).toBe(Math.max(...ls.slice(0, 5).map((l) => l.waves)));
     }
-    expect(getLevel('c1-n1')).toMatchObject({ map: 'toits-new-york', waves: 3, hpMul: 0.55 });
-    expect(getLevel('c6-n10')).toMatchObject({ waves: 20, hpMul: 1.8, boss: { id: 'thanos', wave: 20 } });
+    // Multiplicateurs strictement croissants sur les 60 niveaux.
+    for (let i = 1; i < LEVELS.length; i++) {
+      const a = LEVELS[i - 1]!, b = LEVELS[i]!;
+      expect(b.hpMul, b.id).toBeGreaterThan(a.hpMul);
+      expect(b.countMul, b.id).toBeGreaterThanOrEqual(a.countMul);
+      expect(b.bossHpMul, b.id).toBeGreaterThanOrEqual(a.bossHpMul);
+    }
+    expect(LEVELS[59]!.countMul).toBeGreaterThan(LEVELS[0]!.countMul);
+    expect(LEVELS[59]!.bossHpMul).toBeGreaterThan(LEVELS[0]!.bossHpMul);
+    expect(getLevel('c1-n1')).toMatchObject({ map: 'toits-new-york', waves: 10 });
+    expect(getLevel('c6-n10')).toMatchObject({ waves: 50, boss: { id: 'thanos', wave: 50 } });
   });
 
   it('les configurations se construisent et le moteur démarre', () => {
     for (const l of LEVELS) {
       const cfg = levelConfig(l, DECK, null, 42);
       expect(cfg).toMatchObject({ mode: 'solo', mapId: l.map, targetWaves: l.waves, mapModifiers: {} });
-      expect(cfg.script?.enemyHpMultiplier).toBe(l.hpMul);
+      expect(cfg.script).toMatchObject({ enemyHpMultiplier: l.hpMul, enemyCountMultiplier: l.countMul, bossHpMultiplier: l.bossHpMul, waveHpGrowth: l.growth });
       const e = createEngine(cfg);
       for (let i = 0; i < 40; i++) e.tick();
       expect(e.state.wave).toBe(1);
     }
   });
 
-  it('rythme des boss conforme : < 5 vagues sans boss, 5-9 un lieutenant, ≥ 10 au moins un gros boss', () => {
+  it('rythme des boss conforme (§4.3), le boss ou lieutenant imposé à la dernière vague des niveaux de boss', () => {
     for (const l of LEVELS) {
       const cfg = levelConfig(l, DECK, null, 7);
       const kinds = Array.from({ length: l.waves }, (_, i) => bossWaveKind(cfg, i + 1));
       const expected = Array.from({ length: l.waves }, (_, i) => {
         const w = i + 1;
+        if (l.boss && w === l.boss.wave) return l.boss.kind === 'lieutenant' ? 'petit' : 'gros';
         return w % 10 === 0 ? 'gros' : w % 5 === 0 ? 'petit' : null;
       });
       expect(kinds, l.id).toEqual(expected);
@@ -101,17 +115,14 @@ describe('données de la campagne', () => {
       const l5 = getLevel(levelId(ch.n, 5))!;
       expect(l5.boss).toMatchObject({ kind: 'lieutenant', id: ch.lieutenantOf, wave: l5.waves });
       const c5 = levelConfig(l5, DECK, null, 3);
-      if (l5.waves === 5) expect(c5.script).toMatchObject({ miniBoss: ch.lieutenantOf, bossAtWave: 5, endOnBossKill: true });
-      else {
-        expect(c5.script?.bossOrder?.[1]).toBe(ch.lieutenantOf);
-        expect(c5.script?.bossOrder?.[0]).not.toBe(ch.lieutenantOf);
-      }
+      expect(c5.script).toMatchObject({ miniBoss: ch.lieutenantOf, bossAtWave: l5.waves, endOnBossKill: true });
+      expect(c5.script?.excludeBosses).toContain(ch.lieutenantOf);
       const l10 = getLevel(levelId(ch.n, 10))!;
       expect(l10.boss).toMatchObject({ kind: 'boss', id: ch.boss, wave: l10.waves });
       expect(levelConfig(l10, DECK, null, 3).script).toMatchObject({ bossId: ch.boss, bossAtWave: l10.waves, endOnBossKill: true });
     }
     expect(getLevel('c6-n10')!.boss!.id).toBe('thanos');
-    expect(getLevel('c6-n8')!.boss).toMatchObject({ id: 'malefique', wave: 20 });
+    expect(getLevel('c6-n8')!.boss).toMatchObject({ id: 'malefique', wave: getLevel('c6-n8')!.waves });
   });
 
   it('le boss du chapitre est retiré de la rotation jusqu’à son niveau', () => {
@@ -154,14 +165,15 @@ describe('étoiles', () => {
     expect(met('c1-n3', { maxPowerup: 3 })).toBe(true);
     expect(met('c1-n3', { maxPowerup: 2 })).toBe(false);
     expect(met('c1-n4', { maxRank: 3 })).toBe(true);
-    expect(met('c1-n5', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 24 }] })).toBe(true);
-    expect(met('c1-n5', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 26 }] })).toBe(false);
-    expect(met('c1-n6', { summons: 11 })).toBe(true);
-    expect(met('c1-n6', { summons: 12 })).toBe(false);
+    expect(met('c1-n5', { bossKills: [{ boss: 'bouffon', small: true, wave: 15, time: 24 }] })).toBe(true);
+    expect(met('c1-n5', { bossKills: [{ boss: 'bouffon', small: true, wave: 15, time: 26 }] })).toBe(false);
+    expect(met('c1-n5', { bossKills: [{ boss: 'galactus', small: true, wave: 5, time: 10 }] })).toBe(false);
+    expect(met('c1-n6', { summons: 29 })).toBe(true);
+    expect(met('c1-n6', { summons: 30 })).toBe(false);
     expect(met('c1-n8', { deck: DECK })).toBe(true);
     expect(met('c1-n8', { deck: STARTER_DECKS.disney })).toBe(false);
     expect(met('c1-n9', { emptyCells: 2 })).toBe(true);
-    expect(met('c1-n10', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 10 }, { boss: 'bouffon', small: false, wave: 10, time: 39 }] })).toBe(true);
+    expect(met('c1-n10', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 10 }, { boss: 'bouffon', small: false, wave: 15, time: 39 }] })).toBe(true);
     expect(met('c1-n10', { bossKills: [{ boss: 'bouffon', small: true, wave: 5, time: 10 }] })).toBe(false);
     expect(met('c2-n3', { deck: ['loki', 'hawkeye', 'falcon', 'cmarvel', 'widow'] })).toBe(true);
     expect(met('c2-n3', { deck: DECK })).toBe(false);
@@ -221,14 +233,17 @@ describe('déblocage', () => {
 
 describe('récompenses', () => {
   const l = (id: string) => getLevel(id)!;
-  it('éclats : 30 par étoile nouvelle, 10 par étoile refaite ; XP', () => {
-    const first = levelRewards(l('c1-n1'), [true, true, false], progress([]), DECK);
+  it('éclats : 30 par étoile nouvelle, 10 par étoile refaite, pour 10 vagues (× vagues / 10) ; XP de même', () => {
+    const first = levelRewards(l('c1-n1'), [true, true, false], progress([]), DECK); // 10 vagues
     expect(first.total.shards).toBe(60);
     expect(first.total.xp).toBe(20 + 20);
     expect(first.firstWin).toBe(true);
     const replay = levelRewards(l('c1-n1'), [true, true, true], progress([['c1-n1', [true, true, false]]]), DECK);
     expect(replay.total.shards).toBe(10 + 10 + 30);
     expect(replay.total.xp).toBe(20 + 10);
+    const long = levelRewards(l('c6-n9'), [true, false, false], progress([]), DECK); // 48 vagues
+    expect(long.total.shards).toBe(Math.round(30 * 4.8));
+    expect(long.total.xp).toBe(Math.round(30 * 4.8));
     expect(replay.firstWin).toBe(false);
     expect(levelRewards(l('c1-n1'), [false, false, false], progress([]), DECK).total).toEqual({});
   });
@@ -238,7 +253,7 @@ describe('récompenses', () => {
     expect(r5.total.cards?.[0]?.count).toBe(10);
     expect(DECK).toContain(r5.total.cards?.[0]?.unit);
     const r10 = levelRewards(l('c1-n10'), [true, false, false], progress([]), DECK);
-    expect(r10.total).toMatchObject({ scrolls: 2, shards: 300 + 30, heroes: ['spiderman'], xp: (20 + 10) * 2 });
+    expect(r10.total).toMatchObject({ scrolls: 2, shards: 300 + 45, heroes: ['spiderman'], xp: 45 * 2 }); // 15 vagues
     const owner = { ...progress([]), heroes: { spiderman: { level: 1, cards: 0, awakening: 0, talents: [null, null, null] } } } as Progress;
     expect(levelRewards(l('c1-n10'), [true, false, false], owner, DECK).total.heroes).toEqual(['venom']);
     expect(levelRewards(l('c3-n10'), [true, false, false], progress([]), DECK).total.heroes).toEqual(['moana']);
@@ -269,8 +284,9 @@ describe('récompenses', () => {
     expect(t.freePulls?.length).toBe(6);
     // 25 ✦ × 13 niveaux de boss (5 et 10 de chaque chapitre, + 8 du ch. 6) + 100 (Thanos)
     expect(t.crystals).toBe(25 * 13 + 100);
-    // 180 étoiles × 30 + 6 × 300 + 6 × (150 + 250 + 400)
-    expect(t.shards).toBe(180 * 30 + 6 * 300 + 6 * 800);
-    expect(t.xp).toBe(54 * (20 + 30) + 6 * (20 + 30) * 2);
+    // 3 étoiles × 30 × (vagues / 10) par niveau + 6 × 300 + 6 × (150 + 250 + 400)
+    const stars = LEVELS.reduce((n, lv) => n + Math.round(90 * lv.waves / 10), 0);
+    expect(t.shards).toBe(stars + 6 * 300 + 6 * 800);
+    expect(t.xp).toBe(LEVELS.reduce((n, lv) => n + Math.round(50 * lv.waves / 10) * (lv.n === 10 ? 2 : 1), 0));
   });
 });

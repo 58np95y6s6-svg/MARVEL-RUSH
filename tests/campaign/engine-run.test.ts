@@ -17,7 +17,7 @@ describe('niveaux joués de bout en bout', () => {
       const age = new Map<number, number>();
       const seen: { wave: number; boss: string; small: boolean }[] = [];
       let end: { outcome: string; wave: number } | null = null;
-      for (let i = 0; i < 20 * 40 * 25 && !end; i++) {
+      for (let i = 0; i < 20 * 40 * 55 && !end; i++) {
         for (const en of simState(e).enemies) if (!en.bossId && !en.x.mini) en.hp = 0;
         // Les boss sont à 1 PV après 2 s.
         for (const en of simState(e).enemies) {
@@ -37,9 +37,14 @@ describe('niveaux joués de bout en bout', () => {
         }
       }
       expect(end, 'fin de partie').toMatchObject({ outcome: 'victoire', wave: l.waves });
-      const expected = Array.from({ length: l.waves }, (_, i) => i + 1).filter((w) => w % 5 === 0);
+      // Rythme §4.3 (lieutenant toutes les 5 vagues, gros boss toutes les 10), le boss ou le lieutenant
+      // imposé remplaçant la dernière vague des niveaux de boss.
+      const expected = Array.from({ length: l.waves }, (_, i) => i + 1).filter((w) => w % 5 === 0 || w === l.boss?.wave);
       expect(seen.map((s) => s.wave)).toEqual(expected);
-      for (const s of seen) expect(s.small, `${l.id} vague ${s.wave}`).toBe(s.wave % 10 !== 0);
+      for (const s of seen) {
+        const small = s.wave === l.boss?.wave ? l.boss.kind === 'lieutenant' : s.wave % 10 !== 0;
+        expect(s.small, `${l.id} vague ${s.wave}`).toBe(small);
+      }
       const last = seen[seen.length - 1];
       if (l.boss) {
         expect(last).toMatchObject({ wave: l.boss.wave, boss: l.boss.id, small: l.boss.kind === 'lieutenant' });

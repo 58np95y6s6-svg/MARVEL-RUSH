@@ -27,11 +27,11 @@ function reachWave(e: Engine, w: number): EngineEvent[] {
 }
 
 describe('vagues', () => {
-  it('durent 30 s et les PV suivent 100 × 1,18^(vague-1), allégés au début (×0,7 en vague 1 → ×1 en vague 12)', () => {
+  it('durent 30 s et les PV suivent 100 × 1,18^(vague-1), sans allègement en début de partie', () => {
     const e = solo();
     expect(e.state.wave).toBe(1);
     step(e, 1);
-    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(70);
+    expect(e.state.enemies[0]!.maxHp).toBeCloseTo(100 * earlyHpMul(1));
     expect(earlyHpMul(12)).toBe(1);
     expect(waveHp(20)).toBeCloseTo(100 * Math.pow(1.18, 19));
     const ev = stepKilling(e, 20 * 30);

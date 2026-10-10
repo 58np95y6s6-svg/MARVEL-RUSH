@@ -140,8 +140,8 @@ export type BossWaveKind = 'petit' | 'gros' | null;
 export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
   const r = rhythm(cfg);
   const s = cfg.script;
-  if (s?.miniBoss && s.bossAtWave !== undefined) {
-    if (wave === s.bossAtWave) return 'petit';
+  if (s?.miniBoss) {
+    if (scriptedMiniWave(cfg, wave)) return 'petit';
   } else if (s?.bossAtWave !== undefined && wave === s.bossAtWave) {
     return 'gros';
   }
@@ -149,6 +149,13 @@ export function bossWaveKind(cfg: GameConfig, wave: number): BossWaveKind {
   if (infinite(cfg) && r.thanos > 0 && wave % r.thanos === 0) return 'gros';
   if (r.small > 0 && wave % r.small === 0) return 'petit';
   return null;
+}
+
+/** script.miniBoss : la vague `wave` est-elle celle du sbire géant imposé ? */
+function scriptedMiniWave(cfg: GameConfig, wave: number): boolean {
+  const s = cfg.script;
+  if (!s?.miniBoss) return false;
+  return wave === (s.bossAtWave ?? cfg.targetWaves);
 }
 
 function nextBigWave(cfg: GameConfig, after: number): number {
@@ -211,7 +218,9 @@ function startWave(ctx: Ctx, wave: number): void {
     spawnBigBoss(ctx, st.pendingBoss!);
   } else if (kind === 'petit') {
     st.waveTimeLeft = 0;
-    const scripted = cfg.script?.miniBoss;
+    // script.miniBoss ne remplace que la vague de petit boss désignée (bossAtWave, sinon la dernière
+    // vague du niveau) ; les autres vagues de petit boss gardent le lieutenant du gros boss suivant.
+    const scripted = scriptedMiniWave(cfg, wave) ? cfg.script!.miniBoss : undefined;
     spawnSmallBoss(ctx, scripted ?? st.nextBigBoss!, !!scripted);
   } else {
     st.waveTimeLeft = WAVE_RULES.duration;
@@ -229,7 +238,13 @@ function waveFinished(ctx: Ctx): void {
 }
 
 function normalHp(ctx: Ctx, wave: number): number {
-  return waveHp(wave) * (ctx.cfg.script?.enemyHpMultiplier ?? 1);
+  const s = ctx.cfg.script;
+  return waveHp(wave, s?.waveHpGrowth) * (s?.enemyHpMultiplier ?? 1);
+}
+
+/** PV d'un boss ou d'un lieutenant : PV d'un ennemi normal × `script.bossHpMultiplier`. */
+function bossHp(ctx: Ctx, wave: number): number {
+  return normalHp(ctx, wave) * (ctx.cfg.script?.bossHpMultiplier ?? 1);
 }
 
 /** Branches d'entrée : 'a' en Solo, 'a' et 'b' en Coop (un flot le long de chaque plateau). */
@@ -300,15 +315,17 @@ function spawnOne(ctx: Ctx): void {
   st.spawnCount++;
 }
 
-function spawnInterval(wave: number): number {
-  return Math.max(WAVE_RULES.spawnIntervalMin, WAVE_RULES.spawnIntervalStart - WAVE_RULES.spawnIntervalStep * (wave - 1));
+/** Intervalle entre deux apparitions ; `script.enemyCountMultiplier` (> 1 : plus d'ennemis par vague) le divise. */
+export function spawnInterval(wave: number, countMul = 1): number {
+  const base = Math.max(WAVE_RULES.spawnIntervalMin, WAVE_RULES.spawnIntervalStart - WAVE_RULES.spawnIntervalStep * (wave - 1));
+  return base / Math.max(0.1, countMul);
 }
 
 /** Petit boss : sbire géant (taille ×2) du prochain gros boss, ou sbire géant imposé par le script. */
 function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
   const st = ctx.st;
   const prm = BOSSES[master].minion.params;
-  const hp = normalHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul);
+  const hp = bossHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul);
   const e = addEnemy(ctx, {
     kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: BOSS_STATS.speed, armor: prm.armor ?? 0,
     shieldHits: prm.shieldHits ?? 0, minionOf: master, giant: true,
@@ -327,7 +344,7 @@ function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
 function spawnBigBoss(ctx: Ctx, boss: BossId): void {
   const st = ctx.st;
   const def = BOSSES[boss];
-  const hp = normalHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1);
+  const hp = bossHp(ctx, st.wave) * BOSS_STATS.hpMul * (def.power.params.hpMul ?? 1);
   const lane = bossLane(ctx);
   const e = addEnemy(ctx, {
     kind: 'normal', lane, hp, maxHp: hp, speed: BOSS_STATS.speed, armor: 0, shieldHits: 0,
@@ -345,7 +362,7 @@ function spawnBigBoss(ctx: Ctx, boss: BossId): void {
 function imposedBossDefeated(ctx: Ctx): boolean {
   const s = ctx.cfg.script!;
   const st = ctx.st;
-  if (s.miniBoss && !s.bossId) return st.currentBossSmall && st.currentBoss === s.miniBoss;
+  if (s.miniBoss && !s.bossId) return st.currentBossSmall && st.currentBoss === s.miniBoss && scriptedMiniWave(ctx.cfg, st.wave);
   if (s.bossId) return !st.currentBossSmall && st.currentBoss === s.bossId;
   if (s.bossOrder?.length) return !st.currentBossSmall && st.scriptedBossIdx >= s.bossOrder.length && st.currentBoss === s.bossOrder[s.bossOrder.length - 1];
   return !st.currentBossSmall;
@@ -366,7 +383,7 @@ function updateWave(ctx: Ctx): void {
       st.spawnTimer -= DT;
       while (st.spawnTimer <= EPS) {
         spawnOne(ctx);
-        st.spawnTimer += spawnInterval(st.wave);
+        st.spawnTimer += spawnInterval(st.wave, ctx.cfg.script?.enemyCountMultiplier);
       }
     } else {
       waveFinished(ctx);

@@ -1,7 +1,6 @@
 // Campagne Solo : 6 chapitres × 10 niveaux (docs/campagne.md), en données, et construction de la
 // configuration moteur d'un niveau. Module pur (aucun accès au DOM ni au stockage).
 
-import { ROTATING_BOSSES } from '../data/bosses';
 import type { BossId, Pack, UnitId } from '../data/types';
 import type { GameConfig, PlayerSetup } from '../engine/types';
 import type { Profile } from '../meta/profile';
@@ -80,100 +79,129 @@ export interface CampaignLevel {
   n: number;         // 1..10
   map: string;       // map du niveau (le niveau de boss bascule dans l'arène quand le boss arrive)
   waves: number;     // vagues à tenir
-  hpMul: number;     // script.enemyHpMultiplier
-  /** Boss ou lieutenant imposé (niveaux 5 et 10, et niveau 8 du chapitre 6). */
+  hpMul: number;     // script.enemyHpMultiplier (PV de tous les ennemis)
+  countMul: number;  // script.enemyCountMultiplier (nombre d'ennemis par vague)
+  bossHpMul: number; // script.bossHpMultiplier (PV des boss et lieutenants, en plus de hpMul)
+  growth: number;    // script.waveHpGrowth (croissance des PV par vague, plus douce dans les chapitres longs)
+  /** Boss ou lieutenant imposé à la dernière vague (niveaux 5 et 10, et niveau 8 du chapitre 6). */
   boss?: ImposedBoss;
   /** Gros boss retiré de la rotation (boss du chapitre avant sa première apparition). */
   exclude?: BossId[];
   bonus: Constraint;
 }
 
-type Row = [map: string, waves: number, hpMul: number, bonus: Constraint];
+type Row = [map: string, waves: number, bonus: Constraint];
 
 const NO_LIFE: Constraint = { kind: 'noLifeLost' };
 
+/**
+ * Vagues : 10 → 15 au chapitre 1, puis de plus en plus (15-20, 20-25, 25-30, 30-40, 40-50). Dans un
+ * chapitre, les vagues montent de niveau en niveau ; les niveaux de boss (5 et 10) sont en haut de la
+ * fourchette du chapitre. Le dernier niveau de la campagne finit sur Thanos à la vague 50.
+ */
 const ROWS: Row[][] = [
   [ // Chapitre 1 — New York
-    ['toits-new-york', 3, 0.55, { kind: 'merges', min: 3 }],
-    ['toits-new-york', 4, 0.6, NO_LIFE],
-    ['atelier-stark', 4, 0.65, { kind: 'powerup', min: 3 }],
-    ['atelier-stark', 4, 0.7, { kind: 'rank', min: 3 }],
-    ['toits-new-york', 5, 0.7, { kind: 'bossTime', max: 25 }],
-    ['base-avengers', 6, 0.7, { kind: 'summonsBelow', max: 12 }],
-    ['base-avengers', 7, 0.75, NO_LIFE],
-    ['atelier-stark', 8, 0.75, { kind: 'packCount', pack: 'marvel', min: 3 }],
-    ['toits-new-york', 9, 0.8, { kind: 'emptyCells', min: 2 }],
-    ['toits-new-york', 10, 0.8, { kind: 'bossTime', max: 40 }],
+    ['toits-new-york', 10, { kind: 'merges', min: 3 }],
+    ['toits-new-york', 11, NO_LIFE],
+    ['atelier-stark', 12, { kind: 'powerup', min: 3 }],
+    ['atelier-stark', 13, { kind: 'rank', min: 3 }],
+    ['toits-new-york', 15, { kind: 'bossTime', max: 25 }],
+    ['base-avengers', 13, { kind: 'summonsBelow', max: 30 }],
+    ['base-avengers', 14, NO_LIFE],
+    ['atelier-stark', 14, { kind: 'packCount', pack: 'marvel', min: 3 }],
+    ['toits-new-york', 15, { kind: 'emptyCells', min: 2 }],
+    ['toits-new-york', 15, { kind: 'bossTime', max: 40 }],
   ],
   [ // Chapitre 2 — Asgard et le Sanctum
-    ['asgard-bifrost', 6, 0.85, NO_LIFE],
-    ['asgard-bifrost', 7, 0.85, { kind: 'rank', min: 4 }],
-    ['sanctum-sanctorum', 8, 0.9, { kind: 'deckHasAny', units: ['strange', 'loki'] }],
-    ['sanctum-sanctorum', 9, 0.9, { kind: 'summonsBelow', max: 15 }],
-    ['asgard-bifrost', 5, 1.0, { kind: 'bossTime', max: 20 }],
-    ['temple-dix-anneaux', 10, 0.9, { kind: 'maxPowerup', max: 2 }],
-    ['temple-dix-anneaux', 11, 0.95, NO_LIFE],
-    ['sanctum-sanctorum', 12, 0.95, { kind: 'team', min: 1 }],
-    ['asgard-bifrost', 13, 1.0, { kind: 'noBossLoss' }],
-    ['asgard-bifrost', 10, 1.0, { kind: 'bossTime', max: 35 }],
+    ['asgard-bifrost', 15, NO_LIFE],
+    ['asgard-bifrost', 16, { kind: 'rank', min: 4 }],
+    ['sanctum-sanctorum', 17, { kind: 'deckHasAny', units: ['strange', 'loki'] }],
+    ['sanctum-sanctorum', 18, { kind: 'summonsBelow', max: 40 }],
+    ['asgard-bifrost', 20, { kind: 'bossTime', max: 25 }],
+    ['temple-dix-anneaux', 17, { kind: 'maxPowerup', max: 2 }],
+    ['temple-dix-anneaux', 18, NO_LIFE],
+    ['sanctum-sanctorum', 19, { kind: 'team', min: 1 }],
+    ['asgard-bifrost', 20, { kind: 'noBossLoss' }],
+    ['asgard-bifrost', 20, { kind: 'bossTime', max: 40 }],
   ],
   [ // Chapitre 3 — L'Océan
-    ['ile-motunui', 8, 0.95, { kind: 'packCount', pack: 'disney', min: 2 }],
-    ['ile-motunui', 10, 0.95, NO_LIFE],
-    ['atlantica', 11, 1.0, { kind: 'rank', min: 5 }],
-    ['recif-nemo', 12, 1.0, { kind: 'controlUnits', min: 2 }],
-    ['atlantica', 15, 0.95, { kind: 'bossTime', max: 20 }],
-    ['recif-nemo', 13, 1.0, { kind: 'summonsBelow', max: 20 }],
-    ['ile-motunui', 14, 1.0, NO_LIFE],
-    ['atlantica', 15, 1.05, { kind: 'team', teams: ['ocean'] }],
-    ['recif-nemo', 16, 1.05, { kind: 'endMana', min: 300 }],
-    ['ile-motunui', 20, 1.0, { kind: 'bossTime', max: 35 }],
+    ['ile-motunui', 20, { kind: 'packCount', pack: 'disney', min: 2 }],
+    ['ile-motunui', 21, NO_LIFE],
+    ['atlantica', 22, { kind: 'rank', min: 5 }],
+    ['recif-nemo', 23, { kind: 'controlUnits', min: 2 }],
+    ['atlantica', 25, { kind: 'bossTime', max: 25 }],
+    ['recif-nemo', 22, { kind: 'summonsBelow', max: 50 }],
+    ['ile-motunui', 23, NO_LIFE],
+    ['atlantica', 24, { kind: 'team', teams: ['ocean'] }],
+    ['recif-nemo', 25, { kind: 'endMana', min: 300 }],
+    ['ile-motunui', 25, { kind: 'bossTime', max: 40 }],
   ],
   [ // Chapitre 4 — L'Empire
-    ['palais-imperial', 10, 1.05, NO_LIFE],
-    ['palais-imperial', 11, 1.1, { kind: 'rank', min: 5 }],
-    ['zootopie', 12, 1.1, { kind: 'packCount', pack: 'disney', min: 3 }],
-    ['zootopie', 13, 1.15, { kind: 'noLeak', enemy: 'blinde' }],
-    ['palais-imperial', 15, 1.15, { kind: 'bossTime', max: 20 }],
-    ['highlands-rebelle', 15, 1.15, { kind: 'summonsBelow', max: 22 }],
-    ['zootopie', 16, 1.2, NO_LIFE],
-    ['foret-pocahontas', 17, 1.2, { kind: 'team', teams: ['princesses'] }],
-    ['palais-imperial', 18, 1.25, { kind: 'rank', min: 6 }],
-    ['palais-imperial', 20, 1.25, { kind: 'bossTime', max: 30 }],
+    ['palais-imperial', 25, NO_LIFE],
+    ['palais-imperial', 26, { kind: 'rank', min: 5 }],
+    ['zootopie', 27, { kind: 'packCount', pack: 'disney', min: 3 }],
+    ['zootopie', 28, { kind: 'noLeak', enemy: 'blinde' }],
+    ['palais-imperial', 30, { kind: 'bossTime', max: 25 }],
+    ['highlands-rebelle', 27, { kind: 'summonsBelow', max: 60 }],
+    ['zootopie', 28, NO_LIFE],
+    ['foret-pocahontas', 29, { kind: 'team', teams: ['princesses'] }],
+    ['palais-imperial', 30, { kind: 'rank', min: 6 }],
+    ['palais-imperial', 30, { kind: 'bossTime', max: 40 }],
   ],
   [ // Chapitre 5 — Le Monde des jouets
-    ['chambre-andy', 12, 1.25, NO_LIFE],
-    ['chambre-andy', 13, 1.3, { kind: 'team', teams: ['pixar', 'animaux'] }],
-    ['sugar-rush', 14, 1.3, { kind: 'noLeak', enemy: 'bouclier' }],
-    ['sugar-rush', 15, 1.35, { kind: 'rank', min: 6 }],
-    ['chambre-andy', 15, 1.35, { kind: 'bossTime', max: 20 }],
-    ['foret-rox-rouky', 16, 1.35, { kind: 'summonsBelow', max: 24 }],
-    ['sugar-rush', 17, 1.4, NO_LIFE],
-    ['chambre-andy', 18, 1.45, { kind: 'noRankLoss' }],
-    ['bayou', 19, 1.5, { kind: 'packEach' }],
-    ['sugar-rush', 20, 1.5, { kind: 'bossTime', max: 30 }],
+    ['chambre-andy', 30, NO_LIFE],
+    ['chambre-andy', 32, { kind: 'team', teams: ['pixar', 'animaux'] }],
+    ['sugar-rush', 34, { kind: 'noLeak', enemy: 'bouclier' }],
+    ['sugar-rush', 36, { kind: 'rank', min: 6 }],
+    ['chambre-andy', 40, { kind: 'bossTime', max: 25 }],
+    ['foret-rox-rouky', 34, { kind: 'summonsBelow', max: 75 }],
+    ['sugar-rush', 36, NO_LIFE],
+    ['chambre-andy', 38, { kind: 'noRankLoss' }],
+    ['bayou', 39, { kind: 'packEach' }],
+    ['sugar-rush', 40, { kind: 'bossTime', max: 40 }],
   ],
   [ // Chapitre 6 — Le Royaume des morts
-    ['royaume-des-morts', 14, 1.5, NO_LIFE],
-    ['royaume-des-morts', 15, 1.55, { kind: 'rank', min: 6 }],
-    ['tour-raiponce', 16, 1.55, { kind: 'maxSleep', max: 3 }],
-    ['royaume-des-morts', 17, 1.6, { kind: 'summonsBelow', max: 26 }],
-    ['tour-raiponce', 15, 1.6, { kind: 'bossTime', max: 20 }],
-    ['royaume-des-morts', 18, 1.65, NO_LIFE],
-    ['highlands-rebelle', 19, 1.7, { kind: 'rank', min: 7 }],
-    ['royaume-des-morts', 20, 1.7, { kind: 'bossTime', max: 30 }],
-    ['royaume-des-morts', 20, 1.75, { kind: 'team', min: 2 }],
-    ['royaume-des-morts', 20, 1.8, NO_LIFE],
+    ['royaume-des-morts', 40, NO_LIFE],
+    ['royaume-des-morts', 41, { kind: 'rank', min: 6 }],
+    ['tour-raiponce', 42, { kind: 'maxSleep', max: 3 }],
+    ['royaume-des-morts', 44, { kind: 'summonsBelow', max: 90 }],
+    ['tour-raiponce', 45, { kind: 'bossTime', max: 25 }],
+    ['royaume-des-morts', 44, NO_LIFE],
+    ['highlands-rebelle', 46, { kind: 'rank', min: 7 }],
+    ['royaume-des-morts', 48, { kind: 'bossTime', max: 40 }],
+    ['royaume-des-morts', 48, { kind: 'team', min: 2 }],
+    ['royaume-des-morts', 50, NO_LIFE],
   ],
 ];
+
+/**
+ * Difficulté (docs/campagne.md §2) : le nombre d'ennemis (`countMul`) et leurs PV (`hpMul`, et
+ * `bossHpMul` pour les boss et lieutenants) montent régulièrement sur les 60 niveaux. La croissance
+ * des PV d'une vague à l'autre (`growth`) est plus douce dans les chapitres longs, pour que la 50e
+ * vague reste à la portée d'une collection de fin de campagne.
+ */
+export const DIFFICULTY = {
+  hp: [1.3, 1.9] as const,         // PV× du niveau 1-1 au niveau 6-10
+  count: [1.1, 1.4] as const,      // effectif× (apparitions par vague)
+  bossHp: [1.0, 1.3] as const,     // PV× des boss et lieutenants, en plus
+  /** Croissance des PV par vague, par chapitre (Solo Infini : 1,18), réglée au simulateur. */
+  growth: [1.14, 1.075, 1.07, 1.07, 1.07, 1.0425] as const,
+};
+
+const lerp = (a: readonly [number, number], t: number): number => Math.round((a[0] + (a[1] - a[0]) * t) * 100) / 100;
 
 function buildLevels(): CampaignLevel[] {
   const out: CampaignLevel[] = [];
   ROWS.forEach((rows, ci) => {
     const ch = CHAPTERS[ci]!;
-    rows.forEach(([map, waves, hpMul, bonus], ni) => {
+    rows.forEach(([map, waves, bonus], ni) => {
       const n = ni + 1;
-      const lvl: CampaignLevel = { id: levelId(ch.n, n), chapter: ch.n, n, map, waves, hpMul, bonus };
+      const t = (ci * 10 + ni) / 59;
+      const lvl: CampaignLevel = {
+        id: levelId(ch.n, n), chapter: ch.n, n, map, waves, bonus,
+        hpMul: lerp(DIFFICULTY.hp, t), countMul: lerp(DIFFICULTY.count, t), bossHpMul: lerp(DIFFICULTY.bossHp, t),
+        growth: DIFFICULTY.growth[ci]!,
+      };
       if (n === 5) lvl.boss = { kind: 'lieutenant', id: ch.lieutenantOf, wave: waves, name: ch.lieutenant };
       if (n === 10) lvl.boss = { kind: 'boss', id: ch.boss, wave: waves, name: bossDisplayName(ch.boss) };
       // Chapitre 6, niveau 8 : Maléfique dans son arène (boss intermédiaire).
@@ -306,29 +334,27 @@ export function playerSetup(deck: UnitId[], profile: Profile | null): PlayerSetu
 
 /**
  * Configuration moteur d'un niveau. Campagne : modificateurs de map désactivés.
- * - Niveau 5 (lieutenant à la vague 5) : `miniBoss` + `endOnBossKill`.
- * - Niveau 5 à 15 vagues : le lieutenant du boss du chapitre arrive à la vague 15 par `bossOrder`
- *   (le gros boss de la vague 10 est tiré dans la rotation sans le boss du chapitre). `miniBoss`
- *   n'est pas utilisé ici car le moteur l'applique à toutes les vagues de petit boss (5 et 15).
- *   La partie se gagne à la fin de la vague 15, c'est-à-dire à la mort du lieutenant.
+ * - Difficulté : `enemyHpMultiplier`, `enemyCountMultiplier`, `bossHpMultiplier` et `waveHpGrowth`.
+ * - Niveau 5 : le lieutenant du boss du chapitre (`miniBoss`) à la dernière vague (`bossAtWave`),
+ *   victoire à sa mort (`endOnBossKill`). Les autres vagues de petit boss gardent le lieutenant du
+ *   gros boss suivant, et les gros boss d'avant sont tirés dans la rotation sans le boss du chapitre.
  * - Niveau 10 (et 8 du ch. 6) : boss imposé à la dernière vague + `endOnBossKill` ; la scène bascule
  *   dans son arène à son arrivée.
  */
 export function levelConfig(level: CampaignLevel, deck: UnitId[], profile: Profile | null, seed?: number): GameConfig {
   const s = seed ?? (hash32(`${level.id}:${Date.now()}`) >>> 0);
-  const script: NonNullable<GameConfig['script']> = { enemyHpMultiplier: level.hpMul };
+  const script: NonNullable<GameConfig['script']> = {
+    enemyHpMultiplier: level.hpMul,
+    enemyCountMultiplier: level.countMul,
+    bossHpMultiplier: level.bossHpMul,
+    waveHpGrowth: level.growth,
+  };
   if (level.exclude?.length) script.excludeBosses = level.exclude.slice();
   const b = level.boss;
   if (b?.kind === 'lieutenant') {
-    if (b.wave < 10) {
-      script.miniBoss = b.id;
-      script.bossAtWave = b.wave;
-      script.endOnBossKill = true;
-    } else {
-      const pool = ROTATING_BOSSES.filter((x) => x !== b.id && !(level.exclude ?? []).includes(x));
-      const rot = pool[hash32(`${level.id}:${s}`) % pool.length]!;
-      script.bossOrder = [rot, b.id];
-    }
+    script.miniBoss = b.id;
+    script.bossAtWave = b.wave;
+    script.endOnBossKill = true;
   } else if (b?.kind === 'boss') {
     script.bossId = b.id;
     script.bossAtWave = b.wave;

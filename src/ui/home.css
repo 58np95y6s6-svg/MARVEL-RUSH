@@ -38,6 +38,10 @@
 .hm-campaign .t { font-size: 40px; line-height: 1; display: block; }
 @keyframes hm-pulse { 50% { transform: scale(1.03); } }
 .hm-campaign:active { animation: none; }
+.hm-resume { width: min(76vw, 300px); padding: 8px 0 10px; }
+.hm-resume[hidden] { display: none; }
+.hm-resume .t { font-size: 24px; line-height: 1; display: block; }
+.hm-resume small { display: block; font-size: 13px; opacity: .95; }
 .hm-infinite { width: min(76vw, 300px); padding: 8px 0 10px; background: linear-gradient(#b48cff, #6b3fd0); }
 .hm-infinite .t { font-size: 26px; line-height: 1; display: block; }
 .hm-infinite.locked { background: linear-gradient(#8a83a8, #5a5378); }

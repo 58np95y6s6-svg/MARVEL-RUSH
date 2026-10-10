@@ -343,3 +343,9 @@
   .cp-rstar .ic-star { width: 60px; height: 60px; }
   .cp-rstar.s1 .ic-star { width: 74px; height: 74px; }
 }
+
+/* Sauvegarde de partie : « Reprendre la partie » en tête de liste */
+.cp-resume { align-self: center; width: min(86vw, 330px); padding: 8px 0 10px; display: flex; flex-direction: column; align-items: center; }
+.cp-resume .t { font-size: 22px; line-height: 1; }
+.cp-resume small { font-size: 13px; }
+.cp-obj small { display: block; }

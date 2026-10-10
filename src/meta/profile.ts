@@ -59,6 +59,10 @@ export interface Profile {
   tutorialStep?: number;
   /** Total de tirages effectués (statistique). */
   pullsDone?: number;
+  /** Tutoriel (§5.0) : héros mis en avant à l'étape « Mets ta nouvelle unité dans ton deck ». */
+  tutorialUnit?: UnitId;
+  /** Astuces contextuelles déjà vues (une seule fois chacune), clé = id de l'astuce (src/tutorial/tips.ts). */
+  tips?: Record<string, boolean>;
 }
 
 /** Récompenses à créditer (fin de partie, coffres, paliers). Tous les champs sont optionnels. */

@@ -17,6 +17,7 @@ import {
   nextLevelToPlay, starCount, totalStars, type Progress, type Stars,
 } from '../campaign/progress';
 import { campaignDeck, commitLevel, getProgress, type CommitResult } from '../campaign/store';
+import { clearSavedGame, currentSavedGame, saveGame, savedGameLabel, type SavedGame } from '../meta/savegame'; // Sauvegarde de partie
 import { ICONS as KIT } from './kit';
 
 // ---------------------------------------------------------------------------------------------
@@ -150,6 +151,9 @@ export function mountCampaign(host: HTMLElement, o: CampaignOptions): () => void
     const list = el('div', 'cp-list scroll');
     const next = unlocked ? nextLevelToPlay(prog, ch.n) : null;
     if (!unlocked) list.appendChild(el('p', 'cp-locked-note', `${ICONS.lock}<span>Chapitre verrouillé : ${esc(lockReason(prog, ch))}</span>`));
+    // Sauvegarde de partie : « Reprendre la partie » en tête de liste.
+    const saved = currentSavedGame();
+    if (saved?.kind === 'campagne') list.appendChild(el('button', 'mr-btn yellow cp-resume', `<span class="t">Reprendre la partie</span><small>${esc(savedGameLabel(saved))}</small>`)).setAttribute('data-a', 'resume');
     for (const l of chapterLevels(ch.n)) list.appendChild(levelCard(l, prog, next?.id === l.id));
     list.appendChild(nextChapterCard(ch, prog));
     wrap.replaceChildren(top, list);
@@ -161,6 +165,7 @@ export function mountCampaign(host: HTMLElement, o: CampaignOptions): () => void
       toast(wrap, `Coffre ${t} ★ : ${chestText(t)}${got ? ' (obtenu)' : ''}`);
     }));
     list.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('[data-a="resume"]')) { location.hash = '#reprendre'; return; } // Sauvegarde de partie
       const nextBtn = (e.target as HTMLElement).closest<HTMLElement>('[data-a="next-chapter"]');
       if (nextBtn) {
         if (ch.n < 6 && isChapterUnlocked(prog, ch.n + 1)) o.onChapter(ch.n + 1);
@@ -319,7 +324,7 @@ function levelCard(l: CampaignLevel, prog: Progress, isNext: boolean): HTMLEleme
     <div class="cp-card-ui">
       <div class="cp-card-title"><h3 class="mr-outline-s">Niveau ${l.n}</h3>${tag}</div>
       <div class="cp-card-stars">${starsHtml(stars)}<span class="cp-cicon" title="${esc(constraintLabel(l.bonus, l))}">${constraintIcon(l.bonus)}</span></div>
-      <span class="cp-waves">${ICONS.wave}<b class="mr-outline-s">${l.waves}</b></span>
+      <span class="cp-waves" title="${l.waves} vagues">${ICONS.wave}<b class="mr-outline-s">${l.waves}</b></span>
       <span class="cp-reward">${chestSvg(l.n === 10 ? 'boss' : l.n === 5 ? 'or' : 'bois', won)}${won ? ICONS.check : ''}</span>
       ${btn}
     </div>
@@ -387,8 +392,15 @@ function levelSheet(l: CampaignLevel, h: { onClose: () => void; onPlay: () => vo
     bossBlock = `<div class="cp-boss ${small ? 'silver' : 'red'}"><span class="cp-portrait ${small ? 'silver' : 'red'}"><img alt="" src="${small ? minionUrl(l.boss.id, 0) : bossUrl(l.boss.id, 0)}"></span>
       <div><b>${esc(l.boss.name)}</b><small>${small ? 'Lieutenant' : 'Boss'} · vague ${l.boss.wave}${small ? '' : ' · dans son arène'}</small><p>${esc(power.name)} : ${esc(power.description)}</p><p class="win">Le niveau est gagné quand ${small ? 'il' : 'le boss'} tombe.</p></div></div>`;
   } else if (l.waves >= 5) {
-    const bits = [l.waves >= 5 ? 'un lieutenant à la vague 5' : '', l.waves >= 10 ? 'un gros boss à la vague 10' : '', l.waves >= 15 ? 'un lieutenant à la vague 15' : '', l.waves >= 20 ? 'un gros boss à la vague 20' : ''].filter(Boolean);
-    bossBlock = `<p class="cp-muted">Boss surprise : ${bits.join(', ')}.</p>`;
+    // Rythme §4.3 : lieutenant toutes les 5 vagues, gros boss toutes les 10.
+    const at = (from: number) => { const w: number[] = []; for (let x = from; x <= l.waves; x += 10) w.push(x); return w; };
+    const list = (w: number[]) => (w.length > 1 ? `aux vagues ${w.slice(0, -1).join(', ')} et ${w[w.length - 1]}` : `à la vague ${w[0]}`);
+    const smalls = at(5), bigs = at(10);
+    const bits = [
+      smalls.length ? `${smalls.length > 1 ? 'des lieutenants' : 'un lieutenant'} ${list(smalls)}` : '',
+      bigs.length ? `${bigs.length > 1 ? 'des gros boss' : 'un gros boss'} ${list(bigs)}` : '',
+    ].filter(Boolean);
+    bossBlock = `<p class="cp-muted">Boss surprise : ${bits.join(' ; ')}.</p>`;
   } else bossBlock = '<p class="cp-muted">Pas de boss : idéal pour apprendre.</p>';
   const decks = profile?.decks.filter((d) => d.length === 5) ?? [];
   const deckTabs = decks.length > 1
@@ -396,7 +408,7 @@ function levelSheet(l: CampaignLevel, h: { onClose: () => void; onPlay: () => vo
   body.innerHTML = `
     ${sceneHtml(l)}
     <div class="cp-obj"><span class="cp-waves">${ICONS.wave}<b class="mr-outline-s">${l.waves}</b></span>
-      <div><b>Objectif : tenir ${l.waves} vagues</b><small>${esc(map.name)} · PV des ennemis ${hpLabel(l.hpMul)}</small></div></div>
+      <div><b>Objectif : tenir ${l.waves} vagues</b><small>Environ ${Math.round(l.waves * 0.55)} min · la partie est sauvegardée à chaque vague</small><small>${esc(map.name)} · PV des ennemis ${hpLabel(l.hpMul)} · ennemis ${hpLabel(l.countMul)}</small></div></div>
     <h4>Étoiles</h4>
     <ul class="cp-star-rows">${rows.map(([on, t, ic], i) => `<li class="${on ? 'on' : ''}">${starsHtml([0, 1, 2].map((k) => k <= i))}<span>${t}</span><i>${on ? ICONS.check : ic}</i></li>`).join('')}</ul>
     <h4>${l.boss ? (l.boss.kind === 'boss' ? 'Boss du niveau' : 'Lieutenant du niveau') : 'Boss'}</h4>
@@ -405,7 +417,7 @@ function levelSheet(l: CampaignLevel, h: { onClose: () => void; onPlay: () => vo
     <div class="cp-chips">${rewardChips(preview.total)}</div>
     <h4>Ton deck${deckTabs ? '' : ' actif'}</h4>${deckTabs}
     <div class="cp-deck">${deck.map((u) => `<span><img alt="" src="${tokenUrl(u)}"><small>${esc(UNITS[u].name)}</small></span>`).join('')}</div>`;
-  foot.innerHTML = `<button class="mr-btn ${won ? '' : 'yellow'} cp-go" data-a="play">${won ? 'Rejouer' : 'Jouer'}</button>`;
+  foot.innerHTML = `<button class="mr-btn ${won ? '' : 'yellow'} cp-go" data-a="play" data-tuto="level-play">${won ? 'Rejouer' : 'Jouer'}</button>`;
   foot.querySelector('[data-a="play"]')!.addEventListener('click', () => { vibrate(10); h.onPlay(); });
   body.querySelectorAll<HTMLElement>('[data-deck]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset['deck']);
@@ -453,6 +465,8 @@ export interface CampaignBattleOptions {
   onReplay: () => void;
   /** Niveau suivant : ouvre sa fiche. */
   onNext: (levelId: string) => void;
+  /** Sauvegarde de partie : reprise d'une partie sauvegardée de ce niveau. */
+  resume?: SavedGame;
 }
 
 export async function mountCampaignBattle(root: HTMLElement, levelId: string, o: CampaignBattleOptions): Promise<() => void> {
@@ -464,7 +478,8 @@ export async function mountCampaignBattle(root: HTMLElement, levelId: string, o:
   const { mountBattle } = await import('./battle');
   const profile = getProfile();
   const deck = campaignDeck(profile);
-  const config = levelConfig(level, deck, profile, o.seed);
+  const resume = o.resume?.kind === 'campagne' && o.resume.levelId === level.id ? o.resume : undefined; // Sauvegarde de partie
+  const config = resume ? resume.state.config : levelConfig(level, deck, profile, o.seed);
   let overlay: HTMLElement | null = null;
   let gone = false;
   const b = mountBattle(root, {
@@ -474,9 +489,12 @@ export async function mountCampaignBattle(root: HTMLElement, levelId: string, o:
     speed: o.speed,
     config,
     title: `Niveau ${level.chapter}-${level.n} · ${getChapter(level.chapter)!.name}`,
+    saved: resume?.state.engine, // Sauvegarde de partie
+    onWaveSave: (wave, state) => { void saveGame('campagne', level.id, config, state, wave).catch(() => undefined); },
     onHome: () => o.onExit(level.chapter),
     onReplay: o.onReplay,
     onEnd: (result) => {
+      void clearSavedGame().catch(() => undefined); // Sauvegarde de partie : partie finie
       const done = commitLevel(level.id, result).catch((err: unknown) => {
         console.error(err);
         return null;
