@@ -2,8 +2,10 @@
 // (docs/rush-royale-mapping.md, données et sources dans docs/rush-royale-donnees.md). Tout est lu par le moteur.
 //
 // Conversion Rush Royale → Marvel Rush :
-// - `damage` = dégâts du niveau de carte 7 de Rush Royale (notre niveau de collection 1) ; +10 % par
-//   niveau de collection (moteur). 0 = l'unité n'attaque pas (soutiens « sans cible » de Rush Royale).
+// - `damage` = dégâts du niveau de carte 7 de Rush Royale (notre niveau de collection 1). Niveau de
+//   collection : `damagePerLevel` = pas du tableau par niveau de l'unité Rush Royale quand il est publié
+//   (docs/rush-royale-donnees.md §1), sinon +10 % par niveau (moteur). 0 = l'unité n'attaque pas
+//   (soutiens « sans cible » de Rush Royale).
 // - Rang de fusion (règle Rush Royale) : intervalle ÷ rang, dégâts par coup indépendants du rang.
 // - `range` : Rush Royale n'a pas de portée ; on garde notre système, cohérent avec le type d'unité.
 //
@@ -25,7 +27,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Tesla.
     id: 'ironman', name: 'Iron Man', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts / charges',
-    targeting: 'premier', damage: 260, attackInterval: 0.6, range: 'globale',
+    targeting: 'premier', damage: 260, damagePerLevel: 107.25, attackInterval: 0.6, range: 'globale',
     ability: {
       name: 'Surcharge Arc',
       description: 'Gagne une charge à chaque fusion ou montée de rang sur une case voisine (au plus autant que son rang). Chaque charge augmente ses dégâts (jusqu’à +38 %) ; chargé à fond, chaque tir frappe aussi 4 autres ennemis à 50 %.',
@@ -60,9 +62,9 @@ export const UNIT_LIST: UnitDef[] = [
   },
   {
     // Rush Royale : Inquisiteur (fiche de l'unité : 834 dégâts au niveau 12, +129 par niveau → 189 au niveau 7,
-    // notre niveau 1 ; ensuite +10 % par niveau de collection comme toutes les unités). Intervalle 1 s, 0,6 s actif.
+    // notre niveau 1 ; ensuite +129 par niveau de collection, comme la fiche). Intervalle 1 s, 0,6 s actif.
     id: 'thor', name: 'Thor', pack: 'marvel', rarity: 'legendaire', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 189, attackInterval: 1.0, range: 3.4,
+    targeting: 'premier', damage: 189, damagePerLevel: 129, attackInterval: 1.0, range: 3.4,
     ability: {
       name: 'Mjolnir',
       description: 'Thor inflige des dégâts de zone égaux à 50 % de ses dégâts de base. Chaque coup consécutif sur une même cible augmente les dégâts qu’elle subit de 15 % (600 % au plus). Si Thor change de cible (la cible actuelle est morte ou hors de portée), l’augmentation des dégâts repart de zéro.\nSi le nombre de Thor sur ton plateau est égal à 1, 3, 5 ou 7, ils passent en mode actif : leur intervalle d’attaque passe de 1 s à 0,6 s et leurs attaques de zone infligent 100 % des dégâts. L’augmentation des dégâts est gardée au changement de mode.',
@@ -95,7 +97,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Mage de feu.
     id: 'cmarvel', name: 'Captain Marvel', pack: 'marvel', rarity: 'rare', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 55, attackInterval: 0.74, range: 'globale',
+    targeting: 'premier', damage: 55, damagePerLevel: 6.2, attackInterval: 0.74, range: 'globale',
     ability: {
       name: 'Rafale photonique',
       description: 'Chaque tir explose autour de la cible : 78 % des dégâts aux ennemis proches.',
@@ -135,7 +137,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Archer.
     id: 'hawkeye', name: 'Œil de faucon', pack: 'marvel', rarity: 'rare', role: 'Cadence',
-    targeting: 'premier', damage: 59, attackInterval: 0.45, range: 'globale',
+    targeting: 'premier', damage: 59, damagePerLevel: 5, attackInterval: 0.45, range: 'globale',
     ability: {
       name: 'Carquois',
       description: 'Archer rapide : chaque amélioration en partie lui donne +22 % de vitesse d’attaque (au lieu de +6 %).',
@@ -155,7 +157,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Prêtresse.
     id: 'widow', name: 'Black Widow', pack: 'marvel', rarity: 'epique', role: 'Mana',
-    targeting: 'premier', damage: 43, attackInterval: 0.9, range: 3.4,
+    targeting: 'premier', damage: 43, damagePerLevel: 16.6, attackInterval: 0.9, range: 3.4,
     ability: {
       name: 'Sacrifice',
       description: 'Fusionnée ou détruite, Black Widow rapporte 80 de mana par rang (rang 6 : 480).',
@@ -165,7 +167,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Danse-lames.
     id: 'shangchi', name: 'Shang-Chi', pack: 'marvel', rarity: 'epique', role: 'Dégâts',
-    targeting: 'premier', damage: 215, attackInterval: 1.2, range: 1.6,
+    targeting: 'premier', damage: 215, damagePerLevel: 98.25, attackInterval: 1.2, range: 1.6,
     ability: {
       name: 'Dix Anneaux',
       description: 'Sans autre Shang-Chi sur une case voisine, il danse : +100 % de vitesse d’attaque. Chaque Shang-Chi qui danse donne +10 % de dégâts aux autres Shang-Chi (8 au plus).',
@@ -177,7 +179,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Archer du vent.
     id: 'moana', name: 'Vaïana & Pua', pack: 'disney', rarity: 'epique', role: 'Cadence',
-    targeting: 'premier', damage: 59, attackInterval: 0.6, range: 3.4,
+    targeting: 'premier', damage: 59, damagePerLevel: 12.2, attackInterval: 0.6, range: 3.4,
     ability: {
       name: 'Appel du vent',
       description: 'Toutes les 4 s, Ouragan : vitesse d’attaque ×3 pendant 3,6 s (+0,3 s par niveau et par rang). Chaque rang au-dessus de 1 ajoute 30 dégâts.',
@@ -210,7 +212,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Pyrotechnicien.
     id: 'mulan', name: 'Mulan & Mushu', pack: 'disney', rarity: 'legendaire', role: 'Dégâts de zone',
-    targeting: 'premier', damage: 229, attackInterval: 1.0, range: 2.4,
+    targeting: 'premier', damage: 229, damagePerLevel: 61.7, attackInterval: 1.0, range: 2.4,
     ability: {
       name: 'Feu de Mushu',
       description: 'Nombre impair de Mulan sur le plateau : cadence ×0,67, cible au hasard et explosion de 100 % autour de la cible (rayon qui grandit avec le rang). Nombre pair : −40 % de dégâts, tir sur le premier.',
@@ -313,7 +315,7 @@ export const UNIT_LIST: UnitDef[] = [
   {
     // Rush Royale : Gardien du portail.
     id: 'vanralph', name: 'Vanellope & Ralph', pack: 'disney', rarity: 'legendaire', role: 'Échangeur',
-    targeting: 'premier', damage: 45, attackInterval: 0.66, range: 2.4,
+    targeting: 'premier', damage: 45, damagePerLevel: 32.2, attackInterval: 0.66, range: 2.4,
     ability: {
       name: 'Glitch',
       description: 'Échangeur : glisse-les sur une alliée de même rang (autre héros), elles échangent leurs cases, sans limite. L’alliée est libérée des effets de boss et de la pénalité de copie ; Vanellope, elle, bugue 2 s (ni attaque, ni fusion).',

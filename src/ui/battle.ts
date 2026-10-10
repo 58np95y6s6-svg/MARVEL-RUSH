@@ -6,7 +6,7 @@ import type { BossId, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import {
   GRID_SIZE, MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, MAX_RANK, POWERUP_ATTACK_SPEED, POWERUP_COSTS,
-  POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
+  COOP_LIVES, POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, START_LIVES, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
   formationLength, growthBonus, growthPointsOf, rangeLabel,
   type Command, type Engine, type EngineEvent, type GameConfig, type PlayerId,
 } from '../engine';
@@ -116,7 +116,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
 
   // Barre du haut
   const top = el('div', 'mr-top');
-  const lives = el('div', 'mr-lives', HEART_SVG.repeat(3));
+  const lives = el('div', 'mr-lives', HEART_SVG.repeat(config.mode === 'coop' ? COOP_LIVES : START_LIVES));
   const wave = el('div', 'mr-wave', '<div class="mr-wave-n mr-outline">Vague 1</div><div class="mr-wave-t mr-outline">0:30</div>');
   const pauseBtn = el('button', 'mr-pause', '<i></i>');
   pauseBtn.setAttribute('aria-label', 'Pause');
@@ -251,7 +251,7 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
   };
 
   // ---------------------------------------------------------------- HUD
-  const cache = { manaUp: '', mana: -1, cost: -1, wave: -1, time: '', lives: 3, count: -1, summonOff: null as boolean | null, cards: [] as string[], banner: '', bossKey: '', bossPct: -1, rage: '' };
+  const cache = { manaUp: '', mana: -1, cost: -1, wave: -1, time: '', lives: -1, count: -1, summonOff: null as boolean | null, cards: [] as string[], banner: '', bossKey: '', bossPct: -1, rage: '' };
 
   function showToast(msg: string): void {
     toast.textContent = msg;

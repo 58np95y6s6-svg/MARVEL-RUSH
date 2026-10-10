@@ -389,7 +389,7 @@ Points de vigilance :
   monstres communs ; après la vague 60 (modes infinis), boss aux vagues paires et mini-boss aux impaires.
 - **Valeurs Marvel Rush** (Rush Royale ne les publie pas) : PV de base 200 en vague 1, croissance ×1,17 par
   vague au 1er bloc (`WAVE_RULES.hpGrowth`, remplacée par `script.waveHpGrowth` en campagne) ; PV des boss
-  inchangés (×12 lieutenant, ×25 gros boss, × PV d'un normal au début de la vague).
+  inchangés (×12 lieutenant, ×25 gros boss, × PV d'un normal au début de la vague ; lieutenant ×5 depuis le §9).
 - Économie : améliorations 100/200/400/**800** (Rush Royale) ; mana de départ gardé à 150 (Rush Royale :
   100 ; à 100, le deck Disney de départ perdait parfois dès la vague 1).
 
@@ -406,3 +406,54 @@ Réglage de campagne (`src/campaign/levels.ts`, `DIFFICULTY.growth`) : ×1,14 / 
 1,07 / 1,0425 (avant : 1,075 / 1,07 / 1,07 aux chapitres 2 à 4) pour que le deck de départ peine dès le
 chapitre 3. Le deck Disney de départ est plus faible que le Marvel (deux soutiens qui n'attaquent pas ou peu :
 Bannière, Chaudron) : c'est le profil Rush Royale.
+
+## 9. Copie de l'équilibrage Rush Royale (octobre 2026)
+
+> Agent Équilibrage. Demande : « On copie l'équilibrage de Rush Royale : vitesse des sbires, PV, etc. »
+> Recherche, sources et niveaux de confiance (A : chiffre lu dans le wiki, une note officielle ou les
+> **textes du jeu** ; B : guide tiers ou déduction directe ; C : valeur Marvel Rush) :
+> `docs/rush-royale-donnees.md` (§1, §2 et §2.4 « introuvable »).
+
+**Valeurs reprises de Rush Royale**
+
+| Règle | Avant | Après | Conf. |
+|---|---|---|---|
+| Composition des vagues (modes infinis) | normaux, rapides dès la vague 2, gros dès 4, blindés dès 6, boucliers dès 8 | **monstres communs seulement** ; la vague du mini-boss (5, 15, 25…) = mini-boss + **9 rapides** (10 monstres) | A (9 : B) |
+| Composition (campagne) | idem | communs, plus gros / blindés / boucliers (ennemis propres à Marvel Rush, les contraintes « aucun blindé ne passe » en ont besoin) ; vague du lieutenant = 9 rapides | A + C |
+| PV du mini-boss (lieutenant) | ×12 d'un normal | **×5** | B |
+| Vitesse du mini-boss | 0,5 case/s (comme un gros boss) | **×0,8 d'un normal** (1,6 case/s, « un peu plus lent ») | B |
+| Mana du mini-boss | ×1 | **×5** du mana d'élimination | A/B |
+| Vies retirées à la porte | normal 1, gros 2, boss et lieutenant : toutes | normal 1, **gros, lieutenant et boss 2** ; niveau de boss : laisser passer le boss imposé = défaite | A |
+| Vies en Coop | 3 | **1** (« la porte n'a qu'une vie ») | A |
+| Vies en Solo | 3 | 3 (PvP de Rush Royale) | B |
+| Chance de critique de base | 0 % | **5 %** (dégâts ×2, valeur Marvel Rush) | A (5 %) / C (×2) |
+| Mana de départ | 150 | **100** | B |
+| Dégâts par niveau de collection | +10 % pour tous | tableau de l'unité Rush Royale (notre niveau 1 = niveau de carte 7) pour 9 héros : Iron Man +107,25, Thor +129, Shang-Chi +98,25, Mulan +61,7, Vanellope +32,2, Black Widow +16,6, Vaïana +12,2, Captain Marvel +6,2, Œil de faucon +5 par niveau ; +10 % pour les autres | A |
+| Inchangé, déjà Rush Royale | — | 10 monstres par vague, vague suivante au nettoyage, rapide PV ×0,5 vitesse ×2, gros PV ×5 mana ×5, mana d'élimination 10 → 50, invocation 10 +10, améliorations 100/200/400/800, rang = cadence, alternance boss / mini-boss après la vague 60 | A/B |
+
+**Gardé faute de chiffre Rush Royale** (aucune source accessible, voir `docs/rush-royale-donnees.md` §2.4) :
+vitesses absolues (normal 2 cases/s, gros boss 0,5), longueur du chemin, rythme d'apparition (2,6 s → 0,6 s),
+PV absolus et croissance (`baseHp` 200 → **220**, seul réglage hors campagne, pour garder le Solo Infini
+dans la cible ; croissance ×1,17 par vague et +25 % par bloc de 10), PV des gros boss (×25), rage (45 s),
+pouvoirs des boss, dégâts critiques (×2), effet des améliorations (+15 % de dégâts, +6 % de cadence).
+
+**Mesures** (`scripts/simulate.ts`, joueur `--casual` sauf mention ; avant = commit 4135a21)
+
+| Mesure | Avant | Après | Cible |
+|---|---|---|---|
+| Solo Infini, départ Marvel niveau 1 (40 parties) | 17,63 | **18,32** | ≈ 14-18 |
+| Solo Infini, départ Disney niveau 1 (40 parties) | 13,20 | **14,97** | ≈ 14-18 |
+| Solo Infini, départ Marvel, bot de référence | 19,80 | 19,85 | — |
+| Solo Infini, méta Marvel (Iron Man, Thor, Hulk, Cap, Widow) niveau 1 / niveau 8 (10 parties) | 25,1 / 27,7 | 24,3 / **32,6** | — |
+| Coop Infini, départ Marvel × 2, bot de référence (20 parties) | 18,55 | 15,75 (1 seule vie) | — |
+| Campagne, collection attendue : victoire moyenne (pire niveau), 10 parties par niveau | c1 99 % (90) · c2-c5 100 % · c6 99 % (90) | c1 97 % (80) — 96 % (80) sur 30 parties par niveau, avant 98 % (87) · c2 100 % · c3 99 % (90) · c4-c6 100 % | ≥ 85 % au ch. 1, ≥ 70 % ensuite |
+| Deck de départ niveau 1 : ch. 1 / ch. 2 / ch. 3 | 99 % / 96 % / 40 % (pire 0) | 97 % / 89 % / **27 %** (pire 0) | peine dès le ch. 3 |
+
+Le Disney de départ perd encore 5 % de ses parties dès la vague 1 en `--casual` (déjà le cas avant, à 150 de
+mana : quatre premières invocations tombées sur Pocahontas, Nemo ou Rox hors de portée).
+
+**Campagne** : les cibles tiennent sans retoucher les multiplicateurs (`DIFFICULTY` inchangé : PV× 1,3 → 1,9,
+effectif× 1,1 → 1,4, boss× 1,0 → 1,3, croissance 1,14 / 1,10 / 1,10 / 1,09 / 1,07 / 1,0425). Les tableaux de
+niveau rendent les Légendaires bien plus forts aux niveaux 6 à 8 (méta niveau 8 : +18 % de vagues en Solo) ;
+les chapitres 4 à 6 restent à 100 % avec la collection attendue. Si les joueurs les trouvent trop faciles,
+relever d'abord `DIFFICULTY.hp[1]` (fin de campagne).

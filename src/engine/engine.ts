@@ -11,7 +11,7 @@ import {
   type LaneId, type PlayerId,
 } from './types';
 import {
-  DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
+  COOP_LIVES, DEFAULT_COOP_LENGTHS, DEFAULT_PATH_LENGTH, DT, EPS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, NO_TEAM, POWERUP_COSTS, POWERUP_MAX, START_LIVES, START_MANA,
   SUMMON_COST_START, SUMMON_COST_STEP, emit, pick, spawnRand,
   type Ctx, type PlayerInfo, type SimEnemy, type SimPlayer, type SimState, type SimUnit, type TeamAgg,
 } from './internal';
@@ -112,7 +112,7 @@ function initState(cfg: GameConfig): SimState {
     })),
     lanes: (cfg.mode === 'coop' ? (['a', 'b', 'tronc'] as LaneId[]) : (['a'] as LaneId[]))
       .map((id) => ({ id, length: DEFAULT_PATH_LENGTH })),
-    lives: START_LIVES,
+    lives: cfg.mode === 'coop' ? COOP_LIVES : START_LIVES,
     enemies: [],
     rng: deriveSeed(cfg.seed, 1),
     spawnRng: deriveSeed(cfg.seed, 2),
@@ -206,7 +206,7 @@ function startWave(ctx: Ctx, wave: number): void {
   // Rush Royale (Coop) : 10 monstres par vague ; une vague de mini-boss en a aussi, une vague de boss non.
   // Après la vague 60 (alternance boss / mini-boss), plus de monstres communs.
   const late = infinite(cfg) && !cfg.bossRhythm && wave > WAVE_RULES.alternateAfter;
-  st.waveMonsters = kind === 'gros' || late ? 0 : monstersInWave(cfg.script?.enemyCountMultiplier);
+  st.waveMonsters = kind === 'gros' || late ? 0 : monstersInWave(cfg.script?.enemyCountMultiplier, kind === 'petit');
   st.pendingBoss = kind === 'gros' ? bigBossFor(ctx, wave, true) : null;
   const nb = nextBigWave(cfg, kind === 'gros' ? wave + 1 : wave);
   st.nextBigBoss = bigBossFor(ctx, nb, false);
@@ -313,7 +313,8 @@ function spawnOne(ctx: Ctx): void {
   if (st.minionMaster && st.spawnCount % WAVE_RULES.minionEvery === WAVE_RULES.minionEvery - 1) {
     spawnMinions(ctx, st.minionMaster);
   } else {
-    const weights = spawnWeights(st.wave);
+    const miniWave = bossWaveKind(ctx.cfg, st.wave) === 'petit';
+    const weights = spawnWeights(st.wave, { miniWave, campaign: !infinite(ctx.cfg) });
     const total = weights.reduce((sum, [, w]) => sum + w, 0);
     let r = spawnRand(ctx) * total;
     let kind: EnemyKind = 'normal';
@@ -338,7 +339,7 @@ function spawnSmallBoss(ctx: Ctx, master: BossId, scripted: boolean): void {
   const prm = BOSSES[master].minion.params;
   const hp = bossHp(ctx, st.wave) * (scripted ? BOSS_STATS.scriptedMiniHpMul : BOSS_STATS.smallHpMul);
   const e = addEnemy(ctx, {
-    kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: BOSS_STATS.speed, armor: prm.armor ?? 0,
+    kind: 'sbire', lane: bossLane(ctx), hp, maxHp: hp, speed: WAVE_RULES.baseSpeed * BOSS_STATS.smallSpeedMul, armor: prm.armor ?? 0,
     shieldHits: prm.shieldHits ?? 0, minionOf: master, giant: true,
     x: {
       mini: 1, rageIn: BOSS_STATS.rageAfter, flying: prm.flying ? 1 : undefined,
@@ -486,8 +487,12 @@ function reachEnd(ctx: Ctx, e: SimEnemy): void {
   e.x.gone = 1;
   const st = ctx.st;
   if (!ctx.cfg.script?.noLifeLoss && st.lives > 0) {
-    // Rush Royale : un gros monstre retire 2 vies, un boss toutes.
-    st.lives = e.bossId || e.x.mini ? 0 : Math.max(0, st.lives - ENEMIES[e.kind].lives);
+    // Rush Royale : un monstre commun retire 1 vie, un gros monstre, un mini-boss ou un boss 2.
+    // Niveau de boss (script.endOnBossKill) : laisser passer le boss imposé, c'est perdre.
+    const boss = !!(e.bossId || e.x.mini);
+    const lost = boss ? BOSS_STATS.gateLives : ENEMIES[e.kind].lives;
+    const imposed = boss && !!ctx.cfg.script?.endOnBossKill && imposedBossDefeated(ctx);
+    st.lives = imposed ? 0 : Math.max(0, st.lives - lost);
     emit(ctx, { type: 'lifeLost', lives: st.lives });
   }
   pumpkinExplosion(ctx, e);

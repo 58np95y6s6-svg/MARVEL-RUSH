@@ -1,7 +1,7 @@
 // Types internes du moteur : ils prolongent les types du contrat (src/engine/types.ts)
 // avec les champs dont la simulation a besoin. Tout est sérialisable en JSON.
 
-import type { BossId, TeamBonusDef, UnitId } from '../data/types';
+import type { BossId, TeamBonusDef, UnitDef, UnitId } from '../data/types';
 import type {
   Command, EngineEvent, EngineState, EnemyInstance, GameConfig, LaneId, PlayerState, UnitInstance,
 } from './types';
@@ -10,8 +10,8 @@ import type { BoardGeometry } from './geometry';
 
 export const DT = 0.05; // 1 / TICKS_PER_SECOND
 export const EPS = 1e-9;
-/** Mana de départ : 150 (Rush Royale : 100 ; on garde 150 pour que le premier tirage permette 5 invocations). */
-export const START_MANA = 150;
+/** Mana de départ (Rush Royale : 100). */
+export const START_MANA = 100;
 export const SUMMON_COST_START = 10;
 export const SUMMON_COST_STEP = 10;
 /** Rush Royale : 100 / 200 / 400 / 800 (doublement). Passer au niveau 2, 3, 4, 5. */
@@ -24,10 +24,23 @@ export const POWERUP_ATTACK_SPEED = 0.06;
 export const MANA_UPGRADE_COSTS = [50, 100, 200, 400, 800];
 export const MANA_UPGRADE_BONUS = 0.2;
 export const MANA_UPGRADE_MAX = 5;
+/** Niveau de collection : +10 % des dégâts de base par niveau, sauf tableau Rush Royale (`UnitDef.damagePerLevel`). */
 export const LEVEL_DAMAGE = 0.1;
+
+/** Multiplicateur de dégâts du niveau de collection (1 au niveau 1). */
+export function levelDamageMul(def: Pick<UnitDef, 'damage' | 'damagePerLevel'>, level: number): number {
+  const n = Math.max(0, level - 1);
+  if (def.damagePerLevel === undefined || def.damage <= 0) return 1 + LEVEL_DAMAGE * n;
+  return 1 + (def.damagePerLevel / def.damage) * n;
+}
 export const DEFAULT_PATH_LENGTH = 30;
 export const DEFAULT_COOP_LENGTHS = { a: 18, b: 18, tronc: 14 };
+/** Vies en Solo (Rush Royale, PvP : 3). */
 export const START_LIVES = 3;
+/** Vies en Coop (Rush Royale : la porte commune n'a qu'une vie, un monstre qui passe finit la partie). */
+export const COOP_LIVES = 1;
+/** Chance de critique par défaut de toutes les unités (Rush Royale : 5 %) ; dégâts critiques ×2 (NO_TEAM.critMul). */
+export const BASE_CRIT_CHANCE = 0.05;
 
 export type SimUnit = UnitInstance;
 
@@ -153,6 +166,8 @@ export interface Ctx {
   info: PlayerInfo[];
   /** Tests des compétences : les portées sont ignorées (toutes les unités touchent tout le chemin). */
   debugNoRange?: boolean;
+  /** Tests : sans la chance de critique par défaut (5 %), pour des dégâts exacts. */
+  debugNoCrit?: boolean;
   /** Tests : impose la Pierre du Gant de l'infini. */
   debugStone?: string;
 }

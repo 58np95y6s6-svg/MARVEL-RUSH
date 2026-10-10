@@ -108,7 +108,7 @@ describe('boss', () => {
     it('Âme : vole 20 % du mana', () => {
       const { e, p } = run('ame', []);
       expect(p.name).toBe('Pierre de l’Âme');
-      expect(e.state.players[0]!.mana).toBe(120); // 150 − 20 %
+      expect(e.state.players[0]!.mana).toBe(80); // 100 − 20 %
     });
     it('Temps : soigne Thanos de 5 %', () => {
       const e = quiet(DECK);

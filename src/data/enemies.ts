@@ -6,8 +6,10 @@
 // - les PV montent à chaque nouveau monstre, et le taux de croissance augmente toutes les 10 vagues ;
 // - rapide : PV ×0,5, vitesse ×2 ; gros : PV ×5, un peu plus lent, mana ×5, 2 vies à la porte ;
 // - mana par élimination : +10 toutes les 10 vagues, plafonné à 50 ;
-// - mini-boss toutes les 5 vagues (avec des monstres communs), boss toutes les 10 ; après la vague 60,
-//   boss aux vagues paires et mini-boss aux vagues impaires.
+// - mini-boss toutes les 5 vagues (avec des monstres rapides), boss toutes les 10 ; après la vague 60,
+//   boss aux vagues paires et mini-boss aux vagues impaires ; les autres vagues ne contiennent que des
+//   monstres communs (textes du jeu) ;
+// - à la porte, un monstre commun retire 1 vie, un gros, un mini-boss ou un boss 2 (src/data/bosses.ts).
 // Rush Royale ne publie pas les PV absolus ni les taux de croissance : `baseHp`, `hpGrowth` et
 // `hpGrowthStep` sont nos valeurs (confiance C), réglées au simulateur (docs/equilibrage.md).
 
@@ -41,8 +43,8 @@ export const ENEMIES: Record<EnemyKind, EnemyKindDef> = {
 export const WAVE_RULES = {
   /** Rush Royale (Coop) : 10 monstres par vague (× script.enemyCountMultiplier). */
   monstersPerWave: 10,
-  /** PV d'un ennemi normal au début de la vague 1 (valeur Marvel Rush, Rush Royale ne la publie pas). */
-  baseHp: 200,
+  /** PV d'un ennemi normal au début de la vague 1 (valeur Marvel Rush, Rush Royale ne la publie pas ; 200 → 220 en octobre 2026). */
+  baseHp: 220,
   /**
    * Croissance des PV par vague dans le 1er bloc de 10 vagues (remplaçable par script.waveHpGrowth) ;
    * le taux (croissance − 1) augmente de `hpGrowthStep` (en part du taux de départ) à chaque bloc de 10 vagues.
@@ -54,7 +56,7 @@ export const WAVE_RULES = {
   killManaBase: 10,
   killManaStep: 10,
   killManaMax: 50,
-  baseSpeed: 2,          // cases par seconde d'un ennemi normal
+  baseSpeed: 2,          // cases par seconde d'un ennemi normal (valeur Marvel Rush : vitesse absolue non publiée)
   /** Rythme des boss, remplaçable par GameConfig.bossRhythm. */
   smallBossEvery: 5,     // mini-boss (lieutenant) : vagues 5, 15, 25…
   bigBossEvery: 10,      // gros boss : vagues 10, 20, 30…
@@ -95,18 +97,25 @@ export function killMana(wave: number): number {
   return Math.min(m, a + s * Math.floor(Math.max(0, wave - 1) / 10));
 }
 
-/** Nombre de monstres d'une vague (`countMul` = script.enemyCountMultiplier). */
-export function monstersInWave(countMul = 1): number {
-  return Math.max(1, Math.round(WAVE_RULES.monstersPerWave * countMul));
+/**
+ * Nombre de monstres d'une vague (`countMul` = script.enemyCountMultiplier). Vague de mini-boss : le
+ * mini-boss compte parmi les 10 (Rush Royale : 10 monstres par vague, dont le mini-boss).
+ */
+export function monstersInWave(countMul = 1, miniWave = false): number {
+  return Math.max(1, Math.round(WAVE_RULES.monstersPerWave * countMul) - (miniWave ? 1 : 0));
 }
 
 /**
- * Composition d'une vague : poids de chaque type selon la vague.
- * Les types se débloquent progressivement, comme dans Rush Royale.
+ * Composition d'une vague (Rush Royale, Coop : « les autres vagues ne contiennent que des monstres
+ * communs ; la 5e vague de chaque dizaine contient un mini-boss et des monstres rapides »).
+ * - Vague de mini-boss (`miniWave`) : uniquement des rapides (PV ×0,5, vitesse ×2).
+ * - Autres vagues : monstres communs. La campagne (`campaign`) y mêle les ennemis propres à Marvel Rush
+ *   (gros, blindé, bouclier), dont ses niveaux ont besoin (contraintes « aucun blindé ne passe »…).
  */
-export function spawnWeights(wave: number): [EnemyKind, number][] {
+export function spawnWeights(wave: number, opts: { miniWave?: boolean; campaign?: boolean } = {}): [EnemyKind, number][] {
+  if (opts.miniWave) return [['rapide', 1]];
   const w: [EnemyKind, number][] = [['normal', 10]];
-  if (wave >= 2) w.push(['rapide', 3]);
+  if (!opts.campaign) return w;
   if (wave >= 4) w.push(['gros', 1]);
   if (wave >= 6) w.push(['blinde', 1]);
   if (wave >= 8) w.push(['bouclier', 1]);

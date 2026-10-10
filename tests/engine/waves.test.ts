@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { bossWaveKind, createEngine } from '../../src/engine';
 import { debugPlace, debugSpawn } from '../../src/engine/debug';
 import { ROTATING_BOSSES } from '../../src/data/bosses';
-import { ENEMIES, WAVE_RULES, killMana, monsterHp, waveGrowth, waveHp } from '../../src/data/enemies';
+import { ENEMIES, WAVE_RULES, killMana, monsterHp, spawnWeights, waveGrowth, waveHp } from '../../src/data/enemies';
 import type { BossId } from '../../src/data/types';
 import type { Engine, EngineEvent, GameConfig } from '../../src/engine/types';
 import { MARVEL, ofType, setup, simState, solo, step } from './helpers';
@@ -78,7 +78,7 @@ describe('vagues', () => {
     expect([3, 6, 9, 12].map((w) => bossWaveKind(custom, w))).toEqual(['petit', 'gros', 'petit', 'gros']);
   });
 
-  it('petit boss : lieutenant géant du prochain gros boss (PV ×12) avec des monstres communs, vague suivante au nettoyage', () => {
+  it('petit boss : lieutenant géant du prochain gros boss (Rush Royale : PV ×5, vitesse ×0,8) avec 9 rapides, vague suivante au nettoyage', () => {
     const e = solo();
     const ev = reachWave(e, 5);
     const mini = ofType(ev, 'miniBossSpawn');
@@ -86,7 +86,8 @@ describe('vagues', () => {
     const st = simState(e);
     const boss = st.enemies.find((x) => x.uid === mini[0]!.enemy)!;
     expect(boss.giant).toBe(true);
-    expect(boss.maxHp).toBeCloseTo(waveHp(5) * 12);
+    expect(boss.maxHp).toBeCloseTo(waveHp(5) * 5);
+    expect(boss.speed).toBeCloseTo(WAVE_RULES.baseSpeed * 0.8);
     expect(boss.minionOf).toBe(st.nextBigBoss);
     expect(e.state.phase).toBe('boss');
     boss.speed = 0;
@@ -96,9 +97,10 @@ describe('vagues', () => {
       e.tick();
       during.push(...e.drainEvents());
     }
-    const commons = ofType(during, 'enemySpawn').length;
-    expect(commons).toBeGreaterThan(0);
-    expect(commons).toBeLessThanOrEqual(10);
+    // Rush Royale : la vague du mini-boss compte 10 monstres, le mini-boss et 9 rapides.
+    const spawns = ofType(during, 'enemySpawn');
+    expect(spawns).toHaveLength(9);
+    expect(spawns.every((x) => x.kind === 'rapide')).toBe(true);
     expect(e.state.wave).toBe(5);
     // Pouvoir affaibli du maître toutes les 10 s.
     expect(ofType(during, 'bossPower').length).toBeGreaterThanOrEqual(3);
@@ -192,7 +194,7 @@ describe('vagues', () => {
     expect(boss.speed).toBeCloseTo(v * 2);
   });
 
-  it('un ennemi qui passe retire 1 vie, un boss toutes ; 0 vie = défaite', () => {
+  it('un ennemi qui passe retire 1 vie, un gros, un mini-boss ou un boss 2 (Rush Royale) ; 0 vie = défaite', () => {
     const e = solo();
     step(e, 1);
     const st = simState(e);
@@ -202,12 +204,19 @@ describe('vagues', () => {
     // Rush Royale : un gros monstre retire 2 vies.
     debugSpawn(e, { kind: 'gros', hp: 1e9, distance: 29.999, speed: 2 });
     expect(ofType(step(e, 2), 'lifeLost')[0]!.lives).toBe(0);
+    // Un boss retire 2 vies : la partie continue s'il en reste.
     const b = createEngine({ mode: 'solo', seed: 3, mapId: 'x', players: [setup()], script: { bossAtWave: 1, bossId: 'cruella' } });
     simState(b).enemies.find((x) => x.bossId)!.distance = 29.999;
     const ev2 = step(b, 2);
-    expect(ofType(ev2, 'lifeLost')[0]!.lives).toBe(0);
-    expect(ofType(ev2, 'gameOver')[0]).toMatchObject({ outcome: 'defaite', wave: 1 });
-    expect(b.state.result?.outcome).toBe('defaite');
+    expect(ofType(ev2, 'lifeLost')[0]!.lives).toBe(1);
+    expect(b.state.result).toBeUndefined();
+    // Niveau de boss (endOnBossKill) : laisser passer le boss imposé, c'est perdre.
+    const c = createEngine({ mode: 'solo', seed: 3, mapId: 'x', players: [setup()], targetWaves: 1, script: { bossAtWave: 1, bossId: 'cruella', endOnBossKill: true } });
+    simState(c).enemies.find((x) => x.bossId)!.distance = 29.999;
+    const ev3 = step(c, 2);
+    expect(ofType(ev3, 'lifeLost')[0]!.lives).toBe(0);
+    expect(ofType(ev3, 'gameOver')[0]).toMatchObject({ outcome: 'defaite', wave: 1 });
+    expect(c.state.result?.outcome).toBe('defaite');
   });
 
   it('victoire après targetWaves vagues, palier « milestone » toutes les 10 vagues', () => {
@@ -237,5 +246,28 @@ describe('vagues', () => {
       return ofType(reachWave(e, 6), 'bossSpawn').map((b) => b.boss as BossId);
     };
     expect(run(11)).toEqual(run(11));
+  });
+  it('composition Rush Royale : vagues normales de monstres communs en mode infini ; la campagne y ajoute gros, blindés et boucliers', () => {
+    expect(spawnWeights(12)).toEqual([['normal', 10]]);
+    expect(spawnWeights(5, { miniWave: true })).toEqual([['rapide', 1]]);
+    expect(spawnWeights(12, { campaign: true }).map(([k]) => k)).toEqual(['normal', 'gros', 'blinde', 'bouclier']);
+    expect(spawnWeights(3, { campaign: true }).map(([k]) => k)).toEqual(['normal']);
+    const e = solo();
+    const ev = reachWave(e, 15);
+    const kinds = new Set(ofType(ev, 'enemySpawn').filter((x) => x.kind !== 'sbire').map((x) => x.kind));
+    expect([...kinds].sort()).toEqual(['normal', 'rapide']);
+  });
+
+  it('mini-boss : mana ×5 d’un monstre commun (Rush Royale)', () => {
+    const e = solo();
+    reachWave(e, 5);
+    const st = simState(e);
+    const mini = st.enemies.find((x) => x.x.mini)!;
+    for (const x of st.enemies) if (x !== mini) x.x.gone = 1;
+    debugPlace(e, 0, 0, 'cmarvel', 7);
+    mini.hp = 1;
+    let kill: { mana: number } | undefined;
+    for (let i = 0; i < 40 && !kill; i++) kill = ofType(step(e, 1), 'kill').find((k) => k.enemy === mini.uid);
+    expect(kill?.mana).toBe(5 * killMana(5));
   });
 });

@@ -11,6 +11,16 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-10-10q',
+    title: 'Équilibrage façon Rush Royale',
+    date: '10 octobre 2026',
+    items: [
+      'Équilibrage copié sur Rush Royale : vagues de monstres communs, et toutes les 5 vagues un lieutenant (PV ×5, plus rapide) escorté de monstres rapides.',
+      'Un lieutenant ou un boss qui passe la porte retire 2 vies (au lieu de toutes) ; en Coop, la porte n’a plus qu’une vie, comme dans Rush Royale.',
+      'Départ à 100 de mana, 5 % de coups critiques pour tous les héros, et les Légendaires gagnent bien plus de dégâts par niveau (tableaux de Rush Royale : Thor +129, Iron Man +107 par niveau…).',
+    ],
+  },
+  {
     id: '2026-10-10p',
     title: 'Couleurs de Loki et Coco',
     date: '10 octobre 2026',

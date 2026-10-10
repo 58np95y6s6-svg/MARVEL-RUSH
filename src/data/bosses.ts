@@ -124,13 +124,20 @@ export const LIEUTENANTS: Record<BossId, LieutenantDef> = {
 
 /** Statistiques communes des boss. */
 export const BOSS_STATS = {
-  smallHpMul: 12,     // petit boss : PV = 12 × PV d'un ennemi normal de la vague
-  scriptedMiniHpMul: 8, // script.miniBoss (campagne, niveaux 5) : PV ×8
-  hpMul: 25,          // gros boss : PV = 25 × PV d'un ennemi normal de la vague
-  speed: 0.5,         // cases par seconde (un normal va à 2)
+  /** Mini-boss (lieutenant) : PV ×5 d'un monstre commun de la vague (Rush Royale, page Monsters). */
+  smallHpMul: 5,
+  scriptedMiniHpMul: 8, // script.miniBoss (campagne, niveaux 5) : PV ×8 (valeur Marvel Rush)
+  /** Mini-boss : « un peu plus lent » qu'un monstre commun (Rush Royale ; ×0,8 comme le gros monstre). */
+  smallSpeedMul: 0.8,
+  /** Mini-boss : mana ×5 d'un monstre commun (Rush Royale). */
+  smallMana: 5,
+  hpMul: 25,          // gros boss : PV = 25 × PV d'un ennemi normal de la vague (valeur Marvel Rush)
+  speed: 0.5,         // gros boss : cases par seconde (un normal va à 2 ; valeur Marvel Rush)
   rageAfter: 45,      // secondes avant la rage
   rageSpeedMul: 2,
   mana: 100,
+  /** Vies retirées à la porte par un boss ou un mini-boss (Rush Royale : 2, contre 1 pour un monstre commun). */
+  gateLives: 2,
 };
 
 export type StoneId = 'puissance' | 'espace' | 'realite' | 'ame' | 'temps' | 'esprit';

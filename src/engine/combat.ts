@@ -7,7 +7,7 @@ import type { Targeting, UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { GRID_COLS, GRID_ROWS, GRID_SIZE, type LaneId } from './types';
 import {
-  DT, EPS, LEVEL_DAMAGE, MANA_UPGRADE_BONUS, NO_TEAM, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, emit, pick, rand,
+  BASE_CRIT_CHANCE, DT, EPS, MANA_UPGRADE_BONUS, levelDamageMul, NO_TEAM, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, emit, pick, rand,
   type Ctx, type SimEnemy, type SimUnit, type TeamAgg,
 } from './internal';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, AWAKENING_MAX, resolveUnitParams } from './talents';
@@ -194,7 +194,9 @@ export function killEnemy(ctx: Ctx, e: SimEnemy, player: number, unit?: SimUnit)
   const p = ctx.st.players[player];
   if (!p) return;
   // Rush Royale (Coop) : mana d'élimination de la vague (10, +10 toutes les 10 vagues, 50 au plus) × type.
-  let mana = e.bossId ? BOSS_STATS.mana : ENEMIES[e.kind].mana * killMana(Math.max(1, ctx.st.wave));
+  // Mini-boss : ×5 (Rush Royale).
+  const kindMana = e.x.mini ? BOSS_STATS.smallMana : ENEMIES[e.kind].mana;
+  let mana = e.bossId ? BOSS_STATS.mana : kindMana * killMana(Math.max(1, ctx.st.wave));
   // Potion de Nemo (Chaudron magique) : mana des éliminations augmenté pendant quelques secondes.
   let potion = 0;
   for (const u of p.grid) if (u && (u.counters.killManaFor ?? 0) > EPS) potion = Math.max(potion, u.counters.killMana ?? 0);
@@ -380,7 +382,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
   const level = info.levels[id] ?? 1;
   const pu = p.powerUps[id] ?? 1;
   const flat = (prm.rankDamageFlat ?? 0) * (u.rank - 1); // Archer du vent (Vaïana) : +30 dégâts par rang
-  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * (1 + LEVEL_DAMAGE * (level - 1)) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
+  let dmg = (def.damage + flat) * (1 + RANK_DAMAGE * (u.rank - 1)) * levelDamageMul(def, level) * (1 + POWERUP_DAMAGE * Math.max(0, pu - 1));
   dmg *= 1 + teamFor(ctx, player, id).damage;
   dmg *= 1 + aurasAt(ctx, player, slot).damage;
   if ((u.counters.boostFor ?? 0) > EPS) dmg *= 1 + (u.counters.boostDamage ?? 0);
@@ -437,7 +439,9 @@ export function unitHit(
     e.x.biteBy = player;
   }
   const team = teamFor(ctx, player, id);
-  if (!crit && team.critChance > 0 && rand(ctx) < team.critChance) {
+  // Critique : 5 % de chance par défaut (Rush Royale), plus les bonus d'équipe.
+  const critChance = (ctx.debugNoCrit ? 0 : BASE_CRIT_CHANCE) + team.critChance;
+  if (!crit && critChance > 0 && rand(ctx) < critChance) {
     crit = true;
     dmg *= team.critMul;
   }

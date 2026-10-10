@@ -23,7 +23,16 @@
 | Notes de mise à jour officielles ([13.0](https://rr.my.games/en/news/1/welcome-to-update-130), [17.0](https://rushroyale.my.games/en/news/12/welcome-to-update-170), 24.1, 26.0) | Minotaure (13.0), PV des boss (17.0), talents | officielles |
 | [alucare.fr](https://www.alucare.fr/en/minotaur/) (guides par unité, en anglais et en français) | Talents chiffrés, détails de mécanique | ~2 ans |
 | [thegameguides.com](https://thegameguides.com/rush-royale/bosses/) | Formule des PV de boss (PvP) | ~4 ans |
-| [Level Winner](https://www.levelwinner.com/rush-royale-beginners-guide-tips-tricks-strategies-to-dominate-your-opponents/), Notes Read | Mana de départ, coûts d'amélioration | ~5 ans |
+| [Level Winner](https://www.levelwinner.com/rush-royale-beginners-guide-tips-tricks-strategies-to-dominate-your-opponents/), Notes Read | Mana de départ, coûts d'amélioration, 3 vies en PvP | ~5 ans |
+| **Textes du jeu** (fichier de localisation anglais extrait du client, publié dans le dépôt public [Hona/rushroyale.xyz](https://github.com/Hona/rushroyale.xyz), `wwwroot/data-mine/localizations.json`) | Règles de la Coop, composition des vagues, dégâts à la porte, mini-boss, effet du rang, boss | textes officiels du jeu (version ~2022) |
+| [alucare.fr : coût des améliorations](https://www.alucare.fr/en/cost-of-improvements-to-rush-royale-cards/) | Bonus de dégâts critiques par niveau de carte | ~2 ans |
+| Notes de mise à jour 8.0, 24.0, 26.1, 35.1 (extraits) | Critique fixe des modes à règles égales, vitesse et PV des monstres en PvP | officielles |
+| [lucasrendon.github.io/rush](https://lucasrendon.github.io/rush/bosses.html) | Ordre des boss et mini-boss après la vague 60 | ~3 ans |
+
+**Deuxième passe (octobre 2026, demande « on copie l'équilibrage de Rush Royale »)** : les textes du jeu
+(localisation extraite du client) ont fourni des règles de **confiance A** qui manquaient (composition des
+vagues de Coop, vie unique de la porte en Coop, dégâts à la porte, mana des mini-boss). Les chiffres absolus
+(vitesses, PV, longueur du chemin) n'apparaissent dans aucune source accessible : voir la fin du §2.
 
 **Introuvable malgré les recherches** : une unité « Paladin » (aucune dans la liste du wiki, ni en
 anglais ni en français, ni dans les notes de mise à jour) ; les **PV absolus** des monstres par vague en Coop
@@ -38,10 +47,14 @@ unités (Rogue, Twins, Bard, Knight Statue : seules les mécaniques sont publié
 |---|---|---|
 | **Effet du rang de fusion** | Pour une unité de dégâts, « le rang ne fait qu'augmenter la vitesse d'attaque : intervalle ÷ rang » (un rang 3 tire 3 fois plus vite qu'un rang 1). Les dégâts par coup ne dépendent pas du rang. Phrase répétée sur les pages Archer, Thunderer, Executioner, Engineer, Reaper, Sharpshooter, Wind Archer, Pyrotechnic. | A |
 | Unités de soutien | Le rang augmente l'effet (Banner, Chemist, Knight Statue : « valeur de base × (rang − 1) ») et la cadence. | A |
-| Critique | 5 % de chance par défaut ; le multiplicateur de critique est une stat de compte qui monte avec les niveaux des cartes. | A |
-| Mana de départ | 100. | B |
+| Effet du rang (texte du jeu) | « Au rang 2, les unités sont deux fois plus fortes ; au rang 3, trois fois… » ; « après une fusion, la vitesse d'attaque des unités qui attaquent augmente en proportion du rang ; pour les soutiens, la puissance du bonus ». | A |
+| Critique | **5 % de chance par défaut** (wiki *Critical Damage*). Les **dégâts critiques** sont une stat de compte qui monte à chaque niveau de n'importe quelle carte : +1 à +4 % par niveau d'une Commune (+45 % au total au niveau 15), +59 % au total pour une Rare (alucare) ; les modes à règles égales fixent 500 % (normal) et 1 000 % (Ligues) (8.0). Valeur de départ d'un compte : non publiée. | A (chance) / B (dégâts) |
+| Mana de départ | 100 (guides ; une bénédiction de faction « Mana de départ » existe dans les textes du jeu). | B |
 | Coût d'invocation | Augmente à chaque invocation (10, 20, 30…). | B |
-| Améliorations en partie | 4 au plus, coûts 100 / 200 / 400 / 800 (doublement). | B (guides anciens) |
+| Améliorations en partie | 4 au plus, coûts 100 / 200 / 400 / 800 (doublement). Effet par unité (Archer : dégâts et cadence +10 % → 38 %) : pas de règle commune publiée. | B (guides anciens) |
+| Vies | **PvP : 3** par joueur (guide). **Coop : la porte commune n'a qu'une vie** : « laisser passer un monstre met fin à la partie » (texte du jeu). | B / A |
+| Dégâts à la porte | « Un monstre ordinaire inflige 1 dégât à la porte, les **mini-boss et les boss 2** » (texte du jeu, tutoriel). | A |
+| Niveau de carte | Pas de règle commune : chaque unité a son tableau (dégâts par niveau). Relevés utilisés (dégâts du niv. 7 → pas par niveau) : Tesla 260 → +107,25 (1 118 au niv. 15) ; Inquisiteur 189 → +129 (fiche) ; Danse-lames 215 → +98,25 ; Pyrotechnicien 229 → +61,7 ; Gardien du portail 45 → +32,2 ; Prêtresse 43 → +16,6 ; Archer du vent 59 → +12,2 ; Mage de feu 55 → +6,2 ; Archer 59 → +5. Les Légendaires gagnent 40 à 70 % de leurs dégâts du niv. 7 par niveau, les Communes 8 à 11 %. | A (tableaux du wiki, deux points chacun) |
 | Talents | Après l'Ascension : 3 paires de talents aux niveaux 9, 11 et 13, un talent final au niveau 15 ; modifiables hors combat. | A |
 | Niveaux de carte | Commune dès le niveau 1, rare 3, épique 5, légendaire 7 ; maximum 15. | A |
 
@@ -56,6 +69,7 @@ unités (Rogue, Twins, Bard, Knight Statue : seules les mécaniques sont publié
 | Normal | ×1 | ×1 | ×1 | 1 | A |
 | Rapide | **×0,5** | **×2** | ×1 | 1 | A |
 | Gros (« mini boss » sur la page *Monsters*) | **×5** | « un peu plus lent » | **×5** | **2** | A (vitesse : C, on prend ×0,8) |
+| Mini-boss de Coop (Bannerlord, Vortex) | ×5 (même page ; pas de chiffre propre à la Coop) | « un peu plus lent » ; Vortex : aura +10 % de vitesse | « plus de mana » (texte du jeu) ; ×5 | **2** | B (PV, vitesse, mana) / A (porte) |
 | Limace (événement « Slug Rush ») | ×0,5 en Coop (×2 en PvP) | — | ×0,5 | — | A |
 
 ### 2.2 Coop (page *Co-op*)
@@ -63,6 +77,8 @@ unités (Rogue, Twins, Bard, Knight Statue : seules les mécaniques sont publié
 | Règle | Valeur | Conf. |
 |---|---|---|
 | Monstres par vague | **10** jusqu'à la vague 60. | A |
+| Composition (texte du jeu) | « La **5e vague de chaque dizaine** contient **un mini-boss et des monstres rapides**, la 10e un boss ; **les autres vagues ne contiennent que des monstres communs**. » Le nombre de rapides n'est pas donné : 9 + le mini-boss (10 monstres par vague). | A (9 : B) |
+| Vies | La porte commune n'a **qu'une vie**. | A |
 | Fin de vague | La vague suivante ne commence **qu'une fois le dernier monstre éliminé**. | A |
 | Croissance des PV | « Les PV augmentent **à chaque nouveau monstre** et **toutes les 10 vagues** ; le **taux de croissance augmente lui aussi** toutes les 10 vagues. » Aucun chiffre publié. | A (forme) / C (chiffres) |
 | Mana par élimination | Augmente de **10 toutes les 10 vagues**, plafonné à **50** vers la vague 50. | A |
@@ -78,6 +94,23 @@ unités (Rogue, Twins, Bard, Knight Statue : seules les mécaniques sont publié
 - Les monstres communs gagnent des PV **toutes les 10 secondes**. Conf. A.
 - Mise à jour 17.0 : les PV de base des mini-boss et des boss montent « beaucoup plus vite à partir de la vague 4 ». Conf. A.
 - Mode Ligues : monstres +20 % de PV et +10 % de vitesse. Conf. A.
+- 24.0 : les PV montent plus nettement dès la 3e vague, et à partir de la vague 10 les monstres accélèrent de vague en vague ; 26.1 (« vague de la mort ») : après la 10e vague, PV effectifs +10 à 15 % toutes les 10 s ; 35.1 : PV un peu relevés dès la vague 5. Conf. A (sans valeurs de base).
+- Le premier boss arrive après 2 minutes (guide BlueStacks). Conf. B.
+
+### 2.4 Ce qui reste introuvable (deuxième passe, octobre 2026)
+
+Recherché sans résultat chiffré (moteur de recherche, wiki, notes de mise à jour, textes du jeu ; les pages
+Fandom, Reddit et les sites de statistiques sont bloqués par le réseau) :
+- **vitesses absolues** des monstres (normal, rapide, gros, boss), **longueur du chemin** et temps de traversée ;
+- **PV absolus** des monstres par vague en Coop, taux de croissance chiffrés, PV des mini-boss et des boss de Coop
+  (seulement « fixes pour un étage » et « plus de 200 M » pour les boss tardifs), PV des étages de Donjon ;
+- **intervalles des pouvoirs de boss** (Gorgone : 2 unités pétrifiées « périodiquement » ; une Gorgone modifiée
+  d'événement : 8 s de pétrification) ;
+- **rythme d'apparition** des monstres dans une vague de Coop (il n'y a pas de minuteur de vague en Coop : la vague
+  suivante attend le nettoyage) ;
+- mana d'élimination de la vague 1 (seulement « +10 toutes les 10 vagues, 50 au plus vers la vague 50 ») ;
+- **dégâts critiques** de départ d'un compte ;
+- effet chiffré commun des améliorations en partie (chaque unité a le sien).
 
 ---
 

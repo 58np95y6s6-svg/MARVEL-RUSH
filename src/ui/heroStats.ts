@@ -5,7 +5,7 @@
 import type { UnitDef, UnitId } from '../data/types';
 import { UNITS } from '../data/units';
 import { AWAKENING_ATTACK_SPEED, AWAKENING_DAMAGE, resolveUnitParams } from '../engine/talents';
-import { LEVEL_DAMAGE, POWERUP_ATTACK_SPEED, POWERUP_DAMAGE } from '../engine/internal';
+import { POWERUP_ATTACK_SPEED, POWERUP_DAMAGE, levelDamageMul } from '../engine/internal';
 import { growthBonus } from '../engine/archetypes';
 
 export interface StatCtx {
@@ -94,7 +94,7 @@ const ABILITY_ROWS: Record<string, Row> = {
 
 /** Dégâts d'un coup (sans compétence) au niveau, à l'amélioration en partie et à l'éveil donnés. */
 export function offense(u: UnitDef, c: StatCtx, prm: Record<string, number>): number {
-  return u.damage * (1 + LEVEL_DAMAGE * (c.level - 1)) * (1 + POWERUP_DAMAGE * (c.powerUp - 1))
+  return u.damage * levelDamageMul(u, c.level) * (1 + POWERUP_DAMAGE * (c.powerUp - 1))
     * (1 + AWAKENING_DAMAGE * c.stars) * (prm.damageMul ?? 1);
 }
 

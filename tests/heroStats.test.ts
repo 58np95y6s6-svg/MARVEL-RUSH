@@ -8,7 +8,7 @@ describe('fiche de héros : statistiques', () => {
   it('Thor (Inquisiteur) : Offensif avec le gain du niveau suivant, intervalles, chiffres de la fiche Rush Royale', () => {
     const c = coreStats('thor', base);
     expect(c.offense.value).toBe('189');
-    expect(c.offense.next).toBe('+19');
+    expect(c.offense.next).toBe('+129'); // fiche de l'Inquisiteur : +129 par niveau
     expect(c.interval.value).toBe('1 s');
     const ab = Object.fromEntries(abilityStats('thor', base).map((t) => [t.key, t.value]));
     expect(ab.rampPerHit).toBe('15 %');
