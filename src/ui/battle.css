@@ -207,6 +207,7 @@
 @keyframes mr-pop { from { transform: scale(.8); opacity: 0; } }
 .mr-info .meta span.rng { background: #ffe7a6; border-color: #d99a2a; }
 .mr-info .meta span.grow { background: #9fe26a; border-color: #4f9a2a; }
+.mr-info .meta span.dark { background: #5a0614; border-color: #ff2a44; color: #fff; }
 .mr-info p.arch { color: #8a4fe0; font-size: 26px; }
 .mr-info p.next { color: #2f8a3c; font-size: 24px; }
 

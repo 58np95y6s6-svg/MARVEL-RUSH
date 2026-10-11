@@ -6,8 +6,10 @@
 // pouls plus rapide). Lueur = copie de la silhouette de la figurine, derrière elle, floutée et colorée
 // (filtres partagés par toutes les vues) ; voile lumineux sur la figurine ; petits éclairs et étincelles
 // partant du contour. Fondu d'environ 200 ms aux changements de mode.
+// Chevalier des ténèbres : pastille cramoisie avec le compteur de Puissance des ténèbres (Thor absorbés),
+// en haut à gauche de la figurine ; petit rebond à chaque hausse.
 // Textures et filtres partagés (créés une fois), objets créés une fois par vue : aucune allocation par image.
-import { BlurFilter, ColorMatrixFilter, Container, Sprite, Texture, type Filter } from 'pixi.js';
+import { BlurFilter, ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture, type Filter } from 'pixi.js';
 import type { ThorKnight, ThorMode } from '../../engine';
 
 type Look = 'normal' | 'lumiere' | 'tenebres';
@@ -107,6 +109,14 @@ export class ThorAura {
   private readonly front = new Container();
   private readonly bolts: Sprite[] = [];
   private readonly boltLife: number[] = [];
+  private readonly badge = new Container();
+  private readonly badgeBg = new Graphics();
+  private readonly badgeText = new Text({
+    text: '',
+    style: { fontFamily: '"Lilita One", "Arial Rounded MT Bold", Arial, sans-serif', fontSize: 30, fill: 0xffffff, stroke: { color: 0x3a0008, width: 6 } },
+  });
+  private stacks = 0;
+  private badgeT = 1;
   private look: Look | null = null;
   private uid = -1;
   private act = 0;
@@ -146,7 +156,34 @@ export class ThorAura {
     body.addChildAt(this.smokeBox, at);
     body.addChildAt(this.veil, body.getChildIndex(figure) + 1);
     body.addChild(this.front);
+    // Pastille du compteur (au-dessus de tout le jeton).
+    this.badgeText.anchor.set(0.5);
+    this.badge.addChild(this.badgeBg, this.badgeText);
+    this.badge.position.set(figure.position.x - size * 0.36, figure.position.y - size * 0.36);
+    this.badge.visible = false;
+    body.addChild(this.badge);
     this.hide();
+  }
+
+  /** Pastille du compteur de cumuls (redessinée seulement quand le nombre change). */
+  private updateBadge(dt: number, n: number): void {
+    if (n !== this.stacks) {
+      if (n > this.stacks) this.badgeT = 0;
+      this.stacks = n;
+      if (n > 0) {
+        this.badgeText.text = String(n);
+        const r = this.size * 0.15;
+        const w = Math.max(r * 2, this.badgeText.width + r * 0.9);
+        this.badgeBg.clear()
+          .roundRect(-w / 2, -r, w, r * 2, r).fill({ color: 0x5a0614 })
+          .roundRect(-w / 2, -r, w, r * 2, r).stroke({ color: 0xff2a44, width: 4 });
+      }
+    }
+    this.badge.visible = n > 0;
+    if (!this.badge.visible) return;
+    this.badgeT = Math.min(1, this.badgeT + dt / 0.35);
+    const k = this.badgeT;
+    this.badge.scale.set(1 + 0.45 * Math.sin(k * Math.PI) * (1 - k));
   }
 
   private hide(): void {
@@ -161,7 +198,8 @@ export class ThorAura {
    * (une autre unité dans la même vue repart de zéro).
    */
   update(dt: number, uid: number, mode: ThorMode | null, spark: SparkFn): void {
-    if (uid !== this.uid) { this.uid = uid; this.act = 0; this.form = 0; this.knight = null; this.boltIn = 0.3; }
+    if (uid !== this.uid) { this.uid = uid; this.act = 0; this.form = 0; this.knight = null; this.boltIn = 0.3; this.stacks = 0; }
+    this.updateBadge(dt, mode?.knight === 'tenebres' ? mode.stacks : 0);
     const ta = mode?.active ? 1 : 0;
     const tf = mode?.knight ? 1 : 0;
     if (mode?.knight) this.knight = mode.knight;

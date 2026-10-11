@@ -203,7 +203,7 @@ export class BattleScene {
     return s;
   }
 
-  private thorOut: ThorMode = { active: false, knight: null };
+  private thorOut: ThorMode = { active: false, knight: null, stacks: 0, stackDamage: 0 };
   private sparkView: UnitView | null = null;
   private readonly thorSpark: SparkFn = (x, y, color) => {
     const v = this.sparkView;
