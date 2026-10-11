@@ -71,7 +71,9 @@ function tickTimers(ctx: Ctx, player: number, u: SimUnit): void {
 /**
  * Talents de l'Inquisiteur (Thor) qui vivent sur le plateau :
  * - Chevalier des ténèbres (`darkKnight`) : le plus ancien exemplaire est toujours actif et, toutes les
- *   `darkStealEvery` s, prend 1 rang à l'autre exemplaire du plus haut rang (rang 7 au plus) ;
+ *   `darkStealEvery` s, absorbe 1 rang de CHAQUE autre exemplaire (un Thor de rang 1 est absorbé en entier et
+ *   quitte le plateau) ; chaque Thor drainé ajoute 1 à son compteur `darkStacks` (dégâts +`darkStackDamage`
+ *   par cumul, sans plafond). Le compteur vit sur l'unité : perdu si le chevalier fusionne ou quitte le plateau ;
  * - Bouclier de foi (`shieldEvery`) : toutes les N s, insensible aux pouvoirs de boss pendant `shieldDuration` s.
  */
 function knightTalents(ctx: Ctx, player: number): void {
@@ -95,11 +97,17 @@ function knightTalents(ctx: Ctx, player: number): void {
     c.darkIn = (c.darkIn ?? prm.darkStealEvery ?? 25) - DT;
     if (c.darkIn > EPS) continue;
     c.darkIn = prm.darkStealEvery ?? 25;
-    const victim = mine.filter((x) => x !== dark && x.rank >= 2).sort((a, b) => b.rank - a.rank || a.uid - b.uid)[0];
-    if (!victim || dark.rank >= MAX_RANK) continue;
-    victim.rank -= 1;
-    dark.rank += 1;
-    abilityEvent(ctx, player, p.grid.indexOf(dark), id, 'Chevalier des ténèbres', []);
+    const drained: number[] = [];
+    for (const x of mine) {
+      if (x === dark) continue;
+      const slot = p.grid.indexOf(x);
+      if (x.rank > 1) x.rank -= 1;
+      else p.grid[slot] = null; // rang 1 : absorbé en entier
+      drained.push(slot);
+    }
+    if (!drained.length) continue;
+    c.darkStacks = (c.darkStacks ?? 0) + drained.length;
+    abilityEvent(ctx, player, p.grid.indexOf(dark), id, 'Chevalier des ténèbres', drained);
   }
 }
 

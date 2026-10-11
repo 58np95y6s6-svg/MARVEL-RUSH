@@ -66,7 +66,7 @@ export const TALENTS: TalentDef[] = [
   ),
   ...u('thor', // Inquisiteur (fiche de l'unité, arbre des niveaux 9/11/13/15 ; recherches : voir docs/rush-royale-mapping.md)
     ['Chevalier de lumière', 'Thor combat en Chevalier de lumière : +6,5 % de dégâts par boss éliminé pendant la partie (20 % de chance par petit boss). Fusionner n’importe quel Thor met tous les Thor en mode actif pendant 10 s.', { bossKillDamage: 0.065, miniKillChance: 0.2, mergeActiveDuration: 10 }],
-    ['Chevalier des ténèbres', 'Le premier Thor du plateau est un Chevalier des ténèbres : toujours en mode actif ; toutes les 25 s, il prend 1 rang à un autre Thor (rang 7 au plus).', { darkKnight: 1, darkStealEvery: 25 }],
+    ['Chevalier des ténèbres', 'Le premier Thor du plateau est un Chevalier des ténèbres, toujours en mode actif. Toutes les 25 s, il absorbe les autres Thor : chacun perd 1 rang de fusion (un Thor de rang 1 disparaît) et donne au chevalier 1 cumul de Puissance des ténèbres, +6 % de dégâts par cumul, sans limite. Les cumuls sont perdus s’il fusionne.', { darkKnight: 1, darkStealEvery: 25, darkStackDamage: 0.06 }],
     ['Purification', 'En mode actif, les coups consécutifs font monter les dégâts deux fois plus vite : +30 % par coup au lieu de +15 %.', { activeRampMul: 2 }],
     ['Bouclier de foi', 'Toutes les 15 s, un bouclier de foi protège chaque Thor pendant 5 s : les pouvoirs de boss ne le touchent pas.', { shieldEvery: 15, shieldDuration: 5 }],
     ['Ronin', 'Limite d’augmentation des dégâts : 800 % au lieu de 600 %.', { rampMaxAdd: 2 }],
