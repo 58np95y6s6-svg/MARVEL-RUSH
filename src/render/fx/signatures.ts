@@ -1427,10 +1427,45 @@ export function playAbility(fx: CombatFx, slot: number, unit: UnitId, name: stri
       fx.host.flash(0.18, 0.25, 0xfff27a);
       return;
     }
+    case 'thor': {
+      // Chevalier des ténèbres : volutes sombres qui filent des Thor drainés vers le chevalier.
+      if (name === 'Chevalier des ténèbres') { darkDrain(fx, slot, targets); return; }
+      fx.cellFlare(slot, col);
+      return;
+    }
     // Compétences déjà portées par l'attaque (Uni-Beam, Smash, Dévorer, Bras bionique, Morsure, Dix Anneaux, Avalanche) :
     default:
       fx.cellFlare(slot, col);
   }
+}
+
+/** Volute sombre : fumée cramoisie qui traîne derrière la mèche. */
+function trDark(m: Mote): void {
+  const fx = fxOf(m);
+  const g = fx.shots.spawn(fx.tex.puff, m.x, m.y, 0.35);
+  g.s.tint = Math.random() < 0.5 ? 0x2a0610 : 0x7a0a1e; g.s0 = 0.35; g.s1 = 0.6; g.a0 = 0.7; g.rot = Math.random() * 6; g.fout = 0.6;
+}
+function darkAbsorb(m: Mote): void {
+  const fx = fxOf(m);
+  fx.glow(m.x, m.y, 0xd0102e, 1.1, 0.25);
+}
+function darkDrain(fx: CombatFx, slot: number, targets: readonly number[]): void {
+  const c = fx.host.cell(slot);
+  const to = { x: c.x, y: c.y - 40 };
+  targets.forEach((t, k) => {
+    const o = fx.host.cell(t);
+    fx.puffs(o.x, o.y - 30, 0x3a0812, 4, 0.7, 90, 0.5);
+    fx.glow(o.x, o.y - 30, 0xd0102e, 1.6, 0.35, 'ground');
+    for (let i = 0; i < fx.n(3); i++) {
+      const m = fx.shotTo('glow', { x: o.x + rnd(-30, 30), y: o.y - 30 + rnd(-20, 20) }, to, 0.55 + i * 0.06, darkAbsorb, 0xd0102e);
+      m.s.tint = i % 2 ? 0xff2a44 : 0x9a0c22; m.s.blendMode = 'add';
+      m.arc = rnd(40, 120) * (i % 2 ? 1 : -1); m.ease = Ease.In; m.wob = 14; m.wobF = 3;
+      m.s0 = 0.9; m.s1 = 0.45; m.delay = k * 0.08 + i * 0.05; m.trail = trDark; m.trailEvery = 0.03;
+    }
+  });
+  fx.ring(c.x, c.y, 0xd0102e, 96, 0.5, 'top', 1);
+  const g = fx.glow(c.x, c.y - 40, 0xd0102e, 2.6, 0.6);
+  g.delay = 0.5;
 }
 
 // ---------------------------------------------------------------- pouvoirs de boss

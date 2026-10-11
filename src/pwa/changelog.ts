@@ -31,6 +31,15 @@ export const CHANGELOG: ReleaseNote[] = [
     ],
   },
   {
+    id: '2026-10-11a',
+    title: 'Chevalier des ténèbres',
+    date: '11 octobre 2026',
+    items: [
+      'Chevalier des ténèbres (talent de Thor) : toutes les 25 s, chaque autre Thor perd 1 rang de fusion (un Thor de rang 1 est absorbé) et le chevalier gagne 1 cumul de Puissance des ténèbres, +6 % de dégâts par cumul, sans limite.',
+      'Le nombre de cumuls s’affiche sur une pastille cramoisie du chevalier et dans sa bulle d’info ; des volutes sombres filent vers lui à chaque absorption.',
+    ],
+  },
+  {
     id: '2026-10-10v',
     title: 'Coop réparée',
     date: '10 octobre 2026',
