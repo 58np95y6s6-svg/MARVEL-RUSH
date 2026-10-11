@@ -5,7 +5,7 @@ export { setTalentCatalog, setAwakeningCatalog, resolveUnitParams } from './tale
 export { mulberry32 } from './rng';
 export * from './types';
 export * as debug from './debug';
-export { RANK_ATTACK_SPEED, RANK_DAMAGE } from './combat';
+export { DARK_STACK_DAMAGE, RANK_ATTACK_SPEED, RANK_DAMAGE } from './combat';
 export { thorMode, type ThorKnight, type ThorMode } from './thorMode';
 export {
   boardGeometry, coveredSpans, rangeClass, rangeLabel, unitRange, RANGE_LONG, RANGE_MEDIUM, RANGE_SHORT,

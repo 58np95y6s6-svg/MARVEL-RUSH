@@ -13,7 +13,7 @@ describe('thorMode', () => {
     const e = eng();
     debugPlace(e, 0, 0, 'thor');
     debugPlace(e, 0, 5, 'cmarvel');
-    expect(thorMode(e.state, e.config, 0, 0)).toEqual({ active: true, knight: null });
+    expect(thorMode(e.state, e.config, 0, 0)).toMatchObject({ active: true, knight: null });
     expect(thorMode(e.state, e.config, 0, 5)).toBeNull();
     expect(thorMode(e.state, e.config, 0, 9)).toBeNull();
     debugPlace(e, 0, 1, 'thor');
@@ -26,12 +26,23 @@ describe('thorMode', () => {
     const l = eng(['a']);
     debugPlace(l, 0, 0, 'thor');
     debugPlace(l, 0, 1, 'thor');
-    expect(thorMode(l.state, l.config, 0, 1)).toEqual({ active: false, knight: 'lumiere' });
+    expect(thorMode(l.state, l.config, 0, 1)).toMatchObject({ active: false, knight: 'lumiere' });
     const d = eng(['b']);
     debugPlace(d, 0, 0, 'thor');
     debugPlace(d, 0, 1, 'thor');
     step(d, 2);
-    expect(thorMode(d.state, d.config, 0, 0)).toEqual({ active: true, knight: 'tenebres' });
-    expect(thorMode(d.state, d.config, 0, 1)).toEqual({ active: false, knight: null });
+    expect(thorMode(d.state, d.config, 0, 0)).toMatchObject({ active: true, knight: 'tenebres' });
+    expect(thorMode(d.state, d.config, 0, 1)).toMatchObject({ active: false, knight: null });
+  });
+});
+
+describe('thorMode : cumuls du Chevalier des ténèbres', () => {
+  it('le compteur n’apparaît que sur le chevalier', () => {
+    const d = eng(['b']);
+    debugPlace(d, 0, 0, 'thor');
+    debugPlace(d, 0, 1, 'thor', 2);
+    step(d, 20 * 25 + 2);
+    expect(thorMode(d.state, d.config, 0, 0)).toMatchObject({ knight: 'tenebres', stacks: 1, stackDamage: 0.06 });
+    expect(thorMode(d.state, d.config, 0, 1)).toMatchObject({ knight: null, stacks: 0 });
   });
 });

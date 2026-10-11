@@ -7,7 +7,7 @@ import { UNITS } from '../data/units';
 import {
   GRID_SIZE, MANA_UPGRADE_BONUS, MANA_UPGRADE_COSTS, MANA_UPGRADE_MAX, MAX_RANK, POWERUP_ATTACK_SPEED, POWERUP_COSTS,
   COOP_LIVES, POWERUP_DAMAGE, POWERUP_MAX, RANK_ATTACK_SPEED, START_LIVES, RANK_DAMAGE, TICKS_PER_SECOND, bossWaveKind, createEngine, dropAction,
-  formationLength, growthBonus, growthPointsOf, rangeLabel,
+  formationLength, growthBonus, growthPointsOf, rangeLabel, thorMode,
   type Command, type Engine, type EngineEvent, type GameConfig, type PlayerId,
 } from '../engine';
 import { getMap } from '../maps';
@@ -610,10 +610,14 @@ export function mountBattle(root: HTMLElement, o: BattleOptions): BattleHandle {
       : '<p class="next">Amélioration maximale.</p>';
     const copyNote = u.status.copyOf
       ? `<p class="arch">Copie par ${UNITS[u.status.copyOf].name} : ${copyMul < 1 ? `−${Math.round((1 - copyMul) * 100)} % de dégâts` : 'dégâts complets'}.</p>` : '';
+    const tm = thorMode(engine.state, engine.config, meIdx, slot);
+    const dark = tm?.knight === 'tenebres' ? tm.stacks * tm.stackDamage : 0;
+    const darkTag = tm?.knight === 'tenebres'
+      ? `<span class="dark">Puissance des ténèbres : +${tm.stacks} × ${Math.round(tm.stackDamage * 100)} %</span>` : '';
     const growthTag = growth > 0.0049 ? `<span class="grow">Croissance +${Math.round(growth * 100)} %</span>` : '';
     info.innerHTML = `<h3>${d.name}<small>Rang ${u.rank}/${MAX_RANK}</small></h3>
       <p><span class="abl">${d.ability.name}</span> : ${d.ability.description}</p>${copyNote}
-      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (d.ability.params.rankDamage ? u.rank : 1 + RANK_DAMAGE * (u.rank - 1)) * (1 + POWERUP_DAMAGE * (lv - 1)) * copyMul * (1 + growth) * (1 + formation))}</span>${growthTag}${formationTag}<span>Cadence ${(d.attackInterval / ((d.ability.params.rankDamage ? 1 : 1 + RANK_ATTACK_SPEED * (u.rank - 1)) * (1 + POWERUP_ATTACK_SPEED * (lv - 1)))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>${nextUp}`;
+      <div class="meta"><span class="rng">Portée : ${rangeLabel(id)}</span><span>${TARGETING[d.targeting] ?? ''}</span><span>Dégâts ${Math.round(d.damage * (d.ability.params.rankDamage ? u.rank : 1 + RANK_DAMAGE * (u.rank - 1)) * (1 + POWERUP_DAMAGE * (lv - 1)) * copyMul * (1 + growth) * (1 + formation) * (1 + dark))}</span>${growthTag}${formationTag}${darkTag}<span>Cadence ${(d.attackInterval / ((d.ability.params.rankDamage ? 1 : 1 + RANK_ATTACK_SPEED * (u.rank - 1)) * (1 + POWERUP_ATTACK_SPEED * (lv - 1)))).toFixed(2).replace(/0$/, '').replace('.', ',')} s</span><span>Amélioration Nv.${lv}</span></div>${nextUp}`;
     const c = scene.cellCenter(slot);
     const x = Math.max(20, Math.min(1000 - 20 - 560, c.x - 280));
     info.style.left = `${x}px`;

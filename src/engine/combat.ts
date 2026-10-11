@@ -314,6 +314,9 @@ export function hasSameNeighbor(ctx: Ctx, player: number, slot: number, unit: Un
   return neighbors(slot, false).some((j) => { const n = grid[j]; return !!n && effectiveId(n) === unit; });
 }
 
+/** Chevalier des ténèbres (Thor) : bonus de dégâts par Thor absorbé (Rush Royale : +6 % par rang absorbé), sans plafond. */
+export const DARK_STACK_DAMAGE = 0.06;
+
 /** Nombres d'exemplaires qui mettent l'Inquisiteur (Thor) en mode actif (fiche Rush Royale : 1, 3, 5 ou 7). */
 export const ACTIVE_COUNTS: readonly number[] = [1, 3, 5, 7];
 
@@ -400,6 +403,7 @@ export function baseDamage(ctx: Ctx, player: number, slot: number, u: SimUnit): 
     dmg *= 1 + prm.dancerDamage * Math.max(0, others);
   }
   if (prm.bossKillDamage) dmg *= 1 + prm.bossKillDamage * (p.bossKills?.[id] ?? 0);                      // Chevalier de lumière (Thor)
+  if (prm.darkKnight && (u.counters.darkStacks ?? 0) > 0) dmg *= 1 + (prm.darkStackDamage ?? DARK_STACK_DAMAGE) * u.counters.darkStacks!; // Chevalier des ténèbres (Thor)
   if (prm.unityDamage && countOnBoard(ctx, player, id) >= (prm.unityAt ?? 4)) dmg *= 1 + prm.unityDamage;  // Unité (Thor)
   if (prm.evenDamageMul && countOnBoard(ctx, player, id) % 2 === 0) dmg *= prm.evenDamageMul;             // Pyrotechnicien
   if (prm.chargeDamage) {                                                                                  // Tesla
