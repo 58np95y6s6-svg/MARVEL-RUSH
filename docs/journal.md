@@ -41,7 +41,7 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 
 | Date (minuit, Paris) | Extension | Branche | État |
 |---|---|---|---|
-| Dimanche 18/10/2026 | DC Comics | `extension/dc` | prête à publier (vérifiée le 10/10, d36f950) |
+| Dimanche 18/10/2026 | DC Comics | `extension/dc` | **publiée le 18/10** |
 | Dimanche 25/10/2026 | Transformers | `extension/transformers` | prête à publier (vérifiée le 10/10, 737619b ; branches empilées) |
 | Dimanche 01/11/2026 | Pixar | `extension/pixar` | prête à publier (vérifiée le 10/10, 5df0740 ; branches empilées) |
 
@@ -58,3 +58,5 @@ Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-dc`. Con
 - Fusion de `main` le 10/10 (Coop, présence, équilibrage Rush Royale) : les héros DC jouent en Coop Infini et en Coop Niveaux (chapitres 1 à 6) ; les chapitres Coop DC restent dans `docs/campagne-coop.md` (non codés).
 
 État : prête à publier (18/10).
+
+- **18/10/2026** : Extension DC publiée le 18/10 (fusion de `extension/dc` dans `main`, typecheck, 512 tests et build verts).
