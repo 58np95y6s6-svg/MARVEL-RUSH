@@ -41,7 +41,7 @@ Tâches automatiques créées à la demande du joueur. À minuit (heure de Paris
 
 | Date (minuit, Paris) | Extension | Branche | État |
 |---|---|---|---|
-| Dimanche 18/10/2026 | DC Comics | `extension/dc` | prête à publier (vérifiée le 10/10, d36f950) |
+| Dimanche 18/10/2026 | DC Comics | `extension/dc` | **publiée le 18/10** |
 | Dimanche 25/10/2026 | Transformers | `extension/transformers` | prête à publier (vérifiée le 10/10, 737619b ; branches empilées) |
 | Dimanche 01/11/2026 | Pixar | `extension/pixar` | prête à publier (vérifiée le 10/10, 5df0740 ; branches empilées) |
 
@@ -59,27 +59,4 @@ Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-dc`. Con
 
 État : prête à publier (18/10).
 
-## Extension Transformers — branche `extension/transformers`
-
-Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-tf`, à partir de `main` (sans l'extension DC). Contenu : la liste définitive de `docs/roadmap.md`.
-- Héros (15) : optimus, bumblebee, ironhide, ratchet, jazz, arcee, grimlock, wheeljack, hotrod, elita, bulkhead, sideswipe, prowl, mirage, ultramagnus. Mécanique propre : transformation robot ↔ véhicule (`src/engine/transformers.ts`, commande `transform`).
-- Gros boss (5) : starscream, soundwave, shockwave, devastator, blitzwing. Boss final : megatron (dans la rotation). Boss cosmique des modes infinis : unicron (vague 150).
-- Chapitres 10 à 12 (numéros libres de toute collision avec DC 7 à 9) ; la campagne suit l'ordre des numéros installés.
-- Fusion avec DC faite le 10/10 (la branche contient `extension/dc`, donc `main`) : `cyborg` dans l'équipe `machines` ; `BossPool` = `tous` | `marvel-disney` | `dc` | `transformers` ; chapitres 7 à 9 (DC) puis 10 à 12 (seuils 255, 285, 315 étoiles).
-- Boss final des modes infinis (`finalBossAt`), par ordre de priorité quand deux paliers tombent sur la même vague : **Unicron (150, 300…) > Darkseid (100, 200…) > Thanos (50, 150…)**. Rotation `tous` : 50 Thanos, 100 Darkseid, 150 Unicron, 200 Darkseid, 250 Thanos, 300 Unicron ; `marvel-disney` : Thanos seul ; `dc` : Darkseid à chaque palier ; `transformers` : Unicron seul. En campagne, les boss finaux sont ceux des niveaux (Thanos 6-10, Darkseid 9-10, Megatron 12-10).
-
-État : prête à publier (25/10).
-
-## Extension Pixar — branche `extension/pixar`
-
-Préparée dans un dossier de travail séparé, `/home/user/marvel-rush-pixar`, à partir de `main` (sans les extensions DC et Transformers). Contenu : la liste définitive de `docs/roadmap.md`.
-- Héros (15) : mrincredible, elastigirl, frozone, violetflash, sullimike, mcqueen, carlrussell, joysadness, remy, walleeve, lucaalberto, mei, jessie, ianbarley, joe. Mécanique propre : le coup de duo (`duoEvery`, `src/engine/pixar.ts`), le partenaire frappe toutes les N attaques.
-- Gros boss (5) : syndrome, randall, lotso, hopper (Le Borgne), muntz. Boss final : zurg (dans la rotation, « Je suis ton père » à 30 % de PV).
-- Chapitres 13 à 15 (numéros libres de toute collision avec DC 7 à 9 et Transformers 10 à 12) ; la campagne suit l'ordre des numéros installés (écran Campagne générique, repris de la branche Transformers).
-- Rotations de boss : `BossPool` = `tous` | `marvel-disney` | `pixar` ; les chapitres 1 à 6 jouent `marvel-disney`, les chapitres d'extension `tous`.
-- Fusion avec Transformers et DC faite le 10/10 (la branche contient `extension/transformers`, donc DC et `main`) : `BossPool` = `tous` | `marvel-disney` | `dc` | `transformers` | `pixar` (rotation `tous` : 23 gros boss, Megatron et Zurg compris) ; chapitres 13 à 15 après le 12 (seuils 345, 375, 405 étoiles) ; tableaux `growth`, `EXT_ROWS`, `EXPECTED`, sections de `heroStats`, équipes et planches réunis.
-- Boss finaux : en campagne, Zurg à la vague 200 (15-10). Modes infinis (`finalBossAt`) : Unicron (150) > Darkseid (100) > Thanos (50) en rotation `tous` ; rotation `pixar` : aucun boss final (Zurg est dans la rotation).
-- Simulateur d'économie (`src/meta/economySim.ts`) : joue la campagne de base (chapitres 1 à 6) seulement ; avec les 150 niveaux des trois extensions, le ★5 d'un Rare tombait au jour 50 (garde-fou : 55 à 100), il revient au jour 84.
-
-État : prête à publier (01/11).
-
+- **18/10/2026** : Extension DC publiée le 18/10 (fusion de `extension/dc` dans `main`, typecheck, 512 tests et build verts).
